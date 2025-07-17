@@ -1,0 +1,490 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete User - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'users:list' %}">Users</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'users:detail' object.pk %}">{{ object.get_display_name }}</a></li>
+    <li class="breadcrumb-item active">Delete</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="bi bi-trash me-2 text-danger"></i>
+                Delete User
+            </h1>
+            <p class="text-muted mb-0">Permanently remove user from the system</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'users:detail' object.pk %}" class="btn btn-outline-primary">
+                <i class="bi bi-eye me-2"></i>
+                View Details
+            </a>
+            <a href="{% url 'users:list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Back to Users
+            </a>
+        </div>
+    </div>
+
+    <!-- Warning Alert -->
+    <div class="alert alert-danger mb-4" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill me-3 fs-3"></i>
+            <div>
+                <h5 class="alert-heading mb-1">Warning: This action cannot be undone!</h5>
+                <p class="mb-0">
+                    Deleting this user will permanently remove all associated data from the system.
+                    Consider deactivating the user instead if you might need to restore access later.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- User Information -->
+        <div class="col-lg-8">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="card-title mb-0">
+                        <i class="bi bi-person-x me-2"></i>
+                        User to be Deleted
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            {% if object.profile_image %}
+                                <img src="{{ object.profile_image.url }}" alt="{{ object.get_full_name }}" class="rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover; border: 3px solid #dc3545;">
+                            {% else %}
+                                <div class="bg-danger rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center text-white" style="width: 100px; height: 100px;">
+                                    <i class="bi bi-person fs-1"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-9">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="detail-item mb-3">
+                                        <strong class="text-danger">Full Name:</strong><br>
+                                        <span class="fs-5">{{ object.get_full_name }}</span>
+                                    </div>
+                                    <div class="detail-item mb-3">
+                                        <strong class="text-danger">Username:</strong><br>
+                                        <code>{{ object.username }}</code>
+                                    </div>
+                                    <div class="detail-item mb-3">
+                                        <strong class="text-danger">Employee ID:</strong><br>
+                                        <code>{{ object.employee_id }}</code>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="detail-item mb-3">
+                                        <strong class="text-danger">Email:</strong><br>
+                                        {{ object.email|default:"Not provided" }}
+                                    </div>
+                                    <div class="detail-item mb-3">
+                                        <strong class="text-danger">Office:</strong><br>
+                                        {{ object.office|default:"Not specified" }}
+                                    </div>
+                                    <div class="detail-item mb-3">
+                                        <strong class="text-danger">Status:</strong><br>
+                                        {% if object.is_active and object.is_active_employee %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                        {% if object.is_staff %}
+                                            <span class="badge bg-warning ms-1">Staff</span>
+                                        {% endif %}
+                                        {% if object.is_superuser %}
+                                            <span class="badge bg-danger ms-1">Admin</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Impact Assessment -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-exclamation-diamond me-2"></i>
+                        Impact Assessment
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="impact-item">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-laptop text-primary me-2"></i>
+                                    <strong>Assigned Devices</strong>
+                                </div>
+                                <div class="ms-4">
+                                    {% if assigned_devices_count > 0 %}
+                                        <span class="badge bg-warning">{{ assigned_devices_count }} device{{ assigned_devices_count|pluralize }}</span>
+                                        <p class="text-muted mt-2 mb-0">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            These devices will be unassigned
+                                        </p>
+                                    {% else %}
+                                        <span class="badge bg-success">No devices assigned</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="impact-item">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-people text-info me-2"></i>
+                                    <strong>User Groups</strong>
+                                </div>
+                                <div class="ms-4">
+                                    {% if user_groups %}
+                                        <span class="badge bg-info">{{ user_groups|length }} group{{ user_groups|length|pluralize }}</span>
+                                        <div class="mt-2">
+                                            {% for group in user_groups %}
+                                                <span class="badge bg-outline-primary me-1">{{ group.name }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <span class="badge bg-success">No groups assigned</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="impact-item">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-calendar3 text-success me-2"></i>
+                                    <strong>Account Created</strong>
+                                </div>
+                                <div class="ms-4">
+                                    <span class="text-muted">{{ object.created_at|date:"F j, Y" }}</span>
+                                    <br>
+                                    <small class="text-muted">({{ object.created_at|timesince }} ago)</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="impact-item">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-clock text-warning me-2"></i>
+                                    <strong>Last Login</strong>
+                                </div>
+                                <div class="ms-4">
+                                    {% if object.last_login %}
+                                        <span class="text-muted">{{ object.last_login|date:"F j, Y g:i A" }}</span>
+                                        <br>
+                                        <small class="text-muted">({{ object.last_login|timesince }} ago)</small>
+                                    {% else %}
+                                        <span class="text-muted">Never logged in</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Panel -->
+        <div class="col-lg-4">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-shield-exclamation me-2"></i>
+                        Alternative Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        Consider these alternatives before permanently deleting the user:
+                    </p>
+                    
+                    <div class="d-grid gap-2">
+                        {% if object.is_active %}
+                            <form method="post" action="{% url 'users:deactivate' object.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-warning w-100">
+                                    <i class="bi bi-pause-circle me-2"></i>
+                                    Deactivate User
+                                </button>
+                            </form>
+                        {% else %}
+                            <form method="post" action="{% url 'users:activate' object.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="bi bi-play-circle me-2"></i>
+                                    Reactivate User
+                                </button>
+                            </form>
+                        {% endif %}
+                        
+                        <a href="{% url 'users:edit' object.pk %}" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-pencil me-2"></i>
+                            Edit User Instead
+                        </a>
+                        
+                        <a href="{% url 'users:roles' object.pk %}" class="btn btn-outline-info w-100">
+                            <i class="bi bi-shield-check me-2"></i>
+                            Manage Roles
+                        </a>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <h6 class="text-danger">Still want to delete?</h6>
+                        <p class="text-muted small">
+                            Type <strong>{{ object.username }}</strong> below to confirm deletion
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delete Confirmation Form -->
+            <div class="card border-danger mt-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-trash-fill me-2"></i>
+                        Confirm Deletion
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="deleteForm">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="confirmUsername" class="form-label">
+                                <strong>Type username to confirm:</strong>
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="confirmUsername" 
+                                   placeholder="Enter {{ object.username }}"
+                                   autocomplete="off"
+                                   required>
+                            <div class="form-text text-danger">
+                                This action cannot be undone
+                            </div>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="confirmUnderstand" required>
+                            <label class="form-check-label" for="confirmUnderstand">
+                                I understand that this action is permanent and cannot be undone
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger" id="deleteButton" disabled>
+                                <i class="bi bi-trash me-2"></i>
+                                Delete User Permanently
+                            </button>
+                            <a href="{% url 'users:detail' object.pk %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-2"></i>
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteForm = document.getElementById('deleteForm');
+        const confirmUsername = document.getElementById('confirmUsername');
+        const confirmUnderstand = document.getElementById('confirmUnderstand');
+        const deleteButton = document.getElementById('deleteButton');
+        const expectedUsername = '{{ object.username|escapejs }}';
+        
+        function validateForm() {
+            const usernameValid = confirmUsername.value.trim() === expectedUsername;
+            const understandChecked = confirmUnderstand.checked;
+            
+            if (usernameValid && understandChecked) {
+                deleteButton.disabled = false;
+                deleteButton.classList.remove('btn-danger');
+                deleteButton.classList.add('btn-danger');
+                confirmUsername.classList.remove('is-invalid');
+                confirmUsername.classList.add('is-valid');
+            } else {
+                deleteButton.disabled = true;
+                if (confirmUsername.value.trim() !== '' && !usernameValid) {
+                    confirmUsername.classList.remove('is-valid');
+                    confirmUsername.classList.add('is-invalid');
+                } else if (confirmUsername.value.trim() === '') {
+                    confirmUsername.classList.remove('is-valid', 'is-invalid');
+                }
+            }
+        }
+        
+        confirmUsername.addEventListener('input', validateForm);
+        confirmUnderstand.addEventListener('change', validateForm);
+        
+        // Form submission with final confirmation
+        deleteForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Final confirmation dialog
+            const finalConfirm = confirm(
+                `Are you absolutely sure you want to delete the user "${expectedUsername}"?\n\n` +
+                'This action will:\n' +
+                '• Permanently remove the user account\n' +
+                '• Unassign any devices\n' +
+                '• Remove all user data\n' +
+                '• Cannot be undone\n\n' +
+                'Click OK to proceed with deletion or Cancel to abort.'
+            );
+            
+            if (finalConfirm) {
+                // Show loading state
+                deleteButton.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Deleting...';
+                deleteButton.disabled = true;
+                
+                // Submit the form
+                this.submit();
+            }
+        });
+        
+        // Prevent accidental navigation
+        let formSubmitted = false;
+        
+        deleteForm.addEventListener('submit', function() {
+            formSubmitted = true;
+        });
+        
+        window.addEventListener('beforeunload', function(e) {
+            if (confirmUsername.value.trim() !== '' && !formSubmitted) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+            }
+        });
+        
+        // Focus on username input
+        confirmUsername.focus();
+        
+        // Add real-time validation feedback
+        confirmUsername.addEventListener('blur', function() {
+            if (this.value.trim() === expectedUsername) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else if (this.value.trim() !== '') {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+            }
+        });
+        
+        // Disable right-click and copy-paste on username field to prevent cheating
+        confirmUsername.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+        
+        confirmUsername.addEventListener('paste', function(e) {
+            e.preventDefault();
+        });
+        
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Escape key to cancel
+            if (e.key === 'Escape') {
+                if (confirm('Are you sure you want to cancel the deletion?')) {
+                    window.location.href = '{% url "users:detail" object.pk %}';
+                }
+            }
+        });
+    });
+</script>
+
+<style>
+    .impact-item {
+        padding: var(--spacing-md);
+        border-left: 3px solid #e5e7eb;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .impact-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .detail-item {
+        padding: var(--spacing-sm) 0;
+    }
+    
+    .card.border-danger {
+        border-color: #dc3545 !important;
+    }
+    
+    .card.border-warning {
+        border-color: #ffc107 !important;
+    }
+    
+    .form-control.is-valid {
+        border-color: #198754;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='m2.3 6.73.5.5c.2.2.5.2.7 0l2.5-2.5c.2-.2.2-.5 0-.7l-.5-.5c-.2-.2-.5-.2-.7 0l-1.5 1.5-.5-.5c-.2-.2-.5-.2-.7 0l-.5.5c-.2.2-.2.5 0 .7z'/%3e%3c/svg%3e");
+    }
+    
+    .form-control.is-invalid {
+        border-color: #dc3545;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    }
+    
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .alert-heading {
+        color: inherit;
+    }
+    
+    code {
+        background-color: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--border-radius);
+        font-size: 0.875rem;
+    }
+    
+    .badge.bg-outline-primary {
+        background-color: transparent !important;
+        border: 1px solid var(--parliament-primary);
+        color: var(--parliament-primary);
+    }
+    
+    @media (max-width: 991.98px) {
+        .btn-group {
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+        
+        .btn-group .btn {
+            width: 100%;
+        }
+        
+        .impact-item {
+            margin-bottom: var(--spacing-lg);
+        }
+    }
+</style>
+{% endblock %}

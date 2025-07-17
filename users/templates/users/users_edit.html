@@ -1,0 +1,604 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit User - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'users:list' %}">Users</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'users:detail' object.pk %}">{{ object.get_display_name }}</a></li>
+    <li class="breadcrumb-item active">Edit</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="bi bi-pencil-square me-2 text-primary"></i>
+                Edit User
+            </h1>
+            <p class="text-muted mb-0">Update user information for {{ object.get_display_name }}</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'users:detail' object.pk %}" class="btn btn-outline-primary">
+                <i class="bi bi-eye me-2"></i>
+                View Details
+            </a>
+            <a href="{% url 'users:list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Back to Users
+            </a>
+        </div>
+    </div>
+
+    <!-- User Info Card -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    {% if object.profile_image %}
+                        <img src="{{ object.profile_image.url }}" alt="{{ object.get_full_name }}" class="rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-primary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center text-white" style="width: 100px; height: 100px;">
+                            <i class="bi bi-person fs-1"></i>
+                        </div>
+                    {% endif %}
+                    <h5 class="mb-1">{{ object.get_full_name }}</h5>
+                    <p class="text-muted mb-2">{{ object.username }}</p>
+                    <span class="badge bg-{% if object.is_active and object.is_active_employee %}success{% else %}secondary{% endif %}">
+                        {% if object.is_active and object.is_active_employee %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Employee ID:</strong> {{ object.employee_id }}<br>
+                            <strong>Email:</strong> {{ object.email|default:"Not provided" }}<br>
+                            <strong>Phone:</strong> {{ object.phone_number|default:"Not provided" }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Office:</strong> {{ object.office|default:"Not specified" }}<br>
+                            <strong>Designation:</strong> {{ object.designation|default:"Not specified" }}<br>
+                            <strong>Joined:</strong> {{ object.created_at|date:"M d, Y" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="form-container">
+        <div class="form-header">
+            <h2 class="form-title">
+                <i class="bi bi-pencil-square"></i>
+                Update User Information
+            </h2>
+        </div>
+
+        <div class="form-body">
+            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                {% csrf_token %}
+
+                <!-- Basic Information Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Basic Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.username.id_for_label }}" class="form-label required">
+                                <i class="bi bi-person-circle me-2"></i>Username
+                            </label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.username.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Username used for login. Must be unique.
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.employee_id.id_for_label }}" class="form-label required">
+                                <i class="bi bi-badge-4k me-2"></i>Employee ID
+                            </label>
+                            {{ form.employee_id }}
+                            {% if form.employee_id.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.employee_id.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Numbers only, minimum 3 digits
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personal Information Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Personal Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label required">
+                                <i class="bi bi-person me-2"></i>First Name
+                            </label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.first_name.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label required">
+                                <i class="bi bi-person me-2"></i>Last Name
+                            </label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.last_name.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.email.id_for_label }}" class="form-label required">
+                                <i class="bi bi-envelope me-2"></i>Email Address
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.email.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Official email address for notifications
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.phone_number.id_for_label }}" class="form-label">
+                                <i class="bi bi-telephone me-2"></i>Phone Number
+                            </label>
+                            {{ form.phone_number }}
+                            {% if form.phone_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.phone_number.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Format: +8801XXXXXXXXX or 01XXXXXXXXX
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Employee Information Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Employee Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.designation.id_for_label }}" class="form-label">
+                                <i class="bi bi-briefcase me-2"></i>Designation
+                            </label>
+                            {{ form.designation }}
+                            {% if form.designation.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.designation.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Job title or position
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.office.id_for_label }}" class="form-label">
+                                <i class="bi bi-building me-2"></i>Office
+                            </label>
+                            {{ form.office }}
+                            {% if form.office.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.office.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Department or office within Parliament Secretariat
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Picture Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Profile Picture</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.profile_image.id_for_label }}" class="form-label">
+                                <i class="bi bi-camera me-2"></i>Profile Image
+                            </label>
+                            {{ form.profile_image }}
+                            {% if form.profile_image.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.profile_image.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Upload a new profile picture (JPG, PNG, GIF, WebP - Max 2MB)
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="current-image mb-3">
+                                {% if object.profile_image %}
+                                    <label class="form-label">Current Image:</label>
+                                    <div>
+                                        <img src="{{ object.profile_image.url }}" alt="Current profile" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted">No profile image uploaded</p>
+                                {% endif %}
+                            </div>
+                            <div id="imagePreview" class="image-preview" style="display: none;">
+                                <label class="form-label">New Image Preview:</label>
+                                <div>
+                                    <img id="previewImg" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Status & Settings</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <div class="form-check">
+                                {{ form.is_active_employee }}
+                                <label class="form-check-label" for="{{ form.is_active_employee.id_for_label }}">
+                                    <i class="bi bi-person-check me-2"></i>Active Employee
+                                </label>
+                            </div>
+                            {% if form.is_active_employee.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.is_active_employee.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Uncheck to deactivate the employee account
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Administrative Notes</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                <i class="bi bi-sticky me-2"></i>Notes
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.notes.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Internal notes for administrative purposes
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-footer">
+                    <div class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        <small>Fields marked with * are required</small>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-parliament-primary">
+                            <i class="bi bi-check-circle me-2"></i>
+                            Update User
+                        </button>
+                        <a href="{% url 'users:detail' object.pk %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>
+                            Cancel
+                        </a>
+                        {% if user.has_perm:'auth.change_user' %}
+                            <a href="{% url 'users:roles' object.pk %}" class="btn btn-outline-info">
+                                <i class="bi bi-shield-check me-2"></i>
+                                Manage Roles
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Image preview functionality
+        const imageInput = document.getElementById('{{ form.profile_image.id_for_label }}');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        
+        if (imageInput && imagePreview && previewImg) {
+            imageInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                        imagePreview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    imagePreview.style.display = 'none';
+                }
+            });
+        }
+
+        // Employee ID validation
+        const employeeIdInput = document.getElementById('{{ form.employee_id.id_for_label }}');
+        if (employeeIdInput) {
+            employeeIdInput.addEventListener('input', function() {
+                const value = this.value;
+                const isValid = /^\d+$/.test(value) && value.length >= 3;
+                
+                this.setCustomValidity(isValid ? '' : 'Employee ID must contain only numbers and be at least 3 digits');
+                this.classList.toggle('is-valid', isValid && value.length > 0);
+                this.classList.toggle('is-invalid', !isValid && value.length > 0);
+            });
+        }
+
+        // Phone number validation
+        const phoneInput = document.getElementById('{{ form.phone_number.id_for_label }}');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function() {
+                const value = this.value;
+                const isValid = /^(\+?8801[3-9]\d{8}|01[3-9]\d{8})$/.test(value) || value === '';
+                
+                this.setCustomValidity(isValid ? '' : 'Enter a valid Bangladesh phone number');
+                this.classList.toggle('is-valid', isValid && value.length > 0);
+                this.classList.toggle('is-invalid', !isValid && value.length > 0);
+            });
+        }
+
+        // Email validation (check for uniqueness excluding current user)
+        const emailInput = document.getElementById('{{ form.email.id_for_label }}');
+        if (emailInput) {
+            const currentEmail = '{{ object.email|escapejs }}';
+            
+            emailInput.addEventListener('blur', function() {
+                const value = this.value;
+                if (value && value !== currentEmail) {
+                    // Check if email already exists via AJAX
+                    fetch(`/users/check-email/?email=${encodeURIComponent(value)}&exclude={{ object.pk }}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.exists) {
+                                this.setCustomValidity('This email is already registered');
+                                this.classList.add('is-invalid');
+                                this.classList.remove('is-valid');
+                            } else {
+                                this.setCustomValidity('');
+                                this.classList.remove('is-invalid');
+                                this.classList.add('is-valid');
+                            }
+                        })
+                        .catch(() => {
+                            this.setCustomValidity('');
+                        });
+                } else {
+                    this.setCustomValidity('');
+                    this.classList.remove('is-invalid');
+                    if (value) {
+                        this.classList.add('is-valid');
+                    }
+                }
+            });
+        }
+
+        // Username validation (check for uniqueness excluding current user)
+        const usernameInput = document.getElementById('{{ form.username.id_for_label }}');
+        if (usernameInput) {
+            const currentUsername = '{{ object.username|escapejs }}';
+            
+            usernameInput.addEventListener('blur', function() {
+                const value = this.value;
+                if (value && value !== currentUsername) {
+                    // Check if username already exists via AJAX
+                    fetch(`/users/check-username/?username=${encodeURIComponent(value)}&exclude={{ object.pk }}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.exists) {
+                                this.setCustomValidity('This username is already taken');
+                                this.classList.add('is-invalid');
+                                this.classList.remove('is-valid');
+                            } else {
+                                this.setCustomValidity('');
+                                this.classList.remove('is-invalid');
+                                this.classList.add('is-valid');
+                            }
+                        })
+                        .catch(() => {
+                            this.setCustomValidity('');
+                        });
+                } else {
+                    this.setCustomValidity('');
+                    this.classList.remove('is-invalid');
+                    if (value) {
+                        this.classList.add('is-valid');
+                    }
+                }
+            });
+        }
+
+        // Form validation
+        const form = document.querySelector('.needs-validation');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Focus on first invalid field
+                    const firstInvalid = form.querySelector('.is-invalid, :invalid');
+                    if (firstInvalid) {
+                        firstInvalid.focus();
+                    }
+                }
+                form.classList.add('was-validated');
+            });
+        }
+
+        // Show changes indicator
+        const originalValues = {};
+        const inputs = form.querySelectorAll('input, select, textarea');
+        
+        inputs.forEach(input => {
+            originalValues[input.name] = input.value;
+            
+            input.addEventListener('input', function() {
+                const hasChanges = Object.keys(originalValues).some(key => {
+                    const currentInput = form.querySelector(`[name="${key}"]`);
+                    return currentInput && currentInput.value !== originalValues[key];
+                });
+                
+                // Show/hide unsaved changes indicator
+                const indicator = document.getElementById('unsavedChanges');
+                if (hasChanges && !indicator) {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.id = 'unsavedChanges';
+                    alertDiv.className = 'alert alert-warning position-fixed';
+                    alertDiv.style.cssText = 'top: 80px; right: 20px; z-index: 1050;';
+                    alertDiv.innerHTML = `
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        You have unsaved changes
+                    `;
+                    document.body.appendChild(alertDiv);
+                } else if (!hasChanges && indicator) {
+                    indicator.remove();
+                }
+            });
+        });
+
+        // Warn before leaving with unsaved changes
+        window.addEventListener('beforeunload', function(e) {
+            const indicator = document.getElementById('unsavedChanges');
+            if (indicator) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+            }
+        });
+
+        // Remove warning when form is submitted
+        form.addEventListener('submit', function() {
+            window.removeEventListener('beforeunload', arguments.callee);
+        });
+    });
+</script>
+
+<style>
+    .form-label.required::after {
+        content: ' *';
+        color: var(--parliament-danger);
+    }
+    
+    .current-image img {
+        border: 2px solid var(--parliament-primary);
+    }
+    
+    .image-preview {
+        margin-top: var(--spacing-md);
+    }
+    
+    .image-preview img {
+        border: 2px solid var(--parliament-success);
+    }
+    
+    .user-info .rounded-circle {
+        border: 3px solid var(--parliament-primary);
+    }
+    
+    .card {
+        box-shadow: var(--shadow);
+        border: none;
+    }
+    
+    .form-check {
+        padding: var(--spacing-md);
+        background-color: #f8f9fa;
+        border-radius: var(--border-radius);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .form-check .form-check-input {
+        margin-top: 0.1rem;
+    }
+    
+    .form-check .form-check-label {
+        margin-left: 0.5rem;
+        font-weight: 500;
+    }
+    
+    @media (max-width: 767.98px) {
+        .btn-group {
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+        
+        .btn-group .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}

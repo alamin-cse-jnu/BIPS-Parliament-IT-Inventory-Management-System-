@@ -1,10 +1,4 @@
-"""
-URL configuration for Users app in PIMS
-Bangladesh Parliament Secretariat
 
-This module defines URL patterns for user management views including
-CRUD operations, authentication, and role management.
-"""
 
 from django.urls import path
 from django.contrib.auth import views as auth_views

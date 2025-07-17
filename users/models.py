@@ -6,7 +6,7 @@ from django.core.validators import RegexValidator
 from django.utils import timezone
 from PIL import Image
 import os
-
+from pims.utils.validators import validate_user_image, validate_employee_id
 
 class CustomUser(AbstractUser):
     """
@@ -19,13 +19,8 @@ class CustomUser(AbstractUser):
     # Employee Information
     employee_id = models.CharField(
         max_length=20, 
-        unique=True, 
-        validators=[
-            RegexValidator(
-                regex=r'^\d+$',
-                message='Employee ID must contain only numbers.'
-            )
-        ],
+        unique=True,
+        validators=[validate_employee_id],        
         help_text='Unique employee identification number (numbers only)'
     )
     
@@ -58,6 +53,7 @@ class CustomUser(AbstractUser):
         upload_to='user_images/',
         blank=True,
         null=True,
+        validators=[validate_user_image],
         help_text='Profile picture for identification'
     )
     

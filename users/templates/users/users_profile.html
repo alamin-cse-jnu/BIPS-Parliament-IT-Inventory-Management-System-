@@ -1,0 +1,711 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item active">My Profile</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="bi bi-person-circle me-2 text-primary"></i>
+                My Profile
+            </h1>
+            <p class="text-muted mb-0">View and manage your account information</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'users:profile_edit' %}" class="btn btn-parliament-primary">
+                <i class="bi bi-pencil me-2"></i>
+                Edit Profile
+            </a>
+            <a href="{% url 'users:password_change' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-key me-2"></i>
+                Change Password
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Profile Summary -->
+        <div class="col-lg-4 col-md-5">
+            <div class="detail-container">
+                <div class="detail-header">
+                    <div class="text-center">
+                        {% if user.profile_image %}
+                            <img src="{{ user.profile_image.url }}" alt="{{ user.get_full_name }}" class="profile-image">
+                        {% else %}
+                            <div class="profile-image-placeholder">
+                                <i class="bi bi-person fs-1 text-white"></i>
+                            </div>
+                        {% endif %}
+                        <h3 class="detail-title">{{ user.get_full_name }}</h3>
+                        <p class="detail-subtitle">{{ user.username }}</p>
+                        <div class="status-indicators">
+                            {% if user.is_active and user.is_active_employee %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                            {% if user.is_superuser %}
+                                <span class="badge bg-danger ms-1">Super Admin</span>
+                            {% elif user.is_staff %}
+                                <span class="badge bg-warning ms-1">Staff</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-body">
+                    <!-- Quick Stats -->
+                    <div class="detail-section">
+                        <h4 class="detail-section-title">
+                            <i class="bi bi-graph-up"></i>
+                            Quick Stats
+                        </h4>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-number text-primary">{{ assigned_devices_count }}</div>
+                                <div class="stat-label">Assigned Devices</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number text-success">{{ user.groups.count }}</div>
+                                <div class="stat-label">User Groups</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number text-info">{{ user.created_at|timesince }}</div>
+                                <div class="stat-label">Member Since</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number text-warning">
+                                    {% if user.last_login %}
+                                        {{ user.last_login|timesince }}
+                                    {% else %}
+                                        Never
+                                    {% endif %}
+                                </div>
+                                <div class="stat-label">Last Login</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Groups -->
+                    <div class="detail-section">
+                        <h4 class="detail-section-title">
+                            <i class="bi bi-people"></i>
+                            My Groups
+                        </h4>
+                        {% if user.groups.exists %}
+                            <div class="group-badges">
+                                {% for group in user.groups.all %}
+                                    <span class="badge bg-primary mb-2">{{ group.name }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">No groups assigned</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="detail-section">
+                        <h4 class="detail-section-title">
+                            <i class="bi bi-lightning"></i>
+                            Quick Actions
+                        </h4>
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'users:profile_edit' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-pencil me-2"></i>
+                                Edit Profile
+                            </a>
+                            <a href="{% url 'users:password_change' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-key me-2"></i>
+                                Change Password
+                            </a>
+                            {% if assigned_devices_count > 0 %}
+                                <a href="#" class="btn btn-outline-info">
+                                    <i class="bi bi-laptop me-2"></i>
+                                    View My Devices
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Details -->
+        <div class="col-lg-8 col-md-7">
+            <div class="detail-container">
+                <div class="detail-header">
+                    <h2 class="detail-title">
+                        <i class="bi bi-person-lines-fill"></i>
+                        Profile Information
+                    </h2>
+                </div>
+
+                <div class="detail-body">
+                    <!-- Personal Information -->
+                    <div class="detail-section">
+                        <h3 class="detail-section-title">Personal Information</h3>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <div class="detail-label">Full Name</div>
+                                <div class="detail-value">{{ user.get_full_name|default:"Not provided" }}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Username</div>
+                                <div class="detail-value">
+                                    <code>{{ user.username }}</code>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Employee ID</div>
+                                <div class="detail-value">
+                                    <code>{{ user.employee_id }}</code>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Email Address</div>
+                                <div class="detail-value">
+                                    {% if user.email %}
+                                        <a href="mailto:{{ user.email }}" class="text-decoration-none">
+                                            <i class="bi bi-envelope me-1"></i>{{ user.email }}
+                                        </a>
+                                    {% else %}
+                                        <span class="detail-value empty">Not provided</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Phone Number</div>
+                                <div class="detail-value">
+                                    {% if user.phone_number %}
+                                        <a href="tel:{{ user.phone_number }}" class="text-decoration-none">
+                                            <i class="bi bi-telephone me-1"></i>{{ user.phone_number }}
+                                        </a>
+                                    {% else %}
+                                        <span class="detail-value empty">Not provided</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Employment Information -->
+                    <div class="detail-section">
+                        <h3 class="detail-section-title">Employment Information</h3>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <div class="detail-label">Designation</div>
+                                <div class="detail-value">{{ user.designation|default:"Not specified" }}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Office</div>
+                                <div class="detail-value">{{ user.office|default:"Not specified" }}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Employee Status</div>
+                                <div class="detail-value">
+                                    {% if user.is_active_employee %}
+                                        <span class="badge bg-success">Active Employee</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactive Employee</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Account Created</div>
+                                <div class="detail-value">
+                                    <i class="bi bi-calendar3 me-1"></i>
+                                    {{ user.created_at|date:"F j, Y" }}
+                                    <small class="text-muted">({{ user.created_at|timesince }} ago)</small>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Last Login</div>
+                                <div class="detail-value">
+                                    {% if user.last_login %}
+                                        <i class="bi bi-clock me-1"></i>
+                                        {{ user.last_login|date:"F j, Y g:i A" }}
+                                        <small class="text-muted">({{ user.last_login|timesince }} ago)</small>
+                                    {% else %}
+                                        <span class="detail-value empty">Never logged in</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Profile Updated</div>
+                                <div class="detail-value">
+                                    <i class="bi bi-pencil me-1"></i>
+                                    {{ user.updated_at|date:"F j, Y g:i A" }}
+                                    <small class="text-muted">({{ user.updated_at|timesince }} ago)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Access -->
+                    <div class="detail-section">
+                        <h3 class="detail-section-title">System Access</h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="access-card">
+                                    <div class="access-header">
+                                        <i class="bi bi-shield-check text-success me-2"></i>
+                                        <h6>Account Status</h6>
+                                    </div>
+                                    <div class="access-body">
+                                        <div class="access-item">
+                                            <span>Account Active</span>
+                                            {% if user.is_active %}
+                                                <span class="badge bg-success">Yes</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">No</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="access-item">
+                                            <span>Employee Active</span>
+                                            {% if user.is_active_employee %}
+                                                <span class="badge bg-success">Yes</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">No</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="access-item">
+                                            <span>Staff Access</span>
+                                            {% if user.is_staff %}
+                                                <span class="badge bg-warning">Yes</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">No</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="access-card">
+                                    <div class="access-header">
+                                        <i class="bi bi-key text-primary me-2"></i>
+                                        <h6>Permissions</h6>
+                                    </div>
+                                    <div class="access-body">
+                                        {% if user.is_superuser %}
+                                            <div class="alert alert-warning py-2">
+                                                <i class="bi bi-shield-fill me-2"></i>
+                                                <strong>Superuser Access</strong>
+                                                <br>
+                                                <small>You have all system permissions</small>
+                                            </div>
+                                        {% else %}
+                                            <div class="permission-summary">
+                                                <div class="permission-count">
+                                                    <span class="count">{{ user.user_permissions.count }}</span>
+                                                    <span class="label">Direct Permissions</span>
+                                                </div>
+                                                <div class="permission-count">
+                                                    <span class="count">{{ user.groups.count }}</span>
+                                                    <span class="label">Group Memberships</span>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2">
+                                                <a href="{% url 'users:permissions' user.pk %}" class="btn btn-outline-primary btn-sm">
+                                                    <i class="bi bi-eye me-1"></i>
+                                                    View All Permissions
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity & Assignments -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-activity me-2"></i>
+                        My Activity & Assignments
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="activity-section">
+                                <h6 class="section-title">
+                                    <i class="bi bi-laptop me-2"></i>
+                                    Device Assignments
+                                </h6>
+                                {% if assigned_devices_count > 0 %}
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        You have {{ assigned_devices_count }} device{{ assigned_devices_count|pluralize }} assigned to you.
+                                        <a href="#" class="alert-link">View details</a>
+                                    </div>
+                                {% else %}
+                                    <div class="text-center py-3">
+                                        <i class="bi bi-laptop text-muted" style="font-size: 2rem;"></i>
+                                        <p class="text-muted mt-2 mb-0">No devices assigned</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="activity-section">
+                                <h6 class="section-title">
+                                    <i class="bi bi-clock-history me-2"></i>
+                                    Recent Activity
+                                </h6>
+                                <div class="activity-timeline">
+                                    <div class="activity-item">
+                                        <div class="activity-icon">
+                                            <i class="bi bi-person-check text-success"></i>
+                                        </div>
+                                        <div class="activity-content">
+                                            <div class="activity-title">Profile Updated</div>
+                                            <div class="activity-time">{{ user.updated_at|timesince }} ago</div>
+                                        </div>
+                                    </div>
+                                    {% if user.last_login %}
+                                        <div class="activity-item">
+                                            <div class="activity-icon">
+                                                <i class="bi bi-box-arrow-in-right text-primary"></i>
+                                            </div>
+                                            <div class="activity-content">
+                                                <div class="activity-title">Last Login</div>
+                                                <div class="activity-time">{{ user.last_login|timesince }} ago</div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    <div class="activity-item">
+                                        <div class="activity-icon">
+                                            <i class="bi bi-person-plus text-info"></i>
+                                        </div>
+                                        <div class="activity-content">
+                                            <div class="activity-title">Account Created</div>
+                                            <div class="activity-time">{{ user.created_at|timesince }} ago</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Copy to clipboard functionality
+        function copyToClipboard(text, element) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = element.textContent;
+                element.textContent = 'Copied!';
+                element.classList.add('text-success');
+                
+                setTimeout(() => {
+                    element.textContent = originalText;
+                    element.classList.remove('text-success');
+                }, 2000);
+            }).catch(() => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                const originalText = element.textContent;
+                element.textContent = 'Copied!';
+                element.classList.add('text-success');
+                
+                setTimeout(() => {
+                    element.textContent = originalText;
+                    element.classList.remove('text-success');
+                }, 2000);
+            });
+        }
+
+        // Add click handlers for copyable elements
+        const copyableElements = document.querySelectorAll('code');
+        copyableElements.forEach(element => {
+            element.style.cursor = 'pointer';
+            element.title = 'Click to copy';
+            element.addEventListener('click', function() {
+                copyToClipboard(this.textContent, this);
+            });
+        });
+
+        // Smooth animations for cards
+        const cards = document.querySelectorAll('.card, .detail-container');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+
+        // Update last seen timestamp
+        function updateLastSeen() {
+            const now = new Date();
+            const lastSeenElement = document.querySelector('.last-seen');
+            if (lastSeenElement) {
+                lastSeenElement.textContent = `Last seen: ${now.toLocaleString()}`;
+            }
+        }
+
+        // Update every minute
+        setInterval(updateLastSeen, 60000);
+    });
+</script>
+
+<style>
+    .profile-image {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid rgba(255,255,255,0.3);
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .profile-image-placeholder {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto var(--spacing-md);
+    }
+    
+    .status-indicators {
+        margin-top: var(--spacing-md);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: var(--spacing-md);
+        background: rgba(255,255,255,0.1);
+        border-radius: var(--border-radius);
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        display: block;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .stat-label {
+        font-size: 0.75rem;
+        color: rgba(255,255,255,0.8);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .group-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+    }
+    
+    .access-card {
+        background: #f8f9fa;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
+        height: 100%;
+    }
+    
+    .access-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .access-header h6 {
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .access-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .access-item:last-child {
+        border-bottom: none;
+    }
+    
+    .permission-summary {
+        display: flex;
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .permission-count {
+        text-align: center;
+        flex: 1;
+    }
+    
+    .permission-count .count {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--parliament-primary);
+    }
+    
+    .permission-count .label {
+        font-size: 0.75rem;
+        color: var(--parliament-neutral);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .activity-section {
+        padding: var(--spacing-md);
+    }
+    
+    .section-title {
+        font-weight: 600;
+        margin-bottom: var(--spacing-md);
+        color: var(--parliament-dark);
+    }
+    
+    .activity-timeline {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+    
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+    
+    .activity-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .activity-content {
+        flex: 1;
+    }
+    
+    .activity-title {
+        font-weight: 500;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .activity-time {
+        font-size: 0.875rem;
+        color: var(--parliament-neutral);
+    }
+    
+    code {
+        background-color: rgba(var(--parliament-primary-rgb), 0.1);
+        color: var(--parliament-primary);
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--border-radius);
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: var(--transition-fast);
+    }
+    
+    code:hover {
+        background-color: rgba(var(--parliament-primary-rgb), 0.2);
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .alert {
+        border: none;
+        border-radius: var(--border-radius);
+        border-left: 4px solid;
+    }
+    
+    .alert-info {
+        border-left-color: var(--parliament-info);
+    }
+    
+    .alert-warning {
+        border-left-color: var(--parliament-warning);
+    }
+    
+    @media (max-width: 991.98px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+        
+        .btn-group .btn {
+            width: 100%;
+        }
+        
+        .permission-summary {
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+    }
+    
+    @media (max-width: 767.98px) {
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .activity-item {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .activity-timeline {
+            gap: var(--spacing-lg);
+        }
+    }
+</style>
+{% endblock %}

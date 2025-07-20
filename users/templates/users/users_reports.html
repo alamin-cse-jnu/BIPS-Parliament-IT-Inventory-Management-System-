@@ -1,0 +1,892 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}User Reports - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'users:list' %}">Users</a></li>
+    <li class="breadcrumb-item active">Reports</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="bi bi-graph-up me-2 text-primary"></i>
+                User Reports & Analytics
+            </h1>
+            <p class="text-muted mb-0">Comprehensive analytics and reporting for user management</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'users:export' %}" class="btn btn-parliament-primary">
+                <i class="bi bi-download me-2"></i>
+                Export Data
+            </a>
+            <a href="{% url 'users:list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Back to Users
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="stats-card">
+                <div class="stats-icon primary">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stats-number">{{ total_users }}</div>
+                <div class="stats-label">Total Users</div>
+                <div class="stats-change positive">
+                    <i class="bi bi-arrow-up"></i>
+                    Active System
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="stats-card">
+                <div class="stats-icon success">
+                    <i class="bi bi-person-check"></i>
+                </div>
+                <div class="stats-number">{{ active_users }}</div>
+                <div class="stats-label">Active Users</div>
+                <div class="stats-change positive">
+                    <i class="bi bi-arrow-up"></i>
+                    {{ active_users|floatformat:0 }}% Active
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="stats-card">
+                <div class="stats-icon warning">
+                    <i class="bi bi-person-badge"></i>
+                </div>
+                <div class="stats-number">{{ staff_users }}</div>
+                <div class="stats-label">Staff Users</div>
+                <div class="stats-change positive">
+                    <i class="bi bi-arrow-up"></i>
+                    System Access
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="stats-card">
+                <div class="stats-icon danger">
+                    <i class="bi bi-shield-fill"></i>
+                </div>
+                <div class="stats-number">{{ admin_users }}</div>
+                <div class="stats-label">Admin Users</div>
+                <div class="stats-change positive">
+                    <i class="bi bi-arrow-up"></i>
+                    Full Access
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Users by Office -->
+        <div class="col-lg-6">
+            <div class="report-section">
+                <div class="report-header">
+                    <h4 class="report-title">
+                        <i class="bi bi-building me-2"></i>
+                        Users by Office
+                    </h4>
+                    <div class="report-actions">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="exportChart('officeChart')">
+                            <i class="bi bi-download me-1"></i>
+                            Export
+                        </button>
+                    </div>
+                </div>
+                <div class="report-content">
+                    {% if users_by_office %}
+                        <div class="chart-container">
+                            <canvas id="officeChart"></canvas>
+                        </div>
+                        <div class="chart-data-table">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Office</th>
+                                        <th class="text-end">Users</th>
+                                        <th class="text-end">Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for office_data in users_by_office %}
+                                        <tr>
+                                            <td>{{ office_data.office|default:"Not Specified" }}</td>
+                                            <td class="text-end">{{ office_data.count }}</td>
+                                            <td class="text-end">
+                                                {{ office_data.count|floatformat:0 }}%
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="empty-chart">
+                            <i class="bi bi-building text-muted"></i>
+                            <p class="text-muted">No office data available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Users by Designation -->
+        <div class="col-lg-6">
+            <div class="report-section">
+                <div class="report-header">
+                    <h4 class="report-title">
+                        <i class="bi bi-briefcase me-2"></i>
+                        Users by Designation
+                    </h4>
+                    <div class="report-actions">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="exportChart('designationChart')">
+                            <i class="bi bi-download me-1"></i>
+                            Export
+                        </button>
+                    </div>
+                </div>
+                <div class="report-content">
+                    {% if users_by_designation %}
+                        <div class="chart-container">
+                            <canvas id="designationChart"></canvas>
+                        </div>
+                        <div class="chart-data-table">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Designation</th>
+                                        <th class="text-end">Users</th>
+                                        <th class="text-end">Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for designation_data in users_by_designation %}
+                                        <tr>
+                                            <td>{{ designation_data.designation|default:"Not Specified" }}</td>
+                                            <td class="text-end">{{ designation_data.count }}</td>
+                                            <td class="text-end">
+                                                {{ designation_data.count|floatformat:0 }}%
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="empty-chart">
+                            <i class="bi bi-briefcase text-muted"></i>
+                            <p class="text-muted">No designation data available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users by Groups -->
+    <div class="row mt-4">
+        <div class="col-lg-8">
+            <div class="report-section">
+                <div class="report-header">
+                    <h4 class="report-title">
+                        <i class="bi bi-people-fill me-2"></i>
+                        Users by Groups/Roles
+                    </h4>
+                    <div class="report-actions">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="exportChart('groupsChart')">
+                            <i class="bi bi-download me-1"></i>
+                            Export
+                        </button>
+                    </div>
+                </div>
+                <div class="report-content">
+                    {% if users_by_group %}
+                        <div class="chart-container">
+                            <canvas id="groupsChart"></canvas>
+                        </div>
+                        <div class="groups-grid">
+                            {% for group_data in users_by_group %}
+                                <div class="group-card">
+                                    <div class="group-header">
+                                        <h6 class="group-name">{{ group_data.name }}</h6>
+                                        <span class="group-count">{{ group_data.user_count }}</span>
+                                    </div>
+                                    <div class="group-progress">
+                                        <div class="progress">
+                                            <div class="progress-bar" style="width: {{ group_data.user_count|floatformat:0 }}%"></div>
+                                        </div>
+                                        <small class="text-muted">{{ group_data.user_count }} users</small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-chart">
+                            <i class="bi bi-people-fill text-muted"></i>
+                            <p class="text-muted">No group data available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- User Activity Summary -->
+        <div class="col-lg-4">
+            <div class="report-section">
+                <div class="report-header">
+                    <h4 class="report-title">
+                        <i class="bi bi-activity me-2"></i>
+                        Activity Summary
+                    </h4>
+                </div>
+                <div class="report-content">
+                    <div class="activity-metrics">
+                        <div class="metric-item">
+                            <div class="metric-icon">
+                                <i class="bi bi-person-plus text-success"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value">{{ total_users }}</div>
+                                <div class="metric-label">Total Registered</div>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-item">
+                            <div class="metric-icon">
+                                <i class="bi bi-person-check text-primary"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value">{{ active_users }}</div>
+                                <div class="metric-label">Currently Active</div>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-item">
+                            <div class="metric-icon">
+                                <i class="bi bi-person-x text-warning"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value">{{ total_users|add:"-"|add:active_users }}</div>
+                                <div class="metric-label">Inactive Users</div>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-item">
+                            <div class="metric-icon">
+                                <i class="bi bi-shield-check text-info"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value">{{ staff_users }}</div>
+                                <div class="metric-label">Staff Members</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-chart">
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Reports -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="report-section">
+                <div class="report-header">
+                    <h4 class="report-title">
+                        <i class="bi bi-table me-2"></i>
+                        Detailed Reports
+                    </h4>
+                    <div class="report-actions">
+                        <div class="btn-group">
+                            <button class="btn btn-outline-primary btn-sm" onclick="generateDetailedReport('active')">
+                                <i class="bi bi-file-earmark-text me-1"></i>
+                                Active Users
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="generateDetailedReport('inactive')">
+                                <i class="bi bi-file-earmark-text me-1"></i>
+                                Inactive Users
+                            </button>
+                            <button class="btn btn-outline-info btn-sm" onclick="generateDetailedReport('staff')">
+                                <i class="bi bi-file-earmark-text me-1"></i>
+                                Staff Users
+                            </button>
+                            <button class="btn btn-outline-success btn-sm" onclick="generateDetailedReport('all')">
+                                <i class="bi bi-file-earmark-text me-1"></i>
+                                All Users
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="report-content">
+                    <div class="report-filters">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <select class="form-select form-select-sm" id="officeFilter">
+                                    <option value="">All Offices</option>
+                                    {% for office_data in users_by_office %}
+                                        <option value="{{ office_data.office }}">{{ office_data.office|default:"Not Specified" }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select form-select-sm" id="designationFilter">
+                                    <option value="">All Designations</option>
+                                    {% for designation_data in users_by_designation %}
+                                        <option value="{{ designation_data.designation }}">{{ designation_data.designation|default:"Not Specified" }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select form-select-sm" id="groupFilter">
+                                    <option value="">All Groups</option>
+                                    {% for group_data in users_by_group %}
+                                        <option value="{{ group_data.name }}">{{ group_data.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-primary btn-sm w-100" onclick="applyFilters()">
+                                    <i class="bi bi-funnel me-1"></i>
+                                    Apply Filters
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="report-summary">
+                        <div class="summary-cards">
+                            <div class="summary-card">
+                                <div class="summary-value">{{ total_users }}</div>
+                                <div class="summary-label">Total Users</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-value">{{ users_by_office|length }}</div>
+                                <div class="summary-label">Offices</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-value">{{ users_by_designation|length }}</div>
+                                <div class="summary-label">Designations</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-value">{{ users_by_group|length }}</div>
+                                <div class="summary-label">Groups</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Chart.js configuration
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#6b7280';
+        
+        // Colors for charts
+        const colors = {
+            primary: '#1e3a8a',
+            success: '#10b981',
+            warning: '#f59e0b',
+            danger: '#ef4444',
+            info: '#3b82f6',
+            secondary: '#6b7280'
+        };
+
+        // Office Chart
+        {% if users_by_office %}
+        const officeCtx = document.getElementById('officeChart').getContext('2d');
+        const officeChart = new Chart(officeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    {% for office_data in users_by_office %}
+                        '{{ office_data.office|default:"Not Specified" }}',
+                    {% endfor %}
+                ],
+                datasets: [{
+                    data: [
+                        {% for office_data in users_by_office %}
+                            {{ office_data.count }},
+                        {% endfor %}
+                    ],
+                    backgroundColor: [
+                        colors.primary,
+                        colors.success,
+                        colors.warning,
+                        colors.danger,
+                        colors.info,
+                        colors.secondary
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        {% endif %}
+
+        // Designation Chart
+        {% if users_by_designation %}
+        const designationCtx = document.getElementById('designationChart').getContext('2d');
+        const designationChart = new Chart(designationCtx, {
+            type: 'bar',
+            data: {
+                labels: [
+                    {% for designation_data in users_by_designation %}
+                        '{{ designation_data.designation|default:"Not Specified" }}',
+                    {% endfor %}
+                ],
+                datasets: [{
+                    label: 'Users',
+                    data: [
+                        {% for designation_data in users_by_designation %}
+                            {{ designation_data.count }},
+                        {% endfor %}
+                    ],
+                    backgroundColor: colors.primary
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        {% endif %}
+
+        // Groups Chart
+        {% if users_by_group %}
+        const groupsCtx = document.getElementById('groupsChart').getContext('2d');
+        const groupsChart = new Chart(groupsCtx, {
+            type: 'horizontalBar',
+            data: {
+                labels: [
+                    {% for group_data in users_by_group %}
+                        '{{ group_data.name }}',
+                    {% endfor %}
+                ],
+                datasets: [{
+                    label: 'Users',
+                    data: [
+                        {% for group_data in users_by_group %}
+                            {{ group_data.user_count }},
+                        {% endfor %}
+                    ],
+                    backgroundColor: colors.info
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        {% endif %}
+
+        // Activity Chart
+        const activityCtx = document.getElementById('activityChart').getContext('2d');
+        const activityChart = new Chart(activityCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Active', 'Inactive', 'Staff'],
+                datasets: [{
+                    data: [
+                        {{ active_users }},
+                        {{ total_users|add:"-"|add:active_users }},
+                        {{ staff_users }}
+                    ],
+                    backgroundColor: [
+                        colors.success,
+                        colors.warning,
+                        colors.info
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    });
+
+    // Export chart function
+    function exportChart(chartId) {
+        const canvas = document.getElementById(chartId);
+        const link = document.createElement('a');
+        link.download = `${chartId}_report.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+    }
+
+    // Generate detailed report
+    function generateDetailedReport(type) {
+        const params = new URLSearchParams({
+            report_type: type,
+            office: document.getElementById('officeFilter').value,
+            designation: document.getElementById('designationFilter').value,
+            group: document.getElementById('groupFilter').value
+        });
+        
+        window.open(`{% url 'users:export' %}?${params.toString()}`, '_blank');
+    }
+
+    // Apply filters
+    function applyFilters() {
+        const office = document.getElementById('officeFilter').value;
+        const designation = document.getElementById('designationFilter').value;
+        const group = document.getElementById('groupFilter').value;
+        
+        // Update charts based on filters
+        // This would typically involve making an AJAX request to get filtered data
+        console.log('Filters applied:', { office, designation, group });
+    }
+</script>
+
+<style>
+    .stats-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow);
+        text-align: center;
+        transition: var(--transition);
+        border: 1px solid #e5e7eb;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .stats-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+    
+    .stats-icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto var(--spacing-md);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+    
+    .stats-icon.primary {
+        background: linear-gradient(135deg, var(--parliament-primary), #1e40af);
+    }
+    
+    .stats-icon.success {
+        background: linear-gradient(135deg, var(--parliament-success), #059669);
+    }
+    
+    .stats-icon.warning {
+        background: linear-gradient(135deg, var(--parliament-warning), #d97706);
+    }
+    
+    .stats-icon.danger {
+        background: linear-gradient(135deg, var(--parliament-danger), #dc2626);
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .stats-label {
+        font-size: 0.875rem;
+        color: var(--parliament-neutral);
+        font-weight: 500;
+    }
+    
+    .stats-change {
+        margin-top: var(--spacing-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .stats-change.positive {
+        color: var(--parliament-success);
+    }
+    
+    .stats-change.negative {
+        color: var(--parliament-danger);
+    }
+    
+    .report-section {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        margin-bottom: var(--spacing-lg);
+        overflow: hidden;
+    }
+    
+    .report-header {
+        background-color: #f8f9fa;
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .report-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin: 0;
+    }
+    
+    .report-content {
+        padding: var(--spacing-lg);
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .chart-data-table {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .empty-chart {
+        text-align: center;
+        padding: var(--spacing-xl);
+        color: var(--parliament-neutral);
+    }
+    
+    .empty-chart i {
+        font-size: 3rem;
+        margin-bottom: var(--spacing-md);
+        opacity: 0.5;
+    }
+    
+    .groups-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-md);
+        margin-top: var(--spacing-lg);
+    }
+    
+    .group-card {
+        background: #f8f9fa;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .group-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .group-name {
+        margin: 0;
+        font-weight: 600;
+        color: var(--parliament-dark);
+    }
+    
+    .group-count {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--parliament-primary);
+    }
+    
+    .group-progress {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .progress {
+        flex: 1;
+        height: 8px;
+        background-color: #e5e7eb;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background-color: var(--parliament-primary);
+        transition: width 0.3s ease;
+    }
+    
+    .activity-metrics {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .metric-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        padding: var(--spacing-md);
+        background: #f8f9fa;
+        border-radius: var(--border-radius);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .metric-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    
+    .metric-content {
+        flex: 1;
+    }
+    
+    .metric-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--parliament-dark);
+    }
+    
+    .metric-label {
+        font-size: 0.875rem;
+        color: var(--parliament-neutral);
+    }
+    
+    .activity-chart {
+        height: 200px;
+        position: relative;
+    }
+    
+    .report-filters {
+        background: #f8f9fa;
+        padding: var(--spacing-lg);
+        border-radius: var(--border-radius);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .report-summary {
+        margin-top: var(--spacing-lg);
+    }
+    
+    .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: var(--spacing-md);
+    }
+    
+    .summary-card {
+        text-align: center;
+        padding: var(--spacing-md);
+        background: #f8f9fa;
+        border-radius: var(--border-radius);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .summary-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--parliament-primary);
+    }
+    
+    .summary-label {
+        font-size: 0.875rem;
+        color: var(--parliament-neutral);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    @media (max-width: 991.98px) {
+        .report-header {
+            flex-direction: column;
+            gap: var(--spacing-md);
+            text-align: center;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+        
+        .btn-group .btn {
+            width: 100%;
+        }
+        
+        .groups-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .activity-metrics {
+            gap: var(--spacing-sm);
+        }
+    }
+    
+    @media (max-width: 767.98px) {
+        .chart-container {
+            height: 250px;
+        }
+        
+        .summary-cards {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .metric-item {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,769 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'locations:list' %}">Locations</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:building_list' %}">Buildings</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:building_detail' object.pk %}">{{ object.name }}</a></li>
+    <li class="breadcrumb-item active">Edit Building</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, var(--parliament-primary), #1e40af);
+        color: white;
+        padding: var(--spacing-xl);
+        text-align: center;
+        position: relative;
+    }
+    
+    .form-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+    }
+    
+    .form-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-md);
+    }
+    
+    .form-subtitle {
+        opacity: 0.9;
+        font-size: 1rem;
+        margin: 0;
+    }
+    
+    .form-body {
+        padding: var(--spacing-xl);
+    }
+    
+    .form-section {
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .form-section:last-child {
+        margin-bottom: 0;
+    }
+    
+    .form-section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-lg);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 2px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .form-row.single {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+    
+    .form-label.required::after {
+        content: ' *';
+        color: var(--parliament-danger);
+        font-weight: 700;
+    }
+    
+    .form-control, .form-select {
+        transition: var(--transition);
+        border: 2px solid #e5e7eb;
+        padding: var(--spacing-md);
+        font-size: 0.95rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--parliament-primary);
+        box-shadow: 0 0 0 0.2rem rgba(30, 58, 138, 0.25);
+    }
+    
+    .form-control.is-valid {
+        border-color: var(--parliament-success);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='m2.3 6.73.5.5c.2.2.5.2.7 0l2.5-2.5c.2-.2.2-.5 0-.7l-.5-.5c-.2-.2-.5-.2-.7 0l-1.5 1.5-.5-.5c-.2-.2-.5-.2-.7 0l-.5.5c-.2.2-.2.5 0 .7z'/%3e%3c/svg%3e");
+    }
+    
+    .form-control.is-invalid {
+        border-color: var(--parliament-danger);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    }
+    
+    .form-text {
+        font-size: 0.875rem;
+        color: var(--parliament-neutral);
+        margin-top: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+    
+    .invalid-feedback {
+        display: block;
+        color: var(--parliament-danger);
+        font-size: 0.875rem;
+        margin-top: var(--spacing-sm);
+    }
+    
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        margin-top: var(--spacing-md);
+    }
+    
+    .form-check-input {
+        width: 1.25rem;
+        height: 1.25rem;
+        margin: 0;
+    }
+    
+    .form-check-label {
+        font-weight: 500;
+        color: var(--parliament-dark);
+        cursor: pointer;
+        margin: 0;
+    }
+    
+    .form-actions {
+        background-color: #f9fafb;
+        padding: var(--spacing-lg) var(--spacing-xl);
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: var(--spacing-md);
+    }
+    
+    .code-preview {
+        font-family: 'Monaco', 'Consolas', monospace;
+        background-color: #f3f4f6;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--border-radius);
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--parliament-primary);
+        margin-top: var(--spacing-sm);
+        border: 1px solid #d1d5db;
+    }
+    
+    .preview-label {
+        font-size: 0.75rem;
+        color: var(--parliament-neutral);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .changes-indicator {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        color: var(--parliament-warning);
+        font-size: 0.875rem;
+        opacity: 0;
+        transition: var(--transition);
+    }
+    
+    .changes-indicator.show {
+        opacity: 1;
+    }
+    
+    .current-values {
+        background-color: #f8f9fa;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+        border-left: 4px solid var(--parliament-info);
+    }
+    
+    .current-value-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-xs) 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .current-value-item:last-child {
+        border-bottom: none;
+    }
+    
+    .current-value-label {
+        font-weight: 500;
+        color: var(--parliament-neutral);
+        font-size: 0.875rem;
+    }
+    
+    .current-value-content {
+        font-weight: 600;
+        color: var(--parliament-dark);
+    }
+    
+    @media (max-width: 768px) {
+        .form-container {
+            margin: 0 var(--spacing-md);
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+        }
+        
+        .form-actions {
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+        
+        .btn-group {
+            width: 100%;
+            flex-direction: column;
+        }
+        
+        .btn-group .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="bi bi-pencil-square me-2 text-primary"></i>
+                {{ page_title }}
+            </h1>
+            <p class="text-muted mb-0">Update building information for {{ object.name }}</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'locations:building_detail' object.pk %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Back to Building
+            </a>
+        </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="form-container">
+        <div class="form-header">
+            <h2 class="form-title">
+                <i class="bi bi-pencil-square"></i>
+                Update Building Information
+            </h2>
+            <p class="form-subtitle">Modify the details for {{ object.name }}</p>
+        </div>
+
+        <div class="form-body">
+            <!-- Current Values Display -->
+            <div class="current-values">
+                <h4 class="mb-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Current Values
+                </h4>
+                <div class="current-value-item">
+                    <span class="current-value-label">Building Name:</span>
+                    <span class="current-value-content">{{ object.name }}</span>
+                </div>
+                <div class="current-value-item">
+                    <span class="current-value-label">Building Code:</span>
+                    <span class="current-value-content">
+                        <code>{{ object.code }}</code>
+                    </span>
+                </div>
+                <div class="current-value-item">
+                    <span class="current-value-label">Status:</span>
+                    <span class="current-value-content">
+                        {% if object.is_active %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle me-1"></i>Active
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary">
+                                <i class="bi bi-pause-circle me-1"></i>Inactive
+                            </span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="current-value-item">
+                    <span class="current-value-label">Related Locations:</span>
+                    <span class="current-value-content">{{ object.location_set.count }} location{{ object.location_set.count|pluralize }}</span>
+                </div>
+            </div>
+
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+
+                <!-- Basic Information Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">
+                        <i class="bi bi-info-circle"></i>
+                        Basic Information
+                    </h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.name.id_for_label }}" class="form-label required">
+                                <i class="bi bi-building"></i>
+                                Building Name
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                Full name of the building (e.g., Main Parliament Building)
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.code.id_for_label }}" class="form-label required">
+                                <i class="bi bi-hash"></i>
+                                Building Code
+                            </label>
+                            {{ form.code }}
+                            {% if form.code.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.code.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                Short unique code (e.g., MPB, SB) - automatically converted to uppercase
+                            </div>
+                            <div class="preview-label">Code Preview:</div>
+                            <div class="code-preview" id="codePreview">{{ object.code }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">
+                        <i class="bi bi-file-text"></i>
+                        Description
+                    </h3>
+                    
+                    <div class="form-row single">
+                        <div class="form-group">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                <i class="bi bi-card-text"></i>
+                                Building Description
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                Optional description about the building, its purpose, or facilities
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">
+                        <i class="bi bi-toggle-on"></i>
+                        Status
+                    </h3>
+                    
+                    <div class="form-row single">
+                        <div class="form-group">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    Building is Active
+                                </label>
+                            </div>
+                            {% if form.is_active.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.is_active.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                Active buildings are available for location assignments
+                            </div>
+                            {% if object.location_set.count > 0 and not object.is_active %}
+                                <div class="alert alert-warning mt-2">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <strong>Warning:</strong> This building has {{ object.location_set.count }} related location{{ object.location_set.count|pluralize }}. 
+                                    Deactivating it may affect location assignments.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <div class="d-flex align-items-center">
+                <div class="changes-indicator" id="changesIndicator">
+                    <i class="bi bi-exclamation-circle"></i>
+                    <span>You have unsaved changes</span>
+                </div>
+                <small class="text-muted">
+                    <i class="bi bi-shield-check me-1"></i>
+                    All fields marked with * are required
+                </small>
+            </div>
+            <div class="btn-group">
+                <a href="{% url 'locations:building_detail' object.pk %}" class="btn btn-outline-secondary" id="cancelBtn">
+                    <i class="bi bi-x-circle me-2"></i>
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-parliament-primary" form="buildingForm">
+                    <i class="bi bi-check-circle me-2"></i>
+                    {{ form_action }} Building
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('.needs-validation');
+        const codeInput = document.getElementById('{{ form.code.id_for_label }}');
+        const codePreview = document.getElementById('codePreview');
+        const nameInput = document.getElementById('{{ form.name.id_for_label }}');
+        const changesIndicator = document.getElementById('changesIndicator');
+        const cancelBtn = document.getElementById('cancelBtn');
+
+        // Set form id for submit button reference
+        if (form) {
+            form.setAttribute('id', 'buildingForm');
+        }
+
+        // Store original values
+        const originalValues = {
+            name: nameInput ? nameInput.value : '',
+            code: codeInput ? codeInput.value : '',
+            description: document.getElementById('{{ form.description.id_for_label }}') ? document.getElementById('{{ form.description.id_for_label }}').value : '',
+            is_active: document.getElementById('{{ form.is_active.id_for_label }}') ? document.getElementById('{{ form.is_active.id_for_label }}').checked : false
+        };
+
+        // Track changes
+        function checkForChanges() {
+            const currentValues = {
+                name: nameInput ? nameInput.value : '',
+                code: codeInput ? codeInput.value : '',
+                description: document.getElementById('{{ form.description.id_for_label }}') ? document.getElementById('{{ form.description.id_for_label }}').value : '',
+                is_active: document.getElementById('{{ form.is_active.id_for_label }}') ? document.getElementById('{{ form.is_active.id_for_label }}').checked : false
+            };
+
+            const hasChanges = Object.keys(originalValues).some(key => {
+                return originalValues[key] !== currentValues[key];
+            });
+
+            if (hasChanges) {
+                changesIndicator.classList.add('show');
+            } else {
+                changesIndicator.classList.remove('show');
+            }
+
+            return hasChanges;
+        }
+
+        // Add change listeners to all form inputs
+        const inputs = form.querySelectorAll('input, textarea, select');
+        inputs.forEach(input => {
+            input.addEventListener('input', checkForChanges);
+            input.addEventListener('change', checkForChanges);
+        });
+
+        // Real-time code preview
+        if (codeInput && codePreview) {
+            function updateCodePreview() {
+                const code = codeInput.value.trim().toUpperCase();
+                codePreview.textContent = code || '{{ object.code }}';
+                codePreview.style.color = code && code !== '{{ object.code }}' ? 'var(--parliament-warning)' : 'var(--parliament-primary)';
+            }
+
+            codeInput.addEventListener('input', updateCodePreview);
+        }
+
+        // Real-time validation
+        const requiredFields = form.querySelectorAll('input[required], textarea[required], select[required]');
+        requiredFields.forEach(field => {
+            field.addEventListener('blur', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                }
+            });
+
+            field.addEventListener('input', function() {
+                if (this.classList.contains('is-invalid') && this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                }
+            });
+        });
+
+        // Code field specific validation
+        if (codeInput) {
+            codeInput.addEventListener('blur', function() {
+                const code = this.value.trim();
+                if (code) {
+                    // Check if code meets basic requirements
+                    if (code.length >= 2 && code.length <= 10) {
+                        this.classList.remove('is-invalid');
+                        this.classList.add('is-valid');
+                    } else {
+                        this.classList.remove('is-valid');
+                        this.classList.add('is-invalid');
+                    }
+                }
+            });
+        }
+
+        // Form submission handling
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Remove any existing validation classes
+                const inputs = form.querySelectorAll('.form-control, .form-select');
+                inputs.forEach(input => {
+                    input.classList.remove('is-invalid', 'is-valid');
+                });
+
+                // Validate required fields
+                let isValid = true;
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        field.classList.add('is-invalid');
+                        isValid = false;
+                    } else {
+                        field.classList.add('is-valid');
+                    }
+                });
+
+                if (!isValid) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Scroll to first invalid field
+                    const firstInvalid = form.querySelector('.is-invalid');
+                    if (firstInvalid) {
+                        firstInvalid.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center' 
+                        });
+                        firstInvalid.focus();
+                    }
+                    
+                    // Show error message
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-danger alert-dismissible fade show';
+                    alert.innerHTML = `
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Please fill in all required fields correctly.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    
+                    const formBody = form.closest('.form-body');
+                    if (formBody) {
+                        formBody.insertBefore(alert, formBody.firstChild);
+                    }
+                    
+                    return false;
+                }
+
+                // Show loading state
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Updating...';
+                    submitBtn.disabled = true;
+                    
+                    // Re-enable button after 10 seconds (safety)
+                    setTimeout(() => {
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                    }, 10000);
+                }
+
+                form.classList.add('was-validated');
+            });
+        }
+
+        // Warn about unsaved changes
+        window.addEventListener('beforeunload', function(e) {
+            if (checkForChanges()) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+                return e.returnValue;
+            }
+        });
+
+        // Cancel button warning
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function(e) {
+                if (checkForChanges()) {
+                    if (!confirm('You have unsaved changes. Are you sure you want to cancel?')) {
+                        e.preventDefault();
+                    }
+                }
+            });
+        }
+
+        // Initialize tooltips
+        if (typeof bootstrap !== 'undefined') {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            const tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + S to save
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                if (form) {
+                    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                }
+            }
+            
+            // Escape to cancel (with confirmation if changes exist)
+            if (e.key === 'Escape') {
+                if (checkForChanges()) {
+                    if (confirm('You have unsaved changes. Are you sure you want to cancel?')) {
+                        window.location.href = cancelBtn.href;
+                    }
+                } else {
+                    window.location.href = cancelBtn.href;
+                }
+            }
+        });
+
+        // Auto-save draft (optional feature)
+        let autoSaveTimer;
+        function autoSaveDraft() {
+            if (checkForChanges()) {
+                const formData = new FormData(form);
+                localStorage.setItem('building_edit_draft_{{ object.pk }}', JSON.stringify({
+                    name: formData.get('name'),
+                    code: formData.get('code'),
+                    description: formData.get('description'),
+                    is_active: formData.get('is_active') === 'on',
+                    timestamp: Date.now()
+                }));
+            }
+        }
+
+        // Auto-save every 30 seconds
+        inputs.forEach(input => {
+            input.addEventListener('input', function() {
+                clearTimeout(autoSaveTimer);
+                autoSaveTimer = setTimeout(autoSaveDraft, 30000);
+            });
+        });
+
+        // Load draft on page load
+        const draft = localStorage.getItem('building_edit_draft_{{ object.pk }}');
+        if (draft) {
+            try {
+                const draftData = JSON.parse(draft);
+                const draftAge = Date.now() - draftData.timestamp;
+                
+                // Only load draft if it's less than 1 hour old
+                if (draftAge < 3600000) {
+                    if (confirm('A draft was found. Would you like to restore your unsaved changes?')) {
+                        if (nameInput) nameInput.value = draftData.name || '';
+                        if (codeInput) codeInput.value = draftData.code || '';
+                        const descInput = document.getElementById('{{ form.description.id_for_label }}');
+                        if (descInput) descInput.value = draftData.description || '';
+                        const activeInput = document.getElementById('{{ form.is_active.id_for_label }}');
+                        if (activeInput) activeInput.checked = draftData.is_active || false;
+                        
+                        checkForChanges();
+                        if (codeInput && codePreview) updateCodePreview();
+                    }
+                }
+            } catch (e) {
+                // Invalid draft data, remove it
+                localStorage.removeItem('building_edit_draft_{{ object.pk }}');
+            }
+        }
+
+        // Clear draft on successful form submission
+        form.addEventListener('submit', function() {
+            localStorage.removeItem('building_edit_draft_{{ object.pk }}');
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,682 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Building - {{ object.name }} - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'locations:list' %}">Locations</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:building_list' %}">Buildings</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:building_detail' object.pk %}">{{ object.name }}</a></li>
+    <li class="breadcrumb-item active">Delete Building</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .delete-header {
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+        color: white;
+        padding: var(--spacing-xl);
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        text-align: center;
+        position: relative;
+    }
+    
+    .delete-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+    }
+    
+    .delete-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-md);
+    }
+    
+    .delete-subtitle {
+        opacity: 0.9;
+        font-size: 1.125rem;
+        margin: 0;
+    }
+    
+    .building-info-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .building-info-body {
+        padding: var(--spacing-xl);
+    }
+    
+    .building-display {
+        text-align: center;
+        padding: var(--spacing-lg);
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        border-radius: var(--border-radius);
+        margin-bottom: var(--spacing-lg);
+        border-left: 4px solid var(--parliament-primary);
+    }
+    
+    .building-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .building-code {
+        font-family: 'Monaco', 'Consolas', monospace;
+        background: linear-gradient(135deg, var(--parliament-primary), #1e40af);
+        color: white;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--border-radius);
+        font-size: 1.125rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        display: inline-block;
+        box-shadow: var(--shadow);
+    }
+    
+    .building-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-lg);
+        margin-top: var(--spacing-lg);
+    }
+    
+    .detail-item {
+        text-align: center;
+    }
+    
+    .detail-label {
+        font-size: 0.875rem;
+        color: var(--parliament-neutral);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: var(--spacing-xs);
+        font-weight: 500;
+    }
+    
+    .detail-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+    }
+    
+    .impact-analysis {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .impact-header {
+        background-color: #fef3c7;
+        padding: var(--spacing-lg);
+        border-left: 4px solid #f59e0b;
+    }
+    
+    .impact-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #92400e;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .impact-body {
+        padding: var(--spacing-xl);
+    }
+    
+    .impact-item {
+        padding: var(--spacing-md);
+        border-left: 3px solid #e5e7eb;
+        margin-bottom: var(--spacing-md);
+        background-color: #f9fafb;
+        border-radius: 0 var(--border-radius) var(--border-radius) 0;
+    }
+    
+    .impact-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .impact-item.warning {
+        border-left-color: #f59e0b;
+        background-color: #fffbeb;
+    }
+    
+    .impact-item.danger {
+        border-left-color: #ef4444;
+        background-color: #fef2f2;
+    }
+    
+    .impact-item-title {
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-xs);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .impact-item-description {
+        color: var(--parliament-neutral);
+        font-size: 0.9rem;
+        margin: 0;
+    }
+    
+    .alternatives-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .alternatives-header {
+        background-color: #dbeafe;
+        padding: var(--spacing-lg);
+        border-left: 4px solid var(--parliament-info);
+    }
+    
+    .alternatives-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1e40af;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .alternatives-body {
+        padding: var(--spacing-xl);
+    }
+    
+    .confirmation-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        border: 2px solid #ef4444;
+    }
+    
+    .confirmation-header {
+        background-color: #ef4444;
+        color: white;
+        padding: var(--spacing-lg);
+    }
+    
+    .confirmation-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .confirmation-body {
+        padding: var(--spacing-xl);
+    }
+    
+    .form-control.is-valid {
+        border-color: #10b981;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2310b981' d='m2.3 6.73.5.5c.2.2.5.2.7 0l2.5-2.5c.2-.2.2-.5 0-.7l-.5-.5c-.2-.2-.5-.2-.7 0l-1.5 1.5-.5-.5c-.2-.2-.5-.2-.7 0l-.5.5c-.2.2-.2.5 0 .7z'/%3e%3c/svg%3e");
+    }
+    
+    .form-control.is-invalid {
+        border-color: #ef4444;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23ef4444'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23ef4444' stroke='none'/%3e%3c/svg%3e");
+    }
+    
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .status-badge {
+        font-size: 0.875rem;
+        font-weight: 500;
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--border-radius-full);
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+    
+    .status-active {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-inactive {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    @media (max-width: 768px) {
+        .building-details {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .delete-container {
+            margin: 0 var(--spacing-md);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="delete-container">
+        <!-- Delete Header -->
+        <div class="building-info-card">
+            <div class="delete-header">
+                <h1 class="delete-title">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    Delete Building
+                </h1>
+                <p class="delete-subtitle">This action cannot be undone</p>
+            </div>
+            
+            <div class="building-info-body">
+                <!-- Building Information -->
+                <div class="building-display">
+                    <div class="building-name">{{ object.name }}</div>
+                    <div class="building-code">{{ object.code }}</div>
+                </div>
+                
+                <div class="building-details">
+                    <div class="detail-item">
+                        <div class="detail-label">Status</div>
+                        <div class="detail-value">
+                            {% if object.is_active %}
+                                <span class="status-badge status-active">
+                                    <i class="bi bi-check-circle"></i>
+                                    Active
+                                </span>
+                            {% else %}
+                                <span class="status-badge status-inactive">
+                                    <i class="bi bi-pause-circle"></i>
+                                    Inactive
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">Related Locations</div>
+                        <div class="detail-value">{{ related_locations_count }}</div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">Created Date</div>
+                        <div class="detail-value">{{ object.created_at|date:"M d, Y" }}</div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">Last Updated</div>
+                        <div class="detail-value">{{ object.updated_at|date:"M d, Y" }}</div>
+                    </div>
+                </div>
+                
+                {% if object.description %}
+                    <div class="mt-4">
+                        <div class="detail-label">Description</div>
+                        <div class="detail-value">{{ object.description }}</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Impact Analysis -->
+        <div class="impact-analysis">
+            <div class="impact-header">
+                <h3 class="impact-title">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Deletion Impact Analysis
+                </h3>
+            </div>
+            
+            <div class="impact-body">
+                {% if related_locations_count > 0 %}
+                    <div class="impact-item danger">
+                        <div class="impact-item-title">
+                            <i class="bi bi-geo-alt-fill text-danger"></i>
+                            {{ related_locations_count }} Related Location{{ related_locations_count|pluralize }} Will Be Affected
+                        </div>
+                        <p class="impact-item-description">
+                            All locations currently assigned to this building will lose their building reference. 
+                            This may affect location searches and reports.
+                        </p>
+                    </div>
+                {% endif %}
+                
+                <div class="impact-item warning">
+                    <div class="impact-item-title">
+                        <i class="bi bi-database-fill-x text-warning"></i>
+                        Permanent Data Loss
+                    </div>
+                    <p class="impact-item-description">
+                        Building information including name, code, and description will be permanently deleted 
+                        and cannot be recovered.
+                    </p>
+                </div>
+                
+                <div class="impact-item warning">
+                    <div class="impact-item-title">
+                        <i class="bi bi-graph-down text-warning"></i>
+                        Historical Reports Affected
+                    </div>
+                    <p class="impact-item-description">
+                        Existing reports and analytics that reference this building may show incomplete data 
+                        or broken references.
+                    </p>
+                </div>
+                
+                <div class="impact-item warning">
+                    <div class="impact-item-title">
+                        <i class="bi bi-link-45deg text-warning"></i>
+                        System References
+                    </div>
+                    <p class="impact-item-description">
+                        Any QR codes, assignments, or device records that reference this building 
+                        will lose the building connection.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alternatives -->
+        <div class="alternatives-card">
+            <div class="alternatives-header">
+                <h3 class="alternatives-title">
+                    <i class="bi bi-lightbulb"></i>
+                    Consider These Alternatives
+                </h3>
+            </div>
+            
+            <div class="alternatives-body">
+                <p class="text-muted mb-4">
+                    Consider these safer alternatives before permanently deleting the building:
+                </p>
+                
+                <div class="d-grid gap-2">
+                    {% if object.is_active %}
+                        <form method="post" action="{% url 'locations:building_toggle_status' object.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-warning w-100">
+                                <i class="bi bi-pause-circle me-2"></i>
+                                Deactivate Building Instead
+                            </button>
+                        </form>
+                    {% else %}
+                        <form method="post" action="{% url 'locations:building_toggle_status' object.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="bi bi-play-circle me-2"></i>
+                                Reactivate Building Instead
+                            </button>
+                        </form>
+                    {% endif %}
+                    
+                    <a href="{% url 'locations:building_edit' object.pk %}" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-pencil me-2"></i>
+                        Edit Building Instead
+                    </a>
+                    
+                    {% if related_locations_count > 0 %}
+                        <a href="{% url 'locations:list' %}?building={{ object.pk }}" class="btn btn-outline-info w-100">
+                            <i class="bi bi-list me-2"></i>
+                            Review Related Locations First
+                        </a>
+                    {% endif %}
+                </div>
+                
+                <hr class="my-4">
+                
+                <div class="text-center">
+                    <h6 class="text-danger">Still want to delete?</h6>
+                    <p class="text-muted small">
+                        Type <strong>{{ object.code }}</strong> below to confirm deletion
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Form -->
+        <div class="confirmation-card">
+            <div class="confirmation-header">
+                <h3 class="confirmation-title">
+                    <i class="bi bi-trash-fill"></i>
+                    Confirm Deletion
+                </h3>
+            </div>
+            
+            <div class="confirmation-body">
+                <form method="post" id="deleteForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="confirmCode" class="form-label">
+                            <strong>Type building code to confirm:</strong>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="confirmCode" 
+                               placeholder="Enter {{ object.code }}"
+                               autocomplete="off"
+                               required>
+                        <div class="form-text text-danger">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            This action cannot be undone
+                        </div>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="confirmUnderstand" required>
+                        <label class="form-check-label" for="confirmUnderstand">
+                            I understand that this action is permanent and will affect {{ related_locations_count }} related location{{ related_locations_count|pluralize }}
+                        </label>
+                    </div>
+                    
+                    {% if related_locations_count > 0 %}
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="confirmImpact" required>
+                            <label class="form-check-label" for="confirmImpact">
+                                I acknowledge that {{ related_locations_count }} location{{ related_locations_count|pluralize }} will lose their building reference
+                            </label>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger" id="deleteButton" disabled>
+                            <i class="bi bi-trash me-2"></i>
+                            Delete Building Permanently
+                        </button>
+                        <a href="{% url 'locations:building_detail' object.pk %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteForm = document.getElementById('deleteForm');
+        const confirmCode = document.getElementById('confirmCode');
+        const confirmUnderstand = document.getElementById('confirmUnderstand');
+        const confirmImpact = document.getElementById('confirmImpact');
+        const deleteButton = document.getElementById('deleteButton');
+        const expectedCode = '{{ object.code|escapejs }}';
+        
+        function validateForm() {
+            const codeValid = confirmCode.value.trim().toUpperCase() === expectedCode.toUpperCase();
+            const understandChecked = confirmUnderstand.checked;
+            const impactChecked = confirmImpact ? confirmImpact.checked : true;
+            
+            if (codeValid && understandChecked && impactChecked) {
+                deleteButton.disabled = false;
+                deleteButton.classList.remove('btn-outline-danger');
+                deleteButton.classList.add('btn-danger');
+                confirmCode.classList.remove('is-invalid');
+                confirmCode.classList.add('is-valid');
+            } else {
+                deleteButton.disabled = true;
+                deleteButton.classList.remove('btn-danger');
+                deleteButton.classList.add('btn-outline-danger');
+                
+                if (confirmCode.value.trim() !== '' && !codeValid) {
+                    confirmCode.classList.remove('is-valid');
+                    confirmCode.classList.add('is-invalid');
+                } else if (confirmCode.value.trim() === '') {
+                    confirmCode.classList.remove('is-valid', 'is-invalid');
+                }
+            }
+        }
+        
+        confirmCode.addEventListener('input', validateForm);
+        confirmUnderstand.addEventListener('change', validateForm);
+        if (confirmImpact) {
+            confirmImpact.addEventListener('change', validateForm);
+        }
+        
+        // Form submission with final confirmation
+        deleteForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Final confirmation dialog
+            const finalConfirm = confirm(
+                `Are you absolutely sure you want to delete the building "${expectedCode}"?\n\n` +
+                'This action will:\n' +
+                '• Permanently remove the building record\n' +
+                '• Affect {{ related_locations_count }} related location{{ related_locations_count|pluralize }}\n' +
+                '• Remove all building data\n' +
+                '• Cannot be undone\n\n' +
+                'Click OK to proceed with deletion or Cancel to abort.'
+            );
+            
+            if (finalConfirm) {
+                // Show loading state
+                deleteButton.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Deleting...';
+                deleteButton.disabled = true;
+                
+                // Submit the form
+                this.submit();
+            }
+        });
+        
+        // Prevent accidental navigation
+        let formSubmitted = false;
+        
+        deleteForm.addEventListener('submit', function() {
+            formSubmitted = true;
+        });
+        
+        window.addEventListener('beforeunload', function(e) {
+            if (confirmCode.value.trim() !== '' && !formSubmitted) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+            }
+        });
+        
+        // Focus on code input
+        confirmCode.focus();
+        
+        // Add real-time validation feedback
+        confirmCode.addEventListener('blur', function() {
+            if (this.value.trim().toUpperCase() === expectedCode.toUpperCase()) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else if (this.value.trim() !== '') {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+            }
+        });
+        
+        // Disable right-click and copy-paste on code field to prevent cheating
+        confirmCode.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+        
+        confirmCode.addEventListener('paste', function(e) {
+            e.preventDefault();
+        });
+        
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Escape key to cancel
+            if (e.key === 'Escape') {
+                if (confirm('Are you sure you want to cancel the deletion?')) {
+                    window.location.href = '{% url "locations:building_detail" object.pk %}';
+                }
+            }
+        });
+        
+        // Auto-uppercase code input
+        confirmCode.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+        
+        // Add pulse animation to delete button when enabled
+        const originalValidate = validateForm;
+        validateForm = function() {
+            const wasDisabled = deleteButton.disabled;
+            originalValidate();
+            
+            if (wasDisabled && !deleteButton.disabled) {
+                deleteButton.style.animation = 'pulse 0.5s';
+                setTimeout(() => {
+                    deleteButton.style.animation = '';
+                }, 500);
+            }
+        };
+    });
+</script>
+
+<style>
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    .btn-outline-danger {
+        color: #dc2626;
+        border-color: #dc2626;
+        background-color: transparent;
+    }
+    
+    .btn-outline-danger:hover {
+        background-color: #dc2626;
+        border-color: #dc2626;
+        color: white;
+    }
+</style>
+{% endblock %}

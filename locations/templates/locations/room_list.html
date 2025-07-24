@@ -1,0 +1,603 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Rooms - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'locations:index' %}">Locations</a></li>
+    <li class="breadcrumb-item active">Rooms</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .rooms-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow);
+        text-align: center;
+        transition: var(--transition);
+        border-left: 4px solid;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .stat-card.total {
+        border-left-color: var(--parliament-primary);
+    }
+    
+    .stat-card.active {
+        border-left-color: var(--parliament-success);
+    }
+    
+    .stat-card.inactive {
+        border-left-color: var(--parliament-warning);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .stat-label {
+        color: var(--parliament-neutral);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .filter-panel {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .filter-toggle {
+        background: none;
+        border: none;
+        color: var(--parliament-primary);
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .rooms-table-container {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+    
+    .table-header {
+        background-color: #f8f9fa;
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+    
+    .table-footer {
+        background-color: #f8f9fa;
+        padding: var(--spacing-lg);
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .rooms-table {
+        width: 100%;
+        margin: 0;
+    }
+    
+    .rooms-table th {
+        background-color: white;
+        border-bottom: 1px solid #e5e7eb;
+        font-weight: 600;
+        padding: var(--spacing-md);
+        color: var(--parliament-text);
+    }
+    
+    .rooms-table td {
+        padding: var(--spacing-md);
+        border-bottom: 1px solid #f3f4f6;
+        vertical-align: middle;
+    }
+    
+    .rooms-table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+    
+    .room-info {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .room-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--border-radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: white;
+    }
+    
+    .room-icon.office { background-color: var(--parliament-primary); }
+    .room-icon.meeting { background-color: var(--parliament-info); }
+    .room-icon.storage { background-color: var(--parliament-warning); }
+    .room-icon.server { background-color: var(--parliament-danger); }
+    .room-icon.conference { background-color: var(--parliament-success); }
+    .room-icon.other { background-color: var(--parliament-neutral); }
+    
+    .room-details h6 {
+        margin: 0 0 4px 0;
+        font-weight: 600;
+        color: var(--parliament-text);
+    }
+    
+    .room-details .text-muted {
+        font-size: 0.875rem;
+        margin: 0;
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--border-radius);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-badge.active {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-badge.inactive {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .room-type-badge {
+        padding: 0.25rem 0.5rem;
+        background-color: #f3f4f6;
+        color: var(--parliament-text);
+        border-radius: var(--border-radius);
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: capitalize;
+    }
+    
+    .capacity-info {
+        font-size: 0.875rem;
+        color: var(--parliament-neutral);
+    }
+    
+    .actions-dropdown .dropdown-menu {
+        border: none;
+        box-shadow: var(--shadow-md);
+        border-radius: var(--border-radius);
+    }
+    
+    .actions-dropdown .dropdown-item {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .actions-dropdown .dropdown-item:hover {
+        background-color: #f9fafb;
+    }
+    
+    .pagination-info {
+        font-size: 0.875rem;
+        color: var(--parliament-neutral);
+    }
+    
+    @media (max-width: 767.98px) {
+        .rooms-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .filter-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .table-header {
+            flex-direction: column;
+            gap: var(--spacing-md);
+            text-align: center;
+        }
+        
+        .table-footer {
+            flex-direction: column;
+            gap: var(--spacing-md);
+            text-align: center;
+        }
+        
+        .room-info {
+            flex-direction: column;
+            text-align: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .rooms-table th:nth-child(3),
+        .rooms-table td:nth-child(3),
+        .rooms-table th:nth-child(4),
+        .rooms-table td:nth-child(4) {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="bi bi-door-open me-2 text-primary"></i>
+                Rooms Management
+            </h1>
+            <p class="text-muted mb-0">Manage rooms and their configurations in the Parliament Secretariat</p>
+        </div>
+        {% if user.has_perm:'locations.add_room' %}
+            <a href="{% url 'locations:room_create' %}" class="btn btn-parliament-primary">
+                <i class="bi bi-plus-lg me-2"></i>
+                Add New Room
+            </a>
+        {% endif %}
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="rooms-stats">
+        <div class="stat-card total">
+            <div class="stat-number text-primary">{{ total_rooms }}</div>
+            <div class="stat-label">Total Rooms</div>
+        </div>
+        <div class="stat-card active">
+            <div class="stat-number text-success">{{ active_rooms }}</div>
+            <div class="stat-label">Active Rooms</div>
+        </div>
+        <div class="stat-card inactive">
+            <div class="stat-number text-warning">{{ inactive_rooms }}</div>
+            <div class="stat-label">Inactive Rooms</div>
+        </div>
+    </div>
+
+    <!-- Filter Panel -->
+    <div class="filter-panel">
+        <button class="filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#filterForm">
+            <i class="bi bi-funnel"></i>
+            Filter Rooms
+            <i class="bi bi-chevron-down ms-auto"></i>
+        </button>
+        
+        <div class="collapse" id="filterForm">
+            <form method="get" class="filter-form">
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label for="search" class="form-label">Search</label>
+                        <input type="text" 
+                               id="search" 
+                               name="search" 
+                               class="form-control" 
+                               placeholder="Search by name, number, or description..." 
+                               value="{{ search }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="room_type" class="form-label">Room Type</label>
+                        <select id="room_type" name="room_type" class="form-select">
+                            <option value="">All Types</option>
+                            {% for value, label in room_types %}
+                                <option value="{{ value }}" {% if room_type == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="status" class="form-label">Status</label>
+                        <select id="status" name="status" class="form-select">
+                            <option value="">All Status</option>
+                            <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
+                            <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-parliament-primary">
+                        <i class="bi bi-search me-2"></i>
+                        Apply Filters
+                    </button>
+                    <a href="{% url 'locations:room_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-2"></i>
+                        Clear Filters
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Rooms Table -->
+    <div class="rooms-table-container">
+        <div class="table-header">
+            <h5 class="mb-0">
+                <i class="bi bi-list-ul me-2"></i>
+                Rooms List
+            </h5>
+            <small class="text-muted">
+                Showing {{ rooms|length }} of {{ total_rooms }} rooms
+            </small>
+        </div>
+
+        {% if rooms %}
+            <table class="rooms-table">
+                <thead>
+                    <tr>
+                        <th>Room Information</th>
+                        <th>Type</th>
+                        <th>Capacity</th>
+                        <th>Area (sq ft)</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for room in rooms %}
+                        <tr>
+                            <td>
+                                <div class="room-info">
+                                    <div class="room-icon {{ room.room_type }}">
+                                        {% if room.room_type == 'office' %}
+                                            <i class="bi bi-building"></i>
+                                        {% elif room.room_type == 'meeting' %}
+                                            <i class="bi bi-people"></i>
+                                        {% elif room.room_type == 'storage' %}
+                                            <i class="bi bi-box"></i>
+                                        {% elif room.room_type == 'server' %}
+                                            <i class="bi bi-hdd-rack"></i>
+                                        {% elif room.room_type == 'conference' %}
+                                            <i class="bi bi-camera-video"></i>
+                                        {% elif room.room_type == 'hall' %}
+                                            <i class="bi bi-door-open"></i>
+                                        {% elif room.room_type == 'chamber' %}
+                                            <i class="bi bi-bank"></i>
+                                        {% else %}
+                                            <i class="bi bi-door-closed"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="room-details">
+                                        <h6>
+                                            <a href="{% url 'locations:room_detail' room.pk %}" 
+                                               class="text-decoration-none">
+                                                {{ room.name }}
+                                            </a>
+                                        </h6>
+                                        <p class="text-muted">Room #{{ room.room_number }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="room-type-badge">
+                                    {{ room.get_room_type_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if room.capacity %}
+                                    <span class="capacity-info">
+                                        <i class="bi bi-people me-1"></i>
+                                        {{ room.capacity }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if room.area_sqft %}
+                                    <span class="capacity-info">
+                                        {{ room.area_sqft }} sq ft
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="status-badge {% if room.is_active %}active{% else %}inactive{% endif %}">
+                                    {% if room.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="dropdown actions-dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                            type="button" 
+                                            data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" 
+                                               href="{% url 'locations:room_detail' room.pk %}">
+                                                <i class="bi bi-eye me-2"></i>
+                                                View Details
+                                            </a>
+                                        </li>
+                                        {% if user.has_perm:'locations.change_room' %}
+                                            <li>
+                                                <a class="dropdown-item" 
+                                                   href="{% url 'locations:room_edit' room.pk %}">
+                                                    <i class="bi bi-pencil me-2"></i>
+                                                    Edit Room
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <form method="post" 
+                                                      action="{% url 'locations:room_toggle_status' room.pk %}" 
+                                                      style="display: inline;">
+                                                    {% csrf_token %}
+                                                    <button type="submit" 
+                                                            class="dropdown-item"
+                                                            onclick="return confirm('Are you sure you want to {% if room.is_active %}deactivate{% else %}activate{% endif %} this room?')">
+                                                        {% if room.is_active %}
+                                                            <i class="bi bi-pause-circle me-2"></i>
+                                                            Deactivate
+                                                        {% else %}
+                                                            <i class="bi bi-play-circle me-2"></i>
+                                                            Activate
+                                                        {% endif %}
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        {% endif %}
+                                        {% if user.has_perm:'locations.delete_room' %}
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <a class="dropdown-item text-danger" 
+                                                   href="{% url 'locations:room_delete' room.pk %}">
+                                                    <i class="bi bi-trash me-2"></i>
+                                                    Delete Room
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-door-closed display-1 text-muted mb-3"></i>
+                <h5 class="text-muted">No Rooms Found</h5>
+                <p class="text-muted mb-4">
+                    {% if search or room_type or status %}
+                        No rooms match your current filters. Try adjusting your search criteria.
+                    {% else %}
+                        No rooms have been added to the system yet.
+                    {% endif %}
+                </p>
+                {% if user.has_perm:'locations.add_room' %}
+                    <a href="{% url 'locations:room_create' %}" class="btn btn-parliament-primary">
+                        <i class="bi bi-plus-lg me-2"></i>
+                        Add First Room
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <div class="table-footer">
+                <div class="pagination-info">
+                    Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} rooms
+                </div>
+                <nav aria-label="Rooms pagination">
+                    <ul class="pagination mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if search %}search={{ search }}&{% endif %}{% if room_type %}room_type={{ room_type }}&{% endif %}{% if status %}status={{ status }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if search %}search={{ search }}&{% endif %}{% if room_type %}room_type={{ room_type }}&{% endif %}{% if status %}status={{ status }}&{% endif %}page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if search %}search={{ search }}&{% endif %}{% if room_type %}room_type={{ room_type }}&{% endif %}{% if status %}status={{ status }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-submit filter form on change
+        const filterForm = document.querySelector('.filter-form');
+        const filterInputs = filterForm.querySelectorAll('select, input[type="text"]');
+        
+        filterInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                if (this.type !== 'text') {
+                    filterForm.submit();
+                }
+            });
+        });
+        
+        // Search input debounce
+        const searchInput = document.getElementById('search');
+        let searchTimeout;
+        
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                filterForm.submit();
+            }, 500);
+        });
+        
+        // Status toggle confirmation
+        const statusForms = document.querySelectorAll('form[action*="toggle-status"]');
+        statusForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const button = form.querySelector('button[type="submit"]');
+                const action = button.textContent.includes('Deactivate') ? 'deactivate' : 'activate';
+                
+                if (!confirm(`Are you sure you want to ${action} this room?`)) {
+                    e.preventDefault();
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

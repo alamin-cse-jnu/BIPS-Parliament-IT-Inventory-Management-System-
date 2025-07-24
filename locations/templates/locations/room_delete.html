@@ -1,0 +1,782 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Room - {{ room.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --parliament-primary: #00875a;
+        --parliament-secondary: #f8f9fa;
+        --parliament-dark: #333;
+        --parliament-light: #6c757d;
+        --parliament-neutral: #495057;
+        --parliament-success: #28a745;
+        --parliament-info: #17a2b8;
+        --parliament-warning: #ffc107;
+        --parliament-danger: #dc3545;
+        --spacing-xs: 0.25rem;
+        --spacing-sm: 0.5rem;
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        --spacing-xl: 2rem;
+        --border-radius: 0.375rem;
+        --transition: all 0.15s ease-in-out;
+        --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--parliament-danger) 0%, #e3342f 100%);
+        padding: var(--spacing-xl);
+        margin-bottom: var(--spacing-xl);
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+        color: white;
+        box-shadow: var(--shadow-md);
+    }
+
+    .page-title {
+        font-size: 1.875rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .page-subtitle {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin: var(--spacing-sm) 0 0 0;
+        font-weight: 400;
+    }
+
+    .danger-warning {
+        background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+        border: 2px solid var(--parliament-danger);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .danger-warning::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(220, 53, 69, 0.1), transparent);
+        animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+
+    .warning-icon {
+        font-size: 3rem;
+        color: var(--parliament-danger);
+        animation: pulse 2s infinite;
+        margin-bottom: var(--spacing-md);
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .warning-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--parliament-danger);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .warning-message {
+        font-size: 1.1rem;
+        color: var(--parliament-dark);
+        line-height: 1.6;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .room-info-card {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        margin-bottom: var(--spacing-xl);
+        border: 2px solid #e9ecef;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .card-body {
+        padding: var(--spacing-lg);
+    }
+
+    .room-detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .detail-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-md);
+        background: #f8f9fa;
+        border-radius: var(--border-radius);
+        border: 1px solid #dee2e6;
+    }
+
+    .detail-label {
+        font-weight: 500;
+        color: var(--parliament-neutral);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .detail-value {
+        font-weight: 600;
+        color: var(--parliament-dark);
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .status-active {
+        background: rgba(40, 167, 69, 0.1);
+        color: var(--parliament-success);
+        border: 1px solid var(--parliament-success);
+    }
+
+    .status-inactive {
+        background: rgba(220, 53, 69, 0.1);
+        color: var(--parliament-danger);
+        border: 1px solid var(--parliament-danger);
+    }
+
+    .impact-section {
+        background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+        border: 2px solid var(--parliament-warning);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .impact-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #e65100;
+        margin-bottom: var(--spacing-md);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .impact-message {
+        font-size: 1rem;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-lg);
+        line-height: 1.6;
+    }
+
+    .impact-count {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        background: rgba(230, 81, 0, 0.1);
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        color: #e65100;
+        border: 1px solid #e65100;
+    }
+
+    .deletion-form-card {
+        background: white;
+        border: 3px solid var(--parliament-danger);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .form-header {
+        background: linear-gradient(135deg, var(--parliament-danger) 0%, #e3342f 100%);
+        padding: var(--spacing-lg);
+        color: white;
+    }
+
+    .form-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .form-content {
+        padding: var(--spacing-xl);
+    }
+
+    .confirmation-section {
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .confirmation-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .form-check {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+        padding: var(--spacing-lg);
+        background: #f8f9fa;
+        border-radius: var(--border-radius);
+        border: 2px solid #dee2e6;
+        margin-bottom: var(--spacing-lg);
+        transition: var(--transition);
+    }
+
+    .form-check:hover {
+        border-color: var(--parliament-danger);
+        background: rgba(220, 53, 69, 0.02);
+    }
+
+    .form-check-input {
+        width: 1.25rem;
+        height: 1.25rem;
+        margin: 0;
+        margin-top: 0.125rem;
+    }
+
+    .form-check-label {
+        font-weight: 500;
+        color: var(--parliament-dark);
+        cursor: pointer;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .form-check-label strong {
+        color: var(--parliament-danger);
+    }
+
+    .form-actions {
+        background: #f9fafb;
+        padding: var(--spacing-lg);
+        border-top: 2px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--spacing-md);
+        margin: 0 calc(-1 * var(--spacing-xl)) calc(-1 * var(--spacing-xl)) calc(-1 * var(--spacing-xl));
+    }
+
+    .btn-group {
+        display: flex;
+        gap: var(--spacing-md);
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, var(--parliament-danger) 0%, #e3342f 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        transition: var(--transition);
+        cursor: pointer;
+        opacity: 0.5;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-danger:enabled {
+        opacity: 1;
+    }
+
+    .btn-danger:enabled:hover {
+        background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+        color: white;
+    }
+
+    .btn-danger:disabled {
+        cursor: not-allowed;
+        background: #6c757d;
+    }
+
+    .btn-outline-secondary {
+        background: transparent;
+        border: 2px solid #6c757d;
+        color: #6c757d;
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        transition: var(--transition);
+        cursor: pointer;
+    }
+
+    .btn-outline-secondary:hover {
+        background: #6c757d;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .deletion-info {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        color: var(--parliament-light);
+        font-size: 0.875rem;
+    }
+
+    @media (max-width: 768px) {
+        .room-detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .btn-group {
+            flex-direction: column;
+        }
+
+        .detail-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--spacing-sm);
+        }
+    }
+
+    .shake {
+        animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+
+    .room-type-icon {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        color: white;
+        margin-right: var(--spacing-sm);
+    }
+
+    .room-type-icon.office { background: #6f42c1; }
+    .room-type-icon.meeting { background: #fd7e14; }
+    .room-type-icon.storage { background: #6c757d; }
+    .room-type-icon.server { background: #dc3545; }
+    .room-type-icon.conference { background: #20c997; }
+    .room-type-icon.hall { background: #0d6efd; }
+    .room-type-icon.other { background: #adb5bd; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="bi bi-trash"></i>
+        Delete Room
+    </h1>
+    <p class="page-subtitle">
+        Permanently remove room "{{ room.name }}" from the system
+    </p>
+</div>
+
+<div class="container-fluid">
+    <!-- Danger Warning -->
+    <div class="danger-warning text-center">
+        <div class="warning-icon">
+            <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <h2 class="warning-title">
+            <i class="bi bi-shield-exclamation me-2"></i>
+            DANGEROUS ACTION
+        </h2>
+        <p class="warning-message">
+            You are about to permanently delete this room from the system. 
+            <strong>This action cannot be undone</strong> and will affect all related data.
+        </p>
+    </div>
+
+    <!-- Room Information -->
+    <div class="room-info-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="bi bi-door-open"></i>
+                Room to be Deleted
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="room-detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">
+                        <i class="bi bi-building"></i>
+                        Room Name
+                    </span>
+                    <span class="detail-value">{{ room.name }}</span>
+                </div>
+                
+                <div class="detail-item">
+                    <span class="detail-label">
+                        <i class="bi bi-hash"></i>
+                        Room Number
+                    </span>
+                    <span class="detail-value">{{ room.room_number|default:"Not set" }}</span>
+                </div>
+                
+                <div class="detail-item">
+                    <span class="detail-label">
+                        <i class="bi bi-tags"></i>
+                        Room Type
+                    </span>
+                    <span class="detail-value">
+                        <span class="room-type-icon {{ room.room_type }}">
+                            {% if room.room_type == 'office' %}
+                                <i class="bi bi-building"></i>
+                            {% elif room.room_type == 'meeting' %}
+                                <i class="bi bi-people"></i>
+                            {% elif room.room_type == 'storage' %}
+                                <i class="bi bi-box"></i>
+                            {% elif room.room_type == 'server' %}
+                                <i class="bi bi-hdd-rack"></i>
+                            {% elif room.room_type == 'conference' %}
+                                <i class="bi bi-camera-video"></i>
+                            {% elif room.room_type == 'hall' %}
+                                <i class="bi bi-shop"></i>
+                            {% else %}
+                                <i class="bi bi-three-dots"></i>
+                            {% endif %}
+                        </span>
+                        {{ room.get_room_type_display }}
+                    </span>
+                </div>
+                
+                <div class="detail-item">
+                    <span class="detail-label">
+                        <i class="bi bi-people"></i>
+                        Capacity
+                    </span>
+                    <span class="detail-value">
+                        {% if room.capacity %}{{ room.capacity }} people{% else %}Not specified{% endif %}
+                    </span>
+                </div>
+                
+                <div class="detail-item">
+                    <span class="detail-label">
+                        <i class="bi bi-aspect-ratio"></i>
+                        Area
+                    </span>
+                    <span class="detail-value">
+                        {% if room.area_sqft %}{{ room.area_sqft }} sq ft{% else %}Not specified{% endif %}
+                    </span>
+                </div>
+                
+                <div class="detail-item">
+                    <span class="detail-label">
+                        <i class="bi bi-toggle-on"></i>
+                        Status
+                    </span>
+                    <span class="detail-value">
+                        {% if room.is_active %}
+                            <span class="status-badge status-active">
+                                <i class="bi bi-check-circle me-1"></i>Active
+                            </span>
+                        {% else %}
+                            <span class="status-badge status-inactive">
+                                <i class="bi bi-x-circle me-1"></i>Inactive
+                            </span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            
+            {% if room.description %}
+                <div class="detail-item" style="margin-top: var(--spacing-lg);">
+                    <span class="detail-label">
+                        <i class="bi bi-text-paragraph"></i>
+                        Description
+                    </span>
+                    <span class="detail-value">{{ room.description }}</span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Impact Warning -->
+    {% if related_locations_count > 0 %}
+        <div class="impact-section">
+            <h3 class="impact-title">
+                <i class="bi bi-exclamation-triangle"></i>
+                Deletion Impact
+            </h3>
+            <p class="impact-message">
+                This room is currently associated with 
+                <span class="impact-count">
+                    <i class="bi bi-geo-alt"></i>
+                    {{ related_locations_count }} location{{ related_locations_count|pluralize }}
+                </span>
+                in the system. Deleting this room will also affect these related records.
+            </p>
+        </div>
+    {% endif %}
+
+    <!-- Deletion Form -->
+    <div class="deletion-form-card">
+        <div class="form-header">
+            <h3 class="form-title">
+                <i class="bi bi-shield-check"></i>
+                Confirm Deletion
+            </h3>
+        </div>
+
+        <div class="form-content">
+            <form method="post" id="deleteForm">
+                {% csrf_token %}
+                
+                <div class="confirmation-section">
+                    <h4 class="confirmation-title">
+                        <i class="bi bi-check-square"></i>
+                        Confirmation Required
+                    </h4>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                        <label class="form-check-label" for="confirmDelete">
+                            I understand that <strong>deleting this room is permanent</strong> and cannot be undone.
+                        </label>
+                    </div>
+                    
+                    {% if related_locations_count > 0 %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="confirmImpact" required>
+                            <label class="form-check-label" for="confirmImpact">
+                                I acknowledge that this action will affect <strong>{{ related_locations_count }} related location{{ related_locations_count|pluralize }}</strong> and understand the potential impact on the system.
+                            </label>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="confirmBackup" required>
+                        <label class="form-check-label" for="confirmBackup">
+                            I confirm that I have <strong>verified this deletion is necessary</strong> and have considered the consequences.
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <div class="deletion-info">
+                        <i class="bi bi-info-circle"></i>
+                        <small>All confirmations required to enable deletion</small>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-danger" id="deleteBtn" disabled>
+                            <i class="bi bi-trash me-2"></i>
+                            Delete Room Permanently
+                        </button>
+                        <a href="{% url 'locations:room_detail' room.pk %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Cancel & Go Back
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmDelete = document.getElementById('confirmDelete');
+    const confirmImpact = document.getElementById('confirmImpact');
+    const confirmBackup = document.getElementById('confirmBackup');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const deleteForm = document.getElementById('deleteForm');
+    
+    // Update delete button state
+    function updateDeleteButton() {
+        const allRequired = [confirmDelete, confirmBackup];
+        {% if related_locations_count > 0 %}
+            allRequired.push(confirmImpact);
+        {% endif %}
+        
+        const allChecked = allRequired.every(checkbox => checkbox.checked);
+        
+        deleteBtn.disabled = !allChecked;
+        
+        if (allChecked) {
+            deleteBtn.style.opacity = '1';
+            deleteBtn.style.background = 'linear-gradient(135deg, var(--parliament-danger) 0%, #e3342f 100%)';
+        } else {
+            deleteBtn.style.opacity = '0.5';
+            deleteBtn.style.background = '#6c757d';
+        }
+    }
+    
+    // Add event listeners to checkboxes
+    [confirmDelete, confirmImpact, confirmBackup].forEach(checkbox => {
+        if (checkbox) {
+            checkbox.addEventListener('change', updateDeleteButton);
+        }
+    });
+    
+    // Form submission with confirmation
+    deleteForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!deleteBtn.disabled) {
+            let confirmMessage = `⚠️ FINAL CONFIRMATION ⚠️\n\n`;
+            confirmMessage += `You are about to permanently delete the room:\n`;
+            confirmMessage += `"${`{{ room.name }}`.replace(/"/g, '\\"')}"\n\n`;
+            
+            {% if related_locations_count > 0 %}
+                confirmMessage += `This will affect {{ related_locations_count }} related location{{ related_locations_count|pluralize:'s' }} in the system.\n\n`;
+            {% endif %}
+            
+            confirmMessage += 'Type "DELETE" to confirm:';
+            
+            const userInput = prompt(confirmMessage);
+            
+            if (userInput === 'DELETE') {
+                // Show loading state
+                deleteBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Deleting Room...';
+                deleteBtn.disabled = true;
+                
+                // Submit the form
+                this.submit();
+            } else if (userInput !== null) {
+                // Shake the form to indicate error
+                deleteForm.classList.add('shake');
+                setTimeout(() => deleteForm.classList.remove('shake'), 500);
+                
+                alert('Deletion cancelled. You must type "DELETE" exactly to confirm.');
+            }
+        }
+    });
+    
+    // Warn about leaving page with pending changes
+    let hasInteracted = false;
+    
+    [confirmDelete, confirmImpact, confirmBackup].forEach(checkbox => {
+        if (checkbox) {
+            checkbox.addEventListener('change', function() {
+                hasInteracted = true;
+            });
+        }
+    });
+    
+    window.addEventListener('beforeunload', function(e) {
+        const anyChecked = [confirmDelete, confirmImpact, confirmBackup].some(
+            checkbox => checkbox && checkbox.checked
+        );
+        
+        if (hasInteracted && anyChecked) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+    
+    // Initialize button state
+    updateDeleteButton();
+    
+    // Auto-scroll to form if there are many related locations
+    const relatedCount = {{ related_locations_count }};
+    if (relatedCount > 5) {
+        setTimeout(function() {
+            document.getElementById('deleteForm').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+        }, 500);
+    }
+    
+    // Highlight dangerous action
+    const dangerElements = document.querySelectorAll('.text-danger, .btn-danger, .border-danger');
+    dangerElements.forEach(element => {
+        element.addEventListener('mouseenter', function() {
+            this.style.filter = 'brightness(1.1)';
+        });
+        
+        element.addEventListener('mouseleave', function() {
+            this.style.filter = 'brightness(1)';
+        });
+    });
+    
+    // Add visual feedback for checkbox interactions
+    [confirmDelete, confirmImpact, confirmBackup].forEach(checkbox => {
+        if (checkbox) {
+            const parentCheck = checkbox.closest('.form-check');
+            
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
+                    parentCheck.style.background = 'rgba(40, 167, 69, 0.05)';
+                    parentCheck.style.borderColor = 'var(--parliament-success)';
+                } else {
+                    parentCheck.style.background = '#f8f9fa';
+                    parentCheck.style.borderColor = '#dee2e6';
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

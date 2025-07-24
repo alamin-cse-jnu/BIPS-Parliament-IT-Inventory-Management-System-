@@ -1,0 +1,749 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ office.name }} - Office Details - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --parliament-primary: #1e3a8a;
+        --parliament-secondary: #0f172a;
+        --parliament-success: #059669;
+        --parliament-danger: #dc2626;
+        --parliament-warning: #d97706;
+        --parliament-info: #0284c7;
+        --parliament-light: #f8fafc;
+        --parliament-dark: #1f2937;
+        --parliament-neutral: #6b7280;
+        --spacing-xs: 0.25rem;
+        --spacing-sm: 0.5rem;
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        --spacing-xl: 2rem;
+        --border-radius: 0.5rem;
+        --transition: all 0.3s ease;
+    }
+
+    .office-header {
+        background: linear-gradient(135deg, var(--parliament-primary) 0%, var(--parliament-secondary) 100%);
+        color: white;
+        padding: var(--spacing-xl) 0;
+        margin-bottom: var(--spacing-xl);
+        border-radius: var(--border-radius);
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+    }
+
+    .office-icon {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        flex-shrink: 0;
+    }
+
+    .office-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-sm);
+        line-height: 1.2;
+    }
+
+    .office-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-lg);
+        opacity: 0.9;
+        font-size: 1.1rem;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .actions-toolbar {
+        background: white;
+        padding: var(--spacing-lg);
+        border-radius: var(--border-radius);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: var(--spacing-xl);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+    }
+
+    .toolbar-section {
+        display: flex;
+        gap: var(--spacing-sm);
+        align-items: center;
+    }
+
+    .detail-grid {
+        display: grid;
+        gap: var(--spacing-xl);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .detail-card {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: var(--parliament-light);
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .card-body {
+        padding: var(--spacing-lg);
+    }
+
+    .detail-row {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        gap: var(--spacing-md);
+        padding: var(--spacing-md) 0;
+        border-bottom: 1px solid #f3f4f6;
+        align-items: center;
+    }
+
+    .detail-row:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: var(--parliament-neutral);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .detail-value {
+        color: var(--parliament-dark);
+        word-break: break-word;
+    }
+
+    .office-type-badge {
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.875rem;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .office-type-wing { background: #dbeafe; color: #1e40af; }
+    .office-type-branch { background: #ede9fe; color: #7c3aed; }
+    .office-type-section { background: #cffafe; color: #0891b2; }
+    .office-type-secretary { background: #dcfce7; color: #166534; }
+    .office-type-speaker { background: #fed7aa; color: #ea580c; }
+    .office-type-mp { background: #fce7f3; color: #be185d; }
+    .office-type-other { background: #f3f4f6; color: #374151; }
+
+    .status-badge {
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        font-size: 0.875rem;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .status-active {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-inactive {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .contact-info {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .contact-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .contact-link {
+        color: var(--parliament-info);
+        text-decoration: none;
+        transition: var(--transition);
+    }
+
+    .contact-link:hover {
+        color: var(--parliament-primary);
+        text-decoration: underline;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .stat-card {
+        background: white;
+        padding: var(--spacing-lg);
+        border-radius: var(--border-radius);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        transition: var(--transition);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .stat-label {
+        color: var(--parliament-neutral);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .locations-table {
+        background: white;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .locations-table th {
+        background: var(--parliament-light);
+        font-weight: 600;
+        color: var(--parliament-dark);
+        padding: var(--spacing-md);
+        border: none;
+    }
+
+    .locations-table td {
+        padding: var(--spacing-md);
+        vertical-align: middle;
+        border-top: 1px solid #f3f4f6;
+    }
+
+    .location-code {
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+        background: #f3f4f6;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+    }
+
+    .component-tag {
+        background: #f3f4f6;
+        padding: 0.125rem 0.5rem;
+        border-radius: var(--border-radius);
+        font-size: 0.75rem;
+        margin-right: var(--spacing-xs);
+        margin-bottom: var(--spacing-xs);
+        display: inline-block;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: var(--spacing-xl);
+        color: var(--parliament-neutral);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: var(--spacing-md);
+        opacity: 0.5;
+    }
+
+    @media (max-width: 767.98px) {
+        .header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .office-meta {
+            justify-content: center;
+        }
+
+        .actions-toolbar {
+            flex-direction: column;
+        }
+
+        .toolbar-section {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .detail-row {
+            grid-template-columns: 1fr;
+            gap: var(--spacing-xs);
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Office Header -->
+    <div class="office-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="office-icon">
+                    {% if office.office_type == 'wing' %}
+                        <i class="bi bi-diagram-2"></i>
+                    {% elif office.office_type == 'branch' %}
+                        <i class="bi bi-diagram-3"></i>
+                    {% elif office.office_type == 'section' %}
+                        <i class="bi bi-collection"></i>
+                    {% elif office.office_type == 'secretary' %}
+                        <i class="bi bi-person-badge"></i>
+                    {% elif office.office_type == 'speaker' %}
+                        <i class="bi bi-megaphone"></i>
+                    {% elif office.office_type == 'mp' %}
+                        <i class="bi bi-people"></i>
+                    {% else %}
+                        <i class="bi bi-building"></i>
+                    {% endif %}
+                </div>
+                <div>
+                    <h1 class="office-title">{{ office.name }}</h1>
+                    <div class="office-meta">
+                        <div class="meta-item">
+                            <i class="bi bi-hash"></i>
+                            <span>{{ office.office_code }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="bi bi-tag"></i>
+                            <span>{{ office.get_office_type_display }}</span>
+                        </div>
+                        {% if office.head_of_office %}
+                        <div class="meta-item">
+                            <i class="bi bi-person"></i>
+                            <span>{{ office.head_of_office }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions Toolbar -->
+    <div class="actions-toolbar">
+        <div class="toolbar-section">
+            <h5 class="mb-0">
+                <i class="bi bi-info-circle me-2"></i>
+                Office Details
+            </h5>
+        </div>
+        <div class="toolbar-section">
+            <a href="{% url 'locations:office_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Back to Offices
+            </a>
+            {% if perms.locations.change_office %}
+                <a href="{% url 'locations:office_edit' office.pk %}" class="btn btn-outline-warning">
+                    <i class="bi bi-pencil me-2"></i>
+                    Edit Office
+                </a>
+            {% endif %}
+            {% if perms.locations.change_office %}
+                <form method="post" action="{% url 'locations:office_toggle_status' office.pk %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-{% if office.is_active %}danger{% else %}success{% endif %}"
+                            onclick="return confirm('Are you sure you want to {% if office.is_active %}deactivate{% else %}activate{% endif %} this office?')">
+                        <i class="bi bi-toggle-{% if office.is_active %}off{% else %}on{% endif %} me-2"></i>
+                        {% if office.is_active %}Deactivate{% else %}Activate{% endif %}
+                    </button>
+                </form>
+            {% endif %}
+            {% if perms.locations.delete_office %}
+                <a href="{% url 'locations:office_delete' office.pk %}" class="btn btn-outline-danger"
+                   onclick="return confirm('Are you sure you want to delete this office?')">
+                    <i class="bi bi-trash me-2"></i>
+                    Delete
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number text-primary">{{ locations_count }}</div>
+            <div class="stat-label">Total Locations</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number text-success">{{ active_locations_count }}</div>
+            <div class="stat-label">Active Locations</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number text-info">
+                {% if office.contact_number or office.email %}1{% else %}0{% endif %}
+            </div>
+            <div class="stat-label">Contact Methods</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number text-warning">
+                {% if office.head_of_office %}1{% else %}0{% endif %}
+            </div>
+            <div class="stat-label">Head Assigned</div>
+        </div>
+    </div>
+
+    <!-- Office Information -->
+    <div class="detail-grid">
+        <div class="detail-card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="bi bi-info-circle"></i>
+                    Basic Information
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="detail-row">
+                    <div class="detail-label">
+                        <i class="bi bi-building"></i>
+                        Office Name
+                    </div>
+                    <div class="detail-value">{{ office.name }}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">
+                        <i class="bi bi-hash"></i>
+                        Office Code
+                    </div>
+                    <div class="detail-value">
+                        <span class="location-code">{{ office.office_code }}</span>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">
+                        <i class="bi bi-tag"></i>
+                        Office Type
+                    </div>
+                    <div class="detail-value">
+                        <span class="office-type-badge office-type-{{ office.office_type }}">
+                            <i class="bi bi-diagram-3"></i>
+                            {{ office.get_office_type_display }}
+                        </span>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">
+                        <i class="bi bi-toggle-on"></i>
+                        Status
+                    </div>
+                    <div class="detail-value">
+                        <span class="status-badge status-{% if office.is_active %}active{% else %}inactive{% endif %}">
+                            <i class="bi bi-{% if office.is_active %}check-circle{% else %}x-circle{% endif %}"></i>
+                            {% if office.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </div>
+                </div>
+                {% if office.description %}
+                <div class="detail-row">
+                    <div class="detail-label">
+                        <i class="bi bi-card-text"></i>
+                        Description
+                    </div>
+                    <div class="detail-value">{{ office.description }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="detail-card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="bi bi-person-gear"></i>
+                    Administrative Details
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="detail-row">
+                    <div class="detail-label">
+                        <i class="bi bi-person"></i>
+                        Head of Office
+                    </div>
+                    <div class="detail-value">
+                        {% if office.head_of_office %}
+                            {{ office.head_of_office }}
+                        {% else %}
+                            <span class="text-muted">Not assigned</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">
+                        <i class="bi bi-telephone"></i>
+                        Contact Information
+                    </div>
+                    <div class="detail-value">
+                        {% if office.contact_number or office.email %}
+                            <div class="contact-info">
+                                {% if office.contact_number %}
+                                    <div class="contact-item">
+                                        <i class="bi bi-telephone text-success"></i>
+                                        <a href="tel:{{ office.contact_number }}" class="contact-link">
+                                            {{ office.contact_number }}
+                                        </a>
+                                    </div>
+                                {% endif %}
+                                {% if office.email %}
+                                    <div class="contact-item">
+                                        <i class="bi bi-envelope text-info"></i>
+                                        <a href="mailto:{{ office.email }}" class="contact-link">
+                                            {{ office.email }}
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <span class="text-muted">No contact information available</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">
+                        <i class="bi bi-calendar-plus"></i>
+                        Created
+                    </div>
+                    <div class="detail-value">
+                        {{ office.created_at|date:"F d, Y \a\t g:i A" }}
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">
+                        <i class="bi bi-pencil-square"></i>
+                        Last Updated
+                    </div>
+                    <div class="detail-value">
+                        {{ office.updated_at|date:"F d, Y \a\t g:i A" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Locations -->
+    {% if related_locations %}
+        <div class="detail-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title">
+                    <i class="bi bi-geo-alt"></i>
+                    Related Locations
+                    <span class="badge bg-primary ms-2">{{ locations_count }}</span>
+                </h3>
+                <div class="btn-group btn-group-sm">
+                    <a href="{% url 'locations:create' %}?office={{ office.pk }}" class="btn btn-outline-primary">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        Add Location
+                    </a>
+                    {% if locations_count > 10 %}
+                        <a href="{% url 'locations:list' %}?office={{ office.pk }}" class="btn btn-outline-info">
+                            <i class="bi bi-eye me-1"></i>
+                            View All
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table locations-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Location Code</th>
+                                <th>Location Name</th>
+                                <th>Components</th>
+                                <th>Status</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for location in related_locations|slice:":10" %}
+                                <tr>
+                                    <td>
+                                        <span class="location-code">{{ location.location_code }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-medium">{{ location.name }}</div>
+                                        {% if location.address %}
+                                            <small class="text-muted d-block">{{ location.address|truncatechars:50 }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if location.building %}
+                                            <span class="component-tag">
+                                                <i class="bi bi-building me-1"></i>{{ location.building.name }}
+                                            </span>
+                                        {% endif %}
+                                        {% if location.floor %}
+                                            <span class="component-tag">
+                                                <i class="bi bi-layers me-1"></i>{{ location.floor.name }}
+                                            </span>
+                                        {% endif %}
+                                        {% if location.block %}
+                                            <span class="component-tag">
+                                                <i class="bi bi-grid-3x3-gap me-1"></i>{{ location.block.name }}
+                                            </span>
+                                        {% endif %}
+                                        {% if location.room %}
+                                            <span class="component-tag">
+                                                <i class="bi bi-door-open me-1"></i>{{ location.room.name }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if location.is_active %}
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle me-1"></i>Active
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-x-circle me-1"></i>Inactive
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'locations:detail' location.pk %}" 
+                                               class="btn btn-outline-info btn-sm"
+                                               title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            {% if perms.locations.change_location %}
+                                                <a href="{% url 'locations:edit' location.pk %}" 
+                                                   class="btn btn-outline-warning btn-sm"
+                                                   title="Edit Location">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="detail-card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="bi bi-geo-alt"></i>
+                    Related Locations
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="empty-state">
+                    <i class="bi bi-geo-alt"></i>
+                    <h5>No Locations Found</h5>
+                    <p class="text-muted">This office doesn't have any associated locations yet.</p>
+                    <a href="{% url 'locations:create' %}?office={{ office.pk }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        Add First Location
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add confirmation dialogs for destructive actions
+        const deleteButtons = document.querySelectorAll('a[href*="delete"], button[onclick*="delete"]');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                if (!this.onclick && !confirm('Are you sure you want to delete this item?')) {
+                    e.preventDefault();
+                }
+            });
+        });
+
+        // Auto-refresh page data every 5 minutes
+        setInterval(function() {
+            // Only refresh if user is still active on the page
+            if (document.visibilityState === 'visible') {
+                const statsCards = document.querySelectorAll('.stat-card');
+                if (statsCards.length > 0) {
+                    // Add subtle loading indicator
+                    statsCards.forEach(card => {
+                        card.style.opacity = '0.7';
+                    });
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+            }
+        }, 300000); // 5 minutes
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,1093 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Location Map - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+/* Custom styles for location map page */
+.map-header {
+    background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0 0 20px 20px;
+}
+
+.map-container {
+    height: calc(100vh - 200px);
+    min-height: 600px;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+    position: relative;
+}
+
+#mapView {
+    height: 100%;
+    width: 100%;
+}
+
+.map-controls {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.map-control-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    min-width: 280px;
+}
+
+.map-stats {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    min-width: 200px;
+}
+
+.filter-section {
+    margin-bottom: 1rem;
+}
+
+.filter-section h6 {
+    margin-bottom: 0.5rem;
+    color: #495057;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.filter-btn {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid #dee2e6;
+    background: white;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: #6c757d;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.filter-btn:hover {
+    background: #f8f9fa;
+    border-color: #0d6efd;
+    color: #0d6efd;
+    text-decoration: none;
+}
+
+.filter-btn.active {
+    background: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: #495057;
+}
+
+.legend-container {
+    position: absolute;
+    bottom: 15px;
+    left: 15px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.legend-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.75rem;
+}
+
+.legend-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.legend-marker {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.marker-building { background: #0d6efd; }
+.marker-floor { background: #6610f2; }
+.marker-room { background: #20c997; }
+.marker-office { background: #fd7e14; }
+.marker-default { background: #6c757d; }
+
+.map-toolbar {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    z-index: 1000;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.toolbar-btn {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 0.75rem;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.toolbar-btn:hover {
+    background: #0d6efd;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.search-container {
+    margin-bottom: 1rem;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.custom-popup {
+    max-width: 300px;
+}
+
+.popup-header {
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.popup-code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: #6c757d;
+    background: #f8f9fa;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.popup-description {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.75rem;
+}
+
+.popup-coordinates {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: #495057;
+    background: #e7f3ff;
+    padding: 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+}
+
+.popup-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.popup-btn {
+    padding: 0.375rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.popup-btn.primary {
+    background: #0d6efd;
+    color: white;
+}
+
+.popup-btn.primary:hover {
+    background: #0b5ed7;
+    color: white;
+    text-decoration: none;
+}
+
+.popup-btn.outline {
+    background: transparent;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+.popup-btn.outline:hover {
+    background: #f8f9fa;
+    color: #495057;
+    text-decoration: none;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    border-radius: 15px;
+}
+
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 0.3rem solid #f8f9fa;
+    border-top: 0.3rem solid #0d6efd;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.error-message {
+    background: #f8d7da;
+    border: 1px solid #f5c2c7;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .map-controls, .map-stats, .legend-container {
+        position: static;
+        margin-bottom: 1rem;
+        backdrop-filter: none;
+        background: white;
+    }
+    
+    .map-container {
+        height: 500px;
+    }
+    
+    .map-toolbar {
+        position: static;
+        justify-content: center;
+        margin-top: 1rem;
+    }
+    
+    .filter-buttons {
+        flex-direction: column;
+    }
+    
+    .filter-btn {
+        text-align: center;
+    }
+}
+
+/* Custom marker styles */
+.custom-marker {
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.custom-marker:hover {
+    transform: scale(1.1);
+}
+
+.marker-building { background: #0d6efd; }
+.marker-floor { background: #6610f2; }
+.marker-room { background: #20c997; }
+.marker-office { background: #fd7e14; }
+.marker-default { background: #6c757d; }
+
+/* Cluster styles */
+.marker-cluster {
+    background: rgba(13, 110, 253, 0.8);
+    border: 3px solid rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.marker-cluster-small {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+}
+
+.marker-cluster-medium {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+}
+
+.marker-cluster-large {
+    width: 50px;
+    height: 50px;
+    font-size: 16px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="map-header">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb text-white-50">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'locations:list' %}" class="text-white">
+                                <i class="bi bi-geo-alt me-1"></i>Locations
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">Interactive Map</li>
+                    </ol>
+                </nav>
+                
+                <h1 class="mb-0">
+                    <i class="bi bi-map me-3"></i>
+                    Location Map
+                </h1>
+                <p class="mb-0 mt-2 text-white-75">
+                    Interactive map showing all GPS-enabled locations in the Bangladesh Parliament Secretariat
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Mobile Controls (visible on small screens) -->
+    <div class="d-md-none mb-3">
+        <div class="map-control-card">
+            <div class="search-container">
+                <input type="text" id="mobileSearch" class="search-input" placeholder="Search locations...">
+            </div>
+            
+            <div class="filter-section">
+                <h6><i class="bi bi-funnel"></i> Quick Filters</h6>
+                <div class="filter-buttons" id="mobileFilters">
+                    <button class="filter-btn active" data-filter="all">All Locations</button>
+                    <button class="filter-btn" data-filter="building">Buildings</button>
+                    <button class="filter-btn" data-filter="office">Offices</button>
+                    <button class="filter-btn" data-filter="room">Rooms</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map Container -->
+    <div class="map-container">
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <div class="text-muted">Loading map data...</div>
+            </div>
+        </div>
+
+        <!-- Map Controls (Desktop) -->
+        <div class="map-controls d-none d-md-block">
+            <div class="map-control-card">
+                <div class="search-container">
+                    <input type="text" id="locationSearch" class="search-input" placeholder="Search locations...">
+                </div>
+                
+                <div class="filter-section">
+                    <h6><i class="bi bi-funnel"></i> Filter by Type</h6>
+                    <div class="filter-buttons" id="typeFilters">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="building">Buildings</button>
+                        <button class="filter-btn" data-filter="office">Offices</button>
+                        <button class="filter-btn" data-filter="room">Rooms</button>
+                    </div>
+                </div>
+                
+                <div class="filter-section">
+                    <h6><i class="bi bi-building"></i> Filter by Building</h6>
+                    <div class="filter-buttons" id="buildingFilters">
+                        <button class="filter-btn active" data-building="all">All Buildings</button>
+                        {% for code, name in filter_options.buildings %}
+                            <button class="filter-btn" data-building="{{ code }}">{{ name }}</button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map Statistics -->
+        <div class="map-stats">
+            <h6 class="mb-3">
+                <i class="bi bi-bar-chart"></i>
+                Map Statistics
+            </h6>
+            
+            <div class="stat-item">
+                <span class="stat-label">Total Mapped:</span>
+                <span class="stat-value">{{ total_mapped_locations }}</span>
+            </div>
+            
+            <div class="stat-item">
+                <span class="stat-label">Coverage:</span>
+                <span class="stat-value">{{ map_stats.coverage_percentage }}%</span>
+            </div>
+            
+            <div class="stat-item">
+                <span class="stat-label">Buildings:</span>
+                <span class="stat-value">{{ map_stats.buildings_with_coords }}</span>
+            </div>
+            
+            <div class="stat-item">
+                <span class="stat-label">Offices:</span>
+                <span class="stat-value">{{ map_stats.offices_with_coords }}</span>
+            </div>
+            
+            <div class="stat-item">
+                <span class="stat-label">Rooms:</span>
+                <span class="stat-value">{{ map_stats.rooms_with_coords }}</span>
+            </div>
+        </div>
+
+        <!-- Map Legend -->
+        <div class="legend-container">
+            <div class="legend-title">
+                <i class="bi bi-info-circle"></i>
+                Legend
+            </div>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-marker marker-building"></div>
+                    <span>Building Locations</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker marker-office"></div>
+                    <span>Office Locations</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker marker-room"></div>
+                    <span>Room Locations</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker marker-floor"></div>
+                    <span>Floor Locations</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker marker-default"></div>
+                    <span>Other Locations</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map Toolbar -->
+        <div class="map-toolbar">
+            <button class="toolbar-btn" id="zoomToFit" title="Zoom to fit all locations">
+                <i class="bi bi-arrows-fullscreen"></i>
+            </button>
+            <button class="toolbar-btn" id="toggleClusters" title="Toggle marker clustering">
+                <i class="bi bi-collection"></i>
+            </button>
+            <button class="toolbar-btn" id="exportMap" title="Export map data">
+                <i class="bi bi-download"></i>
+            </button>
+            <button class="toolbar-btn" id="fullscreen" title="Toggle fullscreen">
+                <i class="bi bi-fullscreen"></i>
+            </button>
+        </div>
+
+        <!-- Actual Map -->
+        <div id="mapView"></div>
+    </div>
+
+    <!-- Map Information Panel -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Map Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">
+                        This interactive map displays all locations with GPS coordinates in the 
+                        Bangladesh Parliament Secretariat inventory system.
+                    </p>
+                    
+                    <h6>Features:</h6>
+                    <ul class="mb-3">
+                        <li>Real-time location data with {{ total_mapped_locations }} mapped locations</li>
+                        <li>Interactive markers with detailed location information</li>
+                        <li>Advanced filtering by building, type, and search</li>
+                        <li>Marker clustering for better performance</li>
+                        <li>Export capabilities for GPS data</li>
+                    </ul>
+                    
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'locations:with_coordinates' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-list me-2"></i>List View
+                        </a>
+                        <a href="{% url 'locations:without_coordinates' %}" class="btn btn-outline-warning btn-sm">
+                            <i class="bi bi-geo-alt-slash me-2"></i>Unmapped Locations
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-gear me-2"></i>
+                        Map Controls
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6>Navigation:</h6>
+                    <ul class="mb-3">
+                        <li><strong>Zoom:</strong> Use mouse wheel or +/- buttons</li>
+                        <li><strong>Pan:</strong> Click and drag to move around</li>
+                        <li><strong>Markers:</strong> Click for location details</li>
+                        <li><strong>Search:</strong> Type location name or code</li>
+                    </ul>
+                    
+                    <h6>Shortcuts:</h6>
+                    <ul class="mb-0">
+                        <li><kbd>F</kbd> - Zoom to fit all locations</li>
+                        <li><kbd>C</kbd> - Toggle marker clustering</li>
+                        <li><kbd>Esc</kbd> - Clear all filters</li>
+                        <li><kbd>Enter</kbd> - Search locations</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Map data from Django context
+    const mapLocations = {{ map_locations|safe }};
+    const mapCenter = {{ map_center }};
+    
+    // Initialize map
+    const map = L.map('mapView', {
+        center: mapCenter,
+        zoom: 13,
+        zoomControl: false
+    });
+    
+    // Add tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    // Add custom zoom control
+    L.control.zoom({
+        position: 'topright'
+    }).addTo(map);
+    
+    // Marker cluster group
+    const markerClusterGroup = L.markerClusterGroup({
+        chunkedLoading: true,
+        maxClusterRadius: 50,
+        iconCreateFunction: function(cluster) {
+            const count = cluster.getChildCount();
+            let className = 'marker-cluster ';
+            
+            if (count < 10) {
+                className += 'marker-cluster-small';
+            } else if (count < 100) {
+                className += 'marker-cluster-medium';
+            } else {
+                className += 'marker-cluster-large';
+            }
+            
+            return L.divIcon({
+                html: `<div class="${className}">${count}</div>`,
+                className: 'marker-cluster-wrapper',
+                iconSize: L.point(40, 40)
+            });
+        }
+    });
+    
+    // Store all markers for filtering
+    let allMarkers = [];
+    let filteredMarkers = [];
+    
+    // Function to determine marker color based on location type
+    function getMarkerColor(location) {
+        if (location.building && !location.office && !location.room) return '#0d6efd'; // Building
+        if (location.office) return '#fd7e14'; // Office
+        if (location.room) return '#20c997'; // Room
+        if (location.floor) return '#6610f2'; // Floor
+        return '#6c757d'; // Default
+    }
+    
+    // Function to create custom marker
+    function createMarker(location) {
+        const color = getMarkerColor(location);
+        
+        const marker = L.circleMarker([location.latitude, location.longitude], {
+            radius: 8,
+            fillColor: color,
+            color: 'white',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.8
+        });
+        
+        // Create popup content
+        const popupContent = `
+            <div class="custom-popup">
+                <div class="popup-header">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    ${location.name}
+                </div>
+                ${location.code ? `<div class="popup-code">${location.code}</div>` : ''}
+                <div class="popup-description">${location.description}</div>
+                <div class="popup-coordinates">
+                    <i class="bi bi-globe me-1"></i>
+                    ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}
+                </div>
+                <div class="popup-actions">
+                    <a href="${location.url}" class="popup-btn primary">
+                        <i class="bi bi-eye me-1"></i>Details
+                    </a>
+                    <a href="${location.qr_url}" class="popup-btn outline">
+                        <i class="bi bi-qr-code me-1"></i>QR Code
+                    </a>
+                </div>
+            </div>
+        `;
+        
+        marker.bindPopup(popupContent, {
+            maxWidth: 300,
+            className: 'custom-popup-wrapper'
+        });
+        
+        // Store location data with marker
+        marker.locationData = location;
+        
+        return marker;
+    }
+    
+    // Create markers for all locations
+    mapLocations.forEach(location => {
+        const marker = createMarker(location);
+        allMarkers.push(marker);
+    });
+    
+    // Initially show all markers
+    filteredMarkers = [...allMarkers];
+    markerClusterGroup.addLayers(filteredMarkers);
+    map.addLayer(markerClusterGroup);
+    
+    // Hide loading overlay
+    document.getElementById('loadingOverlay').style.display = 'none';
+    
+    // Filter functions
+    function filterMarkers() {
+        const searchTerm = document.getElementById('locationSearch').value.toLowerCase();
+        const activeTypeFilter = document.querySelector('#typeFilters .filter-btn.active').dataset.filter;
+        const activeBuildingFilter = document.querySelector('#buildingFilters .filter-btn.active').dataset.building;
+        
+        filteredMarkers = allMarkers.filter(marker => {
+            const location = marker.locationData;
+            
+            // Search filter
+            const matchesSearch = !searchTerm || 
+                location.name.toLowerCase().includes(searchTerm) ||
+                (location.code && location.code.toLowerCase().includes(searchTerm)) ||
+                location.description.toLowerCase().includes(searchTerm);
+            
+            // Type filter
+            let matchesType = true;
+            if (activeTypeFilter !== 'all') {
+                switch (activeTypeFilter) {
+                    case 'building':
+                        matchesType = location.building && !location.office && !location.room;
+                        break;
+                    case 'office':
+                        matchesType = !!location.office;
+                        break;
+                    case 'room':
+                        matchesType = !!location.room;
+                        break;
+                }
+            }
+            
+            // Building filter
+            const matchesBuilding = activeBuildingFilter === 'all' || 
+                (location.building && location.building.code === activeBuildingFilter);
+            
+            return matchesSearch && matchesType && matchesBuilding;
+        });
+        
+        // Update map
+        markerClusterGroup.clearLayers();
+        markerClusterGroup.addLayers(filteredMarkers);
+        
+        // Update statistics
+        updateMapStats();
+    }
+    
+    // Update map statistics
+    function updateMapStats() {
+        const statsContainer = document.querySelector('.map-stats');
+        const totalMapped = filteredMarkers.length;
+        
+        statsContainer.querySelector('.stat-item:first-child .stat-value').textContent = totalMapped;
+        
+        // Calculate other stats for filtered results
+        const buildings = new Set();
+        let offices = 0;
+        let rooms = 0;
+        
+        filteredMarkers.forEach(marker => {
+            const location = marker.locationData;
+            if (location.building) buildings.add(location.building.code);
+            if (location.office) offices++;
+            if (location.room) rooms++;
+        });
+        
+        const statItems = statsContainer.querySelectorAll('.stat-item .stat-value');
+        statItems[2].textContent = buildings.size;
+        statItems[3].textContent = offices;
+        statItems[4].textContent = rooms;
+    }
+    
+    // Event listeners for filters
+    document.getElementById('locationSearch').addEventListener('input', filterMarkers);
+    
+    document.querySelectorAll('#typeFilters .filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('#typeFilters .filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            filterMarkers();
+        });
+    });
+    
+    document.querySelectorAll('#buildingFilters .filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('#buildingFilters .filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            filterMarkers();
+        });
+    });
+    
+    // Toolbar functionality
+    document.getElementById('zoomToFit').addEventListener('click', function() {
+        if (filteredMarkers.length > 0) {
+            const group = new L.featureGroup(filteredMarkers);
+            map.fitBounds(group.getBounds().pad(0.1));
+        }
+    });
+    
+    let clustersEnabled = true;
+    document.getElementById('toggleClusters').addEventListener('click', function() {
+        if (clustersEnabled) {
+            map.removeLayer(markerClusterGroup);
+            filteredMarkers.forEach(marker => map.addLayer(marker));
+            this.innerHTML = '<i class="bi bi-collection-fill"></i>';
+            this.title = 'Enable marker clustering';
+        } else {
+            filteredMarkers.forEach(marker => map.removeLayer(marker));
+            markerClusterGroup.clearLayers();
+            markerClusterGroup.addLayers(filteredMarkers);
+            map.addLayer(markerClusterGroup);
+            this.innerHTML = '<i class="bi bi-collection"></i>';
+            this.title = 'Disable marker clustering';
+        }
+        clustersEnabled = !clustersEnabled;
+    });
+    
+    document.getElementById('exportMap').addEventListener('click', function() {
+        const exportData = {
+            locations: filteredMarkers.map(marker => marker.locationData),
+            center: map.getCenter(),
+            zoom: map.getZoom(),
+            bounds: map.getBounds(),
+            exported_at: new Date().toISOString()
+        };
+        
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataBlob = new Blob([dataStr], {type: 'application/json'});
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `location_map_data_${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+    });
+    
+    document.getElementById('fullscreen').addEventListener('click', function() {
+        const mapContainer = document.querySelector('.map-container');
+        
+        if (!document.fullscreenElement) {
+            mapContainer.requestFullscreen().then(() => {
+                this.innerHTML = '<i class="bi bi-fullscreen-exit"></i>';
+                this.title = 'Exit fullscreen';
+                setTimeout(() => map.invalidateSize(), 100);
+            });
+        } else {
+            document.exitFullscreen().then(() => {
+                this.innerHTML = '<i class="bi bi-fullscreen"></i>';
+                this.title = 'Enter fullscreen';
+                setTimeout(() => map.invalidateSize(), 100);
+            });
+        }
+    });
+    
+    // Mobile filter handling
+    const mobileFilters = document.getElementById('mobileFilters');
+    if (mobileFilters) {
+        mobileFilters.addEventListener('click', function(e) {
+            if (e.target.classList.contains('filter-btn')) {
+                // Update mobile filter state
+                mobileFilters.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                // Sync with desktop filters
+                const filter = e.target.dataset.filter;
+                const desktopBtn = document.querySelector(`#typeFilters [data-filter="${filter}"]`);
+                if (desktopBtn) {
+                    desktopBtn.click();
+                }
+            }
+        });
+        
+        // Mobile search
+        document.getElementById('mobileSearch').addEventListener('input', function() {
+            document.getElementById('locationSearch').value = this.value;
+            filterMarkers();
+        });
+    }
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName === 'INPUT') return;
+        
+        switch(e.key.toLowerCase()) {
+            case 'f':
+                e.preventDefault();
+                document.getElementById('zoomToFit').click();
+                break;
+            case 'c':
+                e.preventDefault();
+                document.getElementById('toggleClusters').click();
+                break;
+            case 'escape':
+                e.preventDefault();
+                // Clear all filters
+                document.getElementById('locationSearch').value = '';
+                document.querySelector('#typeFilters [data-filter="all"]').click();
+                document.querySelector('#buildingFilters [data-building="all"]').click();
+                break;
+        }
+    });
+    
+    // Handle map resize
+    window.addEventListener('resize', function() {
+        setTimeout(() => map.invalidateSize(), 100);
+    });
+    
+    // Initial map fit
+    if (mapLocations.length > 0) {
+        setTimeout(() => {
+            document.getElementById('zoomToFit').click();
+        }, 500);
+    }
+    
+    // Error handling for map loading
+    map.on('tileerror', function(e) {
+        console.warn('Map tile loading error:', e);
+    });
+    
+    // Map interaction tracking
+    let mapInteracted = false;
+    map.on('zoomstart movestart', function() {
+        mapInteracted = true;
+    });
+    
+    // Custom marker hover effects
+    allMarkers.forEach(marker => {
+        marker.on('mouseover', function() {
+            this.setStyle({
+                radius: 12,
+                weight: 3
+            });
+        });
+        
+        marker.on('mouseout', function() {
+            this.setStyle({
+                radius: 8,
+                weight: 2
+            });
+        });
+    });
+    
+    // Add scale control
+    L.control.scale({
+        position: 'bottomleft',
+        metric: true,
+        imperial: false
+    }).addTo(map);
+    
+    // Performance monitoring
+    const startTime = performance.now();
+    map.whenReady(function() {
+        const loadTime = performance.now() - startTime;
+        console.log(`Map loaded in ${loadTime.toFixed(2)}ms with ${mapLocations.length} locations`);
+    });
+    
+    // Context menu for map
+    map.on('contextmenu', function(e) {
+        const lat = e.latlng.lat.toFixed(6);
+        const lng = e.latlng.lng.toFixed(6);
+        
+        const contextMenu = L.popup()
+            .setLatLng(e.latlng)
+            .setContent(`
+                <div class="context-menu">
+                    <div class="mb-2"><strong>Coordinates:</strong></div>
+                    <div class="coordinates-display mb-3">${lat}, ${lng}</div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-primary" onclick="copyCoordinates('${lat}, ${lng}')">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                        <a href="{% url 'locations:create' %}?lat=${lat}&lng=${lng}" class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-plus"></i> Add Location
+                        </a>
+                    </div>
+                </div>
+            `)
+            .openOn(map);
+    });
+    
+    // Global function for copying coordinates
+    window.copyCoordinates = function(coords) {
+        navigator.clipboard.writeText(coords).then(() => {
+            // Show temporary notification
+            const notification = document.createElement('div');
+            notification.className = 'alert alert-success position-fixed';
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; opacity: 0.9;';
+            notification.innerHTML = '<i class="bi bi-check-circle me-2"></i>Coordinates copied to clipboard!';
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 2000);
+        });
+    };
+    
+    // Auto-update map data every 5 minutes (optional)
+    if (window.location.search.includes('auto-refresh')) {
+        setInterval(() => {
+            console.log('Auto-refreshing map data...');
+            // In a real implementation, you might fetch updated location data
+            // via AJAX and update the markers accordingly
+        }, 300000); // 5 minutes
+    }
+});
+</script>
+{% endblock %}

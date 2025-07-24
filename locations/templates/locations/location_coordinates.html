@@ -1,0 +1,736 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}GPS Coordinates - {{ object.name }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+/* Custom styles for coordinates management page */
+.coordinates-header {
+    background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0 0 20px 20px;
+}
+
+.location-info-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid #e9ecef;
+}
+
+.coordinates-form-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid #e9ecef;
+}
+
+.current-coordinates {
+    background: linear-gradient(135deg, #e7f3ff 0%, #f8f9fa 100%);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid #bee5eb;
+}
+
+.coordinate-input-group {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.coordinate-input-group .form-label {
+    font-weight: 600;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.coordinate-input-group .form-control {
+    padding-left: 3rem;
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+}
+
+.coordinate-icon {
+    position: absolute;
+    left: 1rem;
+    top: 2.75rem;
+    color: #6c757d;
+    z-index: 5;
+}
+
+.map-preview {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid #dee2e6;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+}
+
+.map-placeholder {
+    color: #6c757d;
+    font-size: 1.1rem;
+}
+
+.coordinate-tools {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid #dee2e6;
+}
+
+.tool-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: white;
+    color: #495057;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    margin-bottom: 0.5rem;
+}
+
+.tool-button:hover {
+    background: #e9ecef;
+    color: #212529;
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.validation-info {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffffff 100%);
+    border: 1px solid #ffeaa7;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.coordinates-display {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #198754;
+    background: rgba(25, 135, 84, 0.1);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(25, 135, 84, 0.2);
+}
+
+.coordinate-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-badge.has-coordinates {
+    background: rgba(25, 135, 84, 0.1);
+    color: #198754;
+    border: 1px solid rgba(25, 135, 84, 0.2);
+}
+
+.status-badge.no-coordinates {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.form-floating .form-control {
+    height: calc(3.5rem + 2px);
+    line-height: 1.25;
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label {
+    opacity: 0.65;
+    transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+}
+
+.precision-note {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+.location-preview {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    border: 1px solid #dee2e6;
+}
+
+.location-detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.location-detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.detail-value {
+    color: #6c757d;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .coordinate-tools {
+        padding: 1rem;
+    }
+    
+    .tool-button {
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="coordinates-header">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb text-white-50">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'locations:list' %}" class="text-white">
+                                <i class="bi bi-geo-alt me-1"></i>Locations
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'locations:detail' object.pk %}" class="text-white">{{ object.name }}</a>
+                        </li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">GPS Coordinates</li>
+                    </ol>
+                </nav>
+                
+                <h1 class="mb-0">
+                    <i class="bi bi-geo-alt-fill me-3"></i>
+                    GPS Coordinates Management
+                </h1>
+                <p class="mb-0 mt-2 text-white-75">
+                    Manage GPS coordinates for {{ object.name }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Current Coordinates Status -->
+            <div class="current-coordinates">
+                <div class="coordinate-status">
+                    {% if object.latitude and object.longitude %}
+                        <span class="status-badge has-coordinates">
+                            <i class="bi bi-geo-alt-fill"></i>
+                            GPS Coordinates Available
+                        </span>
+                    {% else %}
+                        <span class="status-badge no-coordinates">
+                            <i class="bi bi-geo-alt-slash"></i>
+                            No GPS Coordinates
+                        </span>
+                    {% endif %}
+                </div>
+                
+                {% if object.latitude and object.longitude %}
+                    <h5 class="mb-3">
+                        <i class="bi bi-globe me-2"></i>
+                        Current Coordinates
+                    </h5>
+                    <div class="coordinates-display">
+                        Latitude: {{ object.latitude|floatformat:8 }}°<br>
+                        Longitude: {{ object.longitude|floatformat:8 }}°
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Last updated: {% if object.updated_at %}{{ object.updated_at|date:"M d, Y \a\t g:i A" }}{% else %}Unknown{% endif %}
+                        </small>
+                    </div>
+                {% else %}
+                    <h5 class="mb-3">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        GPS Coordinates Missing
+                    </h5>
+                    <p class="text-muted mb-0">
+                        This location doesn't have GPS coordinates assigned yet. 
+                        Add coordinates below to enable mapping and location services.
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Coordinates Form -->
+            <div class="coordinates-form-card">
+                <h4 class="mb-4">
+                    <i class="bi bi-pencil-square me-2"></i>
+                    {% if object.latitude and object.longitude %}Update{% else %}Add{% endif %} GPS Coordinates
+                </h4>
+                
+                <form method="post" id="coordinatesForm" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="coordinate-input-group">
+                                <label for="{{ form.latitude.id_for_label }}" class="form-label">
+                                    <i class="bi bi-geo-alt"></i>
+                                    Latitude
+                                </label>
+                                <div class="position-relative">
+                                    <i class="bi bi-geo-alt coordinate-icon"></i>
+                                    {{ form.latitude }}
+                                </div>
+                                <div class="precision-note">
+                                    Range: -90.0 to 90.0 degrees (8 decimal places precision)
+                                </div>
+                                {% if form.latitude.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.latitude.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="coordinate-input-group">
+                                <label for="{{ form.longitude.id_for_label }}" class="form-label">
+                                    <i class="bi bi-globe"></i>
+                                    Longitude
+                                </label>
+                                <div class="position-relative">
+                                    <i class="bi bi-globe coordinate-icon"></i>
+                                    {{ form.longitude }}
+                                </div>
+                                <div class="precision-note">
+                                    Range: -180.0 to 180.0 degrees (8 decimal places precision)
+                                </div>
+                                {% if form.longitude.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.longitude.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Validation Info -->
+                    <div class="validation-info">
+                        <h6 class="mb-3">
+                            <i class="bi bi-shield-check me-2"></i>
+                            Coordinate Validation for Bangladesh
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Latitude Guidelines:</strong>
+                                <ul class="mb-0">
+                                    <li>Bangladesh range: 20.0° to 27.0° N</li>
+                                    <li>Dhaka area: ~23.8° N</li>
+                                    <li>Use positive values (North)</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Longitude Guidelines:</strong>
+                                <ul class="mb-0">
+                                    <li>Bangladesh range: 88.0° to 93.0° E</li>
+                                    <li>Dhaka area: ~90.4° E</li>
+                                    <li>Use positive values (East)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-geo-alt me-2"></i>
+                            {% if object.latitude and object.longitude %}Update{% else %}Save{% endif %} Coordinates
+                        </button>
+                        <a href="{% url 'locations:detail' object.pk %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="bi bi-x-circle me-2"></i>
+                            Cancel
+                        </a>
+                        {% if object.latitude and object.longitude %}
+                            <button type="button" class="btn btn-outline-danger btn-lg" id="clearCoordinates">
+                                <i class="bi bi-trash me-2"></i>
+                                Clear Coordinates
+                            </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+
+            <!-- Coordinate Tools -->
+            <div class="coordinate-tools">
+                <h5 class="mb-3">
+                    <i class="bi bi-tools me-2"></i>
+                    Coordinate Tools & Resources
+                </h5>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <a href="https://www.google.com/maps" target="_blank" class="tool-button w-100">
+                            <i class="bi bi-geo-alt"></i>
+                            <div>
+                                <div class="fw-bold">Google Maps</div>
+                                <small class="text-muted">Find coordinates visually</small>
+                            </div>
+                        </a>
+                        
+                        <a href="https://www.latlong.net/" target="_blank" class="tool-button w-100">
+                            <i class="bi bi-crosshair"></i>
+                            <div>
+                                <div class="fw-bold">LatLong.net</div>
+                                <small class="text-muted">Get precise coordinates</small>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <button type="button" class="tool-button w-100" id="getCurrentLocation">
+                            <i class="bi bi-geo"></i>
+                            <div>
+                                <div class="fw-bold">Use Current Location</div>
+                                <small class="text-muted">Get coordinates from browser</small>
+                            </div>
+                        </button>
+                        
+                        {% if object.latitude and object.longitude %}
+                            <a href="https://maps.google.com/?q={{ object.latitude }},{{ object.longitude }}" 
+                               target="_blank" class="tool-button w-100">
+                                <i class="bi bi-map"></i>
+                                <div>
+                                    <div class="fw-bold">View on Map</div>
+                                    <small class="text-muted">Open current coordinates</small>
+                                </div>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Location Information -->
+            <div class="location-info-card">
+                <h5 class="mb-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Location Information
+                </h5>
+                
+                <div class="location-preview">
+                    <div class="location-detail-item">
+                        <span class="detail-label">Name:</span>
+                        <span class="detail-value fw-bold">{{ object.name }}</span>
+                    </div>
+                    
+                    {% if object.location_code %}
+                    <div class="location-detail-item">
+                        <span class="detail-label">Code:</span>
+                        <span class="detail-value">{{ object.location_code }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if object.building %}
+                    <div class="location-detail-item">
+                        <span class="detail-label">Building:</span>
+                        <span class="detail-value">{{ object.building.name }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if object.floor %}
+                    <div class="location-detail-item">
+                        <span class="detail-label">Floor:</span>
+                        <span class="detail-value">{{ object.floor.name }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if object.block %}
+                    <div class="location-detail-item">
+                        <span class="detail-label">Block:</span>
+                        <span class="detail-value">{{ object.block.name }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if object.room %}
+                    <div class="location-detail-item">
+                        <span class="detail-label">Room:</span>
+                        <span class="detail-value">{{ object.room.name }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if object.office %}
+                    <div class="location-detail-item">
+                        <span class="detail-label">Office:</span>
+                        <span class="detail-value">{{ object.office.name }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="location-detail-item">
+                        <span class="detail-label">Status:</span>
+                        <span class="detail-value">
+                            {% if object.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map Preview -->
+            <div class="map-preview">
+                {% if object.latitude and object.longitude %}
+                    <iframe width="100%" height="250" frameborder="0" style="border:0; border-radius: 8px;"
+                            src="https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY&q={{ object.latitude }},{{ object.longitude }}"
+                            allowfullscreen>
+                    </iframe>
+                    <p class="map-placeholder mt-2 mb-0">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Interactive map showing current coordinates
+                    </p>
+                {% else %}
+                    <i class="bi bi-map" style="font-size: 3rem; color: #dee2e6; margin-bottom: 1rem;"></i>
+                    <div class="map-placeholder">
+                        <strong>Map Preview Unavailable</strong><br>
+                        Add GPS coordinates to enable map view
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="location-info-card">
+                <h6 class="mb-3">
+                    <i class="bi bi-lightning me-2"></i>
+                    Quick Actions
+                </h6>
+                
+                <div class="d-grid gap-2">
+                    <a href="{% url 'locations:detail' object.pk %}" class="btn btn-outline-primary">
+                        <i class="bi bi-eye me-2"></i>
+                        View Location Details
+                    </a>
+                    
+                    <a href="{% url 'locations:edit' object.pk %}" class="btn btn-outline-warning">
+                        <i class="bi bi-pencil me-2"></i>
+                        Edit Location
+                    </a>
+                    
+                    {% if object.latitude and object.longitude %}
+                        <a href="{% url 'locations:map' %}?location={{ object.pk }}" class="btn btn-outline-info">
+                            <i class="bi bi-map me-2"></i>
+                            View on System Map
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('coordinatesForm');
+    const latInput = document.getElementById('{{ form.latitude.id_for_label }}');
+    const lngInput = document.getElementById('{{ form.longitude.id_for_label }}');
+    const getCurrentLocationBtn = document.getElementById('getCurrentLocation');
+    const clearCoordinatesBtn = document.getElementById('clearCoordinates');
+    
+    // Real-time coordinate validation
+    function validateCoordinate(input, min, max, type) {
+        const value = parseFloat(input.value);
+        const isValid = !isNaN(value) && value >= min && value <= max;
+        
+        if (input.value && !isValid) {
+            input.classList.add('is-invalid');
+            input.classList.remove('is-valid');
+        } else if (input.value && isValid) {
+            input.classList.add('is-valid');
+            input.classList.remove('is-invalid');
+        } else {
+            input.classList.remove('is-valid', 'is-invalid');
+        }
+        
+        return isValid;
+    }
+    
+    // Validate inputs on change
+    latInput.addEventListener('input', function() {
+        validateCoordinate(this, -90, 90, 'latitude');
+        updateMapPreview();
+    });
+    
+    lngInput.addEventListener('input', function() {
+        validateCoordinate(this, -180, 180, 'longitude');
+        updateMapPreview();
+    });
+    
+    // Get current location using browser geolocation
+    if (getCurrentLocationBtn) {
+        getCurrentLocationBtn.addEventListener('click', function() {
+            if (navigator.geolocation) {
+                this.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Getting Location...';
+                this.disabled = true;
+                
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        latInput.value = position.coords.latitude.toFixed(8);
+                        lngInput.value = position.coords.longitude.toFixed(8);
+                        
+                        // Validate the new coordinates
+                        validateCoordinate(latInput, -90, 90, 'latitude');
+                        validateCoordinate(lngInput, -180, 180, 'longitude');
+                        
+                        getCurrentLocationBtn.innerHTML = '<i class="bi bi-geo me-2"></i>Location Retrieved!';
+                        getCurrentLocationBtn.classList.remove('btn-outline-primary');
+                        getCurrentLocationBtn.classList.add('btn-success');
+                        
+                        setTimeout(function() {
+                            getCurrentLocationBtn.innerHTML = '<i class="bi bi-geo me-2"></i>Use Current Location';
+                            getCurrentLocationBtn.classList.remove('btn-success');
+                            getCurrentLocationBtn.classList.add('btn-outline-primary');
+                            getCurrentLocationBtn.disabled = false;
+                        }, 2000);
+                        
+                        updateMapPreview();
+                    },
+                    function(error) {
+                        getCurrentLocationBtn.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>Location Error';
+                        getCurrentLocationBtn.classList.add('btn-danger');
+                        getCurrentLocationBtn.disabled = false;
+                        
+                        let errorMessage = 'Unable to get location: ';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage += 'Permission denied';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage += 'Location unavailable';
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage += 'Request timeout';
+                                break;
+                            default:
+                                errorMessage += 'Unknown error';
+                                break;
+                        }
+                        
+                        alert(errorMessage);
+                        
+                        setTimeout(function() {
+                            getCurrentLocationBtn.innerHTML = '<i class="bi bi-geo me-2"></i>Use Current Location';
+                            getCurrentLocationBtn.classList.remove('btn-danger');
+                            getCurrentLocationBtn.classList.add('btn-outline-primary');
+                        }, 3000);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000
+                    }
+                );
+            } else {
+                alert('Geolocation is not supported by this browser.');
+            }
+        });
+    }
+    
+    // Clear coordinates
+    if (clearCoordinatesBtn) {
+        clearCoordinatesBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to clear the GPS coordinates for this location?')) {
+                latInput.value = '';
+                lngInput.value = '';
+                latInput.classList.remove('is-valid', 'is-invalid');
+                lngInput.classList.remove('is-valid', 'is-invalid');
+                updateMapPreview();
+            }
+        });
+    }
+    
+    // Update map preview (placeholder function)
+    function updateMapPreview() {
+        const lat = parseFloat(latInput.value);
+        const lng = parseFloat(lngInput.value);
+        
+        if (!isNaN(lat) && !isNaN(lng)) {
+            // In a real implementation, you would update the embedded map here
+            console.log('Updated coordinates:', lat, lng);
+        }
+    }
+    
+    // Form submission validation
+    form.addEventListener('submit', function(e) {
+        const latValid = validateCoordinate(latInput, -90, 90, 'latitude');
+        const lngValid = validateCoordinate(lngInput, -180, 180, 'longitude');
+        
+        if (latInput.value && lngInput.value && (!latValid || !lngValid)) {
+            e.preventDefault();
+            alert('Please check the coordinate values. They must be within valid ranges.');
+            return false;
+        }
+        
+        // Show loading state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving Coordinates...';
+        submitBtn.disabled = true;
+    });
+    
+    // Initialize validation on page load
+    if (latInput.value) validateCoordinate(latInput, -90, 90, 'latitude');
+    if (lngInput.value) validateCoordinate(lngInput, -180, 180, 'longitude');
+});
+</script>
+{% endblock %}

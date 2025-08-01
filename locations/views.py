@@ -5583,7 +5583,6 @@ class LocationMapView(LoginRequiredMixin, TemplateView):
 class QRCodeStatsView(LoginRequiredMixin, TemplateView):
     """
     Display QR code statistics and management dashboard.
-    Location: locations/views.py - QR Code Utilities
     """
     template_name = 'locations/qrcode_stats.html'
     
@@ -5655,7 +5654,6 @@ class QRCodeStatsView(LoginRequiredMixin, TemplateView):
 class QRCodeCleanupView(LoginRequiredMixin, PermissionRequiredMixin, View):
     """
     Clean up orphaned QR code files.
-    Location: locations/views.py - QR Code Utilities
     """
     permission_required = 'locations.delete_location'
     
@@ -5706,7 +5704,6 @@ class QRCodeCleanupView(LoginRequiredMixin, PermissionRequiredMixin, View):
 class LocationQRCodeRegenerateView(LoginRequiredMixin, PermissionRequiredMixin, View):
     """
     Regenerate QR code for a specific location.
-    Location: locations/views.py - QR Code Utilities
     """
     permission_required = 'locations.change_location'
     

@@ -1,0 +1,583 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - PIMS{% endblock %}
+
+{% block page_title %}
+    <div class="d-flex align-items-center">
+        <i class="bi bi-qr-code-scan me-2"></i>
+        {{ page_title }}
+    </div>
+{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:index' %}" class="text-decoration-none">
+                    <i class="bi bi-geo-alt me-1"></i>Locations
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-qr-code-scan me-1"></i>Bulk QR Code Generation
+            </li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <!-- Overview Statistics -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-primary mb-2">
+                        <i class="bi bi-geo-alt-fill" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ total_locations }}</h3>
+                    <p class="text-muted mb-0 small">Total Locations</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-success mb-2">
+                        <i class="bi bi-qr-code" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ locations_with_qr }}</h3>
+                    <p class="text-muted mb-0 small">With QR Codes</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-warning mb-2">
+                        <i class="bi bi-exclamation-triangle-fill" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ locations_without_qr }}</h3>
+                    <p class="text-muted mb-0 small">Without QR Codes</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-info mb-2">
+                        <i class="bi bi-percent" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">
+                        {% if total_locations > 0 %}
+                            {% widthratio locations_with_qr total_locations 100 %}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </h3>
+                    <p class="text-muted mb-0 small">Coverage</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Generation Form -->
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-qr-code-scan me-2"></i>
+                        Generate QR Codes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="bulkGenerateForm">
+                        {% csrf_token %}
+                        
+                        <!-- Filter Options -->
+                        <div class="mb-4">
+                            <h6 class="mb-3">
+                                <i class="bi bi-funnel me-1"></i>
+                                Filter Locations
+                            </h6>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="building" class="form-label">
+                                        <i class="bi bi-building me-1"></i>
+                                        Building
+                                    </label>
+                                    <select name="building" id="building" class="form-select">
+                                        <option value="">All Buildings</option>
+                                        {% for building in buildings %}
+                                            <option value="{{ building.id }}">{{ building.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="office_type" class="form-label">
+                                        <i class="bi bi-briefcase me-1"></i>
+                                        Office Type
+                                    </label>
+                                    <select name="office_type" id="office_type" class="form-select">
+                                        <option value="">All Office Types</option>
+                                        {% for office_type, display_name in office_types %}
+                                            <option value="{{ office_type }}">{{ display_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="room_type" class="form-label">
+                                        <i class="bi bi-door-closed me-1"></i>
+                                        Room Type
+                                    </label>
+                                    <select name="room_type" id="room_type" class="form-select">
+                                        <option value="">All Room Types</option>
+                                        {% for room_type, display_name in room_types %}
+                                            <option value="{{ room_type }}">{{ display_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <div class="mt-4 pt-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" 
+                                                   type="checkbox" 
+                                                   id="only_with_coordinates" 
+                                                   name="only_with_coordinates">
+                                            <label class="form-check-label" for="only_with_coordinates">
+                                                <i class="bi bi-geo me-1"></i>
+                                                Only locations with GPS coordinates
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Generation Options -->
+                        <div class="mb-4">
+                            <h6 class="mb-3">
+                                <i class="bi bi-gear me-1"></i>
+                                Generation Options
+                            </h6>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="regenerate_existing" 
+                                               name="regenerate_existing">
+                                        <label class="form-check-label" for="regenerate_existing">
+                                            <i class="bi bi-arrow-clockwise me-1"></i>
+                                            Regenerate existing QR codes
+                                        </label>
+                                        <div class="form-text">
+                                            Replace QR codes that already exist
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="include_coordinates" 
+                                               name="include_coordinates" 
+                                               checked>
+                                        <label class="form-check-label" for="include_coordinates">
+                                            <i class="bi bi-geo-alt me-1"></i>
+                                            Include GPS coordinates in QR data
+                                        </label>
+                                        <div class="form-text">
+                                            Add location coordinates to QR code data
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preview Section -->
+                        <div class="mb-4">
+                            <h6 class="mb-3">
+                                <i class="bi bi-eye me-1"></i>
+                                Preview Selection
+                            </h6>
+                            <div class="preview-section">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <span id="preview-text">Select filters to preview which locations will be processed.</span>
+                                </div>
+                                <div id="location-preview" style="display: none;">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Code</th>
+                                                    <th>Name</th>
+                                                    <th>Building</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="preview-tbody">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary" id="generateBtn">
+                                <i class="bi bi-qr-code-scan me-1"></i>
+                                Generate QR Codes
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="resetFilters()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>
+                                Reset Filters
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bulk Download -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-download me-2"></i>
+                        Bulk Download
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        Download multiple QR codes as a ZIP file using the same filters.
+                    </p>
+                    
+                    <form method="post" action="{% url 'locations:bulk_qrcode_download' %}" id="bulkDownloadForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="building" id="download_building">
+                        <input type="hidden" name="office_type" id="download_office_type">
+                        <input type="hidden" name="room_type" id="download_room_type">
+                        <input type="hidden" name="only_with_coordinates" id="download_only_with_coordinates">
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success" id="downloadBtn">
+                                <i class="bi bi-file-zip me-1"></i>
+                                Download ZIP
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightning me-2"></i>
+                        Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'locations:qrcode_stats' %}" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-bar-chart me-1"></i>
+                            QR Code Statistics
+                        </a>
+                        
+                        <button type="button" class="btn btn-outline-warning btn-sm" onclick="generateAllMissing()">
+                            <i class="bi bi-qr-code me-1"></i>
+                            Generate All Missing
+                        </button>
+                        
+                        <a href="{% url 'locations:qrcode_cleanup' %}" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-trash me-1"></i>
+                            Cleanup Orphaned QR Codes
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generation Tips -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        Tips & Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>QR Code Contents:</strong>
+                        <ul class="list-unstyled mt-2 small">
+                            <li><i class="bi bi-dot"></i> Location identification</li>
+                            <li><i class="bi bi-dot"></i> Component relationships</li>
+                            <li><i class="bi bi-dot"></i> Direct URL to location</li>
+                            <li><i class="bi bi-dot"></i> GPS coordinates (if available)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Best Practices:</strong>
+                        <ul class="list-unstyled mt-2 small">
+                            <li><i class="bi bi-dot"></i> Generate QR codes after location setup</li>
+                            <li><i class="bi bi-dot"></i> Print and attach to physical locations</li>
+                            <li><i class="bi bi-dot"></i> Regenerate after major location updates</li>
+                            <li><i class="bi bi-dot"></i> Test QR codes with mobile devices</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Note:</strong> Large bulk operations may take several minutes to complete.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .form-check-label {
+        font-weight: 500;
+    }
+    
+    .form-text {
+        font-size: 0.8rem;
+    }
+    
+    .preview-section {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .alert {
+        font-size: 0.9rem;
+    }
+    
+    .table-sm th,
+    .table-sm td {
+        padding: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        display: none;
+    }
+    
+    .loading-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        text-align: center;
+        min-width: 300px;
+    }
+    
+    .progress-container {
+        margin-top: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .d-flex.gap-2 {
+            flex-direction: column;
+        }
+        
+        .d-flex.gap-2 > * {
+            margin-bottom: 0.5rem;
+        }
+        
+        .d-grid.gap-2 > * {
+            margin-bottom: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('bulkGenerateForm');
+    const downloadForm = document.getElementById('bulkDownloadForm');
+    const previewText = document.getElementById('preview-text');
+    const locationPreview = document.getElementById('location-preview');
+    const previewTbody = document.getElementById('preview-tbody');
+    
+    // Sync download form fields with main form
+    function syncDownloadForm() {
+        document.getElementById('download_building').value = document.getElementById('building').value;
+        document.getElementById('download_office_type').value = document.getElementById('office_type').value;
+        document.getElementById('download_room_type').value = document.getElementById('room_type').value;
+        document.getElementById('download_only_with_coordinates').value = document.getElementById('only_with_coordinates').checked ? 'on' : '';
+    }
+    
+    // Update preview when filters change
+    function updatePreview() {
+        syncDownloadForm();
+        
+        const building = document.getElementById('building').value;
+        const officeType = document.getElementById('office_type').value;
+        const roomType = document.getElementById('room_type').value;
+        const onlyWithCoordinates = document.getElementById('only_with_coordinates').checked;
+        
+        // Show filter summary
+        let filters = [];
+        if (building) filters.push(`Building: ${document.getElementById('building').selectedOptions[0].text}`);
+        if (officeType) filters.push(`Office: ${document.getElementById('office_type').selectedOptions[0].text}`);
+        if (roomType) filters.push(`Room: ${document.getElementById('room_type').selectedOptions[0].text}`);
+        if (onlyWithCoordinates) filters.push('With GPS coordinates only');
+        
+        if (filters.length > 0) {
+            previewText.innerHTML = `<strong>Filters:</strong> ${filters.join(', ')}`;
+        } else {
+            previewText.innerHTML = 'No filters applied - all active locations will be processed.';
+        }
+        
+        // Fetch preview data (simplified for demo)
+        fetchPreviewData();
+    }
+    
+    function fetchPreviewData() {
+        // This would typically make an AJAX call to get preview data
+        // For now, we'll show a simple message
+        locationPreview.style.display = 'none';
+        
+        // Simulate preview count
+        const building = document.getElementById('building').value;
+        const officeType = document.getElementById('office_type').value;
+        const roomType = document.getElementById('room_type').value;
+        
+        if (building || officeType || roomType) {
+            previewText.innerHTML += '<br><small class="text-muted">Preview feature available in full implementation.</small>';
+        }
+    }
+    
+    // Add event listeners to filter fields
+    document.getElementById('building').addEventListener('change', updatePreview);
+    document.getElementById('office_type').addEventListener('change', updatePreview);
+    document.getElementById('room_type').addEventListener('change', updatePreview);
+    document.getElementById('only_with_coordinates').addEventListener('change', updatePreview);
+    
+    // Form submission with loading indicator
+    form.addEventListener('submit', function(e) {
+        const generateBtn = document.getElementById('generateBtn');
+        const originalText = generateBtn.innerHTML;
+        
+        generateBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Generating...';
+        generateBtn.disabled = true;
+        
+        // Show loading overlay
+        showLoadingOverlay('Generating QR codes...', 'This may take a few minutes for large selections.');
+        
+        // Re-enable button after timeout (in case of server error)
+        setTimeout(() => {
+            generateBtn.innerHTML = originalText;
+            generateBtn.disabled = false;
+            hideLoadingOverlay();
+        }, 60000); // 60 seconds timeout
+    });
+    
+    // Download form submission
+    downloadForm.addEventListener('submit', function(e) {
+        const downloadBtn = document.getElementById('downloadBtn');
+        const originalText = downloadBtn.innerHTML;
+        
+        downloadBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Preparing...';
+        downloadBtn.disabled = true;
+        
+        setTimeout(() => {
+            downloadBtn.innerHTML = originalText;
+            downloadBtn.disabled = false;
+        }, 10000); // 10 seconds timeout for download
+    });
+    
+    // Reset filters function
+    window.resetFilters = function() {
+        document.getElementById('building').value = '';
+        document.getElementById('office_type').value = '';
+        document.getElementById('room_type').value = '';
+        document.getElementById('only_with_coordinates').checked = false;
+        document.getElementById('regenerate_existing').checked = false;
+        document.getElementById('include_coordinates').checked = true;
+        updatePreview();
+    };
+    
+    // Generate all missing QR codes
+    window.generateAllMissing = function() {
+        if (confirm('This will generate QR codes for all locations that don\'t have them. Continue?')) {
+            // Reset filters to include all locations
+            resetFilters();
+            
+            // Submit the form
+            form.submit();
+        }
+    };
+    
+    // Loading overlay functions
+    function showLoadingOverlay(title, message) {
+        const overlay = document.createElement('div');
+        overlay.className = 'loading-overlay';
+        overlay.innerHTML = `
+            <div class="loading-content">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5>${title}</h5>
+                <p class="text-muted mb-0">${message}</p>
+                <div class="progress-container">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        overlay.id = 'loadingOverlay';
+        document.body.appendChild(overlay);
+        overlay.style.display = 'flex';
+    }
+    
+    function hideLoadingOverlay() {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+            overlay.remove();
+        }
+    }
+    
+    // Initialize
+    updatePreview();
+});
+</script>
+{% endblock %}

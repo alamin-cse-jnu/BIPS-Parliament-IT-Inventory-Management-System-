@@ -1,0 +1,648 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - PIMS{% endblock %}
+
+{% block page_title %}
+    <div class="d-flex align-items-center">
+        <i class="bi bi-bar-chart me-2"></i>
+        {{ page_title }}
+    </div>
+{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:index' %}" class="text-decoration-none">
+                    <i class="bi bi-geo-alt me-1"></i>Locations
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-bar-chart me-1"></i>QR Code Statistics
+            </li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <!-- Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-primary mb-2">
+                        <i class="bi bi-geo-alt-fill" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ qr_stats.total_locations }}</h3>
+                    <p class="text-muted mb-0">Total Locations</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-success mb-2">
+                        <i class="bi bi-qr-code" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ qr_stats.with_qr_codes }}</h3>
+                    <p class="text-muted mb-0">With QR Codes</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-warning mb-2">
+                        <i class="bi bi-exclamation-triangle-fill" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ qr_stats.without_qr_codes }}</h3>
+                    <p class="text-muted mb-0">Without QR Codes</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-info mb-2">
+                        <i class="bi bi-percent" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ qr_stats.coverage_percentage }}%</h3>
+                    <p class="text-muted mb-0">Coverage</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0">
+                    <h6 class="mb-0">
+                        <i class="bi bi-progress-bar me-2"></i>
+                        QR Code Coverage Progress
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">Progress</span>
+                        <span class="fw-bold">{{ qr_stats.with_qr_codes }} / {{ qr_stats.total_locations }}</span>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-success" 
+                             role="progressbar" 
+                             style="width: {{ qr_stats.coverage_percentage }}%">
+                            {{ qr_stats.coverage_percentage }}%
+                        </div>
+                    </div>
+                    <div class="mt-2 d-flex justify-content-between text-muted small">
+                        <span>{{ qr_stats.without_qr_codes }} remaining</span>
+                        <span>
+                            {% if qr_stats.coverage_percentage == 100 %}
+                                <i class="bi bi-check-circle text-success"></i> Complete
+                            {% elif qr_stats.coverage_percentage >= 75 %}
+                                <i class="bi bi-exclamation-circle text-info"></i> Almost there
+                            {% elif qr_stats.coverage_percentage >= 50 %}
+                                <i class="bi bi-dash-circle text-warning"></i> Good progress
+                            {% else %}
+                                <i class="bi bi-x-circle text-danger"></i> Getting started
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Storage Statistics -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-hdd me-2"></i>
+                        Storage Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 text-center">
+                            <div class="storage-stat">
+                                <div class="stat-icon text-primary mb-2">
+                                    <i class="bi bi-file-image" style="font-size: 2rem;"></i>
+                                </div>
+                                <h4 class="mb-1">
+                                    {% if qr_stats.total_file_size > 1048576 %}
+                                        {{ qr_stats.total_file_size|floatformat:1|filesizeformat }}
+                                    {% elif qr_stats.total_file_size > 1024 %}
+                                        {{ qr_stats.total_file_size|div:1024|floatformat:1 }} KB
+                                    {% else %}
+                                        {{ qr_stats.total_file_size }} bytes
+                                    {% endif %}
+                                </h4>
+                                <p class="text-muted mb-0 small">Total Size</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-6 text-center">
+                            <div class="storage-stat">
+                                <div class="stat-icon text-success mb-2">
+                                    <i class="bi bi-calculator" style="font-size: 2rem;"></i>
+                                </div>
+                                <h4 class="mb-1">
+                                    {% if qr_stats.average_file_size > 1024 %}
+                                        {{ qr_stats.average_file_size|div:1024|floatformat:1 }} KB
+                                    {% else %}
+                                        {{ qr_stats.average_file_size|floatformat:0 }} bytes
+                                    {% endif %}
+                                </h4>
+                                <p class="text-muted mb-0 small">Average Size</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Storage Location:</strong> QR codes are stored in the <code>qrcodes/locations/</code> directory.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightning me-2"></i>
+                        Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'locations:bulk_qrcode_generate' %}" class="btn btn-primary">
+                            <i class="bi bi-qr-code-scan me-1"></i>
+                            Bulk Generate QR Codes
+                        </a>
+                        
+                        <a href="{% url 'locations:bulk_qrcode_download' %}" class="btn btn-success">
+                            <i class="bi bi-download me-1"></i>
+                            Download All QR Codes
+                        </a>
+                        
+                        <form method="post" action="{% url 'locations:qrcode_cleanup' %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="btn btn-warning w-100"
+                                    onclick="return confirm('This will remove orphaned QR code files. Continue?')">
+                                <i class="bi bi-trash me-1"></i>
+                                Clean Up Orphaned Files
+                            </button>
+                        </form>
+                        
+                        <a href="{% url 'locations:list' %}?has_qr_code=no" class="btn btn-outline-info">
+                            <i class="bi bi-list me-1"></i>
+                            View Locations Without QR Codes
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Building Breakdown -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-building me-2"></i>
+                        QR Code Coverage by Building
+                    </h6>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="toggleView()">
+                            <i class="bi bi-table me-1"></i>
+                            <span id="view-toggle-text">Chart View</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Table View -->
+                    <div id="table-view">
+                        {% if building_stats %}
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col">
+                                                <i class="bi bi-building me-1"></i>Building
+                                            </th>
+                                            <th scope="col" class="text-center">
+                                                <i class="bi bi-geo-alt me-1"></i>Total Locations
+                                            </th>
+                                            <th scope="col" class="text-center">
+                                                <i class="bi bi-qr-code me-1"></i>With QR Codes
+                                            </th>
+                                            <th scope="col" class="text-center">
+                                                <i class="bi bi-exclamation me-1"></i>Missing
+                                            </th>
+                                            <th scope="col" class="text-center">Coverage</th>
+                                            <th scope="col" class="text-center">Progress</th>
+                                            <th scope="col" class="text-center">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for stat in building_stats %}
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="me-3">
+                                                            <i class="bi bi-building text-primary" style="font-size: 1.2rem;"></i>
+                                                        </div>
+                                                        <div>
+                                                            <strong>{{ stat.building.name }}</strong>
+                                                            <br>
+                                                            <small class="text-muted">{{ stat.building.code }}</small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="fw-bold">{{ stat.total_locations }}</span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="fw-bold text-success">{{ stat.with_qr_codes }}</span>
+                                                </td>
+                                                <td class="text-center">
+                                                    {% if stat.without_qr_codes > 0 %}
+                                                        <span class="fw-bold text-warning">{{ stat.without_qr_codes }}</span>
+                                                    {% else %}
+                                                        <span class="text-muted">—</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="fw-bold">{{ stat.coverage_percentage }}%</span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="progress" style="width: 100px; height: 8px;">
+                                                        <div class="progress-bar 
+                                                            {% if stat.coverage_percentage == 100 %}bg-success
+                                                            {% elif stat.coverage_percentage >= 75 %}bg-info
+                                                            {% elif stat.coverage_percentage >= 50 %}bg-warning
+                                                            {% else %}bg-danger{% endif %}" 
+                                                             style="width: {{ stat.coverage_percentage }}%">
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="btn-group" role="group">
+                                                        <a href="{% url 'locations:building_detail' stat.building.pk %}" 
+                                                           class="btn btn-outline-info btn-sm" 
+                                                           title="View Building Details">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                        {% if stat.without_qr_codes > 0 %}
+                                                            <a href="{% url 'locations:bulk_qrcode_generate' %}?building={{ stat.building.id }}" 
+                                                               class="btn btn-outline-primary btn-sm" 
+                                                               title="Generate Missing QR Codes">
+                                                                <i class="bi bi-qr-code"></i>
+                                                            </a>
+                                                        {% endif %}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <div class="text-muted mb-3">
+                                    <i class="bi bi-building" style="font-size: 3rem;"></i>
+                                </div>
+                                <h5 class="text-muted">No Buildings Found</h5>
+                                <p class="text-muted">No active buildings with locations found.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Chart View (Hidden by default) -->
+                    <div id="chart-view" style="display: none;">
+                        <canvas id="buildingChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Summary & Recommendations
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <h6 class="text-primary">Current Status</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="bi bi-dot"></i>
+                                    <strong>{{ qr_stats.with_qr_codes }}</strong> locations have QR codes generated
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-dot"></i>
+                                    <strong>{{ qr_stats.without_qr_codes }}</strong> locations still need QR codes
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-dot"></i>
+                                    Overall coverage is <strong>{{ qr_stats.coverage_percentage }}%</strong>
+                                </li>
+                                <li class="mb-0">
+                                    <i class="bi bi-dot"></i>
+                                    Total storage used: <strong>{{ qr_stats.total_file_size|filesizeformat }}</strong>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="col-lg-4">
+                            <h6 class="text-success">Next Steps</h6>
+                            {% if qr_stats.coverage_percentage < 100 %}
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <strong>Action Required:</strong> {{ qr_stats.without_qr_codes }} locations still need QR codes.
+                                    <div class="mt-2">
+                                        <a href="{% url 'locations:bulk_qrcode_generate' %}" class="btn btn-warning btn-sm">
+                                            <i class="bi bi-qr-code-scan me-1"></i>
+                                            Generate Missing QR Codes
+                                        </a>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-success">
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    <strong>Complete!</strong> All locations have QR codes generated.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .storage-stat {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        background: #f8f9fa;
+    }
+    
+    .stat-icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .progress {
+        border-radius: 10px;
+    }
+    
+    .progress-bar {
+        transition: width 0.6s ease;
+    }
+    
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .btn-group .btn {
+        border-radius: 0.25rem;
+    }
+    
+    .btn-group .btn:not(:last-child) {
+        margin-right: 0.25rem;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+    }
+    
+    code {
+        background-color: #f8f9fa;
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+        color: #e83e8c;
+    }
+    
+    @media (max-width: 768px) {
+        .btn-group {
+            flex-direction: column;
+        }
+        
+        .btn-group .btn:not(:last-child) {
+            margin-right: 0;
+            margin-bottom: 0.25rem;
+        }
+        
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+        
+        .d-grid.gap-2 > * {
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress {
+            width: 60px !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let chartInstance = null;
+    let isChartView = false;
+    
+    // Toggle between table and chart view
+    window.toggleView = function() {
+        const tableView = document.getElementById('table-view');
+        const chartView = document.getElementById('chart-view');
+        const toggleText = document.getElementById('view-toggle-text');
+        
+        if (isChartView) {
+            // Switch to table view
+            tableView.style.display = 'block';
+            chartView.style.display = 'none';
+            toggleText.textContent = 'Chart View';
+            isChartView = false;
+            
+            // Destroy chart if exists
+            if (chartInstance) {
+                chartInstance.destroy();
+                chartInstance = null;
+            }
+        } else {
+            // Switch to chart view
+            tableView.style.display = 'none';
+            chartView.style.display = 'block';
+            toggleText.textContent = 'Table View';
+            isChartView = true;
+            
+            // Create chart
+            createBuildingChart();
+        }
+    };
+    
+    function createBuildingChart() {
+        const ctx = document.getElementById('buildingChart').getContext('2d');
+        
+        // Extract data from building stats
+        const buildingData = [
+            {% for stat in building_stats %}
+            {
+                building: '{{ stat.building.name|escapejs }}',
+                total: {{ stat.total_locations }},
+                withQR: {{ stat.with_qr_codes }},
+                withoutQR: {{ stat.without_qr_codes }},
+                coverage: {{ stat.coverage_percentage }}
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+        
+        chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: buildingData.map(item => item.building),
+                datasets: [
+                    {
+                        label: 'With QR Codes',
+                        data: buildingData.map(item => item.withQR),
+                        backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                        borderColor: 'rgba(40, 167, 69, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Without QR Codes',
+                        data: buildingData.map(item => item.withoutQR),
+                        backgroundColor: 'rgba(255, 193, 7, 0.8)',
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'Buildings'
+                        }
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Locations'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'QR Code Coverage by Building'
+                    },
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                const dataIndex = context.dataIndex;
+                                const coverage = buildingData[dataIndex].coverage;
+                                return `Coverage: ${coverage}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Add animation to progress bars
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 500);
+    });
+    
+    // Add click handlers for action buttons
+    document.querySelectorAll('[onclick*="confirm"]').forEach(button => {
+        button.addEventListener('click', function(e) {
+            const message = this.getAttribute('onclick').match(/confirm\('([^']+)'\)/)[1];
+            if (!confirm(message)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    });
+    
+    // Auto-refresh statistics every 30 seconds
+    let autoRefreshEnabled = false;
+    
+    function toggleAutoRefresh() {
+        autoRefreshEnabled = !autoRefreshEnabled;
+        if (autoRefreshEnabled) {
+            setInterval(() => {
+                if (autoRefreshEnabled) {
+                    location.reload();
+                }
+            }, 30000);
+        }
+    }
+    
+    // Add auto-refresh toggle (could be added to UI if needed)
+    // toggleAutoRefresh();
+});
+</script>
+{% endblock %}

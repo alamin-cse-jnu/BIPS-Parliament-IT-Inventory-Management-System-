@@ -1,0 +1,408 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - PIMS{% endblock %}
+
+{% block page_title %}
+    <div class="d-flex align-items-center">
+        <i class="bi bi-building me-2"></i>
+        {{ page_title }}
+    </div>
+{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:index' %}" class="text-decoration-none">
+                    <i class="bi bi-geo-alt me-1"></i>Locations
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-bar-chart me-1"></i>Office Statistics
+            </li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <!-- Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-primary mb-2">
+                        <i class="bi bi-building-fill" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ office_stats.total }}</h3>
+                    <p class="text-muted mb-0">Total Offices</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-success mb-2">
+                        <i class="bi bi-check-circle-fill" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ office_stats.active }}</h3>
+                    <p class="text-muted mb-0">Active Offices</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-info mb-2">
+                        <i class="bi bi-geo-alt-fill" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ office_stats.with_locations }}</h3>
+                    <p class="text-muted mb-0">With Locations</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-warning mb-2">
+                        <i class="bi bi-exclamation-triangle-fill" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ office_stats.inactive }}</h3>
+                    <p class="text-muted mb-0">Inactive Offices</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Information Analysis -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-lines-fill me-2"></i>
+                        Contact Information Completeness
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+                            <div class="text-center p-3 rounded border">
+                                <div class="text-primary mb-2">
+                                    <i class="bi bi-person-badge-fill" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h4 class="mb-1">{{ contact_stats.with_head }}</h4>
+                                <p class="text-muted mb-0 small">With Head Assigned</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+                            <div class="text-center p-3 rounded border">
+                                <div class="text-success mb-2">
+                                    <i class="bi bi-telephone-fill" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h4 class="mb-1">{{ contact_stats.with_phone }}</h4>
+                                <p class="text-muted mb-0 small">With Phone Number</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+                            <div class="text-center p-3 rounded border">
+                                <div class="text-info mb-2">
+                                    <i class="bi bi-envelope-fill" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h4 class="mb-1">{{ contact_stats.with_email }}</h4>
+                                <p class="text-muted mb-0 small">With Email Address</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+                            <div class="text-center p-3 rounded border">
+                                <div class="text-warning mb-2">
+                                    <i class="bi bi-check2-all" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h4 class="mb-1">{{ contact_stats.with_both }}</h4>
+                                <p class="text-muted mb-0 small">Complete Contact Info</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Office Type Breakdown -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-diagram-3 me-2"></i>
+                        Office Types Analysis
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'locations:office_list' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-list me-1"></i>View All Offices
+                        </a>
+                        <a href="{% url 'locations:office_create' %}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-plus-lg me-1"></i>Add Office
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if office_type_stats %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col">
+                                            <i class="bi bi-tag me-1"></i>Office Type
+                                        </th>
+                                        <th scope="col" class="text-center">
+                                            <i class="bi bi-building me-1"></i>Count
+                                        </th>
+                                        <th scope="col" class="text-center">
+                                            <i class="bi bi-person-badge me-1"></i>With Head
+                                        </th>
+                                        <th scope="col" class="text-center">
+                                            <i class="bi bi-telephone me-1"></i>With Contact
+                                        </th>
+                                        <th scope="col" class="text-center">
+                                            <i class="bi bi-geo-alt me-1"></i>Locations
+                                        </th>
+                                        <th scope="col" class="text-center">Completeness</th>
+                                        <th scope="col" class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for office_type_data in office_type_stats %}
+                                        {% if office_type_data.count > 0 %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-3">
+                                                        {% if office_type_data.type == 'wing' %}
+                                                            <i class="bi bi-diagram-2 text-primary" style="font-size: 1.2rem;"></i>
+                                                        {% elif office_type_data.type == 'branch' %}
+                                                            <i class="bi bi-diagram-3 text-info" style="font-size: 1.2rem;"></i>
+                                                        {% elif office_type_data.type == 'section' %}
+                                                            <i class="bi bi-collection text-secondary" style="font-size: 1.2rem;"></i>
+                                                        {% elif office_type_data.type == 'secretary' %}
+                                                            <i class="bi bi-person-badge text-success" style="font-size: 1.2rem;"></i>
+                                                        {% elif office_type_data.type == 'speaker' %}
+                                                            <i class="bi bi-megaphone text-warning" style="font-size: 1.2rem;"></i>
+                                                        {% elif office_type_data.type == 'deputy speaker' %}
+                                                            <i class="bi bi-megaphone text-info" style="font-size: 1.2rem;"></i>
+                                                        {% elif office_type_data.type == 'chief Whip' %}
+                                                            <i class="bi bi-person-lines-fill text-danger" style="font-size: 1.2rem;"></i>
+                                                        {% elif office_type_data.type == 'whip' %}
+                                                            <i class="bi bi-person-lines-fill text-warning" style="font-size: 1.2rem;"></i>
+                                                        {% elif office_type_data.type == 'chairman' %}
+                                                            <i class="bi bi-person-workspace text-primary" style="font-size: 1.2rem;"></i>
+                                                        {% elif office_type_data.type == 'mp' %}
+                                                            <i class="bi bi-people text-success" style="font-size: 1.2rem;"></i>
+                                                        {% elif office_type_data.type == 'unit' %}
+                                                            <i class="bi bi-boxes text-info" style="font-size: 1.2rem;"></i>
+                                                        {% elif office_type_data.type == 'store' %}
+                                                            <i class="bi bi-shop text-secondary" style="font-size: 1.2rem;"></i>
+                                                        {% elif office_type_data.type == 'project' %}
+                                                            <i class="bi bi-kanban text-primary" style="font-size: 1.2rem;"></i>
+                                                        {% else %}
+                                                            <i class="bi bi-building text-muted" style="font-size: 1.2rem;"></i>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div>
+                                                        <strong>{{ office_type_data.display_name }}</strong>
+                                                        <br>
+                                                        <small class="text-muted">{{ office_type_data.type }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="fw-bold">{{ office_type_data.count }}</span>
+                                                <div class="progress mt-1" style="height: 4px;">
+                                                    {% with max_count=office_type_stats.0.count %}
+                                                    <div class="progress-bar bg-primary" 
+                                                         style="width: {% widthratio office_type_data.count max_count 100 %}%"></div>
+                                                    {% endwith %}
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="fw-bold text-success">{{ office_type_data.with_head }}</span>
+                                                <br>
+                                                <small class="text-muted">
+                                                    {% widthratio office_type_data.with_head office_type_data.count 100 %}%
+                                                </small>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="fw-bold text-info">{{ office_type_data.with_contact }}</span>
+                                                <br>
+                                                <small class="text-muted">
+                                                    {% widthratio office_type_data.with_contact office_type_data.count 100 %}%
+                                                </small>
+                                            </td>
+                                            <td class="text-center">
+                                                {% if office_type_data.location_count > 0 %}
+                                                    <span class="fw-bold text-primary">{{ office_type_data.location_count }}</span>
+                                                {% else %}
+                                                    <span class="text-muted">—</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                {% with completeness_pct=office_type_data.with_head|add:office_type_data.with_contact %}
+                                                    {% with max_possible=office_type_data.count|add:office_type_data.count %}
+                                                        {% widthratio completeness_pct max_possible 100 as completeness %}
+                                                        {% if completeness >= 75 %}
+                                                            <span class="badge bg-success">High ({{ completeness }}%)</span>
+                                                        {% elif completeness >= 50 %}
+                                                            <span class="badge bg-warning">Medium ({{ completeness }}%)</span>
+                                                        {% elif completeness >= 25 %}
+                                                            <span class="badge bg-info">Low ({{ completeness }}%)</span>
+                                                        {% else %}
+                                                            <span class="badge bg-secondary">None ({{ completeness }}%)</span>
+                                                        {% endif %}
+                                                    {% endwith %}
+                                                {% endwith %}
+                                            </td>
+                                            <td class="text-center">
+                                                <a href="{% url 'locations:office_by_type' office_type_data.type %}" 
+                                                   class="btn btn-outline-info btn-sm" 
+                                                   title="View {{ office_type_data.display_name }} Offices">
+                                                    <i class="bi bi-eye me-1"></i>View
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <div class="text-muted mb-3">
+                                <i class="bi bi-building" style="font-size: 3rem;"></i>
+                            </div>
+                            <h5 class="text-muted">No Offices Found</h5>
+                            <p class="text-muted">Start by creating your first office.</p>
+                            <a href="{% url 'locations:office_create' %}" class="btn btn-primary">
+                                <i class="bi bi-plus-lg me-1"></i>Create Office
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 0.375rem;
+        border: 1px solid #dee2e6;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #495057;
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .progress {
+        border-radius: 2px;
+    }
+    
+    .btn-group .btn {
+        border-radius: 0.25rem;
+    }
+    
+    .btn-group .btn:not(:last-child) {
+        margin-right: 0.25rem;
+    }
+    
+    .card-header {
+        font-weight: 600;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+    }
+    
+    .office-type-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+    
+    .office-type-wing { background-color: #0d6efd; }
+    .office-type-branch { background-color: #0dcaf0; }
+    .office-type-section { background-color: #6c757d; }
+    .office-type-secretary { background-color: #198754; }
+    .office-type-speaker { background-color: #ffc107; }
+    .office-type-deputy-speaker { background-color: #0dcaf0; }
+    .office-type-chief-whip { background-color: #dc3545; }
+    .office-type-whip { background-color: #ffc107; }
+    .office-type-chairman { background-color: #0d6efd; }
+    .office-type-mp { background-color: #198754; }
+    .office-type-unit { background-color: #0dcaf0; }
+    .office-type-store { background-color: #6c757d; }
+    .office-type-project { background-color: #0d6efd; }
+    .office-type-other { background-color: #6c757d; }
+    
+    @media (max-width: 768px) {
+        .btn-group {
+            flex-direction: column;
+        }
+        
+        .btn-group .btn:not(:last-child) {
+            margin-right: 0;
+            margin-bottom: 0.25rem;
+        }
+        
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,405 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - PIMS{% endblock %}
+
+{% block page_title %}
+    <div class="d-flex align-items-center">
+        <i class="bi bi-layers me-2"></i>
+        {{ page_title }}
+    </div>
+{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:index' %}" class="text-decoration-none">
+                    <i class="bi bi-geo-alt me-1"></i>Locations
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-bar-chart me-1"></i>Floor Statistics
+            </li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <!-- Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-primary mb-2">
+                        <i class="bi bi-layers-fill" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ floor_stats.total }}</h3>
+                    <p class="text-muted mb-0">Total Floors</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-success mb-2">
+                        <i class="bi bi-check-circle-fill" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ floor_stats.active }}</h3>
+                    <p class="text-muted mb-0">Active Floors</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-info mb-2">
+                        <i class="bi bi-geo-alt-fill" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ floor_stats.with_locations }}</h3>
+                    <p class="text-muted mb-0">With Locations</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-warning mb-2">
+                        <i class="bi bi-exclamation-triangle-fill" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ floor_stats.inactive }}</h3>
+                    <p class="text-muted mb-0">Inactive Floors</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floor Level Analysis -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0">
+                    <h5 class="mb-0">
+                        <i class="bi bi-diagram-3 me-2"></i>
+                        Floor Level Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+                            <div class="text-center p-3 rounded border">
+                                <div class="text-danger mb-2">
+                                    <i class="bi bi-arrow-down-circle-fill" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h4 class="mb-1">{{ level_analysis.basement_floors }}</h4>
+                                <p class="text-muted mb-0 small">Basement Levels</p>
+                                {% if level_analysis.lowest_floor < 0 %}
+                                    <small class="text-muted">(Lowest: {{ level_analysis.lowest_floor }})</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+                            <div class="text-center p-3 rounded border">
+                                <div class="text-success mb-2">
+                                    <i class="bi bi-house-fill" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h4 class="mb-1">{{ level_analysis.ground_floor }}</h4>
+                                <p class="text-muted mb-0 small">Ground Level</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+                            <div class="text-center p-3 rounded border">
+                                <div class="text-info mb-2">
+                                    <i class="bi bi-arrow-up-circle-fill" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h4 class="mb-1">{{ level_analysis.upper_floors }}</h4>
+                                <p class="text-muted mb-0 small">Upper Levels</p>
+                                {% if level_analysis.highest_floor > 0 %}
+                                    <small class="text-muted">(Highest: {{ level_analysis.highest_floor }})</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+                            <div class="text-center p-3 rounded border">
+                                <div class="text-primary mb-2">
+                                    <i class="bi bi-rulers" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h4 class="mb-1">
+                                    {% if level_analysis.highest_floor and level_analysis.lowest_floor %}
+                                        {{ level_analysis.highest_floor|add:level_analysis.lowest_floor|floatformat:0|add:1 }}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                </h4>
+                                <p class="text-muted mb-0 small">Total Range</p>
+                                <small class="text-muted">
+                                    {{ level_analysis.lowest_floor }} to {{ level_analysis.highest_floor }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floor Distribution -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-ul me-2"></i>
+                        Floors by Location Count
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'locations:floor_list' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-list me-1"></i>View All Floors
+                        </a>
+                        <a href="{% url 'locations:floor_create' %}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-plus-lg me-1"></i>Add Floor
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if floor_distribution %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col" class="text-center">
+                                            <i class="bi bi-sort-numeric-down me-1"></i>Level
+                                        </th>
+                                        <th scope="col">
+                                            <i class="bi bi-layers me-1"></i>Floor Name
+                                        </th>
+                                        <th scope="col" class="text-center">
+                                            <i class="bi bi-geo-alt me-1"></i>Location Count
+                                        </th>
+                                        <th scope="col" class="text-center">Utilization</th>
+                                        <th scope="col" class="text-center">Category</th>
+                                        <th scope="col" class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for floor_data in floor_distribution %}
+                                        {% for floor_data in floor_distribution %}
+                                        {% with floor_obj=floor_data %}
+                                        <tr>
+                                            <td class="text-center">
+                                                <div class="d-flex align-items-center justify-content-center">
+                                                    {% if floor_obj.floor_number < 0 %}
+                                                        <i class="bi bi-arrow-down text-danger me-1"></i>
+                                                        <strong class="text-danger">{{ floor_obj.floor_number }}</strong>
+                                                    {% elif floor_obj.floor_number == 0 %}
+                                                        <i class="bi bi-house text-success me-1"></i>
+                                                        <strong class="text-success">G</strong>
+                                                    {% else %}
+                                                        <i class="bi bi-arrow-up text-info me-1"></i>
+                                                        <strong class="text-info">{{ floor_obj.floor_number }}</strong>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-3">
+                                                        {% if floor_obj.floor_number < 0 %}
+                                                            <i class="bi bi-layers text-danger" style="font-size: 1.2rem;"></i>
+                                                        {% elif floor_obj.floor_number == 0 %}
+                                                            <i class="bi bi-layers text-success" style="font-size: 1.2rem;"></i>
+                                                        {% else %}
+                                                            <i class="bi bi-layers text-info" style="font-size: 1.2rem;"></i>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div>
+                                                        <strong>{{ floor_obj.name }}</strong>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="fw-bold">{{ floor_obj.location_count }}</span>
+                                                {% if floor_obj.location_count > 0 %}
+                                                    <div class="progress mt-1" style="height: 4px;">
+                                                        {% with max_count=floor_distribution.0.location_count %}
+                                                        <div class="progress-bar bg-primary" 
+                                                             style="width: {% widthratio floor_obj.location_count max_count 100 %}%"></div>
+                                                        {% endwith %}
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                {% if floor_obj.location_count >= 10 %}
+                                                    <span class="badge bg-success">High</span>
+                                                {% elif floor_obj.location_count >= 5 %}
+                                                    <span class="badge bg-info">Medium</span>
+                                                {% elif floor_obj.location_count >= 1 %}
+                                                    <span class="badge bg-warning">Low</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">None</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                {% if floor_obj.floor_number < 0 %}
+                                                    <span class="badge bg-light text-dark border">
+                                                        <i class="bi bi-arrow-down me-1"></i>Basement
+                                                    </span>
+                                                {% elif floor_obj.floor_number == 0 %}
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-house me-1"></i>Ground
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-primary">
+                                                        <i class="bi bi-arrow-up me-1"></i>Upper
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="btn-group" role="group">
+                                                    <button onclick="location.href='{% url 'locations:floor_detail' floor_obj.id %}'" 
+                                                            class="btn btn-outline-info btn-sm" 
+                                                            title="View Details">
+                                                        <i class="bi bi-eye"></i>
+                                                    </button>
+                                                    <button onclick="location.href='{% url 'locations:floor_edit' floor_obj.id %}'" 
+                                                            class="btn btn-outline-warning btn-sm" 
+                                                            title="Edit Floor">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endwith %}
+                                        {% endfor %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <div class="text-muted mb-3">
+                                <i class="bi bi-layers" style="font-size: 3rem;"></i>
+                            </div>
+                            <h5 class="text-muted">No Floors Found</h5>
+                            <p class="text-muted">Start by creating your first floor.</p>
+                            <a href="{% url 'locations:floor_create' %}" class="btn btn-primary">
+                                <i class="bi bi-plus-lg me-1"></i>Create Floor
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 0.375rem;
+        border: 1px solid #dee2e6;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #495057;
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .progress {
+        border-radius: 2px;
+    }
+    
+    .btn-group .btn {
+        border-radius: 0.25rem;
+    }
+    
+    .btn-group .btn:not(:last-child) {
+        margin-right: 0.25rem;
+    }
+    
+    .card-header {
+        font-weight: 600;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+    }
+    
+    .level-indicator {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+    }
+    
+    .level-basement {
+        background-color: #dc3545;
+    }
+    
+    .level-ground {
+        background-color: #198754;
+    }
+    
+    .level-upper {
+        background-color: #0d6efd;
+    }
+    
+    @media (max-width: 768px) {
+        .btn-group {
+            flex-direction: column;
+        }
+        
+        .btn-group .btn:not(:last-child) {
+            margin-right: 0;
+            margin-bottom: 0.25rem;
+        }
+        
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}

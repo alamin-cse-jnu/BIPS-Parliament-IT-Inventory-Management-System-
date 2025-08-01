@@ -1,0 +1,531 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ office_type_display }} Offices - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'locations:list' %}">Locations</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:office_list' %}">Offices</a></li>
+    <li class="breadcrumb-item active">{{ office_type_display }}</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .office-type-header {
+        background: linear-gradient(135deg, var(--parliament-primary), #1e40af);
+        color: white;
+        padding: var(--spacing-xl);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: var(--spacing-lg);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .office-type-header::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 100px;
+        background: linear-gradient(45deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+    }
+    
+    .office-type-title {
+        font-size: 2.25rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+    
+    .office-type-subtitle {
+        opacity: 0.9;
+        font-size: 1.125rem;
+        margin: 0;
+    }
+    
+    .office-type-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        padding: var(--spacing-lg);
+        text-align: center;
+        border-left: 4px solid var(--parliament-primary);
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--parliament-primary);
+        margin-bottom: var(--spacing-xs);
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--parliament-neutral);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 500;
+    }
+    
+    .offices-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .office-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border-top: 4px solid var(--parliament-primary);
+    }
+    
+    .office-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .office-card-header {
+        padding: var(--spacing-lg);
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .office-code {
+        font-family: 'Monaco', 'Consolas', monospace;
+        background-color: var(--parliament-primary);
+        color: white;
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--border-radius);
+        font-size: 0.875rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        display: inline-block;
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .office-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin: 0;
+        line-height: 1.3;
+    }
+    
+    .office-card-body {
+        padding: var(--spacing-lg);
+    }
+    
+    .office-detail {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-md);
+        font-size: 0.9rem;
+        color: var(--parliament-neutral);
+    }
+    
+    .office-detail:last-child {
+        margin-bottom: 0;
+    }
+    
+    .office-detail-icon {
+        width: 16px;
+        color: var(--parliament-primary);
+        flex-shrink: 0;
+    }
+    
+    .office-card-footer {
+        padding: var(--spacing-md) var(--spacing-lg);
+        background-color: #f8f9fa;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .status-badge {
+        font-size: 0.75rem;
+        font-weight: 500;
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--border-radius-full);
+    }
+    
+    .status-active {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-inactive {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .office-actions {
+        display: flex;
+        gap: var(--spacing-xs);
+    }
+    
+    .btn-office-action {
+        padding: 0.375rem;
+        border-radius: var(--border-radius);
+        border: 1px solid #e5e7eb;
+        background: white;
+        color: var(--parliament-neutral);
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-office-action:hover {
+        background-color: var(--parliament-primary);
+        color: white;
+        border-color: var(--parliament-primary);
+    }
+    
+    .office-type-navigation {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .office-type-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+        justify-content: center;
+    }
+    
+    .office-type-btn {
+        padding: var(--spacing-sm) var(--spacing-lg);
+        border-radius: var(--border-radius-full);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        font-size: 0.875rem;
+    }
+    
+    .office-type-btn.active {
+        background-color: var(--parliament-primary);
+        color: white;
+    }
+    
+    .office-type-btn:not(.active) {
+        background-color: #f3f4f6;
+        color: var(--parliament-neutral);
+    }
+    
+    .office-type-btn:hover {
+        background-color: var(--parliament-primary);
+        color: white;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: var(--spacing-xl) var(--spacing-lg);
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        color: #e5e7eb;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .empty-state-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .empty-state-description {
+        color: var(--parliament-neutral);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        margin-top: var(--spacing-lg);
+    }
+    
+    @media (max-width: 768px) {
+        .office-type-title {
+            font-size: 1.75rem;
+        }
+        
+        .office-type-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .offices-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .office-type-buttons {
+            justify-content: flex-start;
+        }
+        
+        .office-card-footer {
+            flex-direction: column;
+            gap: var(--spacing-sm);
+            align-items: flex-start;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Office Type Header -->
+    <div class="office-type-header">
+        <h1 class="office-type-title">
+            <i class="bi bi-building-gear"></i>
+            {{ office_type_display }} Offices
+        </h1>
+        <p class="office-type-subtitle">
+            Managing {{ total_offices }} {{ office_type_display|lower }} office{{ total_offices|pluralize }} in Bangladesh Parliament Secretariat
+        </p>
+    </div>
+
+    <!-- Office Type Navigation -->
+    <div class="office-type-navigation">
+        <div class="office-type-buttons">
+            {% for type_code, type_name in office_stats.items %}
+                <a href="{% url 'locations:office_by_type' type_code %}" 
+                   class="office-type-btn {% if office_type == type_code %}active{% endif %}">
+                    {% if type_code == 'speaker' %}
+                        <i class="bi bi-person-badge"></i>
+                    {% elif type_code == 'secretary' %}
+                        <i class="bi bi-person-gear"></i>
+                    {% elif type_code == 'mp' %}
+                        <i class="bi bi-people"></i>
+                    {% elif type_code == 'wing' %}
+                        <i class="bi bi-diagram-3"></i>
+                    {% elif type_code == 'branch' %}
+                        <i class="bi bi-tree"></i>
+                    {% endif %}
+                    {{ type_name|title }}
+                    <span class="badge bg-light text-dark ms-1">{{ office_stats|default:0 }}</span>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Office Statistics -->
+    <div class="office-type-stats">
+        <div class="stat-card">
+            <span class="stat-number">{{ total_offices }}</span>
+            <div class="stat-label">Total Offices</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ offices|length }}</span>
+            <div class="stat-label">Current Page</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">
+                {% with active_count=offices|length %}{{ active_count }}{% endwith %}
+            </span>
+            <div class="stat-label">Active Offices</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ page_obj.paginator.num_pages|default:1 }}</span>
+            <div class="stat-label">Total Pages</div>
+        </div>
+    </div>
+
+    <!-- Office Actions -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="h5 mb-0 text-muted">
+                <i class="bi bi-list-ul me-2"></i>
+                Office Listings
+            </h3>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'locations:office_create' %}" class="btn btn-parliament-primary">
+                <i class="bi bi-plus-circle me-2"></i>
+                Add New Office
+            </a>
+            <a href="{% url 'locations:office_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-list me-2"></i>
+                View All Offices
+            </a>
+        </div>
+    </div>
+
+    <!-- Offices Grid -->
+    {% if offices %}
+        <div class="offices-grid">
+            {% for office in offices %}
+                <div class="office-card">
+                    <div class="office-card-header">
+                        <div class="office-code">{{ office.office_code }}</div>
+                        <h3 class="office-name">{{ office.name }}</h3>
+                    </div>
+                    
+                    <div class="office-card-body">
+                        {% if office.head_of_office %}
+                            <div class="office-detail">
+                                <i class="bi bi-person-badge office-detail-icon"></i>
+                                <span><strong>Head:</strong> {{ office.head_of_office }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if office.contact_number %}
+                            <div class="office-detail">
+                                <i class="bi bi-telephone office-detail-icon"></i>
+                                <span>{{ office.contact_number }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if office.email %}
+                            <div class="office-detail">
+                                <i class="bi bi-envelope office-detail-icon"></i>
+                                <span>{{ office.email }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if office.description %}
+                            <div class="office-detail">
+                                <i class="bi bi-info-circle office-detail-icon"></i>
+                                <span>{{ office.description|truncatechars:50 }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="office-detail">
+                            <i class="bi bi-geo-alt office-detail-icon"></i>
+                            <span>
+                                {% with office.location_set.count as location_count %}
+                                    {{ location_count }} location{{ location_count|pluralize }}
+                                {% endwith %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="office-card-footer">
+                        <span class="status-badge {% if office.is_active %}status-active{% else %}status-inactive{% endif %}">
+                            {% if office.is_active %}
+                                <i class="bi bi-check-circle me-1"></i>Active
+                            {% else %}
+                                <i class="bi bi-x-circle me-1"></i>Inactive
+                            {% endif %}
+                        </span>
+                        
+                        <div class="office-actions">
+                            <a href="{% url 'locations:office_detail' office.pk %}" 
+                               class="btn-office-action" title="View Details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'locations:office_edit' office.pk %}" 
+                               class="btn-office-action" title="Edit Office">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'locations:list' %}?office={{ office.pk }}" 
+                               class="btn-office-action" title="View Locations">
+                                <i class="bi bi-geo-alt"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <div class="pagination-container">
+                <nav aria-label="Office pagination">
+                    <ul class="pagination pagination-lg">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1">
+                                    <i class="bi bi-chevron-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
+                                    <i class="bi bi-chevron-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="bi bi-building-slash"></i>
+            </div>
+            <h3 class="empty-state-title">No {{ office_type_display }} Offices Found</h3>
+            <p class="empty-state-description">
+                There are currently no active {{ office_type_display|lower }} offices in the system. 
+                You can add new offices to get started.
+            </p>
+            <div>
+                <a href="{% url 'locations:office_create' %}" class="btn btn-parliament-primary">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Add First {{ office_type_display }} Office
+                </a>
+                <a href="{% url 'locations:office_list' %}" class="btn btn-outline-secondary ms-2">
+                    <i class="bi bi-list me-2"></i>
+                    View All Offices
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

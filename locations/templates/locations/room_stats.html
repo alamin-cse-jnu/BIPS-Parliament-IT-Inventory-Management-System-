@@ -1,0 +1,436 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - PIMS{% endblock %}
+
+{% block page_title %}
+    <div class="d-flex align-items-center">
+        <i class="bi bi-door-closed me-2"></i>
+        {{ page_title }}
+    </div>
+{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:index' %}" class="text-decoration-none">
+                    <i class="bi bi-geo-alt me-1"></i>Locations
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-bar-chart me-1"></i>Room Statistics
+            </li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <!-- Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-primary mb-2">
+                        <i class="bi bi-door-closed-fill" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ room_stats.total }}</h3>
+                    <p class="text-muted mb-0">Total Rooms</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-success mb-2">
+                        <i class="bi bi-check-circle-fill" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ room_stats.active }}</h3>
+                    <p class="text-muted mb-0">Active Rooms</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-info mb-2">
+                        <i class="bi bi-geo-alt-fill" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ room_stats.with_locations }}</h3>
+                    <p class="text-muted mb-0">With Locations</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-warning mb-2">
+                        <i class="bi bi-exclamation-triangle-fill" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ room_stats.inactive }}</h3>
+                    <p class="text-muted mb-0">Inactive Rooms</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Capacity and Area Analysis -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-light border-0">
+                    <h5 class="mb-0">
+                        <i class="bi bi-people me-2"></i>
+                        Capacity Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <div class="text-center p-3 rounded border">
+                                <div class="text-primary mb-2">
+                                    <i class="bi bi-diagram-3-fill" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h4 class="mb-1">{{ capacity_stats.rooms_with_capacity }}</h4>
+                                <p class="text-muted mb-0 small">Rooms with Capacity</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-6 mb-3">
+                            <div class="text-center p-3 rounded border">
+                                <div class="text-success mb-2">
+                                    <i class="bi bi-people-fill" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h4 class="mb-1">{{ capacity_stats.total_capacity }}</h4>
+                                <p class="text-muted mb-0 small">Total Capacity</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-6 mb-3">
+                            <div class="text-center p-3 rounded border">
+                                <div class="text-info mb-2">
+                                    <i class="bi bi-bar-chart-fill" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h4 class="mb-1">{{ capacity_stats.avg_capacity|floatformat:0 }}</h4>
+                                <p class="text-muted mb-0 small">Average Capacity</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-6 mb-3">
+                            <div class="text-center p-3 rounded border">
+                                <div class="text-warning mb-2">
+                                    <i class="bi bi-arrow-up-circle-fill" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h4 class="mb-1">{{ capacity_stats.max_capacity }}</h4>
+                                <p class="text-muted mb-0 small">Maximum Capacity</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-light border-0">
+                    <h5 class="mb-0">
+                        <i class="bi bi-aspect-ratio me-2"></i>
+                        Area Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <div class="text-center p-3 rounded border">
+                                <div class="text-primary mb-2">
+                                    <i class="bi bi-square-fill" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h4 class="mb-1">{{ area_stats.rooms_with_area }}</h4>
+                                <p class="text-muted mb-0 small">Rooms with Area</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-6 mb-3">
+                            <div class="text-center p-3 rounded border">
+                                <div class="text-success mb-2">
+                                    <i class="bi bi-bounding-box-circles" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h4 class="mb-1">{{ area_stats.total_area|floatformat:0 }}</h4>
+                                <p class="text-muted mb-0 small">Total Area (sq ft)</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <div class="text-center p-3 rounded border">
+                                <div class="text-info mb-2">
+                                    <i class="bi bi-calculator-fill" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h4 class="mb-1">{{ area_stats.avg_area|floatformat:1 }}</h4>
+                                <p class="text-muted mb-0 small">Average Area (sq ft)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Type Breakdown -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-grid me-2"></i>
+                        Room Types Analysis
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'locations:room_list' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-list me-1"></i>View All Rooms
+                        </a>
+                        <a href="{% url 'locations:room_create' %}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-plus-lg me-1"></i>Add Room
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if room_type_stats %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col">
+                                            <i class="bi bi-tag me-1"></i>Room Type
+                                        </th>
+                                        <th scope="col" class="text-center">
+                                            <i class="bi bi-door-closed me-1"></i>Count
+                                        </th>
+                                        <th scope="col" class="text-center">
+                                            <i class="bi bi-people me-1"></i>Total Capacity
+                                        </th>
+                                        <th scope="col" class="text-center">
+                                            <i class="bi bi-bar-chart me-1"></i>Avg Capacity
+                                        </th>
+                                        <th scope="col" class="text-center">Utilization</th>
+                                        <th scope="col" class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for room_type_data in room_type_stats %}
+                                        {% if room_type_data.count > 0 %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-3">
+                                                        {% if room_type_data.type == 'office' %}
+                                                            <i class="bi bi-building text-primary" style="font-size: 1.2rem;"></i>
+                                                        {% elif room_type_data.type == 'meeting' %}
+                                                            <i class="bi bi-people text-info" style="font-size: 1.2rem;"></i>
+                                                        {% elif room_type_data.type == 'storage' %}
+                                                            <i class="bi bi-box text-secondary" style="font-size: 1.2rem;"></i>
+                                                        {% elif room_type_data.type == 'server' %}
+                                                            <i class="bi bi-hdd-rack text-danger" style="font-size: 1.2rem;"></i>
+                                                        {% elif room_type_data.type == 'conference' %}
+                                                            <i class="bi bi-camera-video text-success" style="font-size: 1.2rem;"></i>
+                                                        {% elif room_type_data.type == 'hall' %}
+                                                            <i class="bi bi-door-open text-warning" style="font-size: 1.2rem;"></i>
+                                                        {% elif room_type_data.type == 'chamber' %}
+                                                            <i class="bi bi-bank text-primary" style="font-size: 1.2rem;"></i>
+                                                        {% elif room_type_data.type == 'lobby' %}
+                                                            <i class="bi bi-door-open text-info" style="font-size: 1.2rem;"></i>
+                                                        {% elif room_type_data.type == 'utility' %}
+                                                            <i class="bi bi-tools text-secondary" style="font-size: 1.2rem;"></i>
+                                                        {% elif room_type_data.type == 'washroom' %}
+                                                            <i class="bi bi-droplet text-primary" style="font-size: 1.2rem;"></i>
+                                                        {% elif room_type_data.type == 'pantry' %}
+                                                            <i class="bi bi-cup-hot text-warning" style="font-size: 1.2rem;"></i>
+                                                        {% elif room_type_data.type == 'oath' %}
+                                                            <i class="bi bi-award text-success" style="font-size: 1.2rem;"></i>
+                                                        {% else %}
+                                                            <i class="bi bi-door-closed text-muted" style="font-size: 1.2rem;"></i>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div>
+                                                        <strong>{{ room_type_data.display_name }}</strong>
+                                                        <br>
+                                                        <small class="text-muted">{{ room_type_data.type }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="fw-bold">{{ room_type_data.count }}</span>
+                                                <div class="progress mt-1" style="height: 4px;">
+                                                    {% with max_count=room_type_stats.0.count %}
+                                                    <div class="progress-bar bg-primary" 
+                                                         style="width: {% widthratio room_type_data.count max_count 100 %}%"></div>
+                                                    {% endwith %}
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                {% if room_type_data.total_capacity > 0 %}
+                                                    <span class="fw-bold text-success">{{ room_type_data.total_capacity }}</span>
+                                                    <br>
+                                                    <small class="text-muted">{{ room_type_data.with_capacity }} rooms</small>
+                                                {% else %}
+                                                    <span class="text-muted">—</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                {% if room_type_data.avg_capacity > 0 %}
+                                                    <span class="fw-bold text-info">{{ room_type_data.avg_capacity|floatformat:1 }}</span>
+                                                {% else %}
+                                                    <span class="text-muted">—</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                {% if room_type_data.count >= 10 %}
+                                                    <span class="badge bg-success">High</span>
+                                                {% elif room_type_data.count >= 5 %}
+                                                    <span class="badge bg-info">Medium</span>
+                                                {% elif room_type_data.count >= 1 %}
+                                                    <span class="badge bg-warning">Low</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">None</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                <a href="{% url 'locations:room_by_type' room_type_data.type %}" 
+                                                   class="btn btn-outline-info btn-sm" 
+                                                   title="View {{ room_type_data.display_name }} Rooms">
+                                                    <i class="bi bi-eye me-1"></i>View
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <div class="text-muted mb-3">
+                                <i class="bi bi-door-closed" style="font-size: 3rem;"></i>
+                            </div>
+                            <h5 class="text-muted">No Rooms Found</h5>
+                            <p class="text-muted">Start by creating your first room.</p>
+                            <a href="{% url 'locations:room_create' %}" class="btn btn-primary">
+                                <i class="bi bi-plus-lg me-1"></i>Create Room
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 0.375rem;
+        border: 1px solid #dee2e6;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #495057;
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .progress {
+        border-radius: 2px;
+    }
+    
+    .btn-group .btn {
+        border-radius: 0.25rem;
+    }
+    
+    .btn-group .btn:not(:last-child) {
+        margin-right: 0.25rem;
+    }
+    
+    .card-header {
+        font-weight: 600;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+    }
+    
+    .room-type-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+    
+    .room-type-office { background-color: #0d6efd; }
+    .room-type-meeting { background-color: #0dcaf0; }
+    .room-type-storage { background-color: #6c757d; }
+    .room-type-server { background-color: #dc3545; }
+    .room-type-conference { background-color: #198754; }
+    .room-type-hall { background-color: #ffc107; }
+    .room-type-chamber { background-color: #0d6efd; }
+    .room-type-lobby { background-color: #0dcaf0; }
+    .room-type-utility { background-color: #6c757d; }
+    .room-type-washroom { background-color: #0d6efd; }
+    .room-type-pantry { background-color: #ffc107; }
+    .room-type-oath { background-color: #198754; }
+    .room-type-other { background-color: #6c757d; }
+    
+    @media (max-width: 768px) {
+        .btn-group {
+            flex-direction: column;
+        }
+        
+        .btn-group .btn:not(:last-child) {
+            margin-right: 0;
+            margin-bottom: 0.25rem;
+        }
+        
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}

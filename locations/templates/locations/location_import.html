@@ -1,0 +1,585 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - PIMS{% endblock %}
+
+{% block page_title %}
+    <div class="d-flex align-items-center">
+        <i class="bi bi-upload me-2"></i>
+        {{ page_title }}
+    </div>
+{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:index' %}" class="text-decoration-none">
+                    <i class="bi bi-geo-alt me-1"></i>Locations
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-upload me-1"></i>Import Locations
+            </li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <!-- Import Form -->
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-cloud-upload me-2"></i>
+                        Upload Locations File
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="importForm">
+                        {% csrf_token %}
+                        
+                        <!-- File Upload Section -->
+                        <div class="mb-4">
+                            <label for="import_file" class="form-label">
+                                <i class="bi bi-file-earmark-spreadsheet me-1"></i>
+                                Select File <span class="text-danger">*</span>
+                            </label>
+                            <input type="file" 
+                                   class="form-control" 
+                                   id="import_file" 
+                                   name="import_file" 
+                                   accept=".xlsx,.xls,.csv" 
+                                   required>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Supported formats: Excel (.xlsx, .xls) and CSV (.csv)
+                            </div>
+                        </div>
+
+                        <!-- Upload Options -->
+                        <div class="mb-4">
+                            <h6 class="mb-3">
+                                <i class="bi bi-gear me-1"></i>
+                                Import Options
+                            </h6>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="update_existing" 
+                                               name="update_existing" 
+                                               checked>
+                                        <label class="form-check-label" for="update_existing">
+                                            <i class="bi bi-arrow-repeat me-1"></i>
+                                            Update existing locations
+                                        </label>
+                                        <div class="form-text">
+                                            Update locations with matching codes
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="skip_errors" 
+                                               name="skip_errors" 
+                                               checked>
+                                        <label class="form-check-label" for="skip_errors">
+                                            <i class="bi bi-skip-forward me-1"></i>
+                                            Skip invalid rows
+                                        </label>
+                                        <div class="form-text">
+                                            Continue import despite errors
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="validate_coordinates" 
+                                               name="validate_coordinates" 
+                                               checked>
+                                        <label class="form-check-label" for="validate_coordinates">
+                                            <i class="bi bi-geo-alt me-1"></i>
+                                            Validate GPS coordinates
+                                        </label>
+                                        <div class="form-text">
+                                            Check latitude/longitude validity
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="create_components" 
+                                               name="create_components">
+                                        <label class="form-check-label" for="create_components">
+                                            <i class="bi bi-plus-circle me-1"></i>
+                                            Create missing components
+                                        </label>
+                                        <div class="form-text">
+                                            Auto-create referenced buildings/rooms/offices
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-upload me-1"></i>
+                                Import Locations
+                            </button>
+                            <a href="{% url 'locations:list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-1"></i>
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions and Template -->
+        <div class="col-lg-4">
+            <!-- Download Template -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-download me-2"></i>
+                        Download Template
+                    </h6>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-file-earmark-excel text-success" style="font-size: 3rem;"></i>
+                    </div>
+                    <p class="text-muted mb-3">
+                        Download the template file to ensure proper data format
+                    </p>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'locations:location_template_excel' %}" class="btn btn-success">
+                            <i class="bi bi-file-earmark-excel me-1"></i>
+                            Excel Template
+                        </a>
+                        <a href="{% url 'locations:location_template_csv' %}" class="btn btn-outline-success">
+                            <i class="bi bi-file-earmark-text me-1"></i>
+                            CSV Template
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Required Fields -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-list-check me-2"></i>
+                        Field Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-success">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Required Fields
+                        </h6>
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-1">
+                                <i class="bi bi-dot"></i>
+                                <strong>location_code</strong> - Unique identifier
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-dot"></i>
+                                <strong>name</strong> - Location name
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-primary">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Optional Fields
+                        </h6>
+                        <ul class="list-unstyled mb-0 small">
+                            <li class="mb-1">
+                                <i class="bi bi-dot"></i>
+                                <strong>address</strong> - Full address
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-dot"></i>
+                                <strong>building_code</strong> - Building reference
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-dot"></i>
+                                <strong>floor_number</strong> - Floor level
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-dot"></i>
+                                <strong>block_code</strong> - Block reference
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-dot"></i>
+                                <strong>room_number</strong> - Room reference
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-dot"></i>
+                                <strong>office_code</strong> - Office reference
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-dot"></i>
+                                <strong>latitude/longitude</strong> - GPS coordinates
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-dot"></i>
+                                <strong>notes</strong> - Additional information
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-dot"></i>
+                                <strong>is_active</strong> - Status (TRUE/FALSE)
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Import Instructions -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Import Instructions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ol class="mb-0 small">
+                        <li class="mb-2">
+                            <strong>Download Template:</strong> Use the provided template to format your data correctly.
+                        </li>
+                        <li class="mb-2">
+                            <strong>Required Fields:</strong> location_code and name are mandatory. At least one component reference is required.
+                        </li>
+                        <li class="mb-2">
+                            <strong>Location Code:</strong> Must be unique. Existing codes will be updated if "Update existing" is checked.
+                        </li>
+                        <li class="mb-2">
+                            <strong>Components:</strong> Reference existing buildings, floors, blocks, rooms, or offices by their codes/numbers.
+                        </li>
+                        <li class="mb-2">
+                            <strong>Coordinates:</strong> Use decimal degrees format. Both latitude and longitude must be provided together.
+                        </li>
+                        <li class="mb-2">
+                            <strong>Status Field:</strong> Use TRUE/FALSE, YES/NO, or 1/0 for the is_active field.
+                        </li>
+                        <li class="mb-0">
+                            <strong>Review Results:</strong> Check the import summary and address any errors reported.
+                        </li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sample Data Preview -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0">
+                    <h6 class="mb-0">
+                        <i class="bi bi-eye me-2"></i>
+                        Sample Data Format
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>location_code</th>
+                                    <th>name</th>
+                                    <th>address</th>
+                                    <th>building_code</th>
+                                    <th>floor_number</th>
+                                    <th>room_number</th>
+                                    <th>office_code</th>
+                                    <th>latitude</th>
+                                    <th>longitude</th>
+                                    <th>is_active</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>LOC001</code></td>
+                                    <td>Speaker's Office</td>
+                                    <td>Main Parliament Building, 3rd Floor</td>
+                                    <td>MPB</td>
+                                    <td>3</td>
+                                    <td>301</td>
+                                    <td>SPK001</td>
+                                    <td>23.7465</td>
+                                    <td>90.3915</td>
+                                    <td>TRUE</td>
+                                </tr>
+                                <tr>
+                                    <td><code>LOC002</code></td>
+                                    <td>IT Server Room</td>
+                                    <td>Secretariat Building, Basement</td>
+                                    <td>SB</td>
+                                    <td>-1</td>
+                                    <td>B01</td>
+                                    <td>IT001</td>
+                                    <td>23.7462</td>
+                                    <td>90.3918</td>
+                                    <td>TRUE</td>
+                                </tr>
+                                <tr>
+                                    <td><code>LOC003</code></td>
+                                    <td>Main Assembly Hall</td>
+                                    <td>Parliament Complex, Ground Floor</td>
+                                    <td>MPB</td>
+                                    <td>0</td>
+                                    <td>HALL01</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>TRUE</td>
+                                </tr>
+                                <tr>
+                                    <td><code>LOC004</code></td>
+                                    <td>Storage Area</td>
+                                    <td>Library Building, 2nd Floor</td>
+                                    <td>LIB</td>
+                                    <td>2</td>
+                                    <td></td>
+                                    <td>STORE01</td>
+                                    <td>23.7460</td>
+                                    <td>90.3920</td>
+                                    <td>FALSE</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <div class="alert alert-info">
+                            <i class="bi bi-lightbulb me-2"></i>
+                            <strong>Note:</strong> Empty cells are allowed for optional fields. At least one component reference 
+                            (building, floor, block, room, or office) must be provided for each location.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .form-check-label {
+        font-weight: 500;
+    }
+    
+    .form-text {
+        font-size: 0.8rem;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+    }
+    
+    .table-bordered th,
+    .table-bordered td {
+        border: 1px solid #dee2e6;
+    }
+    
+    .table code {
+        background-color: #f8f9fa;
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+        color: #e83e8c;
+    }
+    
+    .upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .upload-area:hover {
+        border-color: #0d6efd;
+        background-color: #f8f9fa;
+    }
+    
+    .upload-area.dragover {
+        border-color: #198754;
+        background-color: #d1e7dd;
+    }
+    
+    .list-unstyled li {
+        padding: 0.25rem 0;
+    }
+    
+    @media (max-width: 768px) {
+        .d-flex.gap-2 {
+            flex-direction: column;
+        }
+        
+        .d-flex.gap-2 > * {
+            margin-bottom: 0.5rem;
+        }
+        
+        .table-responsive {
+            font-size: 0.8rem;
+        }
+        
+        .table-responsive th,
+        .table-responsive td {
+            padding: 0.5rem 0.25rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('import_file');
+    const importForm = document.getElementById('importForm');
+    
+    // File input change handler
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const fileName = file.name;
+            const fileSize = (file.size / 1024 / 1024).toFixed(2);
+            
+            // Show file info
+            const fileInfo = document.createElement('div');
+            fileInfo.className = 'alert alert-info mt-2';
+            fileInfo.innerHTML = `
+                <i class="bi bi-file-earmark-check me-1"></i>
+                <strong>Selected:</strong> ${fileName} (${fileSize} MB)
+            `;
+            
+            // Remove existing file info
+            const existingInfo = fileInput.parentNode.querySelector('.alert');
+            if (existingInfo) {
+                existingInfo.remove();
+            }
+            
+            fileInput.parentNode.appendChild(fileInfo);
+        }
+    });
+    
+    // Form submission handler
+    importForm.addEventListener('submit', function(e) {
+        const fileInput = document.getElementById('import_file');
+        
+        if (!fileInput.files.length) {
+            e.preventDefault();
+            alert('Please select a file to import.');
+            return false;
+        }
+        
+        const file = fileInput.files[0];
+        const allowedTypes = ['.xlsx', '.xls', '.csv'];
+        const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+        
+        if (!allowedTypes.includes(fileExtension)) {
+            e.preventDefault();
+            alert('Please select a valid Excel (.xlsx, .xls) or CSV (.csv) file.');
+            return false;
+        }
+        
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Importing...';
+        submitBtn.disabled = true;
+        
+        // Re-enable button after form submission (in case of server error)
+        setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 30000); // 30 seconds timeout
+    });
+    
+    // Component creation checkbox dependency
+    const createComponentsCheckbox = document.getElementById('create_components');
+    const skipErrorsCheckbox = document.getElementById('skip_errors');
+    
+    createComponentsCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            // Enable skip errors when creating components
+            skipErrorsCheckbox.checked = true;
+        }
+    });
+    
+    // Drag and drop functionality
+    const uploadArea = fileInput.parentNode;
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    uploadArea.addEventListener('drop', handleDrop, false);
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    function highlight(e) {
+        uploadArea.classList.add('dragover');
+    }
+    
+    function unhighlight(e) {
+        uploadArea.classList.remove('dragover');
+    }
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            fileInput.files = files;
+            fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,447 @@
+{% extends 'vendors/base_vendor.html' %}
+{% load static %}
+
+{% block vendor_title %}{{ vendor.name }}{% endblock %}
+
+{% block vendor_header_title %}{{ vendor.name }}{% endblock %}
+{% block vendor_header_subtitle %}{{ vendor.get_vendor_type_display }} • {{ vendor.vendor_code }}{% endblock %}
+
+{% block vendor_header_actions %}
+    {% if perms.vendors.change_vendor %}
+        <a href="{% url 'vendors:edit' vendor.pk %}" class="btn btn-light btn-lg me-2">
+            <i class="bi bi-pencil me-2"></i>
+            Edit Vendor
+        </a>
+    {% endif %}
+    
+    <div class="dropdown">
+        <button class="btn btn-outline-light btn-lg dropdown-toggle" type="button" 
+                data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-three-dots-vertical"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            {% if perms.vendors.change_vendor %}
+                {% if vendor.is_active %}
+                    <li>
+                        <a class="dropdown-item" href="{% url 'vendors:deactivate' vendor.pk %}" 
+                           onclick="return confirm('Deactivate this vendor?')">
+                            <i class="bi bi-pause-circle me-2"></i>Deactivate
+                        </a>
+                    </li>
+                {% else %}
+                    <li>
+                        <a class="dropdown-item" href="{% url 'vendors:activate' vendor.pk %}" 
+                           onclick="return confirm('Activate this vendor?')">
+                            <i class="bi bi-play-circle me-2"></i>Activate
+                        </a>
+                    </li>
+                {% endif %}
+                
+                {% if vendor.is_preferred %}
+                    <li>
+                        <a class="dropdown-item" href="{% url 'vendors:toggle_preferred' vendor.pk %}" 
+                           onclick="return confirm('Remove from preferred vendors?')">
+                            <i class="bi bi-star me-2"></i>Remove Preferred
+                        </a>
+                    </li>
+                {% else %}
+                    <li>
+                        <a class="dropdown-item" href="{% url 'vendors:toggle_preferred' vendor.pk %}" 
+                           onclick="return confirm('Mark as preferred vendor?')">
+                            <i class="bi bi-star-fill me-2"></i>Mark Preferred
+                        </a>
+                    </li>
+                {% endif %}
+                <li><hr class="dropdown-divider"></li>
+            {% endif %}
+            
+            {% if perms.vendors.delete_vendor %}
+                <li>
+                    <a class="dropdown-item text-danger" href="{% url 'vendors:delete' vendor.pk %}">
+                        <i class="bi bi-trash me-2"></i>Delete Vendor
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+{% endblock %}
+
+{% block vendor_breadcrumb_items %}
+    <li class="breadcrumb-item active">{{ vendor.name }}</li>
+{% endblock %}
+
+{% block vendor_content %}
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Basic Information Card -->
+            <div class="card vendor-card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Basic Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="text-muted"><strong>Vendor Code:</strong></td>
+                                    <td>{{ vendor.vendor_code }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted"><strong>Company Name:</strong></td>
+                                    <td>{{ vendor.name }}</td>
+                                </tr>
+                                {% if vendor.trade_name %}
+                                <tr>
+                                    <td class="text-muted"><strong>Trade Name:</strong></td>
+                                    <td>{{ vendor.trade_name }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td class="text-muted"><strong>Vendor Type:</strong></td>
+                                    <td>
+                                        <div class="vendor-type-icon vendor-type-{{ vendor.vendor_type|lower }} d-inline-flex me-2">
+                                            <i class="{{ vendor.get_vendor_type_display_icon }}"></i>
+                                        </div>
+                                        {{ vendor.get_vendor_type_display }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted"><strong>Status:</strong></td>
+                                    <td>
+                                        <span class="vendor-badge {% if vendor.status == 'ACTIVE' %}active{% elif vendor.status == 'INACTIVE' %}inactive{% elif vendor.status == 'SUSPENDED' %}suspended{% elif vendor.status == 'BLACKLISTED' %}blacklisted{% endif %}">
+                                            {{ vendor.get_status_display }}
+                                        </span>
+                                        {% if vendor.is_preferred %}
+                                            <span class="vendor-badge preferred ms-2">
+                                                <i class="bi bi-star-fill me-1"></i>
+                                                Preferred
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                {% if vendor.business_registration_no %}
+                                <tr>
+                                    <td class="text-muted"><strong>Registration No:</strong></td>
+                                    <td>{{ vendor.business_registration_no }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if vendor.tax_identification_no %}
+                                <tr>
+                                    <td class="text-muted"><strong>TIN:</strong></td>
+                                    <td>{{ vendor.tax_identification_no }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if vendor.website %}
+                                <tr>
+                                    <td class="text-muted"><strong>Website:</strong></td>
+                                    <td>
+                                        <a href="{{ vendor.website }}" target="_blank" class="text-decoration-none">
+                                            {{ vendor.website }}
+                                            <i class="bi bi-box-arrow-up-right ms-1"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% if vendor.performance_rating %}
+                                <tr>
+                                    <td class="text-muted"><strong>Performance:</strong></td>
+                                    <td>
+                                        <div class="performance-stars">
+                                            {% with rating=vendor.performance_rating|floatformat:1 %}
+                                                {% for i in "12345" %}
+                                                    {% if forloop.counter <= rating|floatformat:0 %}
+                                                        <i class="bi bi-star-fill"></i>
+                                                    {% elif forloop.counter <= rating|add:0.5 %}
+                                                        <i class="bi bi-star-half"></i>
+                                                    {% else %}
+                                                        <i class="bi bi-star"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% endwith %}
+                                            <span class="ms-2">{{ vendor.performance_rating }}/5.0</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td class="text-muted"><strong>Eligible for Orders:</strong></td>
+                                    <td>
+                                        {% if vendor.is_eligible_for_new_orders %}
+                                            <span class="badge bg-success">Yes</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">No</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information Card -->
+            <div class="card vendor-card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-lines-fill me-2"></i>
+                        Contact Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Primary Contact</h6>
+                            <p class="mb-2">
+                                <i class="bi bi-person me-2"></i>
+                                <strong>{{ vendor.contact_person }}</strong>
+                                {% if vendor.contact_designation %}
+                                    <br><small class="text-muted ms-4">{{ vendor.contact_designation }}</small>
+                                {% endif %}
+                            </p>
+                            <p class="mb-2">
+                                <i class="bi bi-telephone me-2"></i>
+                                <a href="tel:{{ vendor.phone_primary }}" class="text-decoration-none">
+                                    {{ vendor.phone_primary }}
+                                </a>
+                            </p>
+                            <p class="mb-2">
+                                <i class="bi bi-envelope me-2"></i>
+                                <a href="mailto:{{ vendor.email_primary }}" class="text-decoration-none">
+                                    {{ vendor.email_primary }}
+                                </a>
+                            </p>
+                        </div>
+                        
+                        {% if vendor.phone_secondary or vendor.email_secondary %}
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Secondary Contact</h6>
+                            {% if vendor.phone_secondary %}
+                            <p class="mb-2">
+                                <i class="bi bi-telephone me-2"></i>
+                                <a href="tel:{{ vendor.phone_secondary }}" class="text-decoration-none">
+                                    {{ vendor.phone_secondary }}
+                                </a>
+                            </p>
+                            {% endif %}
+                            {% if vendor.email_secondary %}
+                            <p class="mb-2">
+                                <i class="bi bi-envelope me-2"></i>
+                                <a href="mailto:{{ vendor.email_secondary }}" class="text-decoration-none">
+                                    {{ vendor.email_secondary }}
+                                </a>
+                            </p>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Address Information Card -->
+            <div class="card vendor-card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-geo-alt me-2"></i>
+                        Address Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">{{ vendor.address }}</p>
+                    <p class="text-muted mb-0">
+                        {{ vendor.city }}{% if vendor.district and vendor.district != vendor.city %}, {{ vendor.district }}{% endif %}
+                        {% if vendor.postal_code %} {{ vendor.postal_code }}{% endif %}
+                        <br>{{ vendor.country }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Services & Specialization Card -->
+            {% if vendor.specialization or vendor.service_categories %}
+            <div class="card vendor-card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-gear-wide-connected me-2"></i>
+                        Services & Specialization
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if vendor.specialization %}
+                        <h6 class="text-muted">Specialization</h6>
+                        <p class="mb-3">{{ vendor.specialization }}</p>
+                    {% endif %}
+                    
+                    {% if vendor.service_categories %}
+                        <h6 class="text-muted">Service Categories</h6>
+                        <div class="mb-2">
+                            {% for category in service_categories %}
+                                <span class="badge bg-primary me-1 mb-1">{{ category }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Notes Card -->
+            {% if vendor.notes %}
+            <div class="card vendor-card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-sticky me-2"></i>
+                        Notes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ vendor.notes|linebreaks }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Quick Stats Card -->
+            <div class="card vendor-card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>
+                        Quick Stats
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="stats-number primary">{{ device_count }}</div>
+                            <div class="text-muted small">Device{{ device_count|pluralize }}</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stats-number success">{{ maintenance_count }}</div>
+                            <div class="text-muted small">Service{{ maintenance_count|pluralize }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audit Information Card -->
+            <div class="card vendor-card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>
+                        Audit Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted">Created</small>
+                        <p class="mb-0">{{ vendor.created_at|date:"M d, Y H:i" }}</p>
+                        {% if vendor.created_by %}
+                            <small class="text-muted">by {{ vendor.created_by.get_display_name }}</small>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <small class="text-muted">Last Updated</small>
+                        <p class="mb-0">{{ vendor.updated_at|date:"M d, Y H:i" }}</p>
+                        {% if vendor.updated_by %}
+                            <small class="text-muted">by {{ vendor.updated_by.get_display_name }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions Card -->
+            {% if perms.vendors.change_vendor %}
+            <div class="card vendor-card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning me-2"></i>
+                        Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'vendors:edit' vendor.pk %}" class="btn btn-vendor-primary">
+                            <i class="bi bi-pencil me-2"></i>
+                            Edit Vendor
+                        </a>
+                        
+                        {% if vendor.is_active %}
+                            <a href="{% url 'vendors:deactivate' vendor.pk %}" class="btn btn-vendor-secondary"
+                               onclick="return confirm('Deactivate this vendor?')">
+                                <i class="bi bi-pause-circle me-2"></i>
+                                Deactivate
+                            </a>
+                        {% else %}
+                            <a href="{% url 'vendors:activate' vendor.pk %}" class="btn btn-vendor-success"
+                               onclick="return confirm('Activate this vendor?')">
+                                <i class="bi bi-play-circle me-2"></i>
+                                Activate
+                            </a>
+                        {% endif %}
+                        
+                        {% if vendor.is_preferred %}
+                            <a href="{% url 'vendors:toggle_preferred' vendor.pk %}" class="btn btn-vendor-secondary"
+                               onclick="return confirm('Remove from preferred vendors?')">
+                                <i class="bi bi-star me-2"></i>
+                                Remove Preferred
+                            </a>
+                        {% else %}
+                            <a href="{% url 'vendors:toggle_preferred' vendor.pk %}" class="btn btn-vendor-secondary"
+                               onclick="return confirm('Mark as preferred vendor?')">
+                                <i class="bi bi-star-fill me-2"></i>
+                                Mark Preferred
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Contact Actions Card -->
+            <div class="card vendor-card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-telephone me-2"></i>
+                        Contact Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="tel:{{ vendor.phone_primary }}" class="btn btn-vendor-secondary">
+                            <i class="bi bi-telephone me-2"></i>
+                            Call Primary
+                        </a>
+                        <a href="mailto:{{ vendor.email_primary }}" class="btn btn-vendor-secondary">
+                            <i class="bi bi-envelope me-2"></i>
+                            Email Primary
+                        </a>
+                        {% if vendor.website %}
+                            <a href="{{ vendor.website }}" target="_blank" class="btn btn-vendor-secondary">
+                                <i class="bi bi-globe me-2"></i>
+                                Visit Website
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block vendor_extra_js %}
+    <script>
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    </script>
+{% endblock %}

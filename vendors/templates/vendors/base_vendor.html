@@ -1,0 +1,467 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% block vendor_title %}Vendor Management{% endblock %} - PIMS
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .vendor-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 20px 20px;
+        }
+        
+        .vendor-nav {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        
+        .vendor-nav .nav-link {
+            color: #6b7280;
+            font-weight: 500;
+            padding: 1rem 1.5rem;
+            border-radius: 0;
+            transition: all 0.2s ease;
+        }
+        
+        .vendor-nav .nav-link:hover {
+            color: #1e3a8a;
+            background-color: #f8fafc;
+        }
+        
+        .vendor-nav .nav-link.active {
+            color: #1e3a8a;
+            background-color: #eff6ff;
+            border-bottom: 3px solid #1e3a8a;
+        }
+        
+        .vendor-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow: hidden;
+        }
+        
+        .vendor-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .vendor-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        
+        .vendor-badge.active {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        .vendor-badge.inactive {
+            background-color: #f3f4f6;
+            color: #6b7280;
+        }
+        
+        .vendor-badge.preferred {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .vendor-badge.suspended {
+            background-color: #fef3c7;
+            color: #b45309;
+        }
+        
+        .vendor-badge.blacklisted {
+            background-color: #fecaca;
+            color: #dc2626;
+        }
+        
+        .vendor-type-icon {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            color: white;
+            margin-right: 0.75rem;
+        }
+        
+        .vendor-type-supplier { background-color: #059669; }
+        .vendor-type-manufacturer { background-color: #7c3aed; }
+        .vendor-type-maintenance { background-color: #ea580c; }
+        .vendor-type-support { background-color: #0891b2; }
+        .vendor-type-installation { background-color: #dc2626; }
+        .vendor-type-consultant { background-color: #9333ea; }
+        .vendor-type-other { background-color: #6b7280; }
+        
+        .performance-stars {
+            color: #fbbf24;
+            font-size: 0.875rem;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            transition: transform 0.2s ease;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stats-number.primary { color: #1e3a8a; }
+        .stats-number.success { color: #059669; }
+        .stats-number.warning { color: #d97706; }
+        .stats-number.info { color: #0891b2; }
+        
+        .btn-vendor-action {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+        
+        .btn-vendor-primary {
+            background-color: #1e3a8a;
+            color: white;
+        }
+        
+        .btn-vendor-primary:hover {
+            background-color: #1e40af;
+            color: white;
+        }
+        
+        .btn-vendor-secondary {
+            background-color: #f8fafc;
+            color: #374151;
+            border-color: #d1d5db;
+        }
+        
+        .btn-vendor-secondary:hover {
+            background-color: #f3f4f6;
+            color: #111827;
+        }
+        
+        .btn-vendor-success {
+            background-color: #059669;
+            color: white;
+        }
+        
+        .btn-vendor-success:hover {
+            background-color: #047857;
+            color: white;
+        }
+        
+        .btn-vendor-danger {
+            background-color: #dc2626;
+            color: white;
+        }
+        
+        .btn-vendor-danger:hover {
+            background-color: #b91c1c;
+            color: white;
+        }
+        
+        .search-box {
+            position: relative;
+        }
+        
+        .search-box .form-control {
+            padding-left: 2.75rem;
+            border-radius: 12px;
+            border: 2px solid #e5e7eb;
+            transition: border-color 0.2s ease;
+        }
+        
+        .search-box .form-control:focus {
+            border-color: #1e3a8a;
+            box-shadow: 0 0 0 0.2rem rgba(30, 58, 138, 0.25);
+        }
+        
+        .search-box .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            pointer-events: none;
+        }
+        
+        .filter-dropdown {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            transition: border-color 0.2s ease;
+        }
+        
+        .filter-dropdown:focus {
+            border-color: #1e3a8a;
+            box-shadow: 0 0 0 0.2rem rgba(30, 58, 138, 0.25);
+        }
+        
+        .breadcrumb-vendor {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .breadcrumb-vendor .breadcrumb-item a {
+            color: #1e3a8a;
+            text-decoration: none;
+        }
+        
+        .breadcrumb-vendor .breadcrumb-item a:hover {
+            text-decoration: underline;
+        }
+        
+        .breadcrumb-vendor .breadcrumb-item.active {
+            color: #6b7280;
+        }
+        
+        @media (max-width: 768px) {
+            .vendor-header {
+                padding: 1.5rem 0;
+                margin-bottom: 1.5rem;
+            }
+            
+            .vendor-nav .nav-link {
+                padding: 0.75rem 1rem;
+                font-size: 0.875rem;
+            }
+            
+            .stats-number {
+                font-size: 1.5rem;
+            }
+            
+            .vendor-card {
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+    {% block vendor_extra_css %}{% endblock %}
+{% endblock %}
+
+{% block content %}
+    <!-- Vendor Header -->
+    <div class="vendor-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="h2 mb-2">
+                        <i class="bi bi-building me-3"></i>
+                        {% block vendor_header_title %}Vendor Management{% endblock %}
+                    </h1>
+                    <p class="mb-0 opacity-90">
+                        {% block vendor_header_subtitle %}Manage IT vendors and service providers for Bangladesh Parliament Secretariat{% endblock %}
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    {% block vendor_header_actions %}
+                        {% if perms.vendors.add_vendor %}
+                            <a href="{% url 'vendors:create' %}" class="btn btn-light btn-lg">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                Add New Vendor
+                            </a>
+                        {% endif %}
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vendor Navigation -->
+    <div class="container">
+        {% block vendor_breadcrumbs %}
+            <nav aria-label="breadcrumb" class="breadcrumb-vendor">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'home' %}">
+                            <i class="bi bi-house-door me-1"></i>
+                            Home
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'vendors:list' %}">Vendors</a>
+                    </li>
+                    {% block vendor_breadcrumb_items %}{% endblock %}
+                </ol>
+            </nav>
+        {% endblock %}
+
+        {% block vendor_navigation %}
+            <div class="vendor-nav">
+                <ul class="nav nav-tabs border-0" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'list' %}active{% endif %}" 
+                           href="{% url 'vendors:list' %}">
+                            <i class="bi bi-list me-2"></i>
+                            All Vendors
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'active' %}active{% endif %}" 
+                           href="{% url 'vendors:active' %}">
+                            <i class="bi bi-check-circle me-2"></i>
+                            Active
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'preferred' %}active{% endif %}" 
+                           href="{% url 'vendors:preferred' %}">
+                            <i class="bi bi-star-fill me-2"></i>
+                            Preferred
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'suppliers' %}active{% endif %}" 
+                           href="{% url 'vendors:suppliers' %}">
+                            <i class="bi bi-shop me-2"></i>
+                            Suppliers
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'service_providers' %}active{% endif %}" 
+                           href="{% url 'vendors:service_providers' %}">
+                            <i class="bi bi-tools me-2"></i>
+                            Services
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'search' %}active{% endif %}" 
+                           href="{% url 'vendors:search' %}">
+                            <i class="bi bi-search me-2"></i>
+                            Search
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}" 
+                           href="{% url 'vendors:reports' %}">
+                            <i class="bi bi-graph-up me-2"></i>
+                            Reports
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        {% endblock %}
+
+        <!-- Main Content Area -->
+        <div class="row">
+            <div class="col-12">
+                {% block vendor_content %}
+                    <!-- Content will be inserted here by child templates -->
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // Vendor management JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert-dismissible');
+                alerts.forEach(alert => {
+                    if (alert.classList.contains('show')) {
+                        bootstrap.Alert.getOrCreateInstance(alert).close();
+                    }
+                });
+            }, 5000);
+            
+            // Confirm delete actions
+            document.querySelectorAll('.confirm-delete').forEach(function(element) {
+                element.addEventListener('click', function(e) {
+                    if (!confirm('Are you sure you want to delete this vendor? This action cannot be undone.')) {
+                        e.preventDefault();
+                    }
+                });
+            });
+            
+            // Real-time search functionality
+            const searchInputs = document.querySelectorAll('.search-input');
+            searchInputs.forEach(function(input) {
+                let timeout;
+                input.addEventListener('keyup', function() {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(function() {
+                        // Trigger search after 500ms of no typing
+                        if (input.value.length >= 2 || input.value.length === 0) {
+                            input.closest('form').submit();
+                        }
+                    }, 500);
+                });
+            });
+        });
+        
+        // Vendor status functions
+        function toggleVendorStatus(vendorId, action) {
+            const url = `/vendors/${vendorId}/${action}/`;
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Error updating vendor status');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating vendor status');
+            });
+        }
+        
+        // Export functions
+        function exportVendors(format) {
+            const currentUrl = new URL(window.location.href);
+            const params = currentUrl.searchParams.toString();
+            const exportUrl = `/vendors/export/${format}/?${params}`;
+            window.open(exportUrl, '_blank');
+        }
+    </script>
+    {% block vendor_extra_js %}{% endblock %}
+{% endblock %}

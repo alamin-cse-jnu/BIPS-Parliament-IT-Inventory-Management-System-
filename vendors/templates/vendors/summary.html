@@ -1,0 +1,550 @@
+{% extends 'vendors/base_vendor.html' %}
+{% load static %}
+
+{% block vendor_title %}Vendor Summary{% endblock %}
+
+{% block vendor_header_title %}
+    <i class="bi bi-graph-up me-3"></i>Vendor Summary
+{% endblock %}
+
+{% block vendor_header_subtitle %}
+    Statistical overview and performance analytics for Bangladesh Parliament Secretariat vendor management
+{% endblock %}
+
+{% block vendor_breadcrumb_items %}
+    <li class="breadcrumb-item">
+        <a href="{% url 'vendors:list' %}">
+            <i class="bi bi-building me-1"></i>
+            Vendors
+        </a>
+    </li>
+    <li class="breadcrumb-item active">Summary</li>
+{% endblock %}
+
+{% block vendor_content %}
+    <!-- Include Vendor Stats Component -->
+    {% include 'vendors/_vendor_stats.html' %}
+
+    <!-- Monthly Trends and Analytics -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card vendor-card">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-bar-chart me-2"></i>
+                            Monthly Vendor Registration Trends
+                        </h5>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <input type="radio" class="btn-check" name="timeRange" id="months6" checked>
+                            <label class="btn btn-outline-secondary" for="months6">6M</label>
+                            
+                            <input type="radio" class="btn-check" name="timeRange" id="months12">
+                            <label class="btn btn-outline-secondary" for="months12">12M</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if monthly_stats %}
+                        <div class="chart-container">
+                            <canvas id="monthlyChart" width="400" height="200"></canvas>
+                        </div>
+                        
+                        <!-- Monthly Stats Grid -->
+                        <div class="row g-2 mt-3">
+                            {% for stat in monthly_stats %}
+                                <div class="col-2">
+                                    <div class="monthly-stat-item text-center">
+                                        <div class="monthly-count">{{ stat.count }}</div>
+                                        <div class="monthly-label">{{ stat.month|date:"M" }}</div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-bar-chart text-muted mb-3" style="font-size: 3rem;"></i>
+                            <p class="text-muted">No monthly statistics available yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card vendor-card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-trophy me-2"></i>
+                        Top Performing Vendors
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if top_vendors %}
+                        <div class="top-vendors-list">
+                            {% for vendor in top_vendors|slice:":5" %}
+                                <div class="top-vendor-item mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="ranking-badge me-3">
+                                            {{ forloop.counter }}
+                                        </div>
+                                        <div class="vendor-type-icon vendor-type-{{ vendor.vendor_type|lower }} me-3">
+                                            {% if vendor.vendor_type == 'SUPPLIER' %}
+                                                <i class="bi bi-box-seam"></i>
+                                            {% elif vendor.vendor_type == 'MANUFACTURER' %}
+                                                <i class="bi bi-gear-fill"></i>
+                                            {% elif vendor.vendor_type == 'MAINTENANCE' %}
+                                                <i class="bi bi-wrench"></i>
+                                            {% elif vendor.vendor_type == 'SUPPORT' %}
+                                                <i class="bi bi-headset"></i>
+                                            {% elif vendor.vendor_type == 'INSTALLATION' %}
+                                                <i class="bi bi-hammer"></i>
+                                            {% elif vendor.vendor_type == 'CONSULTANT' %}
+                                                <i class="bi bi-person-badge"></i>
+                                            {% else %}
+                                                <i class="bi bi-building"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="vendor-name">
+                                                <a href="{% url 'vendors:detail' vendor.pk %}" class="text-decoration-none">
+                                                    {{ vendor.name|truncatechars:25 }}
+                                                </a>
+                                            </div>
+                                            <div class="vendor-rating">
+                                                {% for i in "12345" %}
+                                                    <i class="bi bi-star{% if i|add:0 <= vendor.performance_rating %}-fill{% endif %} text-warning"></i>
+                                                {% endfor %}
+                                                <span class="rating-value ms-2">{{ vendor.performance_rating }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <a href="{% url 'vendors:list' %}?sort=rating" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-eye me-1"></i>View All Rated Vendors
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-star text-muted mb-3" style="font-size: 2rem;"></i>
+                            <p class="text-muted small">No rated vendors yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity and Quick Insights -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card vendor-card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>
+                        Recent Vendor Activity
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if recent_vendors %}
+                        <div class="recent-vendors-list">
+                            {% for vendor in recent_vendors|slice:":8" %}
+                                <div class="recent-vendor-item d-flex align-items-center mb-3">
+                                    <div class="vendor-type-icon vendor-type-{{ vendor.vendor_type|lower }} me-3">
+                                        {% if vendor.vendor_type == 'SUPPLIER' %}
+                                            <i class="bi bi-box-seam"></i>
+                                        {% elif vendor.vendor_type == 'MANUFACTURER' %}
+                                            <i class="bi bi-gear-fill"></i>
+                                        {% elif vendor.vendor_type == 'MAINTENANCE' %}
+                                            <i class="bi bi-wrench"></i>
+                                        {% elif vendor.vendor_type == 'SUPPORT' %}
+                                            <i class="bi bi-headset"></i>
+                                        {% elif vendor.vendor_type == 'INSTALLATION' %}
+                                            <i class="bi bi-hammer"></i>
+                                        {% elif vendor.vendor_type == 'CONSULTANT' %}
+                                            <i class="bi bi-person-badge"></i>
+                                        {% else %}
+                                            <i class="bi bi-building"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <div class="vendor-name">
+                                                    <a href="{% url 'vendors:detail' vendor.pk %}" class="text-decoration-none">
+                                                        {{ vendor.name|truncatechars:30 }}
+                                                    </a>
+                                                    {% if vendor.is_preferred %}
+                                                        <i class="bi bi-star-fill text-warning ms-1"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="vendor-meta small text-muted">
+                                                    {{ vendor.vendor_code }} • {{ vendor.get_vendor_type_display }}
+                                                </div>
+                                            </div>
+                                            <div class="text-end">
+                                                <div class="created-date small text-muted">
+                                                    {{ vendor.created_at|timesince }} ago
+                                                </div>
+                                                {% if vendor.is_active %}
+                                                    <span class="badge bg-success">Active</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Inactive</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <a href="{% url 'vendors:list' %}?sort=created" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-clock me-1"></i>View All Recent
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-clock text-muted mb-3" style="font-size: 2rem;"></i>
+                            <p class="text-muted small">No recent vendor activity.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card vendor-card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        Quick Insights
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="insights-list">
+                        <div class="insight-item mb-3">
+                            <div class="d-flex align-items-start">
+                                <div class="insight-icon success me-3">
+                                    <i class="bi bi-trending-up"></i>
+                                </div>
+                                <div>
+                                    <div class="insight-title">Vendor Growth</div>
+                                    <div class="insight-text small text-muted">
+                                        {% if monthly_stats %}
+                                            {{ monthly_stats|last|default:"0" }} new vendors added this month
+                                        {% else %}
+                                            No new vendors this month
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="insight-item mb-3">
+                            <div class="d-flex align-items-start">
+                                <div class="insight-icon warning me-3">
+                                    <i class="bi bi-star"></i>
+                                </div>
+                                <div>
+                                    <div class="insight-title">Preferred Status</div>
+                                    <div class="insight-text small text-muted">
+                                        {{ preferred_vendors|default:0 }} vendors have preferred status
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="insight-item mb-3">
+                            <div class="d-flex align-items-start">
+                                <div class="insight-icon info me-3">
+                                    <i class="bi bi-graph-up"></i>
+                                </div>
+                                <div>
+                                    <div class="insight-title">Performance Rating</div>
+                                    <div class="insight-text small text-muted">
+                                        {{ rated_vendors|default:0 }} vendors have performance ratings
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="insight-item mb-3">
+                            <div class="d-flex align-items-start">
+                                <div class="insight-icon primary me-3">
+                                    <i class="bi bi-geo-alt"></i>
+                                </div>
+                                <div>
+                                    <div class="insight-title">Location Distribution</div>
+                                    <div class="insight-text small text-muted">
+                                        {{ dhaka_vendors|default:0 }} vendors based in Dhaka
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="insight-item">
+                            <div class="d-flex align-items-start">
+                                <div class="insight-icon secondary me-3">
+                                    <i class="bi bi-tools"></i>
+                                </div>
+                                <div>
+                                    <div class="insight-title">Service Diversity</div>
+                                    <div class="insight-text small text-muted">
+                                        6 different service categories available
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export and Action Panel -->
+    <div class="card vendor-card">
+        <div class="card-header bg-light">
+            <h6 class="mb-0">
+                <i class="bi bi-download me-2"></i>
+                Export Summary Data
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="export-option text-center">
+                        <div class="export-icon mb-3">
+                            <i class="bi bi-file-earmark-spreadsheet text-success"></i>
+                        </div>
+                        <div class="export-title mb-2">Full Report</div>
+                        <a href="{% url 'vendors:export_csv' %}" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-download me-1"></i>Export CSV
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="export-option text-center">
+                        <div class="export-icon mb-3">
+                            <i class="bi bi-person-lines-fill text-info"></i>
+                        </div>
+                        <div class="export-title mb-2">Contact List</div>
+                        <a href="{% url 'vendors:export_contacts' %}" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-download me-1"></i>Export Contacts
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="export-option text-center">
+                        <div class="export-icon mb-3">
+                            <i class="bi bi-star text-warning"></i>
+                        </div>
+                        <div class="export-title mb-2">Top Performers</div>
+                        <a href="{% url 'vendors:export_csv' %}?preferred_only=1" class="btn btn-outline-warning btn-sm">
+                            <i class="bi bi-download me-1"></i>Export Preferred
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="export-option text-center">
+                        <div class="export-icon mb-3">
+                            <i class="bi bi-file-pdf text-danger"></i>
+                        </div>
+                        <div class="export-title mb-2">PDF Summary</div>
+                        <a href="{% url 'vendors:reports' %}" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-file-pdf me-1"></i>View Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .monthly-stat-item {
+        padding: 0.75rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    .monthly-stat-item:hover {
+        border-color: #1e3a8a;
+        background-color: #f8fafc;
+    }
+    
+    .monthly-count {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e3a8a;
+    }
+    
+    .monthly-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        font-weight: 500;
+    }
+    
+    .ranking-badge {
+        width: 24px;
+        height: 24px;
+        background: linear-gradient(135deg, #1e3a8a, #1e40af);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+    
+    .vendor-name {
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+    }
+    
+    .vendor-rating {
+        font-size: 0.875rem;
+    }
+    
+    .rating-value {
+        font-size: 0.75rem;
+        color: #6b7280;
+        font-weight: 600;
+    }
+    
+    .vendor-meta {
+        color: #9ca3af;
+    }
+    
+    .created-date {
+        color: #9ca3af;
+        font-size: 0.75rem;
+    }
+    
+    .insight-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        color: white;
+        flex-shrink: 0;
+    }
+    
+    .insight-icon.success { background-color: #059669; }
+    .insight-icon.warning { background-color: #d97706; }
+    .insight-icon.info { background-color: #0891b2; }
+    .insight-icon.primary { background-color: #1e3a8a; }
+    .insight-icon.secondary { background-color: #6b7280; }
+    
+    .insight-title {
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+    }
+    
+    .export-option {
+        padding: 1.5rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        height: 100%;
+    }
+    
+    .export-option:hover {
+        border-color: #d1d5db;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .export-icon {
+        font-size: 2rem;
+    }
+    
+    .export-title {
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 200px;
+        margin-bottom: 1rem;
+    }
+    
+    .vendor-type-icon {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        color: white;
+        flex-shrink: 0;
+    }
+    
+    .vendor-type-supplier { background-color: #059669; }
+    .vendor-type-manufacturer { background-color: #7c3aed; }
+    .vendor-type-maintenance { background-color: #ea580c; }
+    .vendor-type-support { background-color: #0891b2; }
+    .vendor-type-installation { background-color: #dc2626; }
+    .vendor-type-consultant { background-color: #9333ea; }
+    .vendor-type-other { background-color: #6b7280; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if monthly_stats %}
+    // Monthly Chart
+    const ctx = document.getElementById('monthlyChart').getContext('2d');
+    const monthlyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [{% for stat in monthly_stats %}'{{ stat.month }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'New Vendors',
+                data: [{% for stat in monthly_stats %}{{ stat.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                borderColor: '#1e3a8a',
+                backgroundColor: 'rgba(30, 58, 138, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    {% endif %}
+});
+</script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}

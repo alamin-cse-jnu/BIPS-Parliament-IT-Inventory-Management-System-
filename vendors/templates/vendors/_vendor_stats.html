@@ -1,0 +1,399 @@
+{% load static %}
+
+<!-- Vendor Statistics Component -->
+<div class="vendor-stats-component">
+    <!-- Main Statistics Row -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon primary mb-3">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div class="stats-number primary">{{ total_vendors|default:0 }}</div>
+                <div class="text-muted">Total Vendors</div>
+                <div class="stats-trend mt-2">
+                    <small class="text-success">
+                        <i class="bi bi-arrow-up"></i>
+                        +{{ new_vendors_this_month|default:0 }} this month
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon success mb-3">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stats-number success">{{ active_vendors|default:0 }}</div>
+                <div class="text-muted">Active Vendors</div>
+                <div class="stats-trend mt-2">
+                    <small class="text-muted">
+                        {{ active_percentage|default:0|floatformat:1 }}% of total
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon warning mb-3">
+                    <i class="bi bi-star-fill"></i>
+                </div>
+                <div class="stats-number warning">{{ preferred_vendors|default:0 }}</div>
+                <div class="text-muted">Preferred Vendors</div>
+                <div class="stats-trend mt-2">
+                    <small class="text-muted">
+                        {{ preferred_percentage|default:0|floatformat:1 }}% of active
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon info mb-3">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+                <div class="stats-number info">
+                    {{ average_rating|default:0|floatformat:1 }}
+                </div>
+                <div class="text-muted">Average Rating</div>
+                <div class="stats-trend mt-2">
+                    <small class="text-muted">
+                        {{ rated_vendors|default:0 }} vendor{{ rated_vendors|pluralize }} rated
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Statistics Row -->
+    <div class="row mb-4">
+        <div class="col-lg-2 col-md-4 col-6 mb-3">
+            <div class="stats-card compact">
+                <div class="vendor-type-icon vendor-type-supplier mx-auto mb-2">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+                <div class="stats-number-sm">{{ suppliers|default:0 }}</div>
+                <div class="text-muted small">Suppliers</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-6 mb-3">
+            <div class="stats-card compact">
+                <div class="vendor-type-icon vendor-type-manufacturer mx-auto mb-2">
+                    <i class="bi bi-gear-fill"></i>
+                </div>
+                <div class="stats-number-sm">{{ manufacturers|default:0 }}</div>
+                <div class="text-muted small">Manufacturers</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-6 mb-3">
+            <div class="stats-card compact">
+                <div class="vendor-type-icon vendor-type-maintenance mx-auto mb-2">
+                    <i class="bi bi-wrench"></i>
+                </div>
+                <div class="stats-number-sm">{{ maintenance_providers|default:0 }}</div>
+                <div class="text-muted small">Maintenance</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-6 mb-3">
+            <div class="stats-card compact">
+                <div class="vendor-type-icon vendor-type-support mx-auto mb-2">
+                    <i class="bi bi-headset"></i>
+                </div>
+                <div class="stats-number-sm">{{ support_providers|default:0 }}</div>
+                <div class="text-muted small">Support</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-6 mb-3">
+            <div class="stats-card compact">
+                <div class="vendor-type-icon vendor-type-installation mx-auto mb-2">
+                    <i class="bi bi-hammer"></i>
+                </div>
+                <div class="stats-number-sm">{{ installation_providers|default:0 }}</div>
+                <div class="text-muted small">Installation</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-6 mb-3">
+            <div class="stats-card compact">
+                <div class="vendor-type-icon vendor-type-consultant mx-auto mb-2">
+                    <i class="bi bi-person-badge"></i>
+                </div>
+                <div class="stats-number-sm">{{ consultants|default:0 }}</div>
+                <div class="text-muted small">Consultants</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance and Location Stats -->
+    <div class="row mb-4">
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon-sm success me-3">
+                        <i class="bi bi-award"></i>
+                    </div>
+                    <div>
+                        <div class="stats-number-md success">{{ top_rated_count|default:0 }}</div>
+                        <div class="text-muted small">Top Rated (4+ stars)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon-sm info me-3">
+                        <i class="bi bi-geo-alt"></i>
+                    </div>
+                    <div>
+                        <div class="stats-number-md info">{{ dhaka_vendors|default:0 }}</div>
+                        <div class="text-muted small">Dhaka Based</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon-sm primary me-3">
+                        <i class="bi bi-globe"></i>
+                    </div>
+                    <div>
+                        <div class="stats-number-md primary">{{ international_vendors|default:0 }}</div>
+                        <div class="text-muted small">International</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Distribution -->
+    <div class="row">
+        <div class="col-lg-8 col-md-12 mb-3">
+            <div class="card vendor-card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-pie-chart me-2"></i>
+                        Vendor Status Distribution
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-sm-3">
+                            <div class="text-center">
+                                <div class="status-circle status-active mb-2"></div>
+                                <div class="fw-bold text-success">{{ active_vendors|default:0 }}</div>
+                                <div class="small text-muted">Active</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="text-center">
+                                <div class="status-circle status-inactive mb-2"></div>
+                                <div class="fw-bold text-muted">{{ inactive_vendors|default:0 }}</div>
+                                <div class="small text-muted">Inactive</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="text-center">
+                                <div class="status-circle status-suspended mb-2"></div>
+                                <div class="fw-bold text-warning">{{ suspended_vendors|default:0 }}</div>
+                                <div class="small text-muted">Suspended</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="text-center">
+                                <div class="status-circle status-blacklisted mb-2"></div>
+                                <div class="fw-bold text-danger">{{ blacklisted_vendors|default:0 }}</div>
+                                <div class="small text-muted">Blacklisted</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-12 mb-3">
+            <div class="card vendor-card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-calendar-week me-2"></i>
+                        Recent Activity
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="activity-item mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="activity-icon success me-3">
+                                <i class="bi bi-plus-circle"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">{{ new_vendors_this_week|default:0 }}</div>
+                                <div class="small text-muted">New vendors this week</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="activity-icon warning me-3">
+                                <i class="bi bi-star"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">{{ new_preferred_this_month|default:0 }}</div>
+                                <div class="small text-muted">Marked preferred this month</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="d-flex align-items-center">
+                            <div class="activity-icon info me-3">
+                                <i class="bi bi-pencil"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">{{ updated_vendors_this_week|default:0 }}</div>
+                                <div class="small text-muted">Updated this week</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .vendor-stats-component {
+        margin-bottom: 2rem;
+    }
+    
+    .stats-card.compact {
+        padding: 1rem;
+        min-height: auto;
+    }
+    
+    .stats-number-sm {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--parliament-dark, #1e3a8a);
+        margin-bottom: 0.25rem;
+    }
+    
+    .stats-number-md {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+    
+    .stats-number-md.success { color: #059669; }
+    .stats-number-md.info { color: #0891b2; }
+    .stats-number-md.primary { color: #1e3a8a; }
+    
+    .stats-icon-sm {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        color: white;
+    }
+    
+    .stats-icon-sm.success { background-color: #059669; }
+    .stats-icon-sm.info { background-color: #0891b2; }
+    .stats-icon-sm.primary { background-color: #1e3a8a; }
+    
+    .stats-trend {
+        padding-top: 0.5rem;
+        border-top: 1px solid #e5e7eb;
+    }
+    
+    .status-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        margin: 0 auto;
+        border: 3px solid;
+    }
+    
+    .status-circle.status-active {
+        background-color: #dcfce7;
+        border-color: #059669;
+    }
+    
+    .status-circle.status-inactive {
+        background-color: #f3f4f6;
+        border-color: #6b7280;
+    }
+    
+    .status-circle.status-suspended {
+        background-color: #fef3c7;
+        border-color: #d97706;
+    }
+    
+    .status-circle.status-blacklisted {
+        background-color: #fecaca;
+        border-color: #dc2626;
+    }
+    
+    .activity-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        color: white;
+    }
+    
+    .activity-icon.success { background-color: #059669; }
+    .activity-icon.warning { background-color: #d97706; }
+    .activity-icon.info { background-color: #0891b2; }
+    
+    .vendor-type-icon {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        color: white;
+    }
+    
+    .vendor-type-supplier { background-color: #059669; }
+    .vendor-type-manufacturer { background-color: #7c3aed; }
+    .vendor-type-maintenance { background-color: #ea580c; }
+    .vendor-type-support { background-color: #0891b2; }
+    .vendor-type-installation { background-color: #dc2626; }
+    .vendor-type-consultant { background-color: #9333ea; }
+    
+    @media (max-width: 767.98px) {
+        .stats-card.compact {
+            margin-bottom: 0.75rem;
+        }
+        
+        .stats-number {
+            font-size: 1.5rem;
+        }
+        
+        .stats-number-sm {
+            font-size: 1rem;
+        }
+        
+        .stats-number-md {
+            font-size: 1.25rem;
+        }
+    }
+</style>

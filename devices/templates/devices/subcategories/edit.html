@@ -1,0 +1,658 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Subcategory - {{ subcategory.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.gradient-bg {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.9) 100%);
+    min-height: 100vh;
+}
+
+.form-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.form-header {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+    border-radius: 16px 16px 0 0;
+    padding: 1.5rem;
+}
+
+.form-control, .form-select {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    background: rgba(255, 255, 255, 1);
+    border-color: #6366f1;
+    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.1);
+}
+
+.form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.btn-outline-secondary {
+    border: 1px solid #6b7280;
+    color: #6b7280;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-secondary:hover {
+    background: #6b7280;
+    border-color: #6b7280;
+    color: white;
+}
+
+.preview-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: sticky;
+    top: 20px;
+}
+
+.preview-card:hover {
+    border-color: rgba(99, 102, 241, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.1);
+}
+
+.category-icon {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.help-text {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+.field-group {
+    background: rgba(249, 250, 251, 0.8);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.field-group-title {
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.code-preview {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: #4f46e5;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.current-values {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(255, 255, 255, 0.9) 100%);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.current-item {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.current-item:last-child {
+    margin-bottom: 0;
+}
+
+.change-highlight {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(255, 255, 255, 0.9) 100%);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.breadcrumb-item a {
+    color: #6366f1;
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .form-header {
+        padding: 1rem;
+    }
+    
+    .preview-card {
+        position: static;
+        margin-top: 1.5rem;
+        padding: 1rem;
+    }
+    
+    .field-group {
+        padding: 1rem;
+    }
+    
+    .category-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gradient-bg">
+    <div class="container py-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'dashboard' %}">
+                        <i class="bi bi-house me-1"></i>Dashboard
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'devices:category_list' %}">Device Categories</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'devices:subcategory_list' %}">Subcategories</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'devices:subcategory_detail' subcategory.pk %}">{{ subcategory.name }}</a>
+                </li>
+                <li class="breadcrumb-item active">Edit</li>
+            </ol>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h2 class="h3 mb-1">Edit Subcategory</h2>
+                        <p class="text-muted mb-0">Update subcategory information and settings</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Edit Form -->
+            <div class="col-lg-8">
+                <div class="form-card">
+                    <div class="form-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-pencil-square me-2"></i>
+                            Update Subcategory Information
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <!-- Current Values Display -->
+                        <div class="current-values">
+                            <h6 class="text-success mb-3">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Current Values
+                            </h6>
+                            
+                            <div class="current-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Category:</strong> {{ subcategory.category.name }}
+                                    </div>
+                                    <span class="badge bg-primary">{{ subcategory.category.code }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="current-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Name:</strong> {{ subcategory.name }}
+                                    </div>
+                                    <code class="bg-light px-2 py-1 rounded">{{ subcategory.code }}</code>
+                                </div>
+                            </div>
+                            
+                            <div class="current-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Full Code:</strong> {{ subcategory.full_code }}
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <span class="badge bg-secondary">Sort: {{ subcategory.sort_order }}</span>
+                                        {% if subcategory.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% if subcategory.description %}
+                            <div class="current-item">
+                                <strong>Description:</strong>
+                                <div class="mt-1 text-muted">{{ subcategory.description }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <form method="post" novalidate>
+                            {% csrf_token %}
+                            
+                            <!-- Basic Information -->
+                            <div class="field-group">
+                                <div class="field-group-title">
+                                    <i class="bi bi-info-circle text-primary"></i>
+                                    Basic Information
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-12 mb-3">
+                                        <label for="{{ form.category.id_for_label }}" class="form-label">
+                                            Parent Category <span class="text-danger">*</span>
+                                        </label>
+                                        {{ form.category }}
+                                        {% if form.category.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.category.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="help-text">
+                                            Select the main category this subcategory belongs to
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="mb-3">
+                                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                                Subcategory Name <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.name }}
+                                            {% if form.name.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>
+                                            {% endif %}
+                                            <div class="help-text">
+                                                Enter a descriptive name for this subcategory
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.code.id_for_label }}" class="form-label">
+                                                Subcategory Code <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.code }}
+                                            {% if form.code.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.code.errors.0 }}</div>
+                                            {% endif %}
+                                            <div class="help-text">
+                                                Short code for identification
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">
+                                        Description
+                                    </label>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.description.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="help-text">
+                                        Detailed description of this subcategory and its purpose
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Settings -->
+                            <div class="field-group">
+                                <div class="field-group-title">
+                                    <i class="bi bi-gear text-primary"></i>
+                                    Settings
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.sort_order.id_for_label }}" class="form-label">
+                                                Sort Order
+                                            </label>
+                                            {{ form.sort_order }}
+                                            {% if form.sort_order.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.sort_order.errors.0 }}</div>
+                                            {% endif %}
+                                            <div class="help-text">
+                                                Display order within category (0-999)
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label d-block">Status</label>
+                                            <div class="form-check form-switch">
+                                                {{ form.is_active }}
+                                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                                    Active Subcategory
+                                                </label>
+                                            </div>
+                                            {% if form.is_active.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.is_active.errors.0 }}</div>
+                                            {% endif %}
+                                            <div class="help-text">
+                                                Enable to make this subcategory available for use
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Impact Warning -->
+                            {% if subcategory.get_devices_count > 0 %}
+                            <div class="change-highlight">
+                                <div class="d-flex align-items-start gap-3">
+                                    <div class="text-warning">
+                                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="text-warning fw-bold mb-2">Important Note</h6>
+                                        <p class="mb-0 small">
+                                            This subcategory contains <strong>{{ subcategory.get_devices_count }} device(s)</strong>. 
+                                            Changes to the category or code will affect all associated devices and their identification.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Form Actions -->
+                            <div class="d-flex gap-2 justify-content-end">
+                                <a href="{% url 'devices:subcategory_detail' subcategory.pk %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle me-1"></i>
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    Update Subcategory
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview and Help -->
+            <div class="col-lg-4">
+                <!-- Live Preview -->
+                <div class="preview-card">
+                    <div class="text-center">
+                        <div class="category-icon mx-auto" id="iconPreview">
+                            <i class="{{ subcategory.category.icon_class|default:'bi-laptop' }}" id="previewIcon"></i>
+                        </div>
+                        <h6 class="mb-2" id="previewName">{{ subcategory.name }}</h6>
+                        <div class="code-preview" id="previewCode">{{ subcategory.full_code }}</div>
+                        <p class="text-muted small mb-3" id="previewDescription">
+                            {{ subcategory.description|default:"Subcategory description will appear here" }}
+                        </p>
+                        
+                        <!-- Category Badge -->
+                        <div class="mb-3">
+                            <span class="badge bg-primary" id="previewCategoryBadge">
+                                {{ subcategory.category.name }}
+                            </span>
+                        </div>
+                        
+                        <!-- Status Preview -->
+                        <div class="d-flex justify-content-center gap-2">
+                            <span class="badge" id="statusBadge">
+                                {% if subcategory.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                            <span class="badge bg-secondary">Sort: <span id="sortPreview">{{ subcategory.sort_order }}</span></span>
+                        </div>
+                        
+                        <!-- Current Stats -->
+                        <div class="mt-3 pt-3 border-top">
+                            <div class="row g-2 text-center">
+                                <div class="col-6">
+                                    <div class="bg-light rounded p-2">
+                                        <div class="fw-bold text-primary">{{ subcategory.get_devices_count }}</div>
+                                        <small class="text-muted">Devices</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="bg-light rounded p-2">
+                                        <div class="fw-bold text-success">{{ subcategory.get_available_devices_count }}</div>
+                                        <small class="text-muted">Available</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="mt-4">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'devices:subcategory_detail' subcategory.pk %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye me-1"></i>
+                            View Details
+                        </a>
+                        <a href="{% url 'devices:create' %}?subcategory={{ subcategory.pk }}" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-plus-circle me-1"></i>
+                            Add Device
+                        </a>
+                        <a href="{% url 'devices:list' %}?subcategory={{ subcategory.pk }}" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-list me-1"></i>
+                            View All Devices
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form elements
+    const categoryField = document.getElementById('{{ form.category.id_for_label }}');
+    const nameField = document.getElementById('{{ form.name.id_for_label }}');
+    const codeField = document.getElementById('{{ form.code.id_for_label }}');
+    const descriptionField = document.getElementById('{{ form.description.id_for_label }}');
+    const sortOrderField = document.getElementById('{{ form.sort_order.id_for_label }}');
+    const isActiveField = document.getElementById('{{ form.is_active.id_for_label }}');
+    
+    // Preview elements
+    const previewName = document.getElementById('previewName');
+    const previewCode = document.getElementById('previewCode');
+    const previewDescription = document.getElementById('previewDescription');
+    const previewIcon = document.getElementById('previewIcon');
+    const previewCategoryBadge = document.getElementById('previewCategoryBadge');
+    const statusBadge = document.getElementById('statusBadge');
+    const sortPreview = document.getElementById('sortPreview');
+    
+    // Category data for icons
+    const categoryData = {
+        {% for category in form.category.queryset %}
+        '{{ category.id }}': {
+            'name': '{{ category.name|escapejs }}',
+            'code': '{{ category.code|escapejs }}',
+            'icon': '{{ category.icon_class|default:"bi-laptop"|escapejs }}'
+        },
+        {% endfor %}
+    };
+    
+    // Update preview functions
+    function updateCategoryPreview() {
+        const categoryId = categoryField.value;
+        if (categoryId && categoryData[categoryId]) {
+            const category = categoryData[categoryId];
+            previewCategoryBadge.textContent = category.name;
+            previewIcon.className = category.icon;
+            updateCodePreview();
+        }
+    }
+    
+    function updateNamePreview() {
+        previewName.textContent = nameField.value || '{{ subcategory.name|escapejs }}';
+    }
+    
+    function updateCodePreview() {
+        const categoryId = categoryField.value;
+        const subcategoryCode = codeField.value;
+        
+        if (categoryId && categoryData[categoryId] && subcategoryCode) {
+            const categoryCode = categoryData[categoryId].code;
+            previewCode.textContent = `${categoryCode}-${subcategoryCode.toUpperCase()}`;
+        } else if (subcategoryCode) {
+            previewCode.textContent = `CATEGORY-${subcategoryCode.toUpperCase()}`;
+        } else {
+            previewCode.textContent = '{{ subcategory.full_code|escapejs }}';
+        }
+    }
+    
+    function updateDescriptionPreview() {
+        previewDescription.textContent = descriptionField.value || '{{ subcategory.description|default:"Subcategory description will appear here"|escapejs }}';
+    }
+    
+    function updateSortPreview() {
+        sortPreview.textContent = sortOrderField.value || '{{ subcategory.sort_order }}';
+    }
+    
+    function updateStatusPreview() {
+        if (isActiveField.checked) {
+            statusBadge.className = 'badge bg-success';
+            statusBadge.textContent = 'Active';
+        } else {
+            statusBadge.className = 'badge bg-secondary';
+            statusBadge.textContent = 'Inactive';
+        }
+    }
+    
+    // Event listeners
+    categoryField?.addEventListener('change', updateCategoryPreview);
+    nameField?.addEventListener('input', updateNamePreview);
+    codeField?.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+        updateCodePreview();
+    });
+    descriptionField?.addEventListener('input', updateDescriptionPreview);
+    sortOrderField?.addEventListener('input', updateSortPreview);
+    isActiveField?.addEventListener('change', updateStatusPreview);
+    
+    // Form validation feedback
+    const form = document.querySelector('form');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    
+    form?.addEventListener('submit', function() {
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Updating...';
+        submitBtn.disabled = true;
+    });
+    
+    // Initialize status badge
+    updateStatusPreview();
+    
+    // Highlight changes
+    const originalValues = {
+        category: '{{ subcategory.category.id }}',
+        name: '{{ subcategory.name|escapejs }}',
+        code: '{{ subcategory.code|escapejs }}',
+        description: '{{ subcategory.description|escapejs }}',
+        sort_order: '{{ subcategory.sort_order }}',
+        is_active: {{ subcategory.is_active|yesno:"true,false" }}
+    };
+    
+    function highlightChanges() {
+        const fields = [categoryField, nameField, codeField, descriptionField, sortOrderField];
+        const keys = ['category', 'name', 'code', 'description', 'sort_order'];
+        
+        fields.forEach((field, index) => {
+            if (field && field.value !== originalValues[keys[index]]) {
+                field.style.borderColor = '#f59e0b';
+                field.style.borderWidth = '2px';
+            } else if (field) {
+                field.style.borderColor = '';
+                field.style.borderWidth = '';
+            }
+        });
+        
+        if (isActiveField && isActiveField.checked !== originalValues.is_active) {
+            isActiveField.parentElement.style.outline = '2px solid #f59e0b';
+            isActiveField.parentElement.style.borderRadius = '4px';
+        } else if (isActiveField) {
+            isActiveField.parentElement.style.outline = '';
+        }
+    }
+    
+    // Add change listeners for highlighting
+    [categoryField, nameField, codeField, descriptionField, sortOrderField, isActiveField].forEach(field => {
+        if (field) {
+            field.addEventListener('input', highlightChanges);
+            field.addEventListener('change', highlightChanges);
+        }
+    });
+});
+</script>
+{% endblock %}

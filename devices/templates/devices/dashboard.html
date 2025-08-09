@@ -1,0 +1,783 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Device Dashboard - PIMS Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Device Dashboard Styling - Bangladesh Parliament Secretariat PIMS */
+.dashboard-container {
+    background: linear-gradient(135deg, rgba(239, 246, 255, 0.8) 0%, rgba(243, 244, 246, 0.8) 100%);
+    min-height: calc(100vh - 120px);
+    padding: 2rem 0;
+}
+
+.dashboard-header {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.08);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stats-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--card-accent, #6366f1);
+    border-radius: 16px 16px 0 0;
+}
+
+.stats-card.available::before { --card-accent: #10b981; }
+.stats-card.assigned::before { --card-accent: #3b82f6; }
+.stats-card.maintenance::before { --card-accent: #f59e0b; }
+.stats-card.total::before { --card-accent: #6366f1; }
+
+.stats-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 35px rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.2);
+}
+
+.stats-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.stats-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: white;
+}
+
+.stats-icon.available { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.stats-icon.assigned { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+.stats-icon.maintenance { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+.stats-icon.total { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
+
+.stats-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stats-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 0.75rem;
+}
+
+.stats-change {
+    font-size: 0.875rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.change-positive {
+    color: #059669;
+}
+
+.change-negative {
+    color: #dc2626;
+}
+
+.dashboard-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.main-content-area {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.glass-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.08);
+}
+
+.card-header-glass {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%);
+    border-radius: 16px 16px 0 0;
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.2);
+}
+
+.category-chart {
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.5) 0%, rgba(241, 245, 249, 0.5) 100%);
+    border-radius: 12px;
+    margin: 1rem 0;
+}
+
+.recent-devices-list {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.device-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.2);
+    transition: all 0.2s ease;
+}
+
+.device-item:last-child {
+    border-bottom: none;
+}
+
+.device-item:hover {
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 8px;
+    margin: 0 -0.5rem;
+    padding: 1rem 1.5rem;
+}
+
+.device-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.device-icon.complete { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+.device-icon.component { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.device-icon.accessory { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+
+.device-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.device-name {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.device-details {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.device-status {
+    padding: 0.375rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid;
+}
+
+.device-status.available {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.device-status.assigned {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.device-status.maintenance {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.sidebar-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.quick-actions {
+    padding: 1.5rem;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #475569;
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    transition: all 0.3s ease;
+    margin-bottom: 0.75rem;
+}
+
+.action-btn:hover {
+    background: linear-gradient(135deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.9) 100%);
+    border-color: rgba(99, 102, 241, 0.3);
+    color: #6366f1;
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.action-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+}
+
+.action-icon.create { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.action-icon.view { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+.action-icon.maintenance { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+.action-icon.reports { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+
+.action-text h6 {
+    margin: 0;
+    font-weight: 600;
+    color: inherit;
+}
+
+.action-text small {
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+.warranty-alerts {
+    padding: 1.5rem;
+}
+
+.alert-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(252, 165, 165, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+}
+
+.alert-item:last-child {
+    margin-bottom: 0;
+}
+
+.alert-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.alert-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.alert-title {
+    font-weight: 600;
+    color: #7f1d1d;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.alert-details {
+    font-size: 0.75rem;
+    color: #991b1b;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .dashboard-content {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 1rem 0;
+    }
+    
+    .dashboard-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .stats-card {
+        padding: 1.25rem;
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+    }
+    
+    .device-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .device-icon {
+        margin-right: 0;
+    }
+}
+
+/* Animation */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stats-card,
+.glass-card {
+    animation: slideIn 0.5s ease-out;
+}
+
+.stats-card:nth-child(1) { animation-delay: 0.1s; }
+.stats-card:nth-child(2) { animation-delay: 0.2s; }
+.stats-card:nth-child(3) { animation-delay: 0.3s; }
+.stats-card:nth-child(4) { animation-delay: 0.4s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container-fluid">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h2 class="text-dark mb-2">
+                        <i class="bi bi-speedometer2 me-2"></i>
+                        Device Management Dashboard
+                    </h2>
+                    <p class="text-muted mb-0">
+                        Comprehensive overview of IT inventory for Bangladesh Parliament Secretariat
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                    <a href="{% url 'devices:create' %}" class="btn btn-primary me-2">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        Add Device
+                    </a>
+                    <a href="{% url 'devices:reports' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-file-earmark-text me-1"></i>
+                        Reports
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stats-card total">
+                <div class="stats-header">
+                    <div>
+                        <div class="stats-number">{{ total_devices|default:0 }}</div>
+                        <div class="stats-label">Total Devices</div>
+                        <div class="stats-change">
+                            <i class="bi bi-graph-up text-success"></i>
+                            All active devices in system
+                        </div>
+                    </div>
+                    <div class="stats-icon total">
+                        <i class="bi bi-laptop"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-card available">
+                <div class="stats-header">
+                    <div>
+                        <div class="stats-number">{{ available_devices|default:0 }}</div>
+                        <div class="stats-label">Available</div>
+                        <div class="stats-change">
+                            <i class="bi bi-check-circle text-success"></i>
+                            Ready for assignment
+                        </div>
+                    </div>
+                    <div class="stats-icon available">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-card assigned">
+                <div class="stats-header">
+                    <div>
+                        <div class="stats-number">{{ assigned_devices|default:0 }}</div>
+                        <div class="stats-label">Assigned</div>
+                        <div class="stats-change">
+                            <i class="bi bi-person-check text-primary"></i>
+                            Currently in use
+                        </div>
+                    </div>
+                    <div class="stats-icon assigned">
+                        <i class="bi bi-person-check"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-card maintenance">
+                <div class="stats-header">
+                    <div>
+                        <div class="stats-number">{{ maintenance_devices|default:0 }}</div>
+                        <div class="stats-label">Maintenance</div>
+                        <div class="stats-change">
+                            <i class="bi bi-tools text-warning"></i>
+                            Under service
+                        </div>
+                    </div>
+                    <div class="stats-icon maintenance">
+                        <i class="bi bi-tools"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content">
+            <!-- Main Content Area -->
+            <div class="main-content-area">
+                <!-- Category Overview -->
+                <div class="glass-card">
+                    <div class="card-header-glass">
+                        <h5 class="mb-0 text-dark">
+                            <i class="bi bi-grid-3x3-gap me-2"></i>
+                            Device Categories Overview
+                        </h5>
+                    </div>
+                    <div class="p-4">
+                        {% if category_stats %}
+                            <div class="row">
+                                {% for category in category_stats %}
+                                <div class="col-lg-6 mb-3">
+                                    <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded">
+                                        <div>
+                                            <h6 class="mb-1">{{ category.name }}</h6>
+                                            <small class="text-muted">{{ category.device_count }} devices</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge bg-success">{{ category.available_count }} Available</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-grid-3x3-gap text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-2">No device categories found</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Recent Devices -->
+                <div class="glass-card">
+                    <div class="card-header-glass">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <h5 class="mb-0 text-dark">
+                                <i class="bi bi-clock-history me-2"></i>
+                                Recent Devices
+                            </h5>
+                            <a href="{% url 'devices:list' %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-arrow-right me-1"></i>
+                                View All
+                            </a>
+                        </div>
+                    </div>
+                    <div class="p-0">
+                        {% if recent_devices %}
+                            <ul class="recent-devices-list">
+                                {% for device in recent_devices %}
+                                <li class="device-item">
+                                    <div class="device-icon {{ device.device_type|lower }}">
+                                        {% if device.device_type == 'COMPLETE' %}
+                                            <i class="bi bi-laptop"></i>
+                                        {% elif device.device_type == 'COMPONENT' %}
+                                            <i class="bi bi-cpu"></i>
+                                        {% else %}
+                                            <i class="bi bi-usb-symbol"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="device-info">
+                                        <div class="device-name">{{ device.brand }} {{ device.model }}</div>
+                                        <div class="device-details">
+                                            ID: {{ device.device_id }} • {{ device.subcategory.name }}
+                                        </div>
+                                    </div>
+                                    <div class="device-status {{ device.status|lower }}">
+                                        {{ device.get_status_display }}
+                                    </div>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-laptop text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-2">No devices found</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar-content">
+                <!-- Quick Actions -->
+                <div class="glass-card">
+                    <div class="card-header-glass">
+                        <h6 class="mb-0 text-dark">
+                            <i class="bi bi-lightning me-2"></i>
+                            Quick Actions
+                        </h6>
+                    </div>
+                    <div class="quick-actions">
+                        <a href="{% url 'devices:create' %}" class="action-btn">
+                            <div class="action-icon create">
+                                <i class="bi bi-plus-circle"></i>
+                            </div>
+                            <div class="action-text">
+                                <h6>Add Device</h6>
+                                <small>Register new equipment</small>
+                            </div>
+                        </a>
+
+                        <a href="{% url 'devices:list' %}" class="action-btn">
+                            <div class="action-icon view">
+                                <i class="bi bi-list-ul"></i>
+                            </div>
+                            <div class="action-text">
+                                <h6>View All Devices</h6>
+                                <small>Browse device inventory</small>
+                            </div>
+                        </a>
+
+                        <a href="{% url 'devices:maintenance' %}" class="action-btn">
+                            <div class="action-icon maintenance">
+                                <i class="bi bi-tools"></i>
+                            </div>
+                            <div class="action-text">
+                                <h6>Maintenance Queue</h6>
+                                <small>Manage device repairs</small>
+                            </div>
+                        </a>
+
+                        <a href="{% url 'devices:reports' %}" class="action-btn">
+                            <div class="action-icon reports">
+                                <i class="bi bi-file-earmark-bar-graph"></i>
+                            </div>
+                            <div class="action-text">
+                                <h6>Generate Reports</h6>
+                                <small>Export device data</small>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Warranty Alerts -->
+                <div class="glass-card">
+                    <div class="card-header-glass">
+                        <h6 class="mb-0 text-dark">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Warranty Alerts
+                        </h6>
+                    </div>
+                    <div class="warranty-alerts">
+                        {% if expiring_warranties %}
+                            {% for warranty in expiring_warranties %}
+                            <div class="alert-item">
+                                <div class="alert-icon">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <div class="alert-title">{{ warranty.device.device_id }}</div>
+                                    <div class="alert-details">
+                                        Expires {{ warranty.end_date|date:"M d, Y" }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-3">
+                                <i class="bi bi-shield-check text-success" style="font-size: 2rem;"></i>
+                                <p class="text-muted mt-2 mb-0">No warranty alerts</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Top Vendors -->
+                {% if top_vendors %}
+                <div class="glass-card">
+                    <div class="card-header-glass">
+                        <h6 class="mb-0 text-dark">
+                            <i class="bi bi-building me-2"></i>
+                            Top Vendors
+                        </h6>
+                    </div>
+                    <div class="p-3">
+                        {% for vendor in top_vendors %}
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold">{{ vendor.name }}</div>
+                                <small class="text-muted">{{ vendor.device_count }} devices</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Device Dashboard JavaScript - Bangladesh Parliament Secretariat PIMS
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Auto-refresh statistics every 5 minutes
+    setInterval(function() {
+        refreshDashboardStats();
+    }, 300000);
+
+    function refreshDashboardStats() {
+        fetch('/devices/api/dashboard-stats/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.stats) {
+                    updateStatsDisplay(data.stats);
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing stats:', error);
+            });
+    }
+
+    function updateStatsDisplay(stats) {
+        const elements = {
+            total: document.querySelector('.stats-card.total .stats-number'),
+            available: document.querySelector('.stats-card.available .stats-number'),
+            assigned: document.querySelector('.stats-card.assigned .stats-number'),
+            maintenance: document.querySelector('.stats-card.maintenance .stats-number')
+        };
+
+        if (elements.total) elements.total.textContent = stats.total_devices || 0;
+        if (elements.available) elements.available.textContent = stats.available_devices || 0;
+        if (elements.assigned) elements.assigned.textContent = stats.assigned_devices || 0;
+        if (elements.maintenance) elements.maintenance.textContent = stats.maintenance_devices || 0;
+
+        // Add animation class
+        Object.values(elements).forEach(el => {
+            if (el) {
+                el.classList.add('badge-update-animation');
+                setTimeout(() => el.classList.remove('badge-update-animation'), 300);
+            }
+        });
+    }
+
+    // Animate numbers on load
+    animateNumbers();
+
+    function animateNumbers() {
+        const numberElements = document.querySelectorAll('.stats-number');
+        
+        numberElements.forEach(element => {
+            const finalNumber = parseInt(element.textContent) || 0;
+            let currentNumber = 0;
+            const increment = finalNumber / 30;
+            
+            const timer = setInterval(() => {
+                currentNumber += increment;
+                if (currentNumber >= finalNumber) {
+                    element.textContent = finalNumber;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(currentNumber);
+                }
+            }, 50);
+        });
+    }
+});
+</script>
+{% endblock %}

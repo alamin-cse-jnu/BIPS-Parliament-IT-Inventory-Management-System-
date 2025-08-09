@@ -1,0 +1,878 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ category.name }} Category - PIMS Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Device Category Detail Styling - Bangladesh Parliament Secretariat PIMS */
+.detail-container {
+    background: linear-gradient(135deg, rgba(239, 246, 255, 0.8) 0%, rgba(243, 244, 246, 0.8) 100%);
+    min-height: calc(100vh - 120px);
+    padding: 2rem 0;
+}
+
+.detail-header {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.detail-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--category-color, #6366f1);
+    border-radius: 16px 16px 0 0;
+}
+
+.detail-header.desktop::before { --category-color: #3b82f6; }
+.detail-header.laptop::before { --category-color: #10b981; }
+.detail-header.printer::before { --category-color: #f59e0b; }
+.detail-header.network::before { --category-color: #8b5cf6; }
+.detail-header.mobile::before { --category-color: #ef4444; }
+.detail-header.server::before { --category-color: #06b6d4; }
+
+.category-hero {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.category-icon-large {
+    width: 100px;
+    height: 100px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.category-icon-large.desktop { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+.category-icon-large.laptop { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.category-icon-large.printer { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+.category-icon-large.network { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+.category-icon-large.mobile { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+.category-icon-large.server { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); }
+
+.category-info h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.category-code {
+    display: inline-block;
+    background: rgba(241, 245, 249, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.category-description {
+    color: #64748b;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.category-meta {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.glass-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.08);
+    transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 35px rgba(99, 102, 241, 0.15);
+}
+
+.card-header-glass {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%);
+    border-radius: 16px 16px 0 0;
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.2);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--stat-color, #6366f1);
+    border-radius: 12px 12px 0 0;
+}
+
+.stat-card.total::before { --stat-color: #6366f1; }
+.stat-card.subcategories::before { --stat-color: #3b82f6; }
+.stat-card.devices::before { --stat-color: #10b981; }
+.stat-card.active::before { --stat-color: #f59e0b; }
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 35px rgba(99, 102, 241, 0.15);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #64748b;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.8rem;
+}
+
+.subcategories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.subcategory-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.8) 100%);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.subcategory-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.2);
+}
+
+.subcategory-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.subcategory-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.subcategory-code {
+    font-size: 0.8rem;
+    color: #64748b;
+    background: rgba(241, 245, 249, 0.8);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.subcategory-stats {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.device-count {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.device-count .bi {
+    color: #10b981;
+}
+
+.recent-devices-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.device-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.2);
+    transition: all 0.2s ease;
+}
+
+.device-item:last-child {
+    border-bottom: none;
+}
+
+.device-item:hover {
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 8px;
+    margin: 0 -0.5rem;
+    padding: 1rem 1.5rem;
+}
+
+.device-icon-small {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: white;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.device-icon-small.complete { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+.device-icon-small.component { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.device-icon-small.accessory { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+
+.device-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.device-name {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.device-info {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.device-status {
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid;
+}
+
+.device-status.available {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.device-status.assigned {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.device-status.maintenance {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.action-toolbar {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.btn-action {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 1px solid;
+    text-decoration: none;
+}
+
+.btn-primary-action {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-color: #10b981;
+}
+
+.btn-primary-action:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-1px);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-secondary-action {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
+    color: #2563eb;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.btn-secondary-action:hover {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.btn-warning-action {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%);
+    color: #d97706;
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.btn-warning-action:hover {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.btn-danger-action {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
+    color: #dc2626;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger-action:hover {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #9ca3af;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.empty-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .subcategories-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .detail-container {
+        padding: 1rem 0;
+    }
+    
+    .detail-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .category-hero {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+    }
+    
+    .category-info h1 {
+        font-size: 2rem;
+    }
+    
+    .category-meta {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .subcategories-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-toolbar .d-flex {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .btn-action {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* Animation */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.glass-card,
+.stat-card {
+    animation: slideIn 0.5s ease-out;
+}
+
+.stat-card:nth-child(1) { animation-delay: 0.1s; }
+.stat-card:nth-child(2) { animation-delay: 0.2s; }
+.stat-card:nth-child(3) { animation-delay: 0.3s; }
+.stat-card:nth-child(4) { animation-delay: 0.4s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <div class="container-fluid">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'dashboard:index' %}">
+                        <i class="bi bi-house-door me-1"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'devices:list' %}">
+                        <i class="bi bi-laptop me-1"></i>
+                        Devices
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'devices:category_list' %}">
+                        <i class="bi bi-grid-3x3-gap me-1"></i>
+                        Categories
+                    </a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    {{ category.name }}
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Category Header -->
+        <div class="detail-header {{ category.name|lower|slugify }}">
+            <div class="category-hero">
+                <div class="category-icon-large {{ category.name|lower|slugify }}">
+                    {% if category.icon_class %}
+                        <i class="{{ category.icon_class }}"></i>
+                    {% else %}
+                        <i class="bi bi-laptop"></i>
+                    {% endif %}
+                </div>
+                
+                <div class="category-info flex-grow-1">
+                    <h1>{{ category.name }}</h1>
+                    <div class="category-code">{{ category.code }}</div>
+                    {% if category.description %}
+                        <div class="category-description">{{ category.description }}</div>
+                    {% endif %}
+                    
+                    <div class="category-meta">
+                        <div class="meta-item">
+                            <i class="bi bi-calendar-check"></i>
+                            Created {{ category.created_at|date:"M d, Y" }}
+                        </div>
+                        <div class="meta-item">
+                            <i class="bi bi-arrow-clockwise"></i>
+                            Updated {{ category.updated_at|date:"M d, Y" }}
+                        </div>
+                        <div class="meta-item">
+                            {% if category.is_active %}
+                                <i class="bi bi-check-circle text-success"></i>
+                                Active Category
+                            {% else %}
+                                <i class="bi bi-x-circle text-danger"></i>
+                                Inactive Category
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="text-end">
+                    <a href="{% url 'devices:category_edit' category.pk %}" class="btn btn-secondary-action me-2">
+                        <i class="bi bi-pencil me-1"></i>
+                        Edit
+                    </a>
+                    <a href="{% url 'devices:category_delete' category.pk %}" class="btn btn-danger-action">
+                        <i class="bi bi-trash me-1"></i>
+                        Delete
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <div class="stat-number">{{ category.subcategories.count|default:0 }}</div>
+                <div class="stat-label">Total Subcategories</div>
+            </div>
+            
+            <div class="stat-card subcategories">
+                <div class="stat-number">{{ subcategories.count|default:0 }}</div>
+                <div class="stat-label">Active Subcategories</div>
+            </div>
+            
+            <div class="stat-card devices">
+                {% with total_devices=subcategories|length %}
+                <div class="stat-number">
+                    {% for subcategory in subcategories %}
+                        {{ subcategory.device_count|add:0 }}{% if not forloop.last %} + {% endif %}
+                    {% empty %}
+                        0
+                    {% endfor %}
+                </div>
+                {% endwith %}
+                <div class="stat-label">Total Devices</div>
+            </div>
+            
+            <div class="stat-card active">
+                <div class="stat-number">{{ recent_devices.count|default:0 }}</div>
+                <div class="stat-label">Recent Devices</div>
+            </div>
+        </div>
+
+        <!-- Action Toolbar -->
+        <div class="action-toolbar">
+            <div class="d-flex gap-3 align-items-center justify-content-between flex-wrap">
+                <div class="d-flex gap-2">
+                    <a href="{% url 'devices:subcategory_create' %}?category={{ category.pk }}" class="btn btn-primary-action">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        Add Subcategory
+                    </a>
+                    <a href="{% url 'devices:create' %}?category={{ category.pk }}" class="btn btn-secondary-action">
+                        <i class="bi bi-laptop me-1"></i>
+                        Add Device
+                    </a>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'devices:list' %}?category={{ category.pk }}" class="btn btn-warning-action">
+                        <i class="bi bi-list-ul me-1"></i>
+                        View All Devices
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Grid -->
+        <div class="row">
+            <!-- Subcategories -->
+            <div class="col-lg-8">
+                <div class="glass-card">
+                    <div class="card-header-glass">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <h5 class="mb-0 text-dark">
+                                <i class="bi bi-tags me-2"></i>
+                                Subcategories
+                            </h5>
+                            <span class="badge bg-primary">{{ subcategories.count }} Active</span>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4">
+                        {% if subcategories %}
+                            <div class="subcategories-grid">
+                                {% for subcategory in subcategories %}
+                                <div class="subcategory-card">
+                                    <div class="subcategory-header">
+                                        <div class="flex-grow-1">
+                                            <div class="subcategory-name">{{ subcategory.name }}</div>
+                                            <div class="subcategory-code">{{ subcategory.code }}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if subcategory.description %}
+                                        <div class="text-muted mb-3" style="font-size: 0.9rem;">
+                                            {{ subcategory.description|truncatechars:100 }}
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div class="subcategory-stats">
+                                        <div class="device-count">
+                                            <i class="bi bi-laptop"></i>
+                                            {{ subcategory.device_count|default:0 }} devices
+                                        </div>
+                                        <div class="ms-auto">
+                                            <a href="{% url 'devices:subcategory_detail' subcategory.pk %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye me-1"></i>
+                                                View
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="bi bi-tags"></i>
+                                </div>
+                                <div class="empty-title">No Subcategories Found</div>
+                                <p class="text-muted">This category doesn't have any subcategories yet.</p>
+                                <a href="{% url 'devices:subcategory_create' %}?category={{ category.pk }}" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle me-1"></i>
+                                    Create First Subcategory
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Devices Sidebar -->
+                <div class="col-lg-4">
+                    <div class="glass-card">
+                        <div class="card-header-glass">
+                            <h6 class="mb-0 text-dark">
+                                <i class="bi bi-clock-history me-2"></i>
+                                Recent Devices
+                            </h6>
+                        </div>
+                        
+                        <div class="p-0">
+                            {% if recent_devices %}
+                                <ul class="recent-devices-list">
+                                    {% for device in recent_devices %}
+                                    <li class="device-item">
+                                        <div class="device-icon-small {{ device.device_type|lower }}">
+                                            {% if device.device_type == 'COMPLETE' %}
+                                                <i class="bi bi-laptop"></i>
+                                            {% elif device.device_type == 'COMPONENT' %}
+                                                <i class="bi bi-cpu"></i>
+                                            {% else %}
+                                                <i class="bi bi-usb-symbol"></i>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="device-details">
+                                            <div class="device-name">{{ device.brand }} {{ device.model }}</div>
+                                            <div class="device-info">
+                                                ID: {{ device.device_id }} • {{ device.subcategory.name }}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="device-status {{ device.status|lower }}">
+                                            {{ device.get_status_display }}
+                                        </div>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <div class="empty-state py-4">
+                                    <div class="empty-icon">
+                                        <i class="bi bi-laptop"></i>
+                                    </div>
+                                    <div class="empty-title">No Devices</div>
+                                    <p class="text-muted mb-0">No devices in this category yet.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if recent_devices %}
+                            <div class="p-3 border-top">
+                                <a href="{% url 'devices:list' %}?category={{ category.pk }}" class="btn btn-outline-primary btn-sm w-100">
+                                    <i class="bi bi-arrow-right me-1"></i>
+                                    View All Devices
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Device Category Detail JavaScript - Bangladesh Parliament Secretariat PIMS
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(tooltipTriggerEl => {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Confirm delete action
+    const deleteButton = document.querySelector('.btn-danger-action');
+    if (deleteButton) {
+        deleteButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Safely encode category name as JSON to handle special characters
+            const categoryName = {{ category.name|to_json|safe }};
+            const subcategoryCount = {{ subcategories.count|default:0 }};
+            
+            let message = `Are you sure you want to delete the category "${categoryName}"?`;
+            if (subcategoryCount > 0) {
+                message += `\n\nThis category has ${subcategoryCount} subcategories. All associated data will be removed.`;
+            }
+            message += '\n\nThis action cannot be undone.';
+            
+            if (confirm(message)) {
+                window.location.href = this.href;
+            }
+        });
+    }
+
+    // Animate stats on scroll
+    const observerOptions = {
+        threshold: 0.5,
+        rootMargin: '0px 0px -100px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const statNumber = entry.target.querySelector('.stat-number');
+                if (statNumber && !statNumber.classList.contains('animated')) {
+                    animateNumber(statNumber);
+                    statNumber.classList.add('animated');
+                }
+            }
+        });
+    }, observerOptions);
+
+    // Observe all stat cards
+    document.querySelectorAll('.stat-card').forEach(card => {
+        observer.observe(card);
+    });
+
+    // Number animation function
+    function animateNumber(element) {
+        // Handle sum expressions like "1 + 2 + 3"
+        const text = element.textContent.trim();
+        let target;
+        if (text.includes('+')) {
+            // Sum the numbers in the expression
+            target = text.split('+')
+                .map(num => parseInt(num.trim()) || 0)
+                .reduce((sum, num) => sum + num, 0);
+        } else {
+            // Single number
+            target = parseInt(text.replace(/[^0-9]/g, '')) || 0;
+        }
+
+        let current = 0;
+        const increment = Math.ceil(target / 50) || 1; // Avoid division by zero
+        const duration = 1000; // Animation duration in ms
+        const stepTime = Math.abs(Math.floor(duration / target)) || 50; // Fallback for small numbers
+
+        element.textContent = '0'; // Reset to 0 before animating
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            element.textContent = current;
+        }, stepTime);
+    }
+
+    // Add click animation for buttons
+    const buttons = document.querySelectorAll('.btn-action');
+    buttons.forEach(button => {
+        button.addEventListener('click', function() {
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 100);
+        });
+    });
+
+    // Lazy load subcategory cards
+    const subcategoryCards = document.querySelectorAll('.subcategory-card');
+    if (subcategoryCards.length) {
+        const cardObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                    cardObserver.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        });
+
+        subcategoryCards.forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            cardObserver.observe(card);
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,469 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Assigned Devices - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Device List Styling - Parliament Design System */
+.device-list-item {
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.device-list-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(30, 58, 138, 0.15);
+    border-color: rgba(30, 58, 138, 0.3);
+}
+
+.device-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.device-list-name {
+    font-weight: 600;
+    color: #1e3a8a;
+    margin-bottom: 0.25rem;
+}
+
+.device-list-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.device-id-badge {
+    background: rgba(30, 58, 138, 0.1);
+    color: #1e3a8a;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.device-category-badge {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+}
+
+.device-vendor-badge {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+}
+
+.assignment-info {
+    background: rgba(34, 197, 94, 0.1);
+    border-left: 4px solid #22c55e;
+    padding: 0.75rem;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 0.75rem;
+}
+
+.assignment-user {
+    font-weight: 600;
+    color: #16a34a;
+    margin-bottom: 0.25rem;
+}
+
+.assignment-date {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.device-list-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+}
+
+.device-list-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+
+.status-assigned {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border-color: #3b82f6;
+}
+
+.type-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.type-complete {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.type-component {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.type-accessory {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+/* Search and Filter Styling */
+.search-filter-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.stats-card {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.stats-label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .device-list-item {
+        padding: 1rem;
+    }
+    
+    .device-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.25rem;
+    }
+    
+    .device-list-actions {
+        flex-direction: column;
+    }
+    
+    .device-list-actions .btn {
+        font-size: 0.875rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Assigned Devices</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'devices:list' %}">Devices</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Assigned Devices</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="{% url 'devices:create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>
+                Add Device
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Card -->
+    <div class="stats-card">
+        <div class="row text-center">
+            <div class="col-md-3">
+                <div class="stats-number">{{ devices.count }}</div>
+                <div class="stats-label">Assigned Devices</div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-number">{{ unique_users }}</div>
+                <div class="stats-label">Unique Users</div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-number">{{ categories_count }}</div>
+                <div class="stats-label">Categories</div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-number">{{ vendors_count }}</div>
+                <div class="stats-label">Vendors</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="card search-filter-card border-0 shadow-sm">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Search Devices</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="{{ request.GET.search }}" placeholder="Device ID, name, serial...">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label for="category" class="form-label">Category</label>
+                    <select class="form-select" id="category" name="category">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}" 
+                                    {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="vendor" class="form-label">Vendor</label>
+                    <select class="form-select" id="vendor" name="vendor">
+                        <option value="">All Vendors</option>
+                        {% for vendor in vendors %}
+                            <option value="{{ vendor.id }}" 
+                                    {% if request.GET.vendor == vendor.id|stringformat:"s" %}selected{% endif %}>
+                                {{ vendor.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="condition" class="form-label">Condition</label>
+                    <select class="form-select" id="condition" name="condition">
+                        <option value="">All Conditions</option>
+                        <option value="NEW" {% if request.GET.condition == "NEW" %}selected{% endif %}>New</option>
+                        <option value="EXCELLENT" {% if request.GET.condition == "EXCELLENT" %}selected{% endif %}>Excellent</option>
+                        <option value="GOOD" {% if request.GET.condition == "GOOD" %}selected{% endif %}>Good</option>
+                        <option value="FAIR" {% if request.GET.condition == "FAIR" %}selected{% endif %}>Fair</option>
+                        <option value="POOR" {% if request.GET.condition == "POOR" %}selected{% endif %}>Poor</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-funnel me-1"></i>Filter
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Device List -->
+    <div class="row">
+        {% for device in devices %}
+            <div class="col-12">
+                <div class="device-list-item">
+                    <div class="row align-items-center">
+                        <!-- Device Icon -->
+                        <div class="col-auto">
+                            <div class="device-icon">
+                                {% if device.subcategory.category.name == "Desktop" %}
+                                    <i class="bi bi-pc-display"></i>
+                                {% elif device.subcategory.category.name == "Laptop" %}
+                                    <i class="bi bi-laptop"></i>
+                                {% elif device.subcategory.category.name == "Printer" %}
+                                    <i class="bi bi-printer"></i>
+                                {% elif device.subcategory.category.name == "Network" %}
+                                    <i class="bi bi-router"></i>
+                                {% elif device.subcategory.category.name == "Mobile" %}
+                                    <i class="bi bi-phone"></i>
+                                {% else %}
+                                    <i class="bi bi-laptop"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Device Info -->
+                        <div class="col">
+                            <div class="device-list-content">
+                                <h6 class="device-list-name">
+                                    <a href="{% url 'devices:detail' device.id %}" class="text-decoration-none">
+                                        {{ device.name }}
+                                    </a>
+                                </h6>
+                                <div class="device-list-meta">
+                                    <span class="device-id-badge">{{ device.device_id }}</span>
+                                    <span class="device-category-badge">{{ device.subcategory.category.name }}</span>
+                                    {% if device.vendor %}
+                                        <span class="device-vendor-badge">{{ device.vendor.name }}</span>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Assignment Information -->
+                                {% if device.current_assignment %}
+                                <div class="assignment-info">
+                                    <div class="assignment-user">
+                                        <i class="bi bi-person-check me-2"></i>
+                                        {{ device.current_assignment.user.get_full_name|default:device.current_assignment.user.username }}
+                                    </div>
+                                    <div class="assignment-date">
+                                        Assigned: {{ device.current_assignment.assigned_date|date:"M d, Y" }}
+                                        {% if device.current_assignment.expected_return_date %}
+                                            | Expected Return: {{ device.current_assignment.expected_return_date|date:"M d, Y" }}
+                                        {% endif %}
+                                    </div>
+                                    {% if device.current_assignment.location %}
+                                    <div class="assignment-date">
+                                        <i class="bi bi-geo-alt me-1"></i>
+                                        Location: {{ device.current_assignment.location.name }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+
+                                <!-- Device Details -->
+                                <div class="small text-muted">
+                                    {% if device.serial_number %}
+                                        <span class="me-3"><i class="bi bi-hash me-1"></i>{{ device.serial_number }}</span>
+                                    {% endif %}
+                                    {% if device.asset_tag %}
+                                        <span class="me-3"><i class="bi bi-tag me-1"></i>{{ device.asset_tag }}</span>
+                                    {% endif %}
+                                    {% if device.current_location %}
+                                        <span><i class="bi bi-geo-alt me-1"></i>{{ device.current_location.name }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status Badges -->
+                        <div class="col-auto">
+                            <div class="device-list-badges">
+                                <span class="status-badge status-assigned">
+                                    <i class="bi bi-person-check me-1"></i>Assigned
+                                </span>
+                                {% if device.device_type == 'COMPLETE' %}
+                                    <span class="type-badge type-complete">Complete</span>
+                                {% elif device.device_type == 'COMPONENT' %}
+                                    <span class="type-badge type-component">Component</span>
+                                {% elif device.device_type == 'ACCESSORY' %}
+                                    <span class="type-badge type-accessory">Accessory</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="col-auto">
+                            <div class="device-list-actions">
+                                <a href="{% url 'assignments:return' device.current_assignment.id %}" 
+                                   class="btn btn-sm btn-warning me-2">
+                                    <i class="bi bi-arrow-return-left me-1"></i>Return
+                                </a>
+                                <a href="{% url 'devices:detail' device.id %}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye me-1"></i>View
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="bi bi-inbox display-1 text-muted"></i>
+                    </div>
+                    <h5 class="text-muted">No Assigned Devices Found</h5>
+                    <p class="text-muted">No devices are currently assigned to users.</p>
+                    <a href="{% url 'devices:available' %}" class="btn btn-primary">
+                        <i class="bi bi-search me-2"></i>View Available Devices
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav aria-label="Device pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.vendor %}&vendor={{ request.GET.vendor }}{% endif %}{% if request.GET.condition %}&condition={{ request.GET.condition }}{% endif %}">
+                        <i class="bi bi-chevron-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.vendor %}&vendor={{ request.GET.vendor }}{% endif %}{% if request.GET.condition %}&condition={{ request.GET.condition }}{% endif %}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.vendor %}&vendor={{ request.GET.vendor }}{% endif %}{% if request.GET.condition %}&condition={{ request.GET.condition }}{% endif %}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.vendor %}&vendor={{ request.GET.vendor }}{% endif %}{% if request.GET.condition %}&condition={{ request.GET.condition }}{% endif %}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.vendor %}&vendor={{ request.GET.vendor }}{% endif %}{% if request.GET.condition %}&condition={{ request.GET.condition }}{% endif %}">
+                        <i class="bi bi-chevron-double-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

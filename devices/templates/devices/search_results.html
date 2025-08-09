@@ -1,0 +1,684 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Device Search Results - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Search Results Styling - Parliament Design System */
+.search-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+}
+
+.search-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+}
+
+.search-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.search-query-display {
+    background: rgba(30, 58, 138, 0.1);
+    color: #1e3a8a;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: 1rem;
+}
+
+.search-stats {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.search-form-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.search-filters-active {
+    background: rgba(34, 197, 94, 0.1);
+    border-left: 4px solid #22c55e;
+    padding: 1rem;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 1rem;
+}
+
+.filter-tag {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.25rem;
+}
+
+.filter-remove {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+
+.filter-remove:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.result-item {
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.result-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(30, 58, 138, 0.15);
+    border-color: rgba(30, 58, 138, 0.3);
+}
+
+.result-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.result-content {
+    flex: 1;
+}
+
+.result-title {
+    font-weight: 600;
+    color: #1e3a8a;
+    margin-bottom: 0.25rem;
+    font-size: 1.1rem;
+}
+
+.result-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.result-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.badge-id {
+    background: rgba(30, 58, 138, 0.1);
+    color: #1e3a8a;
+}
+
+.badge-category {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.badge-vendor {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+}
+
+.result-description {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-bottom: 0.75rem;
+}
+
+.result-highlights {
+    background: rgba(245, 158, 11, 0.1);
+    border-left: 3px solid #f59e0b;
+    padding: 0.5rem;
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 0.75rem;
+}
+
+.highlight-term {
+    background: rgba(245, 158, 11, 0.3);
+    padding: 0.125rem 0.25rem;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+.result-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+
+.status-available {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+}
+
+.status-assigned {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.status-maintenance {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.status-retired {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+}
+
+.empty-results {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: #d1d5db;
+    margin-bottom: 1.5rem;
+}
+
+.search-suggestions {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.suggestion-item {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.suggestion-item:hover {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.quick-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.quick-filter-btn {
+    background: rgba(30, 58, 138, 0.1);
+    color: #1e3a8a;
+    border: 1px solid rgba(30, 58, 138, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.quick-filter-btn:hover {
+    background: rgba(30, 58, 138, 0.15);
+    color: #1e3a8a;
+    border-color: rgba(30, 58, 138, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .result-item {
+        padding: 1rem;
+    }
+    
+    .result-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.25rem;
+    }
+    
+    .result-actions {
+        flex-direction: column;
+    }
+    
+    .result-actions .btn {
+        font-size: 0.875rem;
+    }
+    
+    .search-form-card .card-body {
+        padding: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="search-container">
+    <div class="container-fluid">
+        <!-- Search Header -->
+        <div class="search-header">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h1 class="search-title">Device Search Results</h1>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'devices:list' %}">Devices</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Search Results</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="text-end">
+                    <a href="{% url 'devices:create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>Add Device
+                    </a>
+                </div>
+            </div>
+
+            {% if query %}
+            <div class="mb-3">
+                <span class="search-query-display">
+                    <i class="bi bi-search me-2"></i>"{{ query }}"
+                </span>
+            </div>
+            {% endif %}
+
+            <div class="search-stats">
+                <i class="bi bi-info-circle me-1"></i>
+                Found {{ devices.count }} device{{ devices.count|pluralize }} 
+                {% if query %}matching "{{ query }}"{% endif %}
+                {% if devices.count > 0 %}
+                    (showing {{ devices|length }} on this page)
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Active Filters Display -->
+        {% if request.GET.items %}
+        <div class="search-filters-active">
+            <h6 class="mb-2">
+                <i class="bi bi-funnel me-2"></i>Active Filters:
+            </h6>
+            <div class="d-flex flex-wrap">
+                {% for key, value in request.GET.items %}
+                    {% if value and key != 'page' %}
+                    <span class="filter-tag">
+                        <strong>{{ key|title }}:</strong> {{ value }}
+                        <button type="button" class="filter-remove" onclick="removeFilter('{{ key }}')">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </span>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <div class="mt-2">
+                <a href="{% url 'devices:search' %}" class="btn btn-sm btn-outline-success">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Clear All Filters
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Search Form -->
+        <div class="card search-form-card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="bi bi-search me-2"></i>Refine Search
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="query" class="form-label">Search Query</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" id="query" name="query" 
+                                   value="{{ query }}" placeholder="Device ID, name, serial, model...">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="category" class="form-label">Category</label>
+                        <select class="form-select" id="category" name="category">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}" 
+                                        {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">All Status</option>
+                            <option value="AVAILABLE" {% if request.GET.status == "AVAILABLE" %}selected{% endif %}>Available</option>
+                            <option value="ASSIGNED" {% if request.GET.status == "ASSIGNED" %}selected{% endif %}>Assigned</option>
+                            <option value="MAINTENANCE" {% if request.GET.status == "MAINTENANCE" %}selected{% endif %}>Maintenance</option>
+                            <option value="RETIRED" {% if request.GET.status == "RETIRED" %}selected{% endif %}>Retired</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="vendor" class="form-label">Vendor</label>
+                        <select class="form-select" id="vendor" name="vendor">
+                            <option value="">All Vendors</option>
+                            {% for vendor in vendors %}
+                                <option value="{{ vendor.id }}" 
+                                        {% if request.GET.vendor == vendor.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ vendor.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search me-1"></i>Search
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Search Results -->
+        <div class="row">
+            {% for device in devices %}
+                <div class="col-12">
+                    <div class="result-item">
+                        <div class="row align-items-center">
+                            <!-- Device Icon -->
+                            <div class="col-auto">
+                                <div class="result-icon">
+                                    {% if device.subcategory.category.name == "Desktop" %}
+                                        <i class="bi bi-pc-display"></i>
+                                    {% elif device.subcategory.category.name == "Laptop" %}
+                                        <i class="bi bi-laptop"></i>
+                                    {% elif device.subcategory.category.name == "Printer" %}
+                                        <i class="bi bi-printer"></i>
+                                    {% elif device.subcategory.category.name == "Network" %}
+                                        <i class="bi bi-router"></i>
+                                    {% elif device.subcategory.category.name == "Mobile" %}
+                                        <i class="bi bi-phone"></i>
+                                    {% else %}
+                                        <i class="bi bi-laptop"></i>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Device Content -->
+                            <div class="col">
+                                <div class="result-content">
+                                    <h6 class="result-title">
+                                        <a href="{% url 'devices:detail' device.id %}" class="text-decoration-none">
+                                            {{ device.name }}
+                                        </a>
+                                    </h6>
+
+                                    <div class="result-meta">
+                                        <span class="result-badge badge-id">{{ device.device_id }}</span>
+                                        <span class="result-badge badge-category">{{ device.subcategory.category.name }}</span>
+                                        {% if device.vendor %}
+                                            <span class="result-badge badge-vendor">{{ device.vendor.name }}</span>
+                                        {% endif %}
+                                    </div>
+
+                                    {% if query and device.search_snippet %}
+                                    <div class="result-highlights">
+                                        <small class="text-muted">
+                                            <i class="bi bi-lightbulb me-1"></i>
+                                            Match: {{ device.search_snippet|safe }}
+                                        </small>
+                                    </div>
+                                    {% endif %}
+
+                                    <div class="result-description">
+                                        {% if device.specifications %}
+                                            {% for key, value in device.specifications.items %}
+                                                {% if forloop.counter <= 2 %}
+                                                    <span class="me-3">{{ key|title }}: {{ value }}</span>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                        
+                                        {% if device.serial_number %}
+                                            <span class="me-3">
+                                                <i class="bi bi-hash me-1"></i>{{ device.serial_number }}
+                                            </span>
+                                        {% endif %}
+                                        
+                                        {% if device.current_location %}
+                                            <span>
+                                                <i class="bi bi-geo-alt me-1"></i>{{ device.current_location.name }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Status Badge -->
+                            <div class="col-auto">
+                                <div class="text-center">
+                                    {% if device.status == 'AVAILABLE' %}
+                                        <span class="status-badge status-available">
+                                            <i class="bi bi-check-circle me-1"></i>Available
+                                        </span>
+                                    {% elif device.status == 'ASSIGNED' %}
+                                        <span class="status-badge status-assigned">
+                                            <i class="bi bi-person-check me-1"></i>Assigned
+                                        </span>
+                                    {% elif device.status == 'MAINTENANCE' %}
+                                        <span class="status-badge status-maintenance">
+                                            <i class="bi bi-wrench me-1"></i>Maintenance
+                                        </span>
+                                    {% elif device.status == 'RETIRED' %}
+                                        <span class="status-badge status-retired">
+                                            <i class="bi bi-archive me-1"></i>Retired
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="col-auto">
+                                <div class="result-actions">
+                                    <a href="{% url 'devices:detail' device.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye me-1"></i>View
+                                    </a>
+                                    {% if device.status == 'AVAILABLE' and device.is_assignable %}
+                                        <a href="{% url 'assignments:create' %}?device={{ device.id }}" 
+                                           class="btn btn-sm btn-success">
+                                            <i class="bi bi-person-plus me-1"></i>Assign
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="empty-results">
+                        <div class="empty-icon">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <h4 class="text-muted mb-3">No Devices Found</h4>
+                        
+                        {% if query %}
+                            <p class="text-muted mb-4">
+                                No devices match your search for "<strong>{{ query }}</strong>".
+                            </p>
+                        {% else %}
+                            <p class="text-muted mb-4">
+                                Please enter search criteria to find devices.
+                            </p>
+                        {% endif %}
+
+                        <!-- Search Suggestions -->
+                        <div class="search-suggestions">
+                            <h6 class="text-dark mb-3">
+                                <i class="bi bi-lightbulb me-2"></i>Search Tips:
+                            </h6>
+                            <div class="row text-start">
+                                <div class="col-md-6">
+                                    <div class="suggestion-item">
+                                        <strong>Device ID:</strong> Try searching by device ID (e.g., "DT2024001")
+                                    </div>
+                                    <div class="suggestion-item">
+                                        <strong>Brand/Model:</strong> Search by manufacturer or model (e.g., "Dell", "ThinkPad")
+                                    </div>
+                                    <div class="suggestion-item">
+                                        <strong>Serial Number:</strong> Use partial serial numbers
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="suggestion-item">
+                                        <strong>Specifications:</strong> Search by RAM, CPU, storage (e.g., "16GB", "i7")
+                                    </div>
+                                    <div class="suggestion-item">
+                                        <strong>Location:</strong> Try searching by building or room
+                                    </div>
+                                    <div class="suggestion-item">
+                                        <strong>Asset Tag:</strong> Search by asset tag number
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Quick Filters -->
+                            <div class="quick-filters">
+                                <h6 class="w-100 text-dark mb-2">Quick Filters:</h6>
+                                <a href="?status=AVAILABLE" class="quick-filter-btn">Available Devices</a>
+                                <a href="?status=ASSIGNED" class="quick-filter-btn">Assigned Devices</a>
+                                <a href="?status=MAINTENANCE" class="quick-filter-btn">Under Maintenance</a>
+                                <a href="?category=1" class="quick-filter-btn">Desktops</a>
+                                <a href="?category=2" class="quick-filter-btn">Laptops</a>
+                                <a href="?category=3" class="quick-filter-btn">Printers</a>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <a href="{% url 'devices:list' %}" class="btn btn-primary me-2">
+                                <i class="bi bi-list me-2"></i>View All Devices
+                            </a>
+                            <a href="{% url 'devices:available' %}" class="btn btn-outline-success">
+                                <i class="bi bi-check-circle me-2"></i>Available Devices
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Search results pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">
+                            <i class="bi bi-chevron-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">
+                            <i class="bi bi-chevron-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function removeFilter(filterKey) {
+    const url = new URL(window.location);
+    url.searchParams.delete(filterKey);
+    url.searchParams.delete('page'); // Reset to first page
+    window.location.href = url.toString();
+}
+
+// Auto-focus search input
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('query');
+    if (searchInput && !searchInput.value) {
+        searchInput.focus();
+    }
+});
+</script>
+{% endblock %}

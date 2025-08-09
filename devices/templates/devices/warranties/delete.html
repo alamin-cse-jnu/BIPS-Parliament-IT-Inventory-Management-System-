@@ -1,0 +1,546 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Warranty - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --parliament-primary: #1e3a8a;
+        --parliament-secondary: #0f172a;
+        --parliament-success: #059669;
+        --parliament-danger: #dc2626;
+        --parliament-warning: #d97706;
+        --parliament-info: #0284c7;
+        --parliament-light: #f8fafc;
+        --parliament-dark: #1f2937;
+        --parliament-neutral: #6b7280;
+        --spacing-xs: 0.25rem;
+        --spacing-sm: 0.5rem;
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        --spacing-xl: 2rem;
+        --border-radius: 0.5rem;
+        --border-radius-lg: 0.75rem;
+        --transition: all 0.3s ease;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    body {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        min-height: 100vh;
+    }
+
+    .delete-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: var(--spacing-xl) var(--spacing-md);
+    }
+
+    .delete-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+    }
+
+    .delete-header {
+        background: linear-gradient(135deg, var(--parliament-danger) 0%, #b91c1c 100%);
+        color: white;
+        padding: var(--spacing-xl);
+        text-align: center;
+        position: relative;
+    }
+
+    .delete-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23ffffff" fill-opacity="0.1"><circle cx="30" cy="30" r="2"/></g></svg>') repeat;
+        opacity: 0.1;
+    }
+
+    .delete-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-md);
+        position: relative;
+        z-index: 1;
+    }
+
+    .delete-subtitle {
+        opacity: 0.9;
+        font-size: 1rem;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+    }
+
+    .delete-body {
+        padding: var(--spacing-xl);
+    }
+
+    .warning-section {
+        background: linear-gradient(135deg, rgba(248, 113, 113, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+        text-align: center;
+    }
+
+    .warning-icon {
+        font-size: 4rem;
+        color: var(--parliament-danger);
+        margin-bottom: var(--spacing-md);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    .warning-message {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--parliament-danger);
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .warning-description {
+        color: var(--parliament-neutral);
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    .warranty-details {
+        background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%);
+        border: 1px solid rgba(99, 102, 241, 0.1);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .warranty-details h4 {
+        color: var(--parliament-dark);
+        font-weight: 600;
+        font-size: 1.25rem;
+        margin-bottom: var(--spacing-lg);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 2px solid rgba(99, 102, 241, 0.1);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--spacing-lg);
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: var(--parliament-neutral);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .detail-value {
+        color: var(--parliament-dark);
+        font-size: 1rem;
+        font-weight: 500;
+        word-break: break-word;
+    }
+
+    .warranty-type-badge {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--border-radius);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .warranty-type-manufacturer {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+
+    .warranty-type-extended {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+    }
+
+    .warranty-type-service {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+    }
+
+    .warranty-status-badge {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--border-radius);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .warranty-status-active {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+
+    .warranty-status-expired {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+    }
+
+    .warranty-status-expiring {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+    }
+
+    .device-info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .device-info h5 {
+        color: var(--parliament-primary);
+        font-weight: 600;
+        margin-bottom: var(--spacing-md);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .device-link {
+        color: var(--parliament-primary);
+        text-decoration: none;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .device-link:hover {
+        text-decoration: underline;
+        color: var(--parliament-secondary);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: var(--spacing-md);
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        padding-top: var(--spacing-lg);
+        border-top: 1px solid rgba(99, 102, 241, 0.1);
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        transition: var(--transition);
+        border: 2px solid transparent;
+        cursor: pointer;
+        min-width: 140px;
+        justify-content: center;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, var(--parliament-danger) 0%, #b91c1c 100%);
+        color: white;
+        border-color: var(--parliament-danger);
+    }
+
+    .btn-danger:hover {
+        background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, rgba(107, 114, 128, 0.1) 0%, rgba(75, 85, 99, 0.05) 100%);
+        color: var(--parliament-neutral);
+        border-color: rgba(107, 114, 128, 0.3);
+    }
+
+    .btn-secondary:hover {
+        background: linear-gradient(135deg, rgba(107, 114, 128, 0.2) 0%, rgba(75, 85, 99, 0.1) 100%);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+        color: var(--parliament-dark);
+        text-decoration: none;
+    }
+
+    .confirmation-checkbox {
+        background: rgba(248, 250, 252, 0.8);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+        text-align: center;
+    }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-sm);
+        font-weight: 500;
+        color: var(--parliament-dark);
+    }
+
+    .form-check-input {
+        margin: 0;
+        transform: scale(1.2);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .delete-container {
+            padding: var(--spacing-md);
+        }
+
+        .delete-title {
+            font-size: 1.5rem;
+        }
+
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+        }
+
+        .header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+
+    /* Accessibility */
+    .btn:focus {
+        outline: 2px solid var(--parliament-primary);
+        outline-offset: 2px;
+    }
+
+    .form-check-input:focus {
+        outline: 2px solid var(--parliament-primary);
+        outline-offset: 2px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <div class="delete-card">
+        <!-- Header -->
+        <div class="delete-header">
+            <h1 class="delete-title">
+                <i class="bi bi-exclamation-triangle"></i>
+                Delete Warranty
+            </h1>
+            <p class="delete-subtitle">
+                Permanently remove warranty record from the system
+            </p>
+        </div>
+
+        <!-- Body -->
+        <div class="delete-body">
+            <!-- Warning Section -->
+            <div class="warning-section">
+                <div class="warning-icon">
+                    <i class="bi bi-shield-x"></i>
+                </div>
+                <p class="warning-message">
+                    This action cannot be undone!
+                </p>
+                <p class="warning-description">
+                    You are about to permanently delete this warranty record. This will remove all warranty information from the system.
+                </p>
+            </div>
+
+            <!-- Warranty Details -->
+            <div class="warranty-details">
+                <h4>
+                    <i class="bi bi-shield-check"></i>
+                    Warranty Information
+                </h4>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            <i class="bi bi-bookmark"></i>
+                            Warranty Type
+                        </span>
+                        <span class="detail-value">
+                            <span class="warranty-type-badge warranty-type-{{ warranty.warranty_type|lower }}">
+                                {{ warranty.get_warranty_type_display }}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            <i class="bi bi-building"></i>
+                            Provider
+                        </span>
+                        <span class="detail-value">{{ warranty.provider.name }}</span>
+                    </div>
+                    {% if warranty.warranty_number %}
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            <i class="bi bi-hash"></i>
+                            Warranty Number
+                        </span>
+                        <span class="detail-value">{{ warranty.warranty_number }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            <i class="bi bi-calendar-event"></i>
+                            Start Date
+                        </span>
+                        <span class="detail-value">{{ warranty.start_date|date:"F d, Y" }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            <i class="bi bi-calendar-x"></i>
+                            End Date
+                        </span>
+                        <span class="detail-value">{{ warranty.end_date|date:"F d, Y" }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            <i class="bi bi-info-circle"></i>
+                            Status
+                        </span>
+                        <span class="detail-value">
+                            {% if warranty.is_active and warranty.end_date >= today %}
+                                {% if warranty.days_remaining <= 30 %}
+                                    <span class="warranty-status-badge warranty-status-expiring">
+                                        Expiring Soon ({{ warranty.days_remaining }} days)
+                                    </span>
+                                {% else %}
+                                    <span class="warranty-status-badge warranty-status-active">
+                                        Active
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                <span class="warranty-status-badge warranty-status-expired">
+                                    Expired
+                                </span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Associated Device Info -->
+            <div class="device-info">
+                <h5>
+                    <i class="bi bi-laptop"></i>
+                    Associated Device
+                </h5>
+                <p class="mb-2">
+                    <strong>Device ID:</strong> 
+                    <a href="{% url 'devices:detail' warranty.device.pk %}" class="device-link">
+                        {{ warranty.device.device_id }}
+                    </a>
+                </p>
+                <p class="mb-2">
+                    <strong>Device:</strong> {{ warranty.device.brand }} {{ warranty.device.model }}
+                </p>
+                <p class="mb-0">
+                    <strong>Category:</strong> {{ warranty.device.subcategory.category.name }} - {{ warranty.device.subcategory.name }}
+                </p>
+            </div>
+
+            <!-- Confirmation Form -->
+            <form method="post" id="deleteForm">
+                {% csrf_token %}
+                
+                <div class="confirmation-checkbox">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                        <label class="form-check-label" for="confirmDelete">
+                            I understand that this action cannot be undone
+                        </label>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-danger" id="deleteButton" disabled>
+                        <i class="bi bi-trash3"></i>
+                        Delete Warranty
+                    </button>
+                    <a href="{% url 'devices:warranty_detail' warranty.pk %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i>
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmCheckbox = document.getElementById('confirmDelete');
+    const deleteButton = document.getElementById('deleteButton');
+    
+    confirmCheckbox.addEventListener('change', function() {
+        deleteButton.disabled = !this.checked;
+        if (this.checked) {
+            deleteButton.style.opacity = '1';
+        } else {
+            deleteButton.style.opacity = '0.6';
+        }
+    });
+    
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

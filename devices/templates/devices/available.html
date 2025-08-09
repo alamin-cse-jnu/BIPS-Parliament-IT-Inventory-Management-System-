@@ -1,0 +1,636 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Available Devices - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/components.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header glass-card mb-4">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="page-title-section">
+                    <h1 class="page-title">
+                        <i class="bi bi-check-circle text-success me-3"></i>
+                        Available Devices
+                    </h1>
+                    <p class="page-subtitle text-muted">
+                        Devices ready for assignment to users and locations in Bangladesh Parliament Secretariat
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-4 text-end">
+                <div class="page-actions">
+                    <div class="btn-group me-2" role="group">
+                        <a href="{% url 'devices:create' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-lg me-2"></i>Add Device
+                        </a>
+                        <button type="button" class="btn btn-outline-primary dropdown-toggle dropdown-toggle-split" 
+                                data-bs-toggle="dropdown">
+                            <span class="visually-hidden">Toggle Dropdown</span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'devices:bulk_import' %}">
+                                <i class="bi bi-upload me-2"></i>Bulk Import
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'devices:export' %}?status=AVAILABLE">
+                                <i class="bi bi-download me-2"></i>Export Available
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'devices:qr_bulk_generate' %}?status=AVAILABLE">
+                                <i class="bi bi-qr-code me-2"></i>Generate QR Codes
+                            </a></li>
+                        </ul>
+                    </div>
+                    <a href="{% url 'devices:list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-list me-2"></i>All Devices
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card bg-success">
+                <div class="stats-card-body">
+                    <div class="stats-icon">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3 class="stats-number">{{ page_obj.paginator.count }}</h3>
+                        <p class="stats-label">Available Devices</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card bg-primary">
+                <div class="stats-card-body">
+                    <div class="stats-icon">
+                        <i class="bi bi-laptop"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3 class="stats-number">{{ complete_devices_count }}</h3>
+                        <p class="stats-label">Complete Devices</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card bg-info">
+                <div class="stats-card-body">
+                    <div class="stats-icon">
+                        <i class="bi bi-cpu"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3 class="stats-number">{{ components_count }}</h3>
+                        <p class="stats-label">Components</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card bg-warning">
+                <div class="stats-card-body">
+                    <div class="stats-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3 class="stats-number">{{ warranty_protected_count }}</h3>
+                        <p class="stats-label">Under Warranty</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    {% include 'devices/partials/_device_search.html' %}
+    {% include 'devices/partials/_device_filters.html' %}
+
+    <!-- View Controls -->
+    <div class="view-controls glass-card mb-4">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <div class="view-info">
+                    <h6 class="mb-1">
+                        Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} 
+                        of {{ page_obj.paginator.count }} available devices
+                    </h6>
+                    <small class="text-muted">
+                        Ready for assignment • 
+                        Last updated: {{ last_updated|date:"M d, Y H:i" }}
+                    </small>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="view-actions d-flex justify-content-end align-items-center gap-3">
+                    <!-- View Toggle -->
+                    <div class="btn-group view-toggle" role="group">
+                        <input type="radio" class="btn-check" name="viewMode" id="gridView" checked>
+                        <label class="btn btn-outline-primary" for="gridView">
+                            <i class="bi bi-grid-3x2"></i>
+                        </label>
+                        <input type="radio" class="btn-check" name="viewMode" id="listView">
+                        <label class="btn btn-outline-primary" for="listView">
+                            <i class="bi bi-list"></i>
+                        </label>
+                        <input type="radio" class="btn-check" name="viewMode" id="tableView">
+                        <label class="btn btn-outline-primary" for="tableView">
+                            <i class="bi bi-table"></i>
+                        </label>
+                    </div>
+
+                    <!-- Sort Options -->
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" 
+                                data-bs-toggle="dropdown">
+                            <i class="bi bi-sort-down me-2"></i>Sort
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="?sort=name">Name A-Z</a></li>
+                            <li><a class="dropdown-item" href="?sort=-name">Name Z-A</a></li>
+                            <li><a class="dropdown-item" href="?sort=category">Category</a></li>
+                            <li><a class="dropdown-item" href="?sort=-created_at">Newest First</a></li>
+                            <li><a class="dropdown-item" href="?sort=created_at">Oldest First</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Bulk Actions -->
+                    <div class="dropdown">
+                        <button class="btn btn-outline-dark dropdown-toggle" type="button" 
+                                data-bs-toggle="dropdown">
+                            <i class="bi bi-check2-square me-2"></i>Bulk Actions
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="showBulkAssignModal()">
+                                <i class="bi bi-person-plus me-2"></i>Assign to User
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="showBulkLocationModal()">
+                                <i class="bi bi-geo-alt me-2"></i>Move to Location
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="generateBulkQR()">
+                                <i class="bi bi-qr-code me-2"></i>Generate QR Codes
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="exportSelected()">
+                                <i class="bi bi-download me-2"></i>Export Selected
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Device List/Grid -->
+    <div id="devicesContainer">
+        {% if devices %}
+            <!-- Grid View (Default) -->
+            <div class="devices-grid" id="gridViewContainer">
+                <div class="row g-4">
+                    {% for device in devices %}
+                        <div class="col-xl-4 col-lg-6 col-md-6">
+                            <div class="device-card glass-card" data-device-id="{{ device.id }}">
+                                <div class="device-card-header">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="device-selection">
+                                            <input type="checkbox" class="form-check-input device-checkbox" 
+                                                   value="{{ device.id }}">
+                                        </div>
+                                        <div class="device-badges">
+                                            {% include 'devices/partials/_status_badges.html' with badge_type="status" device=device %}
+                                            {% if device.device_type %}
+                                                {% include 'devices/partials/_status_badges.html' with badge_type="type" device=device %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="device-card-body">
+                                    <div class="device-icon">
+                                        {% if device.subcategory.category.icon_class %}
+                                            <i class="{{ device.subcategory.category.icon_class }}"></i>
+                                        {% else %}
+                                            <i class="bi bi-laptop"></i>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <h5 class="device-name">
+                                        <a href="{% url 'devices:detail' device.id %}" class="text-decoration-none">
+                                            {{ device.name }}
+                                        </a>
+                                    </h5>
+                                    
+                                    <div class="device-meta">
+                                        <div class="device-id">
+                                            <i class="bi bi-tag-fill me-1"></i>
+                                            {{ device.device_id }}
+                                        </div>
+                                        <div class="device-category">
+                                            <i class="bi bi-folder-fill me-1"></i>
+                                            {{ device.subcategory.category.name }}
+                                        </div>
+                                    </div>
+
+                                    {% if device.specifications %}
+                                        <div class="device-specs-preview">
+                                            {% for key, value in device.specifications.items|slice:":3" %}
+                                                <div class="spec-item">
+                                                    <span class="spec-key">{{ key|title }}:</span>
+                                                    <span class="spec-value">{{ value|truncatechars:20 }}</span>
+                                                </div>
+                                            {% endfor %}
+                                            {% if device.specifications|length > 3 %}
+                                                <div class="spec-more">
+                                                    <small class="text-muted">+{{ device.specifications|length|add:"-3" }} more specs</small>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+
+                                    <div class="device-info">
+                                        {% if device.vendor %}
+                                            <div class="device-vendor">
+                                                <i class="bi bi-building me-1"></i>
+                                                {{ device.vendor.name }}
+                                            </div>
+                                        {% endif %}
+                                        {% if device.current_location %}
+                                            <div class="device-location">
+                                                <i class="bi bi-geo-alt me-1"></i>
+                                                {{ device.current_location }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="device-card-footer">
+                                    <div class="device-actions">
+                                        <a href="{% url 'devices:detail' device.id %}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye me-1"></i>View
+                                        </a>
+                                        <a href="{% url 'assignments:create' %}?device={{ device.id }}" 
+                                           class="btn btn-sm btn-success">
+                                            <i class="bi bi-person-plus me-1"></i>Assign
+                                        </a>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                    type="button" data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="{% url 'devices:edit' device.id %}">
+                                                    <i class="bi bi-pencil me-2"></i>Edit
+                                                </a></li>
+                                                <li><a class="dropdown-item" href="{% url 'devices:qr_view' device.id %}">
+                                                    <i class="bi bi-qr-code me-2"></i>QR Code
+                                                </a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="#" onclick="moveToMaintenance({{ device.id }})">
+                                                    <i class="bi bi-tools me-2"></i>Mark as Maintenance
+                                                </a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="device-meta-footer">
+                                        <small class="text-muted">
+                                            <i class="bi bi-calendar me-1"></i>
+                                            Added {{ device.created_at|date:"M d, Y" }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- List View (Hidden by default) -->
+            <div class="devices-list d-none" id="listViewContainer">
+                <div class="device-list-container">
+                    {% for device in devices %}
+                        <div class="device-list-item glass-card mb-3" data-device-id="{{ device.id }}">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <input type="checkbox" class="form-check-input device-checkbox" 
+                                           value="{{ device.id }}">
+                                </div>
+                                <div class="col-auto">
+                                    <div class="device-list-icon">
+                                        {% if device.subcategory.category.icon_class %}
+                                            <i class="{{ device.subcategory.category.icon_class }}"></i>
+                                        {% else %}
+                                            <i class="bi bi-laptop"></i>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="device-list-content">
+                                        <h6 class="device-list-name mb-1">
+                                            <a href="{% url 'devices:detail' device.id %}" class="text-decoration-none">
+                                                {{ device.name }}
+                                            </a>
+                                        </h6>
+                                        <div class="device-list-meta">
+                                            <span class="device-id-badge">{{ device.device_id }}</span>
+                                            <span class="device-category-badge">{{ device.subcategory.category.name }}</span>
+                                            {% if device.vendor %}
+                                                <span class="device-vendor-badge">{{ device.vendor.name }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="device-list-badges">
+                                        {% include 'devices/partials/_status_badges.html' with badge_type="status" device=device %}
+                                        {% include 'devices/partials/_status_badges.html' with badge_type="type" device=device %}
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="device-list-actions">
+                                        <a href="{% url 'assignments:create' %}?device={{ device.id }}" 
+                                           class="btn btn-sm btn-success me-2">
+                                            <i class="bi bi-person-plus me-1"></i>Assign
+                                        </a>
+                                        <a href="{% url 'devices:detail' device.id %}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye me-1"></i>View
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Table View (Hidden by default) -->
+            <div class="devices-table d-none" id="tableViewContainer">
+                <div class="table-responsive">
+                    <table class="table table-hover device-table glass-card">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="50">
+                                    <input type="checkbox" class="form-check-input" id="selectAll">
+                                </th>
+                                <th>Device</th>
+                                <th>Category</th>
+                                <th>Type</th>
+                                <th>Vendor</th>
+                                <th>Location</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for device in devices %}
+                                <tr data-device-id="{{ device.id }}">
+                                    <td>
+                                        <input type="checkbox" class="form-check-input device-checkbox" 
+                                               value="{{ device.id }}">
+                                    </td>
+                                    <td>
+                                        <div class="device-table-info">
+                                            <div class="device-table-name">
+                                                <a href="{% url 'devices:detail' device.id %}" class="text-decoration-none">
+                                                    {{ device.name }}
+                                                </a>
+                                            </div>
+                                            <small class="text-muted">{{ device.device_id }}</small>
+                                        </div>
+                                    </td>
+                                    <td>{{ device.subcategory.category.name }}</td>
+                                    <td>
+                                        {% include 'devices/partials/_status_badges.html' with badge_type="type" device=device %}
+                                    </td>
+                                    <td>{{ device.vendor.name|default:"-" }}</td>
+                                    <td>{{ device.current_location|default:"-" }}</td>
+                                    <td>
+                                        {% include 'devices/partials/_status_badges.html' with badge_type="status" device=device %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'assignments:create' %}?device={{ device.id }}" 
+                                               class="btn btn-success">
+                                                <i class="bi bi-person-plus"></i>
+                                            </a>
+                                            <a href="{% url 'devices:detail' device.id %}" 
+                                               class="btn btn-outline-primary">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <button class="btn btn-outline-secondary dropdown-toggle" 
+                                                    data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="{% url 'devices:edit' device.id %}">Edit</a></li>
+                                                <li><a class="dropdown-item" href="{% url 'devices:qr_view' device.id %}">QR Code</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="#" onclick="moveToMaintenance({{ device.id }})">Mark as Maintenance</a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        {% else %}
+            <!-- Empty State -->
+            <div class="empty-state glass-card text-center py-5">
+                <div class="empty-state-icon">
+                    <i class="bi bi-inbox"></i>
+                </div>
+                <h4 class="empty-state-title">No Available Devices</h4>
+                <p class="empty-state-description">
+                    There are currently no devices available for assignment. 
+                    Add new devices or check if devices need to be returned from maintenance.
+                </p>
+                <div class="empty-state-actions">
+                    <a href="{% url 'devices:create' %}" class="btn btn-primary me-2">
+                        <i class="bi bi-plus-lg me-2"></i>Add New Device
+                    </a>
+                    <a href="{% url 'devices:maintenance' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-tools me-2"></i>Check Maintenance
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+        <div class="pagination-container mt-4">
+            <nav aria-label="Available devices pagination">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for page_num in page_obj.paginator.page_range %}
+                        {% if page_num == page_obj.number %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                        {% elif page_num > page_obj.number|add:'-3' and page_num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    {% endif %}
+</div>
+
+<!-- JavaScript for view switching and interactions -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // View Mode Switching
+    const viewModeRadios = document.querySelectorAll('input[name="viewMode"]');
+    const gridContainer = document.getElementById('gridViewContainer');
+    const listContainer = document.getElementById('listViewContainer');
+    const tableContainer = document.getElementById('tableViewContainer');
+
+    viewModeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.checked) {
+                // Hide all containers
+                gridContainer.classList.add('d-none');
+                listContainer.classList.add('d-none');
+                tableContainer.classList.add('d-none');
+
+                // Show selected view
+                if (this.id === 'gridView') {
+                    gridContainer.classList.remove('d-none');
+                } else if (this.id === 'listView') {
+                    listContainer.classList.remove('d-none');
+                } else if (this.id === 'tableView') {
+                    tableContainer.classList.remove('d-none');
+                }
+            }
+        });
+    });
+
+    // Select All Functionality
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const deviceCheckboxes = document.querySelectorAll('.device-checkbox');
+
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            deviceCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+    }
+
+    // Individual checkbox handling
+    deviceCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const checkedBoxes = document.querySelectorAll('.device-checkbox:checked');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = checkedBoxes.length === deviceCheckboxes.length;
+                selectAllCheckbox.indeterminate = checkedBoxes.length > 0 && checkedBoxes.length < deviceCheckboxes.length;
+            }
+        });
+    });
+});
+
+function moveToMaintenance(deviceId) {
+    if (confirm('Are you sure you want to mark this device as under maintenance?')) {
+        // AJAX call to update device status
+        fetch(`/devices/${deviceId}/maintenance/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error updating device status');
+            }
+        });
+    }
+}
+
+function showBulkAssignModal() {
+    const selectedDevices = Array.from(document.querySelectorAll('.device-checkbox:checked')).map(cb => cb.value);
+    if (selectedDevices.length === 0) {
+        alert('Please select at least one device');
+        return;
+    }
+    // Open bulk assignment modal
+    console.log('Bulk assign devices:', selectedDevices);
+}
+
+function showBulkLocationModal() {
+    const selectedDevices = Array.from(document.querySelectorAll('.device-checkbox:checked')).map(cb => cb.value);
+    if (selectedDevices.length === 0) {
+        alert('Please select at least one device');
+        return;
+    }
+    // Open bulk location modal
+    console.log('Bulk move devices:', selectedDevices);
+}
+
+function generateBulkQR() {
+    const selectedDevices = Array.from(document.querySelectorAll('.device-checkbox:checked')).map(cb => cb.value);
+    if (selectedDevices.length === 0) {
+        alert('Please select at least one device');
+        return;
+    }
+    // Generate QR codes for selected devices
+    const deviceIds = selectedDevices.join(',');
+    window.open(`/devices/qr/bulk-generate/?devices=${deviceIds}`, '_blank');
+}
+
+function exportSelected() {
+    const selectedDevices = Array.from(document.querySelectorAll('.device-checkbox:checked')).map(cb => cb.value);
+    if (selectedDevices.length === 0) {
+        alert('Please select at least one device');
+        return;
+    }
+    // Export selected devices
+    const deviceIds = selectedDevices.join(',');
+    window.open(`/devices/export/?devices=${deviceIds}&status=AVAILABLE`, '_blank');
+}
+</script>
+{% endblock %}

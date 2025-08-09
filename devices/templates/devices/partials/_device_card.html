@@ -1,0 +1,524 @@
+<!-- Device Card Component for PIMS - Bangladesh Parliament Secretariat -->
+<!-- Location: devices/templates/devices/partials/_device_card.html -->
+
+<div class="card device-card border-0 shadow-sm h-100">
+    <!-- Card Header with Device Type and Status -->
+    <div class="card-header bg-gradient-primary text-white border-0 position-relative">
+        <div class="row align-items-center">
+            <div class="col">
+                <h6 class="mb-0 fw-bold">{{ device.device_id }}</h6>
+                <small class="text-light opacity-90">{{ device.subcategory.name }}</small>
+            </div>
+            <div class="col-auto">
+                <span class="badge device-status device-status-{{ device.status|lower }}">
+                    {% if device.status == 'AVAILABLE' %}
+                        <i class="bi bi-check-circle me-1"></i>Available
+                    {% elif device.status == 'ASSIGNED' %}
+                        <i class="bi bi-person-check me-1"></i>Assigned
+                    {% elif device.status == 'MAINTENANCE' %}
+                        <i class="bi bi-tools me-1"></i>Maintenance
+                    {% elif device.status == 'RETIRED' %}
+                        <i class="bi bi-archive me-1"></i>Retired
+                    {% elif device.status == 'DAMAGED' %}
+                        <i class="bi bi-exclamation-triangle me-1"></i>Damaged
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        
+        <!-- Device Type Icon -->
+        <div class="position-absolute end-0 top-0 p-2">
+            <i class="bi {{ device.subcategory.category.icon_class|default:'bi-laptop' }} fs-5 opacity-50"></i>
+        </div>
+    </div>
+
+    <!-- Card Body -->
+    <div class="card-body">
+        <!-- Device Basic Info -->
+        <div class="device-info mb-3">
+            <h6 class="card-title text-dark mb-2">{{ device.brand }} {{ device.model }}</h6>
+            
+            <!-- Key Specifications -->
+            {% if device.specifications %}
+                <div class="specifications-preview mb-2">
+                    {% for key, value in device.specifications.items %}
+                        {% if forloop.counter <= 3 %}
+                            <span class="badge bg-light text-dark border me-1 mb-1">
+                                <small>{{ key|title }}: {{ value }}</small>
+                            </span>
+                        {% endif %}
+                    {% endfor %}
+                    {% if device.specifications|length > 3 %}
+                        <small class="text-muted">+{{ device.specifications|length|add:"-3" }} more</small>
+                    {% endif %}
+                </div>
+            {% endif %}
+            
+            <!-- Serial Number -->
+            <div class="d-flex align-items-center text-muted mb-2">
+                <i class="bi bi-hash me-2"></i>
+                <small>{{ device.serial_number }}</small>
+            </div>
+            
+            <!-- Asset Tag if available -->
+            {% if device.asset_tag %}
+                <div class="d-flex align-items-center text-muted mb-2">
+                    <i class="bi bi-tag me-2"></i>
+                    <small>Asset: {{ device.asset_tag }}</small>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Location and Assignment Info -->
+        <div class="device-location mb-3">
+            {% if device.current_location %}
+                <div class="d-flex align-items-center text-muted mb-1">
+                    <i class="bi bi-geo-alt me-2"></i>
+                    <small>{{ device.current_location.name }}</small>
+                </div>
+            {% endif %}
+            
+            <!-- Current Assignment -->
+            {% if device.current_assignment %}
+                <div class="d-flex align-items-center text-success mb-1">
+                    <i class="bi bi-person-check me-2"></i>
+                    <small>Assigned to: {{ device.current_assignment.user.get_full_name|default:device.current_assignment.user.username }}</small>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Device Condition and Priority -->
+        <div class="device-meta mb-3">
+            <div class="row">
+                <div class="col-6">
+                    <span class="badge device-condition device-condition-{{ device.condition|lower }}">
+                        {% if device.condition == 'NEW' %}
+                            <i class="bi bi-star-fill me-1"></i>New
+                        {% elif device.condition == 'GOOD' %}
+                            <i class="bi bi-check-circle me-1"></i>Good
+                        {% elif device.condition == 'FAIR' %}
+                            <i class="bi bi-exclamation-circle me-1"></i>Fair
+                        {% elif device.condition == 'POOR' %}
+                            <i class="bi bi-x-circle me-1"></i>Poor
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="col-6 text-end">
+                    <span class="badge device-priority device-priority-{{ device.priority|lower }}">
+                        {% if device.priority == 'LOW' %}
+                            <i class="bi bi-circle me-1"></i>Low
+                        {% elif device.priority == 'MEDIUM' %}
+                            <i class="bi bi-dash-circle me-1"></i>Medium
+                        {% elif device.priority == 'HIGH' %}
+                            <i class="bi bi-exclamation-circle me-1"></i>High
+                        {% elif device.priority == 'CRITICAL' %}
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Critical
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Purchase Information -->
+        <div class="device-purchase mb-3">
+            <div class="row text-muted">
+                <div class="col-6">
+                    <small>
+                        <i class="bi bi-calendar3 me-1"></i>
+                        {{ device.purchase_date|date:"M Y" }}
+                    </small>
+                </div>
+                <div class="col-6 text-end">
+                    <small>
+                        <i class="bi bi-currency-dollar me-1"></i>
+                        ৳{{ device.purchase_price|floatformat:0 }}
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warranty Status -->
+        {% if device.current_warranty %}
+            <div class="warranty-status mb-3">
+                {% with warranty=device.current_warranty %}
+                    {% if warranty.is_active %}
+                        <div class="alert alert-success p-2 mb-0">
+                            <small>
+                                <i class="bi bi-shield-check me-1"></i>
+                                Warranty until {{ warranty.end_date|date:"M d, Y" }}
+                                {% if warranty.days_remaining <= 30 %}
+                                    <span class="badge bg-warning text-dark ms-1">{{ warranty.days_remaining }} days left</span>
+                                {% endif %}
+                            </small>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-light border p-2 mb-0">
+                            <small class="text-muted">
+                                <i class="bi bi-shield-x me-1"></i>
+                                Warranty expired {{ warranty.end_date|date:"M d, Y" }}
+                            </small>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        {% endif %}
+
+        <!-- Component Count for Complete Devices -->
+        {% if device.device_type == 'COMPLETE' and device.components.exists %}
+            <div class="components-info mb-3">
+                <small class="text-muted">
+                    <i class="bi bi-puzzle me-1"></i>
+                    {{ device.components.count }} component{{ device.components.count|pluralize }}
+                </small>
+            </div>
+        {% endif %}
+
+        <!-- Parent Device for Components -->
+        {% if device.parent_device %}
+            <div class="parent-device mb-3">
+                <small class="text-info">
+                    <i class="bi bi-arrow-up-circle me-1"></i>
+                    Part of: {{ device.parent_device.device_id }}
+                </small>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Card Footer with Actions -->
+    <div class="card-footer bg-transparent border-0 pt-0">
+        <div class="btn-toolbar justify-content-between" role="toolbar">
+            <!-- Primary Actions -->
+            <div class="btn-group" role="group">
+                <a href="{% url 'devices:detail' device.pk %}" 
+                   class="btn btn-outline-primary btn-sm" 
+                   data-bs-toggle="tooltip" 
+                   title="View Details">
+                    <i class="bi bi-eye"></i>
+                </a>
+                
+                {% if perms.devices.change_device %}
+                    <a href="{% url 'devices:edit' device.pk %}" 
+                       class="btn btn-outline-secondary btn-sm"
+                       data-bs-toggle="tooltip" 
+                       title="Edit Device">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                {% endif %}
+            </div>
+
+            <!-- Quick Actions based on Status -->
+            <div class="btn-group" role="group">
+                {% if device.status == 'AVAILABLE' and perms.assignments.add_assignment %}
+                    <a href="{% url 'assignments:create' %}?device={{ device.pk }}" 
+                       class="btn btn-success btn-sm"
+                       data-bs-toggle="tooltip" 
+                       title="Assign Device">
+                        <i class="bi bi-person-plus"></i>
+                    </a>
+                {% endif %}
+
+                {% if device.status == 'ASSIGNED' and perms.assignments.change_assignment %}
+                    <button type="button" 
+                            class="btn btn-warning btn-sm"
+                            onclick="returnDevice({{ device.pk }})"
+                            data-bs-toggle="tooltip" 
+                            title="Return Device">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                {% endif %}
+
+                {% if device.status != 'MAINTENANCE' and perms.maintenance.add_maintenance %}
+                    <a href="{% url 'maintenance:create' %}?device={{ device.pk }}" 
+                       class="btn btn-outline-warning btn-sm"
+                       data-bs-toggle="tooltip" 
+                       title="Start Maintenance">
+                        <i class="bi bi-tools"></i>
+                    </a>
+                {% endif %}
+
+                <!-- QR Code -->
+                {% if device.qrcode %}
+                    <button type="button" 
+                            class="btn btn-outline-info btn-sm"
+                            onclick="showQRCode('{{ device.qrcode.qr_code.url }}', '{{ device.device_id }}')"
+                            data-bs-toggle="tooltip" 
+                            title="View QR Code">
+                        <i class="bi bi-qr-code"></i>
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Device Card Styling - Following PIMS Design Rules */
+.device-card {
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.device-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(30, 58, 138, 0.15) !important;
+    border-color: rgba(30, 58, 138, 0.3);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6) !important;
+}
+
+/* Status Badges */
+.device-status {
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 12px;
+    padding: 0.4rem 0.8rem;
+}
+
+.device-status-available {
+    background: rgba(34, 197, 94, 0.9);
+    color: white;
+}
+
+.device-status-assigned {
+    background: rgba(59, 130, 246, 0.9);
+    color: white;
+}
+
+.device-status-maintenance {
+    background: rgba(245, 158, 11, 0.9);
+    color: white;
+}
+
+.device-status-retired {
+    background: rgba(107, 114, 128, 0.9);
+    color: white;
+}
+
+.device-status-damaged {
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+}
+
+/* Condition Badges */
+.device-condition {
+    font-size: 0.7rem;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 0.25rem 0.5rem;
+}
+
+.device-condition-new {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.device-condition-good {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.device-condition-fair {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.device-condition-poor {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Priority Badges */
+.device-priority {
+    font-size: 0.7rem;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 0.25rem 0.5rem;
+}
+
+.device-priority-low {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+.device-priority-medium {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.device-priority-high {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.device-priority-critical {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Specifications Preview */
+.specifications-preview .badge {
+    font-size: 0.65rem;
+    font-weight: 500;
+    background: rgba(248, 250, 252, 1) !important;
+    color: #475569 !important;
+    border: 1px solid rgba(203, 213, 225, 0.5) !important;
+}
+
+/* Alert Styling */
+.alert {
+    border-radius: 8px;
+    font-size: 0.8rem;
+}
+
+/* Action Buttons */
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-sm:hover {
+    transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .device-card {
+        margin-bottom: 1rem;
+    }
+    
+    .card-header .row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .btn-toolbar {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .btn-group {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Dark theme compatibility */
+@media (prefers-color-scheme: dark) {
+    .device-card {
+        background: rgba(17, 24, 39, 0.95);
+        border-color: rgba(75, 85, 99, 0.3);
+    }
+    
+    .card-title {
+        color: #f9fafb !important;
+    }
+    
+    .text-muted {
+        color: #9ca3af !important;
+    }
+    
+    .specifications-preview .badge {
+        background: rgba(31, 41, 55, 1) !important;
+        color: #d1d5db !important;
+        border-color: rgba(75, 85, 99, 0.5) !important;
+    }
+}
+</style>
+
+<script>
+// Device Card Interactions - Bangladesh Parliament Secretariat PIMS
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+// Return Device Function
+function returnDevice(deviceId) {
+    if (confirm('Are you sure you want to return this device? This will end the current assignment.')) {
+        // Implement return device logic
+        fetch(`/assignments/return/${deviceId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while returning the device.');
+        });
+    }
+}
+
+// Show QR Code Modal
+function showQRCode(qrCodeUrl, deviceId) {
+    // Create modal dynamically
+    const modalHtml = `
+        <div class="modal fade" id="qrCodeModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-gradient-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="bi bi-qr-code me-2"></i>
+                            QR Code - ${deviceId}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img src="${qrCodeUrl}" alt="QR Code" class="img-fluid" style="max-width: 300px;">
+                        <div class="mt-3">
+                            <p class="text-muted">Scan this QR code to access device information</p>
+                            <a href="${qrCodeUrl}" download="${deviceId}_qr.png" class="btn btn-primary btn-sm">
+                                <i class="bi bi-download me-1"></i>Download
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal
+    const existingModal = document.getElementById('qrCodeModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add new modal
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('qrCodeModal'));
+    modal.show();
+    
+    // Clean up after modal is hidden
+    document.getElementById('qrCodeModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+</script>

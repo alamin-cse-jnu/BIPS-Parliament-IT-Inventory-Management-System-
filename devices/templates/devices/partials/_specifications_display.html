@@ -1,0 +1,605 @@
+{% load static %}
+
+<div class="specifications-display glass-card">
+    {% if device.specifications %}
+        <div class="card-header bg-gradient border-0">
+            <h6 class="mb-0 text-white">
+                <i class="bi bi-gear me-2"></i>
+                Device Specifications
+            </h6>
+        </div>
+        
+        <div class="card-body">
+            {% if display_mode == "table" %}
+                <!-- Table Display Mode -->
+                <div class="specifications-table">
+                    <div class="table-responsive">
+                        <table class="table table-hover specs-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="spec-key-header">Specification</th>
+                                    <th class="spec-value-header">Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for key, value in device.specifications.items %}
+                                    <tr class="spec-row">
+                                        <td class="spec-key">
+                                            <i class="bi bi-dot spec-icon"></i>
+                                            {{ key|title|replace:"_":" " }}
+                                        </td>
+                                        <td class="spec-value">
+                                            {% if value|length > 50 %}
+                                                <span class="spec-value-short">{{ value|truncatechars:50 }}</span>
+                                                <span class="spec-value-full d-none">{{ value }}</span>
+                                                <button class="btn btn-link btn-sm p-0 ms-2 spec-expand-btn" type="button">
+                                                    <i class="bi bi-chevron-down"></i>
+                                                </button>
+                                            {% else %}
+                                                {{ value }}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+            {% elif display_mode == "cards" %}
+                <!-- Card Display Mode -->
+                <div class="specifications-cards">
+                    <div class="row g-3">
+                        {% for key, value in device.specifications.items %}
+                            <div class="col-lg-6 col-md-12">
+                                <div class="spec-card">
+                                    <div class="spec-card-header">
+                                        <div class="spec-icon-wrapper">
+                                            {% if "cpu" in key|lower or "processor" in key|lower %}
+                                                <i class="bi bi-cpu spec-category-icon"></i>
+                                            {% elif "ram" in key|lower or "memory" in key|lower %}
+                                                <i class="bi bi-memory spec-category-icon"></i>
+                                            {% elif "storage" in key|lower or "disk" in key|lower or "ssd" in key|lower or "hdd" in key|lower %}
+                                                <i class="bi bi-device-hdd spec-category-icon"></i>
+                                            {% elif "graphics" in key|lower or "gpu" in key|lower %}
+                                                <i class="bi bi-display spec-category-icon"></i>
+                                            {% elif "network" in key|lower or "wifi" in key|lower or "ethernet" in key|lower %}
+                                                <i class="bi bi-wifi spec-category-icon"></i>
+                                            {% elif "monitor" in key|lower or "screen" in key|lower or "display" in key|lower %}
+                                                <i class="bi bi-monitor spec-category-icon"></i>
+                                            {% elif "port" in key|lower %}
+                                                <i class="bi bi-plug spec-category-icon"></i>
+                                            {% else %}
+                                                <i class="bi bi-gear-fill spec-category-icon"></i>
+                                            {% endif %}
+                                        </div>
+                                        <h6 class="spec-card-title">{{ key|title|replace:"_":" " }}</h6>
+                                    </div>
+                                    <div class="spec-card-body">
+                                        <p class="spec-card-value">{{ value }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+            {% elif display_mode == "list" %}
+                <!-- List Display Mode -->
+                <div class="specifications-list">
+                    <ul class="list-group list-group-flush specs-list">
+                        {% for key, value in device.specifications.items %}
+                            <li class="list-group-item spec-list-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="spec-key-container">
+                                        <span class="spec-key-badge">{{ key|title|replace:"_":" " }}</span>
+                                    </div>
+                                    <div class="spec-value-container">
+                                        <span class="spec-value-text">{{ value }}</span>
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                
+            {% elif display_mode == "compact" %}
+                <!-- Compact Display Mode -->
+                <div class="specifications-compact">
+                    <div class="spec-tags">
+                        {% for key, value in device.specifications.items %}
+                            <span class="spec-tag" data-bs-toggle="tooltip" title="{{ key|title|replace:'_':' ' }}: {{ value }}">
+                                <i class="bi bi-tag-fill me-1"></i>
+                                {{ key|title|replace:"_":" " }}: 
+                                <strong>{{ value|truncatechars:15 }}</strong>
+                            </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+            {% else %}
+                <!-- Default Grid Display Mode -->
+                <div class="specifications-grid">
+                    <div class="specs-grid-container">
+                        {% for key, value in device.specifications.items %}
+                            <div class="spec-grid-item">
+                                <div class="spec-grid-key">
+                                    <i class="bi bi-chevron-right spec-arrow"></i>
+                                    {{ key|title|replace:"_":" " }}
+                                </div>
+                                <div class="spec-grid-value">
+                                    {% if value|length > 30 %}
+                                        <span class="spec-truncated" data-bs-toggle="tooltip" title="{{ value }}">
+                                            {{ value|truncatechars:30 }}
+                                        </span>
+                                    {% else %}
+                                        {{ value }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Specifications Actions -->
+            <div class="specifications-actions mt-3 pt-3 border-top">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="spec-meta">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{ device.specifications|length }} specification{{ device.specifications|length|pluralize }}
+                        </small>
+                    </div>
+                    <div class="spec-controls">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-secondary spec-mode-btn" data-mode="grid" title="Grid View">
+                                <i class="bi bi-grid"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary spec-mode-btn" data-mode="table" title="Table View">
+                                <i class="bi bi-table"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary spec-mode-btn" data-mode="cards" title="Card View">
+                                <i class="bi bi-grid-3x2"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary spec-mode-btn" data-mode="list" title="List View">
+                                <i class="bi bi-list"></i>
+                            </button>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary ms-2" onclick="copySpecifications()">
+                            <i class="bi bi-clipboard me-1"></i>Copy
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info ms-1" onclick="exportSpecifications()">
+                            <i class="bi bi-download me-1"></i>Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    {% else %}
+        <!-- No Specifications -->
+        <div class="card-body text-center py-5">
+            <div class="no-specs-container">
+                <i class="bi bi-gear no-specs-icon text-muted"></i>
+                <h6 class="text-muted mt-3">No Specifications Available</h6>
+                <p class="text-muted small mb-3">This device doesn't have any specifications defined yet.</p>
+                {% if perms.devices.change_device %}
+                    <a href="{% url 'devices:edit' device.id %}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i>Add Specifications
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+/* Specifications Display Styles */
+.specifications-display {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+    backdrop-filter: blur(12px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.card-header.bg-gradient {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border-radius: 18px 18px 0 0;
+    padding: 1rem 1.5rem;
+}
+
+/* Table Display Mode */
+.specs-table {
+    margin-bottom: 0;
+    background: transparent;
+}
+
+.specs-table th {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: none;
+    font-weight: 600;
+    color: #475569;
+    padding: 1rem;
+}
+
+.spec-row {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.spec-row:hover {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(79, 70, 229, 0.05) 100%);
+    transform: translateX(2px);
+}
+
+.spec-key {
+    font-weight: 600;
+    color: #475569;
+    padding: 1rem;
+}
+
+.spec-icon {
+    color: #6366f1;
+    margin-right: 0.5rem;
+}
+
+.spec-value {
+    color: #64748b;
+    padding: 1rem;
+}
+
+.spec-expand-btn {
+    color: #6366f1;
+    font-size: 0.75rem;
+}
+
+/* Card Display Mode */
+.spec-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+    border: 2px solid rgba(99, 102, 241, 0.1);
+    border-radius: 16px;
+    padding: 1rem;
+    height: 100%;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(8px);
+}
+
+.spec-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.spec-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.spec-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.spec-category-icon {
+    color: white;
+    font-size: 1.25rem;
+}
+
+.spec-card-title {
+    color: #475569;
+    font-weight: 600;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.spec-card-value {
+    color: #64748b;
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* List Display Mode */
+.spec-list-item {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.spec-list-item:hover {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(79, 70, 229, 0.05) 100%);
+    border-color: rgba(99, 102, 241, 0.2);
+}
+
+.spec-key-badge {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.spec-value-text {
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Compact Display Mode */
+.spec-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.spec-tag {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(79, 70, 229, 0.1) 100%);
+    color: #6366f1;
+    padding: 0.5rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    transition: all 0.3s ease;
+    cursor: help;
+}
+
+.spec-tag:hover {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(79, 70, 229, 0.2) 100%);
+    border-color: rgba(99, 102, 241, 0.4);
+    transform: translateY(-1px);
+}
+
+/* Grid Display Mode */
+.specs-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.spec-grid-item {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.8) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.1);
+    border-radius: 12px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.spec-grid-item:hover {
+    border-color: rgba(99, 102, 241, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+}
+
+.spec-grid-key {
+    font-weight: 600;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.spec-arrow {
+    color: #6366f1;
+    font-size: 0.75rem;
+    margin-right: 0.5rem;
+}
+
+.spec-grid-value {
+    color: #64748b;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+/* No Specifications State */
+.no-specs-container {
+    padding: 2rem;
+}
+
+.no-specs-icon {
+    font-size: 3rem;
+    opacity: 0.3;
+}
+
+/* Specifications Actions */
+.specifications-actions {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%);
+    border-radius: 12px;
+    padding: 0.75rem;
+    margin: 0 -0.5rem;
+}
+
+.spec-mode-btn {
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.spec-mode-btn:hover {
+    background-color: #6366f1;
+    border-color: #6366f1;
+    color: white;
+}
+
+.spec-mode-btn.active {
+    background-color: #6366f1;
+    border-color: #6366f1;
+    color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .specs-grid-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .spec-card {
+        margin-bottom: 1rem;
+    }
+    
+    .spec-tags {
+        gap: 0.375rem;
+    }
+    
+    .spec-tag {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.5rem;
+    }
+    
+    .specifications-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .spec-controls {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Animation for mode switching */
+.spec-mode-transition {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+}
+
+.spec-mode-transition.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+</style>
+
+<script>
+// Specifications Display JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Spec expand/collapse functionality
+    const expandButtons = document.querySelectorAll('.spec-expand-btn');
+    expandButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const row = this.closest('.spec-row');
+            const shortText = row.querySelector('.spec-value-short');
+            const fullText = row.querySelector('.spec-value-full');
+            const icon = this.querySelector('i');
+            
+            if (shortText.classList.contains('d-none')) {
+                shortText.classList.remove('d-none');
+                fullText.classList.add('d-none');
+                icon.className = 'bi bi-chevron-down';
+            } else {
+                shortText.classList.add('d-none');
+                fullText.classList.remove('d-none');
+                icon.className = 'bi bi-chevron-up';
+            }
+        });
+    });
+    
+    // Mode switching functionality
+    const modeButtons = document.querySelectorAll('.spec-mode-btn');
+    modeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const mode = this.dataset.mode;
+            switchSpecMode(mode);
+            
+            // Update active button
+            modeButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+});
+
+function switchSpecMode(mode) {
+    // This would typically be implemented with AJAX to reload the content
+    // For now, we'll just show a placeholder
+    console.log('Switching to mode:', mode);
+    
+    // Add transition effect
+    const container = document.querySelector('.specifications-display .card-body');
+    container.classList.add('spec-mode-transition');
+    
+    setTimeout(() => {
+        // Here you would reload the content with the new mode
+        // For demo purposes, we'll just remove the transition class
+        container.classList.remove('spec-mode-transition');
+        container.classList.add('show');
+    }, 300);
+}
+
+function copySpecifications() {
+    const specs = {
+        {% for key, value in device.specifications.items %}
+            "{{ key }}": "{{ value }}",
+        {% endfor %}
+    };
+    
+    navigator.clipboard.writeText(JSON.stringify(specs, null, 2)).then(function() {
+        // Show toast notification
+        showToast('Specifications copied to clipboard!', 'success');
+    }).catch(function(err) {
+        console.error('Could not copy specifications: ', err);
+        showToast('Failed to copy specifications', 'error');
+    });
+}
+
+function exportSpecifications() {
+    const specs = {
+        device_id: "{{ device.device_id }}",
+        device_name: "{{ device.name }}",
+        specifications: {
+            {% for key, value in device.specifications.items %}
+                "{{ key }}": "{{ value }}",
+            {% endfor %}
+        }
+    };
+    
+    const dataStr = JSON.stringify(specs, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = '{{ device.device_id }}_specifications.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast('Specifications exported successfully!', 'success');
+}
+
+function showToast(message, type) {
+    // Simple toast notification
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 3000);
+}
+</script>

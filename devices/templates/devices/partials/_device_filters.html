@@ -1,0 +1,438 @@
+{% load static %}
+
+<div class="device-filters glass-card mb-4">
+    <form method="GET" class="filter-form" id="deviceFilterForm">
+        <div class="row g-3 align-items-end">
+            <!-- Search Input -->
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label small text-muted fw-medium">Search</label>
+                <div class="search-box position-relative">
+                    <i class="bi bi-search search-icon position-absolute top-50 translate-middle-y text-muted"></i>
+                    <input type="text" name="search" class="form-control search-input ps-5" 
+                           placeholder="Search devices..." 
+                           value="{{ form.search.value|default:'' }}"
+                           autocomplete="off">
+                </div>
+            </div>
+            
+            <!-- Category Filter -->
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label small text-muted fw-medium">Category</label>
+                <select name="category" class="form-select filter-dropdown">
+                    <option value="">All Categories</option>
+                    {% for category in form.category.field.queryset %}
+                        <option value="{{ category.id }}" {% if form.category.value == category.id|stringformat:"s" %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Status Filter -->
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label small text-muted fw-medium">Status</label>
+                <select name="status" class="form-select filter-dropdown">
+                    <option value="">All Status</option>
+                    {% for value, label in form.status.field.choices %}
+                        {% if value %}
+                            <option value="{{ value }}" {% if form.status.value == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Device Type Filter -->
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label small text-muted fw-medium">Type</label>
+                <select name="device_type" class="form-select filter-dropdown">
+                    <option value="">All Types</option>
+                    {% for value, label in form.device_type.field.choices %}
+                        {% if value %}
+                            <option value="{{ value }}" {% if form.device_type.value == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="col-lg-3 col-md-12">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                        <i class="bi bi-funnel me-1"></i>Filter
+                    </button>
+                    <a href="?" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </a>
+                    <button type="button" class="btn btn-outline-info btn-sm" 
+                            data-bs-toggle="collapse" data-bs-target="#advancedFilters">
+                        <i class="bi bi-gear"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Active Filters Display -->
+        <div class="active-filters mt-3">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <!-- Quick Filter Badges -->
+                    <div class="quick-filters d-flex gap-1 flex-wrap">
+                        {% if form.search.value %}
+                            <span class="badge bg-primary d-flex align-items-center">
+                                <i class="bi bi-search me-1"></i>
+                                Search: "{{ form.search.value }}"
+                                <button type="button" class="btn-close btn-close-white ms-2 badge-close" 
+                                        onclick="clearFilter('search')" aria-label="Clear search"></button>
+                            </span>
+                        {% endif %}
+                        
+                        {% if form.category.value %}
+                            <span class="badge bg-success d-flex align-items-center">
+                                <i class="bi bi-tag me-1"></i>
+                                Category: {{ form.category.field.queryset|get_item:form.category.value }}
+                                <button type="button" class="btn-close btn-close-white ms-2 badge-close" 
+                                        onclick="clearFilter('category')" aria-label="Clear category filter"></button>
+                            </span>
+                        {% endif %}
+                        
+                        {% if form.status.value %}
+                            <span class="badge bg-info d-flex align-items-center">
+                                <i class="bi bi-circle-fill me-1"></i>
+                                Status: {{ form.status.value|capfirst }}
+                                <button type="button" class="btn-close btn-close-white ms-2 badge-close" 
+                                        onclick="clearFilter('status')" aria-label="Clear status filter"></button>
+                            </span>
+                        {% endif %}
+                        
+                        {% if form.device_type.value %}
+                            <span class="badge bg-warning text-dark d-flex align-items-center">
+                                <i class="bi bi-device-hdd me-1"></i>
+                                Type: {{ form.device_type.value|capfirst }}
+                                <button type="button" class="btn-close ms-2 badge-close" 
+                                        onclick="clearFilter('device_type')" aria-label="Clear type filter"></button>
+                            </span>
+                        {% endif %}
+                        
+                        {% if form.vendor.value %}
+                            <span class="badge bg-secondary d-flex align-items-center">
+                                <i class="bi bi-building me-1"></i>
+                                Vendor: {{ form.vendor.field.queryset|get_item:form.vendor.value }}
+                                <button type="button" class="btn-close btn-close-white ms-2 badge-close" 
+                                        onclick="clearFilter('vendor')" aria-label="Clear vendor filter"></button>
+                            </span>
+                        {% endif %}
+                        
+                        {% if form.location.value %}
+                            <span class="badge bg-dark d-flex align-items-center">
+                                <i class="bi bi-geo-alt me-1"></i>
+                                Location: {{ form.location.field.queryset|get_item:form.location.value }}
+                                <button type="button" class="btn-close btn-close-white ms-2 badge-close" 
+                                        onclick="clearFilter('location')" aria-label="Clear location filter"></button>
+                            </span>
+                        {% endif %}
+                        
+                        {% if form.condition.value %}
+                            <span class="badge bg-purple d-flex align-items-center">
+                                <i class="bi bi-shield-check me-1"></i>
+                                Condition: {{ form.condition.value|capfirst }}
+                                <button type="button" class="btn-close btn-close-white ms-2 badge-close" 
+                                        onclick="clearFilter('condition')" aria-label="Clear condition filter"></button>
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Advanced Filters Collapse -->
+        <div class="collapse mt-3" id="advancedFilters">
+            <div class="advanced-filters-content p-3 bg-light rounded-3 border">
+                <h6 class="text-muted mb-3"><i class="bi bi-sliders me-2"></i>Advanced Filters</h6>
+                <div class="row g-3">
+                    <!-- Subcategory Filter -->
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label small text-muted fw-medium">Subcategory</label>
+                        <select name="subcategory" class="form-select filter-dropdown">
+                            <option value="">All Subcategories</option>
+                            {% for subcategory in form.subcategory.field.queryset %}
+                                <option value="{{ subcategory.id }}" {% if form.subcategory.value == subcategory.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ subcategory.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Vendor Filter -->
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label small text-muted fw-medium">Vendor</label>
+                        <select name="vendor" class="form-select filter-dropdown">
+                            <option value="">All Vendors</option>
+                            {% for vendor in form.vendor.field.queryset %}
+                                <option value="{{ vendor.id }}" {% if form.vendor.value == vendor.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ vendor.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Condition Filter -->
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label small text-muted fw-medium">Condition</label>
+                        <select name="condition" class="form-select filter-dropdown">
+                            <option value="">All Conditions</option>
+                            {% for value, label in form.condition.field.choices %}
+                                {% if value %}
+                                    <option value="{{ value }}" {% if form.condition.value == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Location Filter -->
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label small text-muted fw-medium">Location</label>
+                        <select name="location" class="form-select filter-dropdown">
+                            <option value="">All Locations</option>
+                            {% for location in form.location.field.queryset %}
+                                <option value="{{ location.id }}" {% if form.location.value == location.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ location }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Purchase Date Range -->
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label small text-muted fw-medium">Purchase Date From</label>
+                        <input type="date" name="purchase_date_from" class="form-control" 
+                               value="{{ form.purchase_date_from.value|default:'' }}">
+                    </div>
+                    
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label small text-muted fw-medium">Purchase Date To</label>
+                        <input type="date" name="purchase_date_to" class="form-control" 
+                               value="{{ form.purchase_date_to.value|default:'' }}">
+                    </div>
+                    
+                    <!-- Assignability Filter -->
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label small text-muted fw-medium">Assignable</label>
+                        <select name="is_assignable" class="form-select filter-dropdown">
+                            {% for value, label in form.is_assignable.field.choices %}
+                                <option value="{{ value }}" {% if form.is_assignable.value == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Warranty Status Filter -->
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label small text-muted fw-medium">Warranty Status</label>
+                        <select name="warranty_status" class="form-select filter-dropdown">
+                            {% for value, label in form.warranty_status.field.choices %}
+                                <option value="{{ value }}" {% if form.warranty_status.value == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Advanced Filter Actions -->
+                <div class="mt-3 pt-3 border-top">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="bi bi-check2-circle me-1"></i>Apply Advanced Filters
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetAdvancedFilters()">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i>Reset Advanced
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+/* Device Filters Styling */
+.device-filters {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.search-box {
+    position: relative;
+}
+
+.search-icon {
+    left: 12px;
+    z-index: 10;
+    color: #6c757d;
+}
+
+.search-input {
+    border-radius: 12px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+.filter-dropdown {
+    border-radius: 12px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.filter-dropdown:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+.badge {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.badge-close {
+    --bs-btn-close-bg: none;
+    opacity: 0.8;
+    font-size: 0.7rem;
+    width: 0.8em;
+    height: 0.8em;
+}
+
+.badge-close:hover {
+    opacity: 1;
+}
+
+.bg-purple {
+    background-color: #6f42c1 !important;
+}
+
+.advanced-filters-content {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 2px solid rgba(13, 110, 253, 0.1);
+}
+
+.btn {
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border-width: 2px;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    border-color: #0d6efd;
+}
+
+.btn-outline-secondary {
+    color: #6c757d;
+    border-color: #6c757d;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.btn-outline-info {
+    color: #0dcaf0;
+    border-color: #0dcaf0;
+}
+
+.btn-outline-info:hover {
+    background-color: #0dcaf0;
+    border-color: #0dcaf0;
+}
+
+.form-label {
+    margin-bottom: 0.375rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+@media (max-width: 768px) {
+    .device-filters {
+        padding: 1rem;
+    }
+    
+    .quick-filters {
+        gap: 0.25rem !important;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.5rem;
+    }
+}
+</style>
+
+<script>
+function clearFilter(filterName) {
+    const form = document.getElementById('deviceFilterForm');
+    const input = form.querySelector(`[name="${filterName}"]`);
+    if (input) {
+        input.value = '';
+        form.submit();
+    }
+}
+
+function resetAdvancedFilters() {
+    const form = document.getElementById('deviceFilterForm');
+    const advancedInputs = form.querySelectorAll('#advancedFilters input, #advancedFilters select');
+    advancedInputs.forEach(input => {
+        if (input.type === 'select-one') {
+            input.selectedIndex = 0;
+        } else {
+            input.value = '';
+        }
+    });
+}
+
+// Auto-submit form on filter change
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('deviceFilterForm');
+    const filterDropdowns = filterForm.querySelectorAll('.filter-dropdown');
+    
+    filterDropdowns.forEach(dropdown => {
+        dropdown.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    });
+    
+    // Search input with debounce
+    const searchInput = filterForm.querySelector('.search-input');
+    let searchTimeout;
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            filterForm.submit();
+        }, 500);
+    });
+});
+</script>

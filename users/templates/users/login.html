@@ -1,269 +1,372 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - PIMS</title>
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Login - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Login Page Specific Styles */
+    .login-container {
+        min-height: calc(100vh - 156px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: var(--spacing-lg);
+        background: var(--bg-gradient-primary);
+        background-attachment: fixed;
+    }
     
-    <!-- Bootstrap 5.3 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    .login-card {
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius-2xl);
+        box-shadow: var(--glass-shadow-hover);
+        overflow: hidden;
+        width: 100%;
+        max-width: 450px;
+        animation: fadeIn 0.6s ease-out;
+    }
     
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    .login-header {
+        background: linear-gradient(135deg, var(--parliament-primary) 0%, var(--parliament-primary-hover) 100%);
+        color: white;
+        text-align: center;
+        padding: var(--spacing-2xl) var(--spacing-xl) var(--spacing-xl);
+        position: relative;
+        overflow: hidden;
+    }
     
-    <!-- Custom CSS -->
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    .login-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        animation: pulse 4s ease-in-out infinite;
+    }
     
-    <style>
-        body {
-            background: linear-gradient(135deg, var(--parliament-primary) 0%, #1e40af 50%, #1d4ed8 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: var(--spacing-lg);
+    .login-logo {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto var(--spacing-md);
+        position: relative;
+        z-index: 2;
+    }
+    
+    .login-logo i {
+        font-size: 2rem;
+        color: white;
+    }
+    
+    .login-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-xs);
+        position: relative;
+        z-index: 2;
+    }
+    
+    .login-subtitle {
+        font-size: 0.875rem;
+        opacity: 0.9;
+        margin: 0;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .login-body {
+        padding: var(--spacing-2xl);
+    }
+    
+    .login-form {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-lg);
+    }
+    
+    .form-group {
+        position: relative;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .input-group {
+        position: relative;
+        display: flex;
+    }
+    
+    .input-group-text {
+        background: var(--glass-bg-secondary);
+        border: 1px solid #d1d5db;
+        border-right: none;
+        border-radius: var(--border-radius) 0 0 var(--border-radius);
+        padding: 0.75rem 1rem;
+        color: var(--parliament-neutral);
+        display: flex;
+        align-items: center;
+    }
+    
+    .form-control {
+        border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        border-left: none;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: var(--transition-fast);
+    }
+    
+    .form-control:focus {
+        border-color: var(--parliament-primary);
+        box-shadow: 0 0 0 0.2rem rgba(30, 58, 138, 0.25);
+        z-index: 3;
+        position: relative;
+    }
+    
+    .password-toggle {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--parliament-neutral);
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: var(--border-radius);
+        transition: var(--transition-fast);
+        z-index: 4;
+    }
+    
+    .password-toggle:hover {
+        color: var(--parliament-primary);
+        background: rgba(30, 58, 138, 0.1);
+    }
+    
+    .remember-me {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .form-check-input {
+        margin: 0;
+    }
+    
+    .form-check-label {
+        font-size: 0.875rem;
+        color: var(--parliament-dark);
+        cursor: pointer;
+    }
+    
+    .btn-login {
+        background: linear-gradient(135deg, var(--parliament-primary), var(--parliament-primary-hover));
+        border: none;
+        border-radius: var(--border-radius-lg);
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        padding: 0.875rem 2rem;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .btn-login:hover {
+        background: linear-gradient(135deg, var(--parliament-primary-hover), var(--parliament-primary-active));
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+        color: white;
+    }
+    
+    .btn-login:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .btn-login .loading {
+        display: none;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top: 2px solid white;
+        animation: spin 1s linear infinite;
+    }
+    
+    .btn-login.loading .loading {
+        display: block;
+    }
+    
+    .btn-login.loading .btn-text {
+        display: none;
+    }
+    
+    .login-links {
+        text-align: center;
+        margin-top: var(--spacing-xl);
+        padding-top: var(--spacing-lg);
+        border-top: 1px solid rgba(203, 213, 225, 0.3);
+    }
+    
+    .login-links a {
+        color: var(--parliament-primary);
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: var(--transition-fast);
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+    
+    .login-links a:hover {
+        color: var(--parliament-primary-hover);
+        text-decoration: underline;
+    }
+    
+    .alert {
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+    }
+    
+    .alert-danger {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
+        border-color: rgba(239, 68, 68, 0.3);
+        color: #991b1b;
+    }
+    
+    .invalid-feedback {
+        display: block;
+        font-size: 0.75rem;
+        color: var(--parliament-accent);
+        margin-top: var(--spacing-xs);
+    }
+    
+    .form-text {
+        font-size: 0.75rem;
+        color: var(--parliament-neutral);
+        margin-top: var(--spacing-xs);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 575.98px) {
+        .login-container {
+            padding: var(--spacing-md);
         }
         
-        .login-container {
-            background: white;
-            border-radius: var(--border-radius-lg);
-            box-shadow: var(--shadow-lg);
-            overflow: hidden;
-            max-width: 400px;
-            width: 100%;
+        .login-card {
+            max-width: 100%;
         }
         
         .login-header {
-            background: linear-gradient(135deg, var(--parliament-primary), #1e40af);
-            color: white;
-            padding: var(--spacing-xl);
-            text-align: center;
-            position: relative;
-        }
-        
-        .login-header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 20px;
-            background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
-        }
-        
-        .login-logo {
-            font-size: 3rem;
-            margin-bottom: var(--spacing-md);
-        }
-        
-        .login-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: var(--spacing-sm);
-        }
-        
-        .login-subtitle {
-            opacity: 0.9;
-            font-size: 0.875rem;
-            margin: 0;
+            padding: var(--spacing-xl) var(--spacing-lg);
         }
         
         .login-body {
-            padding: var(--spacing-xl);
+            padding: var(--spacing-xl) var(--spacing-lg);
         }
         
-        .form-group {
-            margin-bottom: var(--spacing-lg);
+        .login-logo {
+            width: 50px;
+            height: 50px;
         }
         
-        .form-label {
-            font-weight: 600;
-            color: var(--parliament-dark);
-            margin-bottom: var(--spacing-sm);
+        .login-logo i {
+            font-size: 1.5rem;
         }
         
-        .form-control {
-            padding: 0.75rem 1rem;
-            border: 2px solid #e5e7eb;
-            border-radius: var(--border-radius);
-            font-size: 1rem;
-            transition: var(--transition-fast);
+        .login-title {
+            font-size: 1.25rem;
         }
-        
-        .form-control:focus {
-            border-color: var(--parliament-primary);
-            box-shadow: 0 0 0 0.2rem rgba(30, 58, 138, 0.25);
+    }
+    
+    /* Animation Keyframes */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
         }
-        
-        .input-group-text {
-            background-color: #f9fafb;
-            border: 2px solid #e5e7eb;
-            border-right: none;
-            color: var(--parliament-neutral);
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
-        
-        .input-group .form-control {
-            border-left: none;
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 0.8;
         }
-        
-        .btn-login {
-            background: linear-gradient(135deg, var(--parliament-primary), #1e40af);
-            border: none;
-            border-radius: var(--border-radius);
-            color: white;
-            font-weight: 600;
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
-            width: 100%;
-            transition: var(--transition);
+        50% {
+            opacity: 0.3;
         }
-        
-        .btn-login:hover {
-            background: linear-gradient(135deg, #1e40af, #1d4ed8);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-        
-        .btn-login:focus {
-            box-shadow: 0 0 0 0.2rem rgba(30, 58, 138, 0.25);
-        }
-        
-        .login-links {
-            text-align: center;
-            margin-top: var(--spacing-lg);
-            padding-top: var(--spacing-lg);
-            border-top: 1px solid #e5e7eb;
-        }
-        
-        .login-links a {
-            color: var(--parliament-primary);
-            text-decoration: none;
-            font-weight: 500;
-            transition: var(--transition-fast);
-        }
-        
-        .login-links a:hover {
-            color: #1e40af;
-            text-decoration: underline;
-        }
-        
-        .remember-me {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-sm);
-            margin-bottom: var(--spacing-lg);
-        }
-        
-        .form-check-input {
-            margin: 0;
-        }
-        
-        .form-check-label {
-            font-size: 0.875rem;
-            color: var(--parliament-neutral);
-            margin: 0;
-        }
-        
-        .alert {
-            border: none;
-            border-radius: var(--border-radius);
-            font-size: 0.875rem;
-            padding: 0.75rem 1rem;
-            margin-bottom: var(--spacing-lg);
-        }
-        
-        .alert-danger {
-            background-color: rgba(239, 68, 68, 0.1);
-            color: #991b1b;
-            border-left: 4px solid #ef4444;
-        }
-        
-        .parliament-footer {
-            background-color: #f9fafb;
-            padding: var(--spacing-md);
-            text-align: center;
-            border-top: 1px solid #e5e7eb;
-            font-size: 0.75rem;
-            color: var(--parliament-neutral);
-        }
-        
-        .loading {
-            display: none;
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 2px solid white;
-            animation: spin 1s linear infinite;
-            margin-right: var(--spacing-sm);
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .btn-login.loading .loading {
-            display: inline-block;
-        }
-        
-        .btn-login.loading .btn-text {
-            opacity: 0.7;
-        }
-        
-        @media (max-width: 576px) {
-            body {
-                padding: var(--spacing-md);
-            }
-            
-            .login-container {
-                max-width: 100%;
-            }
-            
-            .login-header {
-                padding: var(--spacing-lg);
-            }
-            
-            .login-body {
-                padding: var(--spacing-lg);
-            }
-            
-            .login-logo {
-                font-size: 2.5rem;
-            }
-            
-            .login-title {
-                font-size: 1.25rem;
-            }
-        }
-    </style>
-</head>
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
 
-<body>
-    <div class="login-container">
-        <!-- Header -->
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <!-- Login Header -->
         <div class="login-header">
             <div class="login-logo">
                 <i class="bi bi-building"></i>
             </div>
-            <h1 class="login-title">PIMS</h1>
+            <h1 class="login-title">PIMS Login</h1>
             <p class="login-subtitle">Bangladesh Parliament Secretariat<br>IT Inventory Management System</p>
         </div>
-
-        <!-- Login Form -->
+        
+        <!-- Login Body -->
         <div class="login-body">
-            <!-- Display Messages -->
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags|default:'info' }}" role="alert">
-                        <i class="bi bi-{% if message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %} me-2"></i>
-                        {{ message }}
-                    </div>
-                {% endfor %}
+            <!-- Error Messages -->
+            {% if form.errors %}
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Login Failed:</strong>
+                    {% for field, errors in form.errors.items %}
+                        {% if field == '__all__' %}
+                            {% for error in errors %}
+                                {{ error }}
+                            {% endfor %}
+                        {% else %}
+                            Invalid {{ field }}.
+                        {% endif %}
+                    {% endfor %}
+                </div>
             {% endif %}
-
-            <!-- Form Errors -->
+            
+            <!-- Non-field errors -->
             {% if form.non_field_errors %}
                 <div class="alert alert-danger" role="alert">
                     <i class="bi bi-exclamation-triangle me-2"></i>
@@ -272,14 +375,16 @@
                     {% endfor %}
                 </div>
             {% endif %}
-
-            <form method="post" class="needs-validation" novalidate>
+            
+            <!-- Login Form -->
+            <form method="post" class="login-form" id="loginForm" novalidate>
                 {% csrf_token %}
                 
                 <!-- Username/Employee ID Field -->
                 <div class="form-group">
                     <label for="{{ form.username.id_for_label }}" class="form-label">
-                        <i class="bi bi-person me-2"></i>Username or Employee ID
+                        <i class="bi bi-person"></i>
+                        Username or Employee ID
                     </label>
                     <div class="input-group">
                         <span class="input-group-text">
@@ -288,168 +393,250 @@
                         {{ form.username }}
                     </div>
                     {% if form.username.errors %}
-                        <div class="invalid-feedback d-block">
+                        <div class="invalid-feedback">
                             {% for error in form.username.errors %}
-                                <small class="text-danger">{{ error }}</small>
+                                {{ error }}
                             {% endfor %}
                         </div>
                     {% endif %}
+                    <div class="form-text">
+                        <i class="bi bi-info-circle"></i>
+                        Use your system username or employee ID to login
+                    </div>
                 </div>
 
                 <!-- Password Field -->
                 <div class="form-group">
                     <label for="{{ form.password.id_for_label }}" class="form-label">
-                        <i class="bi bi-lock me-2"></i>Password
+                        <i class="bi bi-lock"></i>
+                        Password
                     </label>
                     <div class="input-group">
                         <span class="input-group-text">
                             <i class="bi bi-lock"></i>
                         </span>
                         {{ form.password }}
-                        <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                        <button type="button" class="password-toggle" id="togglePassword" aria-label="Toggle password visibility">
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
                     {% if form.password.errors %}
-                        <div class="invalid-feedback d-block">
+                        <div class="invalid-feedback">
                             {% for error in form.password.errors %}
-                                <small class="text-danger">{{ error }}</small>
+                                {{ error }}
                             {% endfor %}
                         </div>
                     {% endif %}
                 </div>
 
-                <!-- Remember Me -->
+                <!-- Remember Me Checkbox -->
+                {% if form.remember_me %}
                 <div class="remember-me">
                     {{ form.remember_me }}
                     <label for="{{ form.remember_me.id_for_label }}" class="form-check-label">
-                        Remember me
+                        Remember me on this device
                     </label>
                 </div>
+                {% endif %}
 
                 <!-- Submit Button -->
                 <button type="submit" class="btn btn-login" id="loginBtn">
-                    <span class="loading"></span>
+                    <div class="loading"></div>
                     <span class="btn-text">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>
-                        Sign In
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        Sign In to PIMS
                     </span>
                 </button>
+
+                <!-- Hidden next field for redirect after login -->
+                {% if next %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
             </form>
 
             <!-- Additional Links -->
             <div class="login-links">
                 <a href="{% url 'users:password_reset' %}">
-                    <i class="bi bi-question-circle me-1"></i>
+                    <i class="bi bi-question-circle"></i>
                     Forgot your password?
                 </a>
             </div>
         </div>
-
-        <!-- Footer -->
-        <div class="parliament-footer">
-            <p class="mb-0">
-                <i class="bi bi-shield-check me-1"></i>
-                Secure Access to Parliament IT Resources
-            </p>
-        </div>
     </div>
+</div>
+{% endblock %}
 
-    <!-- Bootstrap 5.3 JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Password toggle functionality
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('{{ form.password.id_for_label }}');
     
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Password toggle functionality
-            const togglePassword = document.getElementById('togglePassword');
-            const passwordInput = document.getElementById('{{ form.password.id_for_label }}');
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.type === 'password' ? 'text' : 'password';
+            passwordInput.type = type;
             
-            if (togglePassword && passwordInput) {
-                togglePassword.addEventListener('click', function() {
-                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-                    passwordInput.setAttribute('type', type);
-                    
-                    const icon = this.querySelector('i');
-                    icon.classList.toggle('bi-eye');
-                    icon.classList.toggle('bi-eye-slash');
-                });
-            }
-
-            // Form submission loading state
-            const loginForm = document.querySelector('form');
-            const loginBtn = document.getElementById('loginBtn');
-            
-            if (loginForm && loginBtn) {
-                loginForm.addEventListener('submit', function(e) {
-                    loginBtn.classList.add('loading');
-                    loginBtn.disabled = true;
-                    
-                    // Re-enable button after 10 seconds (in case of network issues)
-                    setTimeout(() => {
-                        loginBtn.classList.remove('loading');
-                        loginBtn.disabled = false;
-                    }, 10000);
-                });
-            }
-
-            // Form validation
-            const forms = document.querySelectorAll('.needs-validation');
-            forms.forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    if (!form.checkValidity()) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                    }
-                    form.classList.add('was-validated');
-                });
-            });
-
-            // Auto-hide alerts after 5 seconds
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                setTimeout(() => {
-                    alert.style.opacity = '0';
-                    setTimeout(() => {
-                        alert.remove();
-                    }, 300);
-                }, 5000);
-            });
-
-            // Focus first input
-            const firstInput = document.querySelector('input[type="text"], input[type="email"]');
-            if (firstInput) {
-                firstInput.focus();
-            }
-
-            // Handle Enter key in username field
-            const usernameInput = document.getElementById('{{ form.username.id_for_label }}');
-            if (usernameInput) {
-                usernameInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        passwordInput.focus();
-                    }
-                });
-            }
-
-            // Employee ID validation (numbers only)
-            if (usernameInput) {
-                usernameInput.addEventListener('input', function() {
-                    const value = this.value;
-                    // Allow both username and employee ID formats
-                    if (value && /^\d+$/.test(value)) {
-                        this.setCustomValidity('');
-                        this.classList.remove('is-invalid');
-                    } else if (value && !/^[a-zA-Z0-9_]+$/.test(value)) {
-                        this.setCustomValidity('Please enter a valid username or employee ID');
-                        this.classList.add('is-invalid');
-                    } else {
-                        this.setCustomValidity('');
-                        this.classList.remove('is-invalid');
-                    }
-                });
+            // Toggle eye icon
+            const icon = this.querySelector('i');
+            if (type === 'password') {
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            } else {
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
             }
         });
-    </script>
-</body>
-</html>
+    }
+    
+    // Form submission handling
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    
+    if (loginForm && loginBtn) {
+        loginForm.addEventListener('submit', function(e) {
+            // Show loading state
+            loginBtn.classList.add('loading');
+            loginBtn.disabled = true;
+            
+            // Basic validation
+            const username = document.getElementById('{{ form.username.id_for_label }}').value.trim();
+            const password = document.getElementById('{{ form.password.id_for_label }}').value;
+            
+            if (!username || !password) {
+                e.preventDefault();
+                loginBtn.classList.remove('loading');
+                loginBtn.disabled = false;
+                
+                // Show error message
+                showError('Please fill in all required fields.');
+                return false;
+            }
+        });
+    }
+    
+    // Auto-focus on first empty field
+    const usernameField = document.getElementById('{{ form.username.id_for_label }}');
+    const passwordField = document.getElementById('{{ form.password.id_for_label }}');
+    
+    if (usernameField && !usernameField.value) {
+        usernameField.focus();
+    } else if (passwordField && !passwordField.value) {
+        passwordField.focus();
+    }
+    
+    // Clear any previous error states on input
+    const formFields = [usernameField, passwordField];
+    formFields.forEach(field => {
+        if (field) {
+            field.addEventListener('input', function() {
+                this.classList.remove('is-invalid');
+                const feedback = this.parentNode.nextElementSibling;
+                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                    feedback.style.display = 'none';
+                }
+            });
+        }
+    });
+    
+    // Helper function to show error messages
+    function showError(message) {
+        // Remove existing error alerts
+        const existingAlerts = document.querySelectorAll('.alert-danger');
+        existingAlerts.forEach(alert => alert.remove());
+        
+        // Create new error alert
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger';
+        alertDiv.innerHTML = `
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Error:</strong> ${message}
+        `;
+        
+        // Insert before form
+        const form = document.getElementById('loginForm');
+        form.parentNode.insertBefore(alertDiv, form);
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Enter key on username field focuses password field
+        if (e.key === 'Enter' && document.activeElement === usernameField) {
+            e.preventDefault();
+            passwordField.focus();
+        }
+    });
+    
+    // Remember me persistence (if field exists)
+    const rememberCheckbox = document.getElementById('{{ form.remember_me.id_for_label }}');
+    const usernameInput = document.getElementById('{{ form.username.id_for_label }}');
+    
+    if (rememberCheckbox && usernameInput) {
+        // Load remembered username if available
+        const rememberedUsername = localStorage.getItem('pims_remembered_username');
+        if (rememberedUsername) {
+            usernameInput.value = rememberedUsername;
+            rememberCheckbox.checked = true;
+        }
+        
+        // Save username when remember me is checked
+        loginForm.addEventListener('submit', function() {
+            if (rememberCheckbox.checked) {
+                localStorage.setItem('pims_remembered_username', usernameInput.value);
+            } else {
+                localStorage.removeItem('pims_remembered_username');
+            }
+        });
+    }
+    
+    // Session timeout warning (if needed)
+    let sessionWarningShown = false;
+    
+    function showSessionWarning() {
+        if (!sessionWarningShown) {
+            sessionWarningShown = true;
+            showError('Your session is about to expire. Please save your work.');
+        }
+    }
+    
+    // Auto-clear form on back button (security measure)
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            // Page was restored from bfcache
+            if (passwordField) {
+                passwordField.value = '';
+            }
+        }
+    });
+    
+    // Add enhanced styling classes to form elements
+    const usernameFormControl = document.getElementById('{{ form.username.id_for_label }}');
+    const passwordFormControl = document.getElementById('{{ form.password.id_for_label }}');
+    
+    if (usernameFormControl) {
+        usernameFormControl.classList.add('form-control');
+        usernameFormControl.setAttribute('placeholder', 'Enter your username or employee ID');
+        usernameFormControl.setAttribute('autocomplete', 'username');
+    }
+    
+    if (passwordFormControl) {
+        passwordFormControl.classList.add('form-control');
+        passwordFormControl.setAttribute('placeholder', 'Enter your password');
+        passwordFormControl.setAttribute('autocomplete', 'current-password');
+    }
+    
+    // Add remember me styling
+    if (rememberCheckbox) {
+        rememberCheckbox.classList.add('form-check-input');
+    }
+});
+</script>
+{% endblock %}

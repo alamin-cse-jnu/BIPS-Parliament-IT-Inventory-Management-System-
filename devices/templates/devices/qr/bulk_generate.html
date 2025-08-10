@@ -1,0 +1,810 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Bulk Generate QR Codes - Devices{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Bulk Generate QR Codes</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'devices:list' %}">Devices</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'devices:qr_list' %}">QR Codes</a></li>
+                    <li class="breadcrumb-item active">Bulk Generate</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="{% url 'devices:qr_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>
+                Back to QR List
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100 stats-card">
+                <div class="card-body text-center">
+                    <div class="text-primary mb-2">
+                        <i class="bi bi-cpu" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ total_devices }}</h3>
+                    <p class="text-muted mb-0 small">Total Active Devices</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100 stats-card">
+                <div class="card-body text-center">
+                    <div class="text-success mb-2">
+                        <i class="bi bi-qr-code" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ devices_with_qr }}</h3>
+                    <p class="text-muted mb-0 small">With QR Codes</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100 stats-card">
+                <div class="card-body text-center">
+                    <div class="text-warning mb-2">
+                        <i class="bi bi-qr-code-scan" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ devices_without_qr }}</h3>
+                    <p class="text-muted mb-0 small">Without QR Codes</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100 stats-card">
+                <div class="card-body text-center">
+                    <div class="text-info mb-2">
+                        <i class="bi bi-percent" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="mb-1">
+                        {% if total_devices > 0 %}
+                            {% widthratio devices_with_qr total_devices 100 %}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </h3>
+                    <p class="text-muted mb-0 small">QR Coverage</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Generation Form -->
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm main-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-qr-code-scan me-2"></i>
+                        Generate QR Codes for Devices
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="bulkGenerateForm">
+                        {% csrf_token %}
+                        
+                        <!-- Filter Options -->
+                        <div class="mb-4">
+                            <h6 class="mb-3">
+                                <i class="bi bi-funnel me-1"></i>
+                                Filter Devices
+                            </h6>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="category" class="form-label">
+                                        <i class="bi bi-tag me-1"></i>
+                                        Category
+                                    </label>
+                                    <select class="form-select" id="category" name="category">
+                                        <option value="">All Categories</option>
+                                        {% for category in categories %}
+                                            <option value="{{ category.id }}">{{ category.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="subcategory" class="form-label">
+                                        <i class="bi bi-tags me-1"></i>
+                                        Subcategory
+                                    </label>
+                                    <select class="form-select" id="subcategory" name="subcategory" disabled>
+                                        <option value="">All Subcategories</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="status" class="form-label">
+                                        <i class="bi bi-circle me-1"></i>
+                                        Status
+                                    </label>
+                                    <select class="form-select" id="status" name="status">
+                                        <option value="">All Statuses</option>
+                                        <option value="available">Available</option>
+                                        <option value="assigned">Assigned</option>
+                                        <option value="maintenance">In Maintenance</option>
+                                        <option value="retired">Retired</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <div class="mt-4 pt-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" 
+                                                   type="checkbox" 
+                                                   id="only_without_qr" 
+                                                   name="only_without_qr" 
+                                                   checked>
+                                            <label class="form-check-label" for="only_without_qr">
+                                                <i class="bi bi-qr-code me-1"></i>
+                                                Only devices without QR codes
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Generation Options -->
+                        <div class="mb-4">
+                            <h6 class="mb-3">
+                                <i class="bi bi-gear me-1"></i>
+                                Generation Options
+                            </h6>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="regenerate_existing" 
+                                               name="regenerate_existing">
+                                        <label class="form-check-label" for="regenerate_existing">
+                                            <i class="bi bi-arrow-clockwise me-1"></i>
+                                            Regenerate existing QR codes
+                                        </label>
+                                        <div class="form-text">This will replace existing QR codes with new ones</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="auto_download" 
+                                               name="auto_download">
+                                        <label class="form-check-label" for="auto_download">
+                                            <i class="bi bi-download me-1"></i>
+                                            Auto-download after generation
+                                        </label>
+                                        <div class="form-text">Automatically download generated QR codes as ZIP</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Device Selection -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-check-square me-1"></i>
+                                    Device Selection
+                                </h6>
+                                <div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAll()">
+                                        <i class="bi bi-check-all me-1"></i>
+                                        Select All
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectNone()">
+                                        <i class="bi bi-square me-1"></i>
+                                        Select None
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="device-selection-container">
+                                <div class="table-responsive">
+                                    <table class="table table-sm device-selection-table">
+                                        <thead>
+                                            <tr>
+                                                <th width="40">
+                                                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                                                </th>
+                                                <th>Device ID</th>
+                                                <th>Brand & Model</th>
+                                                <th>Category</th>
+                                                <th>Status</th>
+                                                <th>QR Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="deviceTableBody">
+                                            {% for device in devices_without_qr %}
+                                                <tr class="device-row" 
+                                                    data-category="{{ device.subcategory.category.id }}"
+                                                    data-subcategory="{{ device.subcategory.id }}"
+                                                    data-status="{{ device.status }}">
+                                                    <td>
+                                                        <input type="checkbox" 
+                                                               name="devices" 
+                                                               value="{{ device.id }}" 
+                                                               class="device-checkbox">
+                                                    </td>
+                                                    <td>
+                                                        <strong>{{ device.device_id }}</strong>
+                                                    </td>
+                                                    <td>
+                                                        {{ device.brand }} {{ device.model }}
+                                                        {% if device.serial_number %}
+                                                            <br><small class="text-muted">SN: {{ device.serial_number }}</small>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-secondary">
+                                                            {{ device.subcategory.category.name }}
+                                                        </span>
+                                                        <br>
+                                                        <small class="text-muted">{{ device.subcategory.name }}</small>
+                                                    </td>
+                                                    <td>
+                                                        {% include 'devices/partials/_status_badge.html' with status=device.status %}
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-warning">
+                                                            <i class="bi bi-exclamation-triangle me-1"></i>
+                                                            Missing
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            {% empty %}
+                                                <tr>
+                                                    <td colspan="6" class="text-center text-muted py-4">
+                                                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                                        All active devices already have QR codes!
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preview Section -->
+                        <div class="mb-4" id="previewSection" style="display: none;">
+                            <h6 class="mb-3">
+                                <i class="bi bi-eye me-1"></i>
+                                Generation Preview
+                            </h6>
+                            
+                            <div class="preview-container">
+                                <div class="alert alert-info">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <div>
+                                            <strong id="selectedCount">0</strong> devices selected for QR code generation
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary" id="generateBtn" disabled>
+                                <i class="bi bi-qr-code-scan me-1"></i>
+                                Generate QR Codes
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="resetFilters()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>
+                                Reset Filters
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Bulk Download -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-download me-2"></i>
+                        Bulk Download Existing
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        Download existing QR codes as a ZIP file.
+                    </p>
+                    
+                    <div class="d-grid">
+                        <a href="{% url 'devices:qr_bulk_download' %}" class="btn btn-success">
+                            <i class="bi bi-file-zip me-1"></i>
+                            Download Existing QR Codes
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightning me-2"></i>
+                        Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectAllMissingQR()">
+                            <i class="bi bi-qr-code me-1"></i>
+                            Select All Missing QR
+                        </button>
+                        
+                        <button type="button" class="btn btn-outline-warning btn-sm" onclick="selectByCategory()">
+                            <i class="bi bi-tag me-1"></i>
+                            Select by Category
+                        </button>
+                        
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="selectByStatus()">
+                            <i class="bi bi-circle me-1"></i>
+                            Select by Status
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generation Tips -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        Tips & Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>QR Code Contents:</strong>
+                        <ul class="list-unstyled mt-2 small">
+                            <li><i class="bi bi-check text-success me-1"></i> Device ID</li>
+                            <li><i class="bi bi-check text-success me-1"></i> Brand & Model</li>
+                            <li><i class="bi bi-check text-success me-1"></i> Serial Number</li>
+                            <li><i class="bi bi-check text-success me-1"></i> Direct Link to Device</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Best Practices:</strong>
+                        <ul class="list-unstyled mt-2 small">
+                            <li><i class="bi bi-info-circle text-info me-1"></i> Generate QR codes for all devices</li>
+                            <li><i class="bi bi-info-circle text-info me-1"></i> Print and attach to physical devices</li>
+                            <li><i class="bi bi-info-circle text-info me-1"></i> Use durable materials for outdoor devices</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-warning small mb-0">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        QR codes cannot be edited once generated. To update, regenerate the code.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.getElementById('category');
+    const subcategorySelect = document.getElementById('subcategory');
+    const statusSelect = document.getElementById('status');
+    const onlyWithoutQrCheckbox = document.getElementById('only_without_qr');
+    const deviceTableBody = document.getElementById('deviceTableBody');
+    const generateBtn = document.getElementById('generateBtn');
+    const previewSection = document.getElementById('previewSection');
+    const selectedCount = document.getElementById('selectedCount');
+
+    // Filter functionality
+    function filterDevices() {
+        const categoryValue = categorySelect.value;
+        const subcategoryValue = subcategorySelect.value;
+        const statusValue = statusSelect.value;
+        const onlyWithoutQr = onlyWithoutQrCheckbox.checked;
+
+        const rows = deviceTableBody.querySelectorAll('.device-row');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            let show = true;
+
+            if (categoryValue && row.dataset.category !== categoryValue) {
+                show = false;
+            }
+            if (subcategoryValue && row.dataset.subcategory !== subcategoryValue) {
+                show = false;
+            }
+            if (statusValue && row.dataset.status !== statusValue) {
+                show = false;
+            }
+
+            row.style.display = show ? '' : 'none';
+            if (show) visibleCount++;
+        });
+
+        updateSelectedCount();
+    }
+
+    // Load subcategories when category changes
+    categorySelect.addEventListener('change', function() {
+        const categoryId = this.value;
+        subcategorySelect.innerHTML = '<option value="">All Subcategories</option>';
+        subcategorySelect.disabled = !categoryId;
+
+        if (categoryId) {
+            fetch(`/devices/api/subcategories/${categoryId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(subcategory => {
+                        const option = document.createElement('option');
+                        option.value = subcategory.id;
+                        option.textContent = subcategory.name;
+                        subcategorySelect.appendChild(option);
+                    });
+                });
+        }
+
+        filterDevices();
+    });
+
+    // Filter on change
+    [subcategorySelect, statusSelect, onlyWithoutQrCheckbox].forEach(element => {
+        element.addEventListener('change', filterDevices);
+    });
+
+    // Selection functionality
+    function updateSelectedCount() {
+        const checkboxes = document.querySelectorAll('.device-checkbox:checked');
+        const visibleCheckboxes = Array.from(checkboxes).filter(cb => 
+            cb.closest('.device-row').style.display !== 'none'
+        );
+        
+        selectedCount.textContent = visibleCheckboxes.length;
+        generateBtn.disabled = visibleCheckboxes.length === 0;
+        previewSection.style.display = visibleCheckboxes.length > 0 ? 'block' : 'none';
+    }
+
+    // Checkbox event listeners
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('device-checkbox')) {
+            updateSelectedCount();
+        }
+    });
+
+    // Initial update
+    updateSelectedCount();
+});
+
+// Utility functions
+function toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const deviceCheckboxes = document.querySelectorAll('.device-checkbox');
+    
+    deviceCheckboxes.forEach(checkbox => {
+        if (checkbox.closest('.device-row').style.display !== 'none') {
+            checkbox.checked = selectAllCheckbox.checked;
+        }
+    });
+    
+    updateSelectedCount();
+}
+
+function selectAll() {
+    const visibleCheckboxes = Array.from(document.querySelectorAll('.device-checkbox'))
+        .filter(cb => cb.closest('.device-row').style.display !== 'none');
+    
+    visibleCheckboxes.forEach(checkbox => checkbox.checked = true);
+    document.getElementById('selectAllCheckbox').checked = true;
+    updateSelectedCount();
+}
+
+function selectNone() {
+    document.querySelectorAll('.device-checkbox').forEach(checkbox => checkbox.checked = false);
+    document.getElementById('selectAllCheckbox').checked = false;
+    updateSelectedCount();
+}
+
+function selectAllMissingQR() {
+    selectAll();
+}
+
+function selectByCategory() {
+    const category = document.getElementById('category').value;
+    if (!category) {
+        alert('Please select a category first');
+        return;
+    }
+    
+    const categoryCheckboxes = Array.from(document.querySelectorAll('.device-checkbox'))
+        .filter(cb => cb.closest('.device-row').dataset.category === category && 
+                     cb.closest('.device-row').style.display !== 'none');
+    
+    categoryCheckboxes.forEach(checkbox => checkbox.checked = true);
+    updateSelectedCount();
+}
+
+function selectByStatus() {
+    const status = document.getElementById('status').value;
+    if (!status) {
+        alert('Please select a status first');
+        return;
+    }
+    
+    const statusCheckboxes = Array.from(document.querySelectorAll('.device-checkbox'))
+        .filter(cb => cb.closest('.device-row').dataset.status === status && 
+                     cb.closest('.device-row').style.display !== 'none');
+    
+    statusCheckboxes.forEach(checkbox => checkbox.checked = true);
+    updateSelectedCount();
+}
+
+function resetFilters() {
+    document.getElementById('category').value = '';
+    document.getElementById('subcategory').value = '';
+    document.getElementById('subcategory').disabled = true;
+    document.getElementById('status').value = '';
+    document.getElementById('only_without_qr').checked = true;
+    
+    // Show all rows
+    document.querySelectorAll('.device-row').forEach(row => {
+        row.style.display = '';
+    });
+    
+    selectNone();
+}
+
+function updateSelectedCount() {
+    const checkboxes = document.querySelectorAll('.device-checkbox:checked');
+    const visibleCheckboxes = Array.from(checkboxes).filter(cb => 
+        cb.closest('.device-row').style.display !== 'none'
+    );
+    
+    document.getElementById('selectedCount').textContent = visibleCheckboxes.length;
+    document.getElementById('generateBtn').disabled = visibleCheckboxes.length === 0;
+    document.getElementById('previewSection').style.display = visibleCheckboxes.length > 0 ? 'block' : 'none';
+}
+</script>
+
+<style>
+/* Custom styles for devices QR bulk generate */
+.stats-card {
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.9) 100%);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.main-card {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.95) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.device-selection-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid rgba(203, 213, 225, 0.5);
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.8) 100%);
+}
+
+.device-selection-table {
+    margin-bottom: 0;
+}
+
+.device-selection-table thead th {
+    position: sticky;
+    top: 0;
+    background: linear-gradient(135deg, rgba(241, 245, 249, 0.95) 0%, rgba(226, 232, 240, 0.95) 100%);
+    backdrop-filter: blur(5px);
+    border-bottom: 2px solid rgba(203, 213, 225, 0.5);
+    z-index: 10;
+}
+
+.device-row {
+    transition: background-color 0.2s ease;
+}
+
+.device-row:hover {
+    background: linear-gradient(135deg, rgba(239, 246, 255, 0.8) 0%, rgba(219, 234, 254, 0.8) 100%);
+}
+
+.preview-container .alert {
+    background: linear-gradient(135deg, rgba(191, 219, 254, 0.8) 0%, rgba(147, 197, 253, 0.8) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    backdrop-filter: blur(5px);
+}
+
+/* Filter section styling */
+.form-select, .form-control {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+    border: 1px solid rgba(203, 213, 225, 0.5);
+    backdrop-filter: blur(3px);
+}
+
+.form-select:focus, .form-control:focus {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.15);
+}
+
+/* Button styling */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.btn-outline-secondary {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.9) 100%);
+    border: 1px solid rgba(148, 163, 184, 0.5);
+    color: #475569;
+    backdrop-filter: blur(3px);
+}
+
+.btn-outline-secondary:hover {
+    background: linear-gradient(135deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.9) 100%);
+    border-color: rgba(100, 116, 139, 0.5);
+    color: #334155;
+    transform: translateY(-1px);
+}
+
+/* Card styling */
+.card {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.9) 100%);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px 12px 0 0 !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .device-selection-container {
+        max-height: 300px;
+    }
+    
+    .stats-card {
+        margin-bottom: 1rem;
+    }
+    
+    .row .col-lg-8,
+    .row .col-lg-4 {
+        margin-bottom: 1rem;
+    }
+    
+    .device-selection-table {
+        font-size: 0.875rem;
+    }
+    
+    .device-selection-table th,
+    .device-selection-table td {
+        padding: 0.5rem 0.375rem;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .d-flex.gap-2 {
+        flex-direction: column;
+    }
+    
+    .d-flex.gap-2 .btn {
+        width: 100%;
+    }
+}
+
+/* Checkbox styling */
+.form-check-input {
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(203, 213, 225, 0.6);
+}
+
+.form-check-input:checked {
+    background-color: #6366f1;
+    border-color: #6366f1;
+}
+
+.form-check-input:focus {
+    border-color: rgba(99, 102, 241, 0.6);
+    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.15);
+}
+
+/* Badge styling */
+.badge {
+    font-weight: 500;
+    padding: 0.5em 0.75em;
+    border-radius: 6px;
+}
+
+.badge.bg-secondary {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
+}
+
+.badge.bg-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    color: white !important;
+}
+
+/* Table hover effects */
+.device-selection-table tbody tr:hover {
+    background: linear-gradient(135deg, rgba(239, 246, 255, 0.6) 0%, rgba(219, 234, 254, 0.6) 100%);
+}
+
+/* Loading states */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Alert styling */
+.alert-warning {
+    background: linear-gradient(135deg, rgba(254, 243, 199, 0.8) 0%, rgba(253, 230, 138, 0.8) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    backdrop-filter: blur(3px);
+    color: #92400e;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, rgba(219, 234, 254, 0.8) 0%, rgba(191, 219, 254, 0.8) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    backdrop-filter: blur(3px);
+    color: #1e40af;
+}
+</style>
+{% endblock %}

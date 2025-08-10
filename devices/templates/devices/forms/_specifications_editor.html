@@ -1,0 +1,829 @@
+<!-- Specifications Editor Component -->
+<!-- Location: devices/templates/devices/forms/_specifications_editor.html -->
+
+<div class="specifications-editor-container">
+    <!-- Editor Header -->
+    <div class="editor-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="editor-title">
+                <h6 class="mb-0">
+                    <i class="bi bi-code-square me-2 text-primary"></i>
+                    Device Specifications Editor
+                </h6>
+                <small class="text-muted">JSON format for structured device specifications</small>
+            </div>
+            <div class="editor-actions">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#specsHelp">
+                    <i class="bi bi-question-circle me-1"></i>Help
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="validateJson">
+                    <i class="bi bi-check-circle me-1"></i>Validate
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Section (Collapsible) -->
+    <div class="collapse" id="specsHelp">
+        <div class="help-panel">
+            <div class="help-content">
+                <h6 class="help-title">
+                    <i class="bi bi-lightbulb text-warning me-2"></i>
+                    JSON Specifications Guide
+                </h6>
+                <p class="help-description">
+                    Enter device specifications in JSON format. Use key-value pairs to describe technical details.
+                </p>
+                
+                <!-- Quick Examples -->
+                <div class="example-grid">
+                    <div class="example-card" data-example="desktop">
+                        <div class="example-header">
+                            <i class="bi bi-pc-display"></i>
+                            <span>Desktop Computer</span>
+                        </div>
+                        <div class="example-preview">
+                            <code>{"cpu": "Intel i7", "ram": "16GB"...}</code>
+                        </div>
+                    </div>
+                    
+                    <div class="example-card" data-example="network">
+                        <div class="example-header">
+                            <i class="bi bi-router"></i>
+                            <span>Network Device</span>
+                        </div>
+                        <div class="example-preview">
+                            <code>{"ports": "24", "type": "Gigabit"...}</code>
+                        </div>
+                    </div>
+                    
+                    <div class="example-card" data-example="printer">
+                        <div class="example-header">
+                            <i class="bi bi-printer"></i>
+                            <span>Printer</span>
+                        </div>
+                        <div class="example-preview">
+                            <code>{"type": "Laser", "speed": "30ppm"...}</code>
+                        </div>
+                    </div>
+                    
+                    <div class="example-card" data-example="mobile">
+                        <div class="example-header">
+                            <i class="bi bi-phone"></i>
+                            <span>Mobile Device</span>
+                        </div>
+                        <div class="example-preview">
+                            <code>{"os": "Android", "storage": "128GB"...}</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Editor Interface -->
+    <div class="editor-interface">
+        <!-- Mode Selector -->
+        <div class="mode-selector">
+            <div class="btn-group" role="group">
+                <input type="radio" class="btn-check" name="editorMode" id="modeVisual" value="visual" checked>
+                <label class="btn btn-outline-primary btn-sm" for="modeVisual">
+                    <i class="bi bi-layout-wtf me-1"></i>Visual
+                </label>
+                
+                <input type="radio" class="btn-check" name="editorMode" id="modeCode" value="code">
+                <label class="btn btn-outline-primary btn-sm" for="modeCode">
+                    <i class="bi bi-code me-1"></i>JSON Code
+                </label>
+            </div>
+        </div>
+
+        <!-- Visual Editor -->
+        <div class="visual-editor" id="visualEditor">
+            <div class="specifications-builder">
+                <div class="builder-header">
+                    <h6 class="mb-3">
+                        <i class="bi bi-plus-square me-2"></i>
+                        Add Specifications
+                    </h6>
+                </div>
+                
+                <div class="spec-items" id="specItems">
+                    <!-- Dynamic specification items will be added here -->
+                </div>
+                
+                <div class="add-spec-row">
+                    <div class="row g-2">
+                        <div class="col-5">
+                            <input type="text" class="form-control form-control-sm" id="newSpecKey" placeholder="Property name (e.g., CPU, RAM)">
+                        </div>
+                        <div class="col-5">
+                            <input type="text" class="form-control form-control-sm" id="newSpecValue" placeholder="Value (e.g., Intel i7, 16GB)">
+                        </div>
+                        <div class="col-2">
+                            <button type="button" class="btn btn-sm btn-success w-100" id="addSpecBtn">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- JSON Code Editor -->
+        <div class="code-editor" id="codeEditor" style="display: none;">
+            <div class="code-editor-wrapper">
+                <textarea 
+                    id="jsonCodeArea" 
+                    class="form-control json-code-textarea"
+                    rows="12"
+                    placeholder="Enter JSON specifications here..."
+                ></textarea>
+                
+                <!-- Validation Status -->
+                <div class="validation-status" id="validationStatus">
+                    <div class="status-indicator">
+                        <i class="bi bi-check-circle text-success me-1"></i>
+                        <span>Valid JSON</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Common Specifications Templates -->
+        <div class="templates-section">
+            <div class="templates-header">
+                <h6 class="mb-3">
+                    <i class="bi bi-collection me-2"></i>
+                    Quick Templates
+                </h6>
+            </div>
+            
+            <div class="template-buttons">
+                <button type="button" class="btn btn-sm btn-outline-info template-btn" data-template="desktop">
+                    <i class="bi bi-pc-display me-1"></i>Desktop
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-info template-btn" data-template="laptop">
+                    <i class="bi bi-laptop me-1"></i>Laptop
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-info template-btn" data-template="server">
+                    <i class="bi bi-server me-1"></i>Server
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-info template-btn" data-template="router">
+                    <i class="bi bi-router me-1"></i>Router
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-info template-btn" data-template="printer">
+                    <i class="bi bi-printer me-1"></i>Printer
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-info template-btn" data-template="mobile">
+                    <i class="bi bi-phone me-1"></i>Mobile
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="clearSpecs">
+                    <i class="bi bi-trash me-1"></i>Clear
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Input for Form Submission -->
+    <input type="hidden" id="specificationsInput" name="specifications_json" value="">
+</div>
+
+<style>
+/* Specifications Editor Styling - Parliament Design System */
+.specifications-editor-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.editor-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+    padding: 1.25rem;
+}
+
+.editor-title h6 {
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+}
+
+.editor-actions .btn {
+    border-radius: 8px;
+    margin-left: 0.5rem;
+}
+
+.help-panel {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%);
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+    padding: 1.25rem;
+}
+
+.help-title {
+    color: #475569;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.help-description {
+    color: #64748b;
+    margin-bottom: 1rem;
+}
+
+.example-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+.example-card {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.example-card:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+    transform: translateY(-1px);
+}
+
+.example-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: #475569;
+    margin-bottom: 0.5rem;
+}
+
+.example-preview {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.editor-interface {
+    padding: 1.25rem;
+}
+
+.mode-selector {
+    margin-bottom: 1.5rem;
+}
+
+.mode-selector .btn {
+    font-size: 0.875rem;
+}
+
+.visual-editor {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.builder-header h6 {
+    color: #475569;
+    font-weight: 600;
+}
+
+.spec-items {
+    min-height: 100px;
+    margin-bottom: 1rem;
+}
+
+.spec-item {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+}
+
+.spec-item:hover {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.spec-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.spec-key {
+    font-weight: 600;
+    color: #475569;
+    min-width: 100px;
+}
+
+.spec-separator {
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.spec-value {
+    color: #64748b;
+    flex: 1;
+}
+
+.spec-actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.spec-actions .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.add-spec-row {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(22, 163, 74, 0.05) 100%);
+    border: 1px dashed rgba(34, 197, 94, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.code-editor-wrapper {
+    position: relative;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.json-code-textarea {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border: none;
+    background: transparent;
+    resize: vertical;
+}
+
+.json-code-textarea:focus {
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.validation-status {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 6px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    backdrop-filter: blur(5px);
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+}
+
+.templates-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.templates-header h6 {
+    color: #475569;
+    font-weight: 600;
+}
+
+.template-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.template-btn {
+    border-radius: 6px;
+    font-size: 0.875rem;
+}
+
+.template-btn:hover {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+    color: white;
+}
+
+/* Empty State */
+.empty-specs {
+    text-align: center;
+    padding: 2rem;
+    color: #94a3b8;
+}
+
+.empty-specs i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .example-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .template-buttons {
+        justify-content: center;
+    }
+    
+    .editor-actions {
+        margin-top: 1rem;
+    }
+    
+    .spec-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .add-spec-row .row {
+        flex-direction: column;
+    }
+    
+    .add-spec-row .col-5,
+    .add-spec-row .col-2 {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Animation */
+.spec-item {
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+
+<script>
+// Specifications Editor JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    const editor = {
+        currentMode: 'visual',
+        specifications: {},
+        
+        // Template definitions
+        templates: {
+            desktop: {
+                "cpu": "Intel Core i7-12700",
+                "ram": "16GB DDR4",
+                "storage": "512GB SSD",
+                "graphics": "Intel Integrated Graphics",
+                "monitor": "24 inch LED",
+                "os": "Windows 11 Pro"
+            },
+            laptop: {
+                "cpu": "Intel Core i5-1235U",
+                "ram": "8GB DDR4",
+                "storage": "256GB SSD",
+                "display": "14 inch Full HD",
+                "battery": "50Wh",
+                "os": "Windows 11 Home"
+            },
+            server: {
+                "cpu": "Intel Xeon E5-2680",
+                "ram": "32GB DDR4 ECC",
+                "storage": "2TB HDD + 500GB SSD",
+                "network": "Gigabit Ethernet",
+                "form_factor": "2U Rack Mount",
+                "power": "750W Redundant PSU"
+            },
+            router: {
+                "ports": "24 Gigabit Ethernet",
+                "wireless": "802.11ac Wave 2",
+                "throughput": "1 Gbps",
+                "frequency": "2.4GHz / 5GHz",
+                "security": "WPA3",
+                "management": "Web GUI"
+            },
+            printer: {
+                "type": "Laser Printer",
+                "color": "Monochrome",
+                "speed": "30 pages per minute",
+                "resolution": "1200 x 1200 dpi",
+                "connectivity": "USB, Ethernet, WiFi",
+                "paper_size": "A4, Letter"
+            },
+            mobile: {
+                "os": "Android 13",
+                "display": "6.5 inch AMOLED",
+                "storage": "128GB",
+                "ram": "6GB",
+                "camera": "50MP + 12MP",
+                "battery": "4500mAh"
+            }
+        },
+        
+        init: function() {
+            this.bindEvents();
+            this.loadExistingSpecs();
+        },
+        
+        bindEvents: function() {
+            const self = this;
+            
+            // Mode switching
+            document.querySelectorAll('input[name="editorMode"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    self.switchMode(e.target.value);
+                });
+            });
+            
+            // Add specification
+            document.getElementById('addSpecBtn').addEventListener('click', () => {
+                self.addSpecification();
+            });
+            
+            // Enter key in input fields
+            ['newSpecKey', 'newSpecValue'].forEach(id => {
+                document.getElementById(id).addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        self.addSpecification();
+                    }
+                });
+            });
+            
+            // Template buttons
+            document.querySelectorAll('.template-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const template = e.target.closest('[data-template]').dataset.template;
+                    if (template) {
+                        self.loadTemplate(template);
+                    }
+                });
+            });
+            
+            // Clear specifications
+            document.getElementById('clearSpecs').addEventListener('click', () => {
+                self.clearSpecifications();
+            });
+            
+            // JSON validation
+            document.getElementById('validateJson').addEventListener('click', () => {
+                self.validateJSON();
+            });
+            
+            // JSON code area changes
+            document.getElementById('jsonCodeArea').addEventListener('input', () => {
+                self.syncFromJSON();
+            });
+            
+            // Example cards
+            document.querySelectorAll('.example-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    const example = e.target.closest('[data-example]').dataset.example;
+                    if (example && self.templates[example]) {
+                        self.loadTemplate(example);
+                    }
+                });
+            });
+        },
+        
+        switchMode: function(mode) {
+            this.currentMode = mode;
+            
+            if (mode === 'visual') {
+                document.getElementById('visualEditor').style.display = 'block';
+                document.getElementById('codeEditor').style.display = 'none';
+                this.syncToVisual();
+            } else {
+                document.getElementById('visualEditor').style.display = 'none';
+                document.getElementById('codeEditor').style.display = 'block';
+                this.syncToJSON();
+            }
+        },
+        
+        addSpecification: function() {
+            const keyInput = document.getElementById('newSpecKey');
+            const valueInput = document.getElementById('newSpecValue');
+            
+            const key = keyInput.value.trim();
+            const value = valueInput.value.trim();
+            
+            if (key && value) {
+                this.specifications[key] = value;
+                this.renderVisualSpecs();
+                this.updateHiddenInput();
+                
+                // Clear inputs
+                keyInput.value = '';
+                valueInput.value = '';
+                keyInput.focus();
+            }
+        },
+        
+        removeSpecification: function(key) {
+            delete this.specifications[key];
+            this.renderVisualSpecs();
+            this.updateHiddenInput();
+        },
+        
+        editSpecification: function(key, newKey, newValue) {
+            if (key !== newKey) {
+                delete this.specifications[key];
+            }
+            this.specifications[newKey] = newValue;
+            this.renderVisualSpecs();
+            this.updateHiddenInput();
+        },
+        
+        renderVisualSpecs: function() {
+            const container = document.getElementById('specItems');
+            
+            if (Object.keys(this.specifications).length === 0) {
+                container.innerHTML = `
+                    <div class="empty-specs">
+                        <i class="bi bi-plus-circle"></i>
+                        <p>No specifications added yet. Add your first specification above.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            Object.entries(this.specifications).forEach(([key, value]) => {
+                const specItem = document.createElement('div');
+                specItem.className = 'spec-item';
+                specItem.innerHTML = `
+                    <div class="spec-content">
+                        <div class="spec-key">${this.escapeHtml(key)}</div>
+                        <div class="spec-separator">:</div>
+                        <div class="spec-value">${this.escapeHtml(value)}</div>
+                    </div>
+                    <div class="spec-actions">
+                        <button type="button" class="btn btn-sm btn-outline-primary edit-spec" data-key="${this.escapeHtml(key)}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-spec" data-key="${this.escapeHtml(key)}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                // Bind events
+                specItem.querySelector('.remove-spec').addEventListener('click', (e) => {
+                    this.removeSpecification(e.target.closest('[data-key]').dataset.key);
+                });
+                
+                specItem.querySelector('.edit-spec').addEventListener('click', (e) => {
+                    this.startEdit(e.target.closest('[data-key]').dataset.key);
+                });
+                
+                container.appendChild(specItem);
+            });
+        },
+        
+        startEdit: function(key) {
+            const value = this.specifications[key];
+            const newKey = prompt('Enter property name:', key);
+            
+            if (newKey !== null) {
+                const newValue = prompt('Enter value:', value);
+                if (newValue !== null) {
+                    this.editSpecification(key, newKey.trim(), newValue.trim());
+                }
+            }
+        },
+        
+        loadTemplate: function(templateName) {
+            if (this.templates[templateName]) {
+                const confirm = Object.keys(this.specifications).length > 0 
+                    ? window.confirm('This will replace current specifications. Continue?') 
+                    : true;
+                
+                if (confirm) {
+                    this.specifications = { ...this.templates[templateName] };
+                    this.renderVisualSpecs();
+                    this.syncToJSON();
+                    this.updateHiddenInput();
+                }
+            }
+        },
+        
+        clearSpecifications: function() {
+            const confirm = Object.keys(this.specifications).length > 0 
+                ? window.confirm('This will clear all specifications. Continue?') 
+                : true;
+            
+            if (confirm) {
+                this.specifications = {};
+                this.renderVisualSpecs();
+                this.syncToJSON();
+                this.updateHiddenInput();
+            }
+        },
+        
+        syncToJSON: function() {
+            const jsonArea = document.getElementById('jsonCodeArea');
+            try {
+                jsonArea.value = JSON.stringify(this.specifications, null, 2);
+                this.updateValidationStatus(true);
+            } catch (e) {
+                this.updateValidationStatus(false, e.message);
+            }
+        },
+        
+        syncFromJSON: function() {
+            const jsonArea = document.getElementById('jsonCodeArea');
+            try {
+                this.specifications = JSON.parse(jsonArea.value || '{}');
+                this.renderVisualSpecs();
+                this.updateHiddenInput();
+                this.updateValidationStatus(true);
+            } catch (e) {
+                this.updateValidationStatus(false, e.message);
+            }
+        },
+        
+        syncToVisual: function() {
+            this.renderVisualSpecs();
+        },
+        
+        validateJSON: function() {
+            const jsonArea = document.getElementById('jsonCodeArea');
+            try {
+                JSON.parse(jsonArea.value || '{}');
+                alert('JSON is valid!');
+                this.updateValidationStatus(true);
+            } catch (e) {
+                alert('JSON Error: ' + e.message);
+                this.updateValidationStatus(false, e.message);
+            }
+        },
+        
+        updateValidationStatus: function(isValid, error = '') {
+            const status = document.getElementById('validationStatus');
+            const indicator = status.querySelector('.status-indicator');
+            
+            if (isValid) {
+                indicator.innerHTML = '<i class="bi bi-check-circle text-success me-1"></i><span>Valid JSON</span>';
+            } else {
+                indicator.innerHTML = '<i class="bi bi-x-circle text-danger me-1"></i><span>Invalid JSON</span>';
+                if (error) {
+                    indicator.title = error;
+                }
+            }
+        },
+        
+        updateHiddenInput: function() {
+            const hiddenInput = document.getElementById('specificationsInput');
+            hiddenInput.value = JSON.stringify(this.specifications);
+        },
+        
+        loadExistingSpecs: function() {
+            const hiddenInput = document.getElementById('specificationsInput');
+            if (hiddenInput.value) {
+                try {
+                    this.specifications = JSON.parse(hiddenInput.value);
+                    this.renderVisualSpecs();
+                    this.syncToJSON();
+                } catch (e) {
+                    console.error('Error loading existing specifications:', e);
+                }
+            }
+        },
+        
+        escapeHtml: function(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    };
+    
+    // Initialize the editor
+    editor.init();
+    
+    // Make editor globally available for debugging
+    window.specsEditor = editor;
+});
+</script>

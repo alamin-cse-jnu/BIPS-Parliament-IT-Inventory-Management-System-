@@ -1,0 +1,677 @@
+<!-- Device Form Partial Template -->
+<!-- Location: devices/templates/devices/forms/_device_form.html -->
+
+<div class="device-form-container">
+    <!-- Device Category & Type Section -->
+    <div class="form-card">
+        <div class="form-header">
+            <h5 class="mb-0">
+                <i class="bi bi-tag me-2 text-primary"></i>
+                Device Classification
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="field-group">
+                <div class="field-group-title">
+                    <i class="bi bi-layers text-primary"></i>
+                    Category & Type Information
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.category.id_for_label }}" class="form-label">
+                                Category <span class="text-danger">*</span>
+                            </label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                                <div class="invalid-feedback d-block">{{ form.category.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                Select the main device category
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.subcategory.id_for_label }}" class="form-label">
+                                Subcategory <span class="text-danger">*</span>
+                            </label>
+                            {{ form.subcategory }}
+                            {% if form.subcategory.errors %}
+                                <div class="invalid-feedback d-block">{{ form.subcategory.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                Choose specific subcategory
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.device_type.id_for_label }}" class="form-label">
+                                Device Type <span class="text-danger">*</span>
+                            </label>
+                            {{ form.device_type }}
+                            {% if form.device_type.errors %}
+                                <div class="invalid-feedback d-block">{{ form.device_type.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                Specify device type (Hardware/Software/Component)
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12" id="parentDeviceRow" style="display: none;">
+                        <div class="mb-3">
+                            <label for="{{ form.parent_device.id_for_label }}" class="form-label">
+                                Parent Device
+                            </label>
+                            {{ form.parent_device }}
+                            <div class="help-text">
+                                Select parent device for components
+                            </div>
+                            {% if form.parent_device.errors %}
+                                <div class="invalid-feedback d-block">{{ form.parent_device.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Device Identification Section -->
+    <div class="form-card">
+        <div class="form-header">
+            <h5 class="mb-0">
+                <i class="bi bi-info-circle me-2 text-primary"></i>
+                Device Identification
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="field-group">
+                <div class="field-group-title">
+                    <i class="bi bi-card-text text-primary"></i>
+                    Basic Information
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                Device Name <span class="text-danger">*</span>
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                Enter descriptive name for the device
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="{{ form.device_id.id_for_label }}" class="form-label">
+                                Device ID
+                            </label>
+                            {{ form.device_id }}
+                            {% if form.device_id.errors %}
+                                <div class="invalid-feedback d-block">{{ form.device_id.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                Auto-generated or custom ID
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.model.id_for_label }}" class="form-label">
+                                Model
+                            </label>
+                            {{ form.model }}
+                            {% if form.model.errors %}
+                                <div class="invalid-feedback d-block">{{ form.model.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                Device model number
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.brand.id_for_label }}" class="form-label">
+                                Brand
+                            </label>
+                            {{ form.brand }}
+                            {% if form.brand.errors %}
+                                <div class="invalid-feedback d-block">{{ form.brand.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                Manufacturer brand name
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.serial_number.id_for_label }}" class="form-label">
+                                Serial Number
+                            </label>
+                            {{ form.serial_number }}
+                            {% if form.serial_number.errors %}
+                                <div class="invalid-feedback d-block">{{ form.serial_number.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                Unique manufacturer serial number
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.barcode.id_for_label }}" class="form-label">
+                                Barcode
+                            </label>
+                            {{ form.barcode }}
+                            {% if form.barcode.errors %}
+                                <div class="invalid-feedback d-block">{{ form.barcode.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                External barcode if available
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Procurement & Financial Section -->
+    <div class="form-card">
+        <div class="form-header">
+            <h5 class="mb-0">
+                <i class="bi bi-cash-coin me-2 text-primary"></i>
+                Procurement & Financial Details
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="field-group">
+                <div class="field-group-title">
+                    <i class="bi bi-currency-dollar text-primary"></i>
+                    Purchase Information
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.vendor.id_for_label }}" class="form-label">
+                                Vendor
+                            </label>
+                            {{ form.vendor }}
+                            {% if form.vendor.errors %}
+                                <div class="invalid-feedback d-block">{{ form.vendor.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                Select device vendor/supplier
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.purchase_date.id_for_label }}" class="form-label">
+                                Purchase Date
+                            </label>
+                            {{ form.purchase_date }}
+                            {% if form.purchase_date.errors %}
+                                <div class="invalid-feedback d-block">{{ form.purchase_date.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                Date when device was purchased
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.purchase_price.id_for_label }}" class="form-label">
+                                Purchase Price (BDT)
+                            </label>
+                            {{ form.purchase_price }}
+                            {% if form.purchase_price.errors %}
+                                <div class="invalid-feedback d-block">{{ form.purchase_price.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                Original purchase price in Bangladeshi Taka
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.current_value.id_for_label }}" class="form-label">
+                                Current Value (BDT)
+                            </label>
+                            {{ form.current_value }}
+                            {% if form.current_value.errors %}
+                                <div class="invalid-feedback d-block">{{ form.current_value.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                Current estimated value
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location & Assignment Section -->
+    <div class="form-card">
+        <div class="form-header">
+            <h5 class="mb-0">
+                <i class="bi bi-geo-alt me-2 text-primary"></i>
+                Location & Status
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="field-group">
+                <div class="field-group-title">
+                    <i class="bi bi-building text-primary"></i>
+                    Physical Location
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.location.id_for_label }}" class="form-label">
+                                Location
+                            </label>
+                            {{ form.location }}
+                            {% if form.location.errors %}
+                                <div class="invalid-feedback d-block">{{ form.location.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                Physical location of the device
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">
+                                Status <span class="text-danger">*</span>
+                            </label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                                <div class="invalid-feedback d-block">{{ form.status.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                Current operational status
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Technical Specifications Section -->
+    <div class="form-card">
+        <div class="form-header">
+            <h5 class="mb-0">
+                <i class="bi bi-cpu me-2 text-primary"></i>
+                Technical Specifications
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="field-group">
+                <div class="field-group-title">
+                    <i class="bi bi-gear text-primary"></i>
+                    Specifications & Notes
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.specifications_json.id_for_label }}" class="form-label">
+                        Technical Specifications (JSON)
+                    </label>
+                    {{ form.specifications_json }}
+                    {% if form.specifications_json.errors %}
+                        <div class="invalid-feedback d-block">{{ form.specifications_json.errors.0 }}</div>
+                    {% endif %}
+                    <div class="help-text">
+                        Enter technical specifications in JSON format. Example: {"CPU": "Intel i7", "RAM": "16GB", "Storage": "512GB SSD"}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.notes.id_for_label }}" class="form-label">
+                        Notes
+                    </label>
+                    {{ form.notes }}
+                    {% if form.notes.errors %}
+                        <div class="invalid-feedback d-block">{{ form.notes.errors.0 }}</div>
+                    {% endif %}
+                    <div class="help-text">
+                        Additional notes or comments about this device
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Device Settings Section -->
+    <div class="form-card">
+        <div class="form-header">
+            <h5 class="mb-0">
+                <i class="bi bi-toggles me-2 text-primary"></i>
+                Device Settings
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="field-group">
+                <div class="field-group-title">
+                    <i class="bi bi-check2-square text-primary"></i>
+                    Activation & Configuration
+                </div>
+                
+                <div class="form-check mb-3">
+                    {{ form.is_active }}
+                    <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
+                        Device is active
+                    </label>
+                    <div class="help-text mt-1">
+                        Enable this option to make the device available for assignments
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Required fields are marked with <span class="text-danger">*</span>
+                </small>
+            </div>
+            <div>
+                <button type="button" class="btn btn-outline-secondary me-2" onclick="history.back()">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i>
+                    Save Device
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Device Form Styling - Parliament Design System */
+.device-form-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    padding: 1.5rem;
+    border-radius: 16px;
+    min-height: 100vh;
+}
+
+.form-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.form-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.form-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.form-header h5 {
+    margin: 0;
+    font-weight: 600;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.field-group {
+    margin-bottom: 1rem;
+}
+
+.field-group-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.form-label {
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.form-control,
+.form-select {
+    border: 1px solid rgba(203, 213, 225, 0.5);
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 0.95rem;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.form-control.is-invalid {
+    border-color: #ef4444;
+}
+
+.invalid-feedback {
+    display: block;
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.help-text {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.text-danger {
+    color: #ef4444 !important;
+}
+
+.form-check {
+    background: rgba(248, 250, 252, 0.5);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.form-check-input {
+    margin-top: 0.1rem;
+}
+
+.form-check-label {
+    font-weight: 500;
+    color: #374151;
+}
+
+.form-actions {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.btn {
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.btn-outline-secondary {
+    border: 1px solid rgba(107, 114, 128, 0.3);
+    color: #6b7280;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.btn-outline-secondary:hover {
+    background: rgba(107, 114, 128, 0.1);
+    border-color: #6b7280;
+    color: #374151;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .device-form-container {
+        padding: 1rem;
+    }
+    
+    .form-header,
+    .card-body,
+    .form-actions {
+        padding: 1rem;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Parent device visibility toggle
+    const deviceTypeField = document.getElementById('id_device_type');
+    const parentDeviceRow = document.getElementById('parentDeviceRow');
+    
+    function toggleParentDevice() {
+        const deviceType = deviceTypeField.value;
+        if (deviceType === 'COMPONENT') {
+            parentDeviceRow.style.display = 'block';
+        } else {
+            parentDeviceRow.style.display = 'none';
+        }
+    }
+    
+    // Initial check
+    if (deviceTypeField) {
+        toggleParentDevice();
+        deviceTypeField.addEventListener('change', toggleParentDevice);
+    }
+    
+    // JSON validation for specifications
+    const specsField = document.getElementById('id_specifications_json');
+    if (specsField) {
+        specsField.addEventListener('blur', function() {
+            const value = this.value.trim();
+            if (value && value !== '') {
+                try {
+                    JSON.parse(value);
+                    this.classList.remove('is-invalid');
+                    const feedback = this.parentNode.querySelector('.invalid-feedback');
+                    if (feedback) feedback.style.display = 'none';
+                } catch (e) {
+                    this.classList.add('is-invalid');
+                    let feedback = this.parentNode.querySelector('.invalid-feedback');
+                    if (!feedback) {
+                        feedback = document.createElement('div');
+                        feedback.className = 'invalid-feedback';
+                        this.parentNode.appendChild(feedback);
+                    }
+                    feedback.textContent = 'Invalid JSON format. Please check your syntax.';
+                    feedback.style.display = 'block';
+                }
+            }
+        });
+    }
+    
+    // Enhanced form validation feedback
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(event) {
+            const requiredFields = form.querySelectorAll('[required]');
+            let hasErrors = false;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    hasErrors = true;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            if (hasErrors) {
+                event.preventDefault();
+                const firstError = form.querySelector('.is-invalid');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstError.focus();
+                }
+            }
+        });
+    });
+});
+</script>

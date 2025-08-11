@@ -1,0 +1,741 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Report Issue - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Report Issue Styling - Parliament Design System */
+.report-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.report-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.report-title {
+    color: #dc2626;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.report-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.report-form {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.form-section {
+    margin-bottom: 2rem;
+    background: rgba(248, 250, 252, 0.5);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.section-header i {
+    color: #dc2626;
+    font-size: 1.25rem;
+}
+
+.section-title {
+    color: #1e3a8a;
+    font-weight: 600;
+    margin: 0;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    color: #374151;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-label.required::after {
+    content: '*';
+    color: #dc2626;
+    margin-left: 0.25rem;
+}
+
+.form-control, .form-select {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(203, 213, 225, 0.5);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 0.2rem rgba(220, 38, 38, 0.1);
+    background: rgba(255, 255, 255, 1);
+}
+
+textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.form-text {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.severity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.severity-option {
+    position: relative;
+    background: rgba(255, 255, 255, 0.8);
+    border: 2px solid rgba(203, 213, 225, 0.4);
+    border-radius: 12px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.severity-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.severity-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.severity-option input[type="radio"]:checked + .severity-content {
+    color: white;
+}
+
+.severity-option.severity-low {
+    border-color: rgba(107, 114, 128, 0.4);
+}
+
+.severity-option.severity-low:hover,
+.severity-option.severity-low input[type="radio"]:checked ~ * {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    border-color: #6b7280;
+}
+
+.severity-option.severity-medium {
+    border-color: rgba(245, 158, 11, 0.4);
+}
+
+.severity-option.severity-medium:hover,
+.severity-option.severity-medium input[type="radio"]:checked ~ * {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-color: #f59e0b;
+}
+
+.severity-option.severity-high {
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+.severity-option.severity-high:hover,
+.severity-option.severity-high input[type="radio"]:checked ~ * {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-color: #ef4444;
+}
+
+.severity-option.severity-critical {
+    border-color: rgba(127, 29, 29, 0.4);
+}
+
+.severity-option.severity-critical:hover,
+.severity-option.severity-critical input[type="radio"]:checked ~ * {
+    background: linear-gradient(135deg, #7f1d1d, #991b1b);
+    border-color: #7f1d1d;
+}
+
+.severity-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #374151;
+    transition: color 0.3s ease;
+}
+
+.severity-icon {
+    font-size: 1.5rem;
+}
+
+.severity-details h6 {
+    margin: 0 0 0.25rem 0;
+    font-weight: 600;
+}
+
+.severity-details p {
+    margin: 0;
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+.urgency-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.urgency-option {
+    position: relative;
+    background: rgba(255, 255, 255, 0.8);
+    border: 2px solid rgba(203, 213, 225, 0.4);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.urgency-option:hover {
+    border-color: #dc2626;
+    background: rgba(220, 38, 38, 0.05);
+}
+
+.urgency-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.urgency-option input[type="radio"]:checked ~ .urgency-content {
+    color: white;
+}
+
+.urgency-option input[type="radio"]:checked {
+    & ~ * {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        border-color: #dc2626;
+    }
+}
+
+.urgency-content {
+    color: #374151;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.btn-report {
+    padding: 0.875rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.btn-submit {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: white;
+}
+
+.btn-submit:hover {
+    background: linear-gradient(135deg, #b91c1c, #991b1b);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    color: white;
+}
+
+.btn-cancel {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+    border: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+.btn-cancel:hover {
+    background: rgba(107, 114, 128, 0.2);
+    color: #374151;
+    text-decoration: none;
+}
+
+.alert-card {
+    background: rgba(254, 242, 242, 0.9);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+    border-left: 4px solid #ef4444;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.alert-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.alert-icon {
+    color: #ef4444;
+}
+
+.alert-title {
+    color: #7f1d1d;
+    font-weight: 600;
+    margin: 0;
+}
+
+.alert-content {
+    color: #991b1b;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.help-card {
+    background: rgba(240, 249, 255, 0.9);
+    border: 1px solid rgba(147, 197, 253, 0.3);
+    border-left: 4px solid #3b82f6;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.help-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.help-icon {
+    color: #3b82f6;
+}
+
+.help-title {
+    color: #1e40af;
+    font-weight: 600;
+    margin: 0;
+}
+
+.help-content {
+    color: #1d4ed8;
+    font-size: 0.875rem;
+}
+
+.help-content ul {
+    margin: 0.5rem 0 0 0;
+    padding-left: 1.25rem;
+}
+
+.help-content li {
+    margin-bottom: 0.25rem;
+}
+
+.invalid-feedback {
+    color: #dc2626;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+@media (max-width: 768px) {
+    .report-container {
+        padding: 1rem 0;
+    }
+    
+    .report-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .report-form {
+        padding: 1.5rem;
+    }
+    
+    .form-section {
+        padding: 1.25rem;
+    }
+    
+    .severity-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .urgency-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .action-buttons {
+        flex-direction: column-reverse;
+    }
+    
+    .btn-report {
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="report-header">
+            <h2 class="report-title">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                Report Issue
+            </h2>
+            <p class="report-subtitle">Report device issues and problems at Bangladesh Parliament Secretariat</p>
+        </div>
+
+        <!-- Alert Card -->
+        <div class="alert-card">
+            <div class="alert-header">
+                <i class="bi bi-info-circle alert-icon"></i>
+                <h6 class="alert-title">Important Notice</h6>
+            </div>
+            <p class="alert-content">Please provide detailed information about the issue to help our technical team resolve it quickly and efficiently.</p>
+        </div>
+
+        <!-- Help Card -->
+        <div class="help-card">
+            <div class="help-header">
+                <i class="bi bi-lightbulb help-icon"></i>
+                <h6 class="help-title">Reporting Tips</h6>
+            </div>
+            <div class="help-content">
+                <ul>
+                    <li>Describe the issue clearly and provide specific error messages if any</li>
+                    <li>Include steps that led to the problem</li>
+                    <li>Select appropriate severity level based on business impact</li>
+                    <li>For critical issues, contact IT support directly at extension 2024</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Report Form -->
+        <form method="post" class="report-form">
+            {% csrf_token %}
+
+            <!-- Device Information -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="bi bi-laptop"></i>
+                    <h5 class="section-title">Device Information</h5>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.device.id_for_label }}" class="form-label required">
+                                <i class="bi bi-cpu me-1"></i>Device
+                            </label>
+                            {{ form.device }}
+                            {% if form.device.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.device.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Select the device experiencing issues</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.location.id_for_label }}" class="form-label">
+                                <i class="bi bi-geo-alt me-1"></i>Location
+                            </label>
+                            {{ form.location }}
+                            {% if form.location.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.location.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Current location of the device (if different from assigned)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Issue Details -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="bi bi-bug"></i>
+                    <h5 class="section-title">Issue Details</h5>
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.title.id_for_label }}" class="form-label required">
+                        <i class="bi bi-type me-1"></i>Issue Title
+                    </label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.title.errors.0 }}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">Brief, descriptive title of the issue</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.description.id_for_label }}" class="form-label required">
+                        <i class="bi bi-file-text me-1"></i>Detailed Description
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.description.errors.0 }}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">Provide detailed description including error messages, steps to reproduce, and impact</div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.category.id_for_label }}" class="form-label required">
+                                <i class="bi bi-tags me-1"></i>Issue Category
+                            </label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.category.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Select the type of issue</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.occurred_at.id_for_label }}" class="form-label">
+                                <i class="bi bi-clock me-1"></i>When Did This Occur?
+                            </label>
+                            {{ form.occurred_at }}
+                            {% if form.occurred_at.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.occurred_at.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">When did you first notice this issue?</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Severity Assessment -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="bi bi-speedometer2"></i>
+                    <h5 class="section-title">Severity Assessment</h5>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label required">
+                        <i class="bi bi-flag me-1"></i>Severity Level
+                    </label>
+                    <div class="severity-grid">
+                        {% for value, label in form.severity.field.choices %}
+                        <div class="severity-option severity-{{ value|lower }}">
+                            <input type="radio" name="{{ form.severity.name }}" value="{{ value }}" id="severity_{{ value }}"
+                                   {% if form.severity.value == value %}checked{% endif %}>
+                            <div class="severity-content">
+                                <div class="severity-icon">
+                                    {% if value == 'LOW' %}
+                                        <i class="bi bi-info-circle"></i>
+                                    {% elif value == 'MEDIUM' %}
+                                        <i class="bi bi-exclamation-circle"></i>
+                                    {% elif value == 'HIGH' %}
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                    {% elif value == 'CRITICAL' %}
+                                        <i class="bi bi-exclamation-triangle-fill"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="severity-details">
+                                    <h6>{{ label }}</h6>
+                                    <p>
+                                        {% if value == 'LOW' %}Minor impact, can wait{% endif %}
+                                        {% if value == 'MEDIUM' %}Moderate impact, needs attention{% endif %}
+                                        {% if value == 'HIGH' %}Significant impact, urgent{% endif %}
+                                        {% if value == 'CRITICAL' %}Critical impact, immediate action{% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if form.severity.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.severity.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">
+                        <i class="bi bi-clock-history me-1"></i>Urgency
+                    </label>
+                    <div class="urgency-grid">
+                        {% for value, label in form.urgency.field.choices %}
+                        <div class="urgency-option">
+                            <input type="radio" name="{{ form.urgency.name }}" value="{{ value }}" id="urgency_{{ value }}"
+                                   {% if form.urgency.value == value %}checked{% endif %}>
+                            <div class="urgency-content">{{ label }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if form.urgency.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.urgency.errors.0 }}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">How quickly does this need to be resolved?</div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="bi bi-person-lines-fill"></i>
+                    <h5 class="section-title">Contact Information</h5>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.reporter_name.id_for_label }}" class="form-label">
+                                <i class="bi bi-person me-1"></i>Reporter Name
+                            </label>
+                            {{ form.reporter_name }}
+                            {% if form.reporter_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.reporter_name.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Your name for follow-up communication</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.reporter_contact.id_for_label }}" class="form-label">
+                                <i class="bi bi-telephone me-1"></i>Contact Information
+                            </label>
+                            {{ form.reporter_contact }}
+                            {% if form.reporter_contact.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.reporter_contact.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Phone/email for updates on this issue</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.additional_notes.id_for_label }}" class="form-label">
+                        <i class="bi bi-sticky me-1"></i>Additional Notes
+                    </label>
+                    {{ form.additional_notes }}
+                    {% if form.additional_notes.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.additional_notes.errors.0 }}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">Any additional information that might help resolve this issue</div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <a href="{% url 'devices:list' %}" class="btn-report btn-cancel">
+                    <i class="bi bi-x-circle"></i>
+                    Cancel
+                </a>
+                <button type="submit" class="btn-report btn-submit">
+                    <i class="bi bi-send"></i>
+                    Submit Issue Report
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle severity selection
+    const severityOptions = document.querySelectorAll('.severity-option');
+    severityOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            const radio = this.querySelector('input[type="radio"]');
+            radio.checked = true;
+            
+            // Update visual state
+            severityOptions.forEach(opt => opt.classList.remove('selected'));
+            this.classList.add('selected');
+        });
+    });
+
+    // Handle urgency selection
+    const urgencyOptions = document.querySelectorAll('.urgency-option');
+    urgencyOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            const radio = this.querySelector('input[type="radio"]');
+            radio.checked = true;
+            
+            // Update visual state
+            urgencyOptions.forEach(opt => opt.classList.remove('selected'));
+            this.classList.add('selected');
+        });
+    });
+
+    // Auto-populate reporter name if user is logged in
+    const reporterNameField = document.querySelector('#{{ form.reporter_name.id_for_label }}');
+    if (reporterNameField && !reporterNameField.value) {
+        // You can populate this from user context if available
+    }
+});
+</script>
+{% endblock %}

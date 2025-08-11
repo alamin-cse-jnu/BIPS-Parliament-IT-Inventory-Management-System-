@@ -1,0 +1,841 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Maintenance Calendar - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Maintenance Calendar Styling - Parliament Design System */
+.calendar-container {
+    background: var(--bg-gradient-primary);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.calendar-header {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.calendar-title {
+    color: var(--parliament-primary);
+    font-weight: 700;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.calendar-subtitle {
+    color: var(--parliament-neutral);
+    margin-bottom: 0;
+}
+
+.calendar-controls {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.controls-grid {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: var(--spacing-lg);
+}
+
+.month-navigation {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.nav-btn {
+    background: rgba(30, 58, 138, 0.1);
+    color: var(--parliament-primary);
+    border: 1px solid rgba(30, 58, 138, 0.2);
+    border-radius: var(--border-radius);
+    padding: 0.5rem;
+    transition: var(--transition);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.nav-btn:hover {
+    background: var(--parliament-primary);
+    color: white;
+    border-color: var(--parliament-primary);
+}
+
+.current-month {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--parliament-dark);
+    text-align: center;
+    min-width: 200px;
+}
+
+.view-options {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.view-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.7);
+    color: var(--parliament-neutral);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: var(--transition);
+}
+
+.view-btn.active,
+.view-btn:hover {
+    background: linear-gradient(135deg, var(--parliament-primary), #2563eb);
+    color: white;
+    border-color: var(--parliament-primary);
+}
+
+.calendar-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.action-btn {
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.btn-primary-action {
+    background: linear-gradient(135deg, var(--parliament-primary), #2563eb);
+    color: white;
+    border: none;
+}
+
+.btn-primary-action:hover {
+    background: linear-gradient(135deg, #1e40af, #1d4ed8);
+    transform: translateY(-1px);
+    color: white;
+}
+
+.btn-secondary-action {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.btn-secondary-action:hover {
+    background: #059669;
+    color: white;
+}
+
+.calendar-wrapper {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--glass-shadow);
+    margin-bottom: var(--spacing-xl);
+}
+
+.calendar-month-header {
+    background: linear-gradient(135deg, var(--parliament-primary) 0%, #3b82f6 100%);
+    color: white;
+    padding: var(--spacing-lg);
+    text-align: center;
+}
+
+.month-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background: white;
+}
+
+.calendar-day-header {
+    background: rgba(30, 58, 138, 0.1);
+    color: var(--parliament-dark);
+    padding: var(--spacing-md);
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--glass-border);
+    border-right: 1px solid var(--glass-border);
+}
+
+.calendar-day-header:last-child {
+    border-right: none;
+}
+
+.calendar-day {
+    min-height: 140px;
+    padding: var(--spacing-sm);
+    border-right: 1px solid var(--glass-border);
+    border-bottom: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.9);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.calendar-day:hover {
+    background: rgba(255, 255, 255, 1);
+    box-shadow: inset 0 0 0 2px rgba(30, 58, 138, 0.1);
+}
+
+.calendar-day:last-child {
+    border-right: none;
+}
+
+.calendar-day.other-month {
+    background: rgba(248, 250, 252, 0.6);
+    color: var(--parliament-neutral);
+}
+
+.calendar-day.today {
+    background: rgba(30, 58, 138, 0.05);
+    border: 2px solid var(--parliament-primary);
+}
+
+.calendar-day.weekend {
+    background: rgba(239, 68, 68, 0.02);
+}
+
+.day-number {
+    font-weight: 700;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+    font-size: 0.875rem;
+    position: sticky;
+    top: 0;
+    background: inherit;
+    padding: 2px 0;
+}
+
+.day-events {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 100px;
+    overflow-y: auto;
+}
+
+.day-events::-webkit-scrollbar {
+    width: 3px;
+}
+
+.day-events::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.day-events::-webkit-scrollbar-thumb {
+    background: rgba(30, 58, 138, 0.3);
+    border-radius: 2px;
+}
+
+.event-item {
+    background: var(--event-color);
+    color: white;
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-size: 0.675rem;
+    font-weight: 500;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.event-item:hover {
+    transform: scale(1.02);
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.event-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.event-scheduled {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.event-in-progress {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.event-overdue {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.event-completed {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.event-critical {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+.event-more {
+    background: rgba(107, 114, 128, 0.8);
+    color: white;
+    text-align: center;
+    font-size: 0.625rem;
+    cursor: pointer;
+}
+
+.calendar-legend {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.legend-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.legend-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin: 0;
+}
+
+.legend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.legend-label {
+    font-size: 0.875rem;
+    color: var(--parliament-neutral);
+}
+
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.stat-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    text-align: center;
+    box-shadow: var(--glass-shadow);
+    transition: var(--transition);
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--glass-shadow-hover);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--spacing-md);
+    font-size: 1.25rem;
+    color: white;
+}
+
+.stat-icon.month { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.stat-icon.week { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.stat-icon.today { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.stat-icon.overdue { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-label {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.upcoming-sidebar {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--glass-shadow);
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.sidebar-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin: 0;
+}
+
+.upcoming-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.upcoming-item {
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid var(--glass-border);
+    transition: var(--transition);
+}
+
+.upcoming-item:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateX(4px);
+}
+
+.upcoming-device {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    font-size: 0.875rem;
+    margin-bottom: var(--spacing-xs);
+}
+
+.upcoming-date {
+    color: var(--parliament-primary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-bottom: var(--spacing-xs);
+}
+
+.upcoming-type {
+    color: var(--parliament-neutral);
+    font-size: 0.75rem;
+}
+
+.calendar-main {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: var(--spacing-xl);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .calendar-main {
+        grid-template-columns: 1fr;
+    }
+    
+    .upcoming-sidebar {
+        max-height: 300px;
+    }
+}
+
+@media (max-width: 768px) {
+    .calendar-container {
+        padding: 1rem 0;
+    }
+    
+    .controls-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+        text-align: center;
+    }
+    
+    .month-navigation {
+        justify-content: center;
+    }
+    
+    .view-options,
+    .calendar-actions {
+        justify-content: center;
+    }
+    
+    .calendar-day {
+        min-height: 100px;
+        padding: 0.25rem;
+    }
+    
+    .day-number {
+        font-size: 0.75rem;
+    }
+    
+    .event-item {
+        font-size: 0.625rem;
+        padding: 2px 4px;
+    }
+    
+    .quick-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .legend-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .calendar-day-header {
+        padding: var(--spacing-sm);
+        font-size: 0.75rem;
+    }
+    
+    .calendar-day {
+        min-height: 80px;
+    }
+    
+    .current-month {
+        font-size: 1.25rem;
+        min-width: auto;
+    }
+    
+    .quick-stats {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="calendar-container">
+    <div class="container-fluid">
+        <!-- Calendar Header -->
+        <div class="calendar-header">
+            <h1 class="calendar-title">
+                <i class="bi bi-calendar4-week"></i>
+                Maintenance Calendar
+            </h1>
+            <p class="calendar-subtitle">Bangladesh Parliament Secretariat - Visual Schedule Overview</p>
+        </div>
+
+        <!-- Quick Statistics -->
+        <div class="quick-stats">
+            <div class="stat-card">
+                <div class="stat-icon month">
+                    <i class="bi bi-calendar-month"></i>
+                </div>
+                <div class="stat-number">{{ stats.this_month }}</div>
+                <div class="stat-label">This Month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon week">
+                    <i class="bi bi-calendar-week"></i>
+                </div>
+                <div class="stat-number">{{ stats.this_week }}</div>
+                <div class="stat-label">This Week</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon today">
+                    <i class="bi bi-calendar-day"></i>
+                </div>
+                <div class="stat-number">{{ stats.today }}</div>
+                <div class="stat-label">Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon overdue">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="stat-number">{{ stats.overdue }}</div>
+                <div class="stat-label">Overdue</div>
+            </div>
+        </div>
+
+        <!-- Calendar Controls -->
+        <div class="calendar-controls">
+            <div class="controls-grid">
+                <div class="month-navigation">
+                    <button class="nav-btn" onclick="navigateMonth({{ prev_year }}, {{ prev_month }})">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <div class="current-month">{{ month_name }} {{ current_year }}</div>
+                    <button class="nav-btn" onclick="navigateMonth({{ next_year }}, {{ next_month }})">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+                
+                <div class="view-options">
+                    <a href="{% url 'maintenance:calendar' %}" class="view-btn active">
+                        <i class="bi bi-calendar3 me-1"></i>Month
+                    </a>
+                    <a href="{% url 'maintenance:schedule' %}?view=list" class="view-btn">
+                        <i class="bi bi-list-ul me-1"></i>List
+                    </a>
+                    <a href="{% url 'maintenance:schedule' %}?view=timeline" class="view-btn">
+                        <i class="bi bi-bar-chart-steps me-1"></i>Timeline
+                    </a>
+                </div>
+                
+                <div class="calendar-actions">
+                    <a href="{% url 'maintenance:create' %}" class="action-btn btn-primary-action">
+                        <i class="bi bi-plus-circle"></i>
+                        New Task
+                    </a>
+                    <a href="{% url 'maintenance:schedule_create' %}" class="action-btn btn-secondary-action">
+                        <i class="bi bi-calendar-plus"></i>
+                        Schedule
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Calendar Layout -->
+        <div class="calendar-main">
+            <!-- Calendar Grid -->
+            <div class="calendar-wrapper">
+                <div class="calendar-month-header">
+                    <h3 class="month-title">{{ month_name }} {{ current_year }}</h3>
+                </div>
+                
+                <div class="calendar-grid">
+                    <!-- Day Headers -->
+                    <div class="calendar-day-header">Sunday</div>
+                    <div class="calendar-day-header">Monday</div>
+                    <div class="calendar-day-header">Tuesday</div>
+                    <div class="calendar-day-header">Wednesday</div>
+                    <div class="calendar-day-header">Thursday</div>
+                    <div class="calendar-day-header">Friday</div>
+                    <div class="calendar-day-header">Saturday</div>
+                    
+                    <!-- Calendar Days -->
+                    {% for week in calendar_weeks %}
+                        {% for day in week %}
+                        <div class="calendar-day {% if not day.in_month %}other-month{% endif %} {% if day.is_today %}today{% endif %} {% if day.is_weekend %}weekend{% endif %}">
+                            <div class="day-number">{{ day.day }}</div>
+                            <div class="day-events">
+                                {% for event in day.events|slice:":3" %}
+                                <a href="{% url 'maintenance:detail' event.id %}" 
+                                   class="event-item event-{{ event.status|lower }} {% if event.priority == 'CRITICAL' %}event-critical{% endif %}"
+                                   title="{{ event.device.device_id }} - {{ event.description|truncatechars:50 }}">
+                                    {{ event.device.device_id|truncatechars:12 }}
+                                </a>
+                                {% endfor %}
+                                {% if day.events|length > 3 %}
+                                <div class="event-item event-more" 
+                                     onclick="showDayEvents('{{ day.date|date:"Y-m-d" }}')">
+                                    +{{ day.events|length|add:"-3" }} more
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Upcoming Tasks Sidebar -->
+            <div class="upcoming-sidebar">
+                <div class="sidebar-header">
+                    <i class="bi bi-clock"></i>
+                    <h4 class="sidebar-title">Upcoming Tasks</h4>
+                </div>
+                
+                <div class="upcoming-list">
+                    {% for task in upcoming_tasks %}
+                    <a href="{% url 'maintenance:detail' task.id %}" class="upcoming-item">
+                        <div class="upcoming-device">{{ task.device.device_id }} - {{ task.device.name|truncatechars:20 }}</div>
+                        <div class="upcoming-date">
+                            <i class="bi bi-calendar me-1"></i>
+                            {{ task.scheduled_date|date:"M d, Y" }}
+                        </div>
+                        <div class="upcoming-type">{{ task.get_maintenance_type_display }}</div>
+                    </a>
+                    {% empty %}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-check-circle"></i>
+                        <p class="mb-0 mt-2">No upcoming tasks</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar Legend -->
+        <div class="calendar-legend">
+            <div class="legend-header">
+                <i class="bi bi-info-circle"></i>
+                <h4 class="legend-title">Status Legend</h4>
+            </div>
+            
+            <div class="legend-grid">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);"></div>
+                    <span class="legend-label">Scheduled</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #f59e0b, #d97706);"></div>
+                    <span class="legend-label">In Progress</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #10b981, #059669);"></div>
+                    <span class="legend-label">Completed</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #ef4444, #dc2626);"></div>
+                    <span class="legend-label">Overdue</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #dc2626, #b91c1c); animation: pulse 2s infinite;"></div>
+                    <span class="legend-label">Critical Priority</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Day Events Modal -->
+<div class="modal fade" id="dayEventsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Maintenance Tasks</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="dayEventsContent">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function navigateMonth(year, month) {
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.set('year', year);
+    currentUrl.searchParams.set('month', month);
+    window.location.href = currentUrl.toString();
+}
+
+function showDayEvents(date) {
+    // This would typically fetch events via AJAX
+    // For now, showing a placeholder modal
+    const modal = new bootstrap.Modal(document.getElementById('dayEventsModal'));
+    document.getElementById('dayEventsContent').innerHTML = `
+        <p>Loading events for ${date}...</p>
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    `;
+    modal.show();
+    
+    // Simulate loading and show placeholder content
+    setTimeout(() => {
+        document.getElementById('dayEventsContent').innerHTML = `
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                Events for ${date} would be displayed here in a real implementation.
+            </div>
+        `;
+    }, 1000);
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+            case 'ArrowLeft':
+                e.preventDefault();
+                navigateMonth({{ prev_year }}, {{ prev_month }});
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                navigateMonth({{ next_year }}, {{ next_month }});
+                break;
+            case 'Home':
+                e.preventDefault();
+                const today = new Date();
+                navigateMonth(today.getFullYear(), today.getMonth() + 1);
+                break;
+        }
+    }
+});
+
+// Tooltip initialization
+document.addEventListener('DOMContentLoaded', function() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

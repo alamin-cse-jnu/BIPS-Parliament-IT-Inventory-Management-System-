@@ -1,0 +1,795 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Maintenance Cost Analysis - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Cost Report Styling - Parliament Design System */
+.cost-report-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.report-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.report-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.report-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.cost-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.cost-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease;
+}
+
+.cost-card:hover {
+    transform: translateY(-3px);
+}
+
+.cost-card.total-cost {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.1));
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.cost-card.average-cost {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.cost-card.budget-variance {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.cost-card.projected-cost {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(124, 58, 237, 0.1));
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+.cost-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.cost-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+}
+
+.cost-icon.total { background: linear-gradient(135deg, #22c55e, #16a34a); }
+.cost-icon.average { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.cost-icon.variance { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.cost-icon.projected { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+
+.cost-trend {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.cost-trend.trend-up {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+}
+
+.cost-trend.trend-down {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.cost-trend.trend-neutral {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+}
+
+.cost-amount {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.cost-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.cost-details {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.analysis-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.main-analysis {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.analysis-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.analysis-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.analysis-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+.analysis-content {
+    padding: 1.5rem;
+}
+
+.cost-breakdown-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.cost-breakdown-table th {
+    background: rgba(248, 250, 252, 0.8);
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    color: #1e293b;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.4);
+}
+
+.cost-breakdown-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.2);
+    color: #64748b;
+}
+
+.cost-breakdown-table tr:hover {
+    background: rgba(248, 250, 252, 0.5);
+}
+
+.category-name {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.cost-value {
+    font-weight: 600;
+    color: #16a34a;
+}
+
+.cost-count {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.variance-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.variance-item:hover {
+    background: rgba(248, 250, 252, 0.8);
+    transform: translateX(4px);
+}
+
+.variance-item:last-child {
+    margin-bottom: 0;
+}
+
+.variance-info {
+    flex: 1;
+}
+
+.variance-title {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.variance-meta {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.variance-amount {
+    text-align: right;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.variance-positive {
+    color: #dc2626;
+}
+
+.variance-negative {
+    color: #16a34a;
+}
+
+.monthly-chart-container {
+    height: 300px;
+    position: relative;
+}
+
+.chart-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #64748b;
+    font-size: 0.875rem;
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 8px;
+    border: 2px dashed rgba(203, 213, 225, 0.4);
+}
+
+.cost-filters {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.filters-header {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    padding: 1rem 1.25rem;
+    margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-label {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.form-control, .form-select {
+    padding: 0.625rem 0.875rem;
+    border: 1px solid rgba(203, 213, 225, 0.6);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(5px);
+    transition: all 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.btn-filter {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    color: white;
+    border: none;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.btn-filter:hover {
+    background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+    transform: translateY(-1px);
+}
+
+.export-actions {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.export-header {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+.export-buttons {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.btn-export {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.btn-export:hover {
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.btn-pdf {
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.btn-pdf:hover {
+    background: rgba(220, 38, 38, 0.15);
+    color: #b91c1c;
+}
+
+.btn-excel {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.btn-excel:hover {
+    background: rgba(34, 197, 94, 0.15);
+    color: #15803d;
+}
+
+.btn-csv {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.btn-csv:hover {
+    background: rgba(59, 130, 246, 0.15);
+    color: #1d4ed8;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #64748b;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .cost-overview {
+        grid-template-columns: 1fr;
+    }
+    
+    .analysis-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .cost-details {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .cost-breakdown-table {
+        font-size: 0.8rem;
+    }
+    
+    .cost-breakdown-table th,
+    .cost-breakdown-table td {
+        padding: 0.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cost-report-container">
+    <div class="container-fluid">
+        <!-- Report Header -->
+        <div class="report-header">
+            <h1 class="report-title">
+                <i class="bi bi-cash-stack"></i>
+                Maintenance Cost Analysis
+            </h1>
+            <p class="report-subtitle">Bangladesh Parliament Secretariat - IT Inventory Management</p>
+        </div>
+
+        <!-- Cost Filters -->
+        <div class="cost-filters">
+            <div class="filters-header">
+                <i class="bi bi-funnel"></i>
+                Filter Cost Data
+            </div>
+            <form method="get" class="filter-form">
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label class="filter-label">Date From</label>
+                        <input type="date" name="date_from" class="form-control" value="{{ request.GET.date_from }}">
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Date To</label>
+                        <input type="date" name="date_to" class="form-control" value="{{ request.GET.date_to }}">
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Maintenance Type</label>
+                        <select name="maintenance_type" class="form-select">
+                            <option value="">All Types</option>
+                            <option value="PREVENTIVE" {% if request.GET.maintenance_type == 'PREVENTIVE' %}selected{% endif %}>Preventive</option>
+                            <option value="CORRECTIVE" {% if request.GET.maintenance_type == 'CORRECTIVE' %}selected{% endif %}>Corrective</option>
+                            <option value="EMERGENCY" {% if request.GET.maintenance_type == 'EMERGENCY' %}selected{% endif %}>Emergency</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <button type="submit" class="btn-filter">
+                            <i class="bi bi-search"></i>
+                            Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Cost Overview Cards -->
+        <div class="cost-overview">
+            <div class="cost-card total-cost">
+                <div class="cost-header">
+                    <div class="cost-icon total">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div class="cost-trend trend-up">
+                        <i class="bi bi-arrow-up"></i>
+                        +12.5%
+                    </div>
+                </div>
+                <div class="cost-amount">৳ {{ cost_summary.total_actual|default:0|floatformat:2 }}</div>
+                <div class="cost-label">Total Cost</div>
+                <div class="cost-details">
+                    <span>Estimated: ৳{{ cost_summary.total_estimated|default:0|floatformat:2 }}</span>
+                    <span>{{ cost_by_type.count|default:0 }} tasks</span>
+                </div>
+            </div>
+
+            <div class="cost-card average-cost">
+                <div class="cost-header">
+                    <div class="cost-icon average">
+                        <i class="bi bi-graph-up"></i>
+                    </div>
+                    <div class="cost-trend trend-up">
+                        <i class="bi bi-arrow-up"></i>
+                        +8.3%
+                    </div>
+                </div>
+                <div class="cost-amount">৳ {{ cost_summary.avg_cost|default:0|floatformat:2 }}</div>
+                <div class="cost-label">Average Cost</div>
+                <div class="cost-details">
+                    <span>Max: ৳{{ cost_summary.max_cost|default:0|floatformat:2 }}</span>
+                    <span>Min: ৳{{ cost_summary.min_cost|default:0|floatformat:2 }}</span>
+                </div>
+            </div>
+
+            <div class="cost-card budget-variance">
+                <div class="cost-header">
+                    <div class="cost-icon variance">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div class="cost-trend trend-down">
+                        <i class="bi bi-arrow-down"></i>
+                        -5.2%
+                    </div>
+                </div>
+                <div class="cost-amount">৳ {{ budget_variance|default:0|floatformat:2 }}</div>
+                <div class="cost-label">Budget Variance</div>
+                <div class="cost-details">
+                    <span>Over Budget: 23%</span>
+                    <span>Under Budget: 77%</span>
+                </div>
+            </div>
+
+            <div class="cost-card projected-cost">
+                <div class="cost-header">
+                    <div class="cost-icon projected">
+                        <i class="bi bi-calculator"></i>
+                    </div>
+                    <div class="cost-trend trend-neutral">
+                        <i class="bi bi-dash"></i>
+                        0.0%
+                    </div>
+                </div>
+                <div class="cost-amount">৳ {{ projected_monthly_cost|default:0|floatformat:2 }}</div>
+                <div class="cost-label">Projected Monthly</div>
+                <div class="cost-details">
+                    <span>Based on current trend</span>
+                    <span>Next 3 months</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analysis Grid -->
+        <div class="analysis-grid">
+            <!-- Main Analysis -->
+            <div class="main-analysis">
+                <!-- Cost by Category -->
+                <div class="analysis-card">
+                    <div class="analysis-header">
+                        <i class="bi bi-pie-chart"></i>
+                        Cost by Device Category
+                    </div>
+                    <div class="analysis-content">
+                        {% if cost_by_category %}
+                            <table class="cost-breakdown-table">
+                                <thead>
+                                    <tr>
+                                        <th>Device Category</th>
+                                        <th>Total Cost</th>
+                                        <th>Average Cost</th>
+                                        <th>Count</th>
+                                        <th>% of Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in cost_by_category %}
+                                    <tr>
+                                        <td class="category-name">{{ item.device__subcategory__category__name }}</td>
+                                        <td class="cost-value">৳ {{ item.total_cost|floatformat:2 }}</td>
+                                        <td>৳ {{ item.avg_cost|floatformat:2 }}</td>
+                                        <td><span class="cost-count">{{ item.count }}</span></td>
+                                        <td>{{ item.percentage|floatformat:1 }}%</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="bi bi-pie-chart"></i>
+                                <p>No cost data available for the selected period</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Monthly Cost Trend -->
+                <div class="analysis-card">
+                    <div class="analysis-header">
+                        <i class="bi bi-graph-up-arrow"></i>
+                        Monthly Cost Trends
+                    </div>
+                    <div class="analysis-content">
+                        <div class="monthly-chart-container">
+                            {% if monthly_costs %}
+                                <div class="chart-placeholder">
+                                    <div>
+                                        <i class="bi bi-bar-chart-line me-2"></i>
+                                        Chart visualization would be implemented here with Chart.js or similar
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="chart-placeholder">
+                                    <div>
+                                        <i class="bi bi-graph-up me-2"></i>
+                                        No monthly data available for chart
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis Sidebar -->
+            <div class="analysis-sidebar">
+                <!-- Cost Variance Analysis -->
+                <div class="analysis-card">
+                    <div class="analysis-header">
+                        <i class="bi bi-clipboard-data"></i>
+                        Cost Variance
+                    </div>
+                    <div class="analysis-content">
+                        {% if cost_variance %}
+                            {% for variance in cost_variance %}
+                            <div class="variance-item">
+                                <div class="variance-info">
+                                    <div class="variance-title">{{ variance.title }}</div>
+                                    <div class="variance-meta">{{ variance.device.device_id }} | {{ variance.created_at|date:"M d" }}</div>
+                                </div>
+                                <div class="variance-amount {% if variance.variance > 0 %}variance-positive{% else %}variance-negative{% endif %}">
+                                    {% if variance.variance > 0 %}+{% endif %}৳ {{ variance.variance|floatformat:2 }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="bi bi-clipboard-data"></i>
+                                <p>No variance data available</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Export Actions -->
+                <div class="export-actions">
+                    <div class="export-header">
+                        <i class="bi bi-download"></i>
+                        Export Cost Data
+                    </div>
+                    <div class="export-buttons">
+                        <a href="{% url 'maintenance:export_pdf' %}?type=cost{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}" class="btn-export btn-pdf">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                            PDF Report
+                        </a>
+                        <a href="{% url 'maintenance:export_excel' %}?type=cost{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}" class="btn-export btn-excel">
+                            <i class="bi bi-file-earmark-excel"></i>
+                            Excel Analysis
+                        </a>
+                        <a href="{% url 'maintenance:export_csv' %}?type=cost{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}" class="btn-export btn-csv">
+                            <i class="bi bi-file-text"></i>
+                            CSV Data
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Cost analysis interactive features
+    console.log('Maintenance Cost Analysis loaded');
+    
+    // Add hover effects to cost cards
+    const costCards = document.querySelectorAll('.cost-card');
+    costCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+
+    // Add interactive effects to table rows
+    const tableRows = document.querySelectorAll('.cost-breakdown-table tbody tr');
+    tableRows.forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.background = 'rgba(59, 130, 246, 0.05)';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.background = '';
+        });
+    });
+
+    // Form validation
+    const filterForm = document.querySelector('.filter-form');
+    if (filterForm) {
+        filterForm.addEventListener('submit', function(e) {
+            const dateFrom = this.querySelector('input[name="date_from"]').value;
+            const dateTo = this.querySelector('input[name="date_to"]').value;
+            
+            if (dateFrom && dateTo && dateFrom > dateTo) {
+                e.preventDefault();
+                alert('Start date must be before end date');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,826 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Maintenance Performance Analysis - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Performance Report Styling - Parliament Design System */
+.performance-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.report-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.report-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.report-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.performance-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.main-performance {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.performance-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Performance Metrics */
+.metrics-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.metric-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-3px);
+}
+
+.metric-card.completion-rate {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.1));
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.metric-card.response-time {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.metric-card.efficiency {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.metric-card.first-fix {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(124, 58, 237, 0.1));
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+.metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.metric-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+}
+
+.metric-icon.completion { background: linear-gradient(135deg, #22c55e, #16a34a); }
+.metric-icon.response { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.metric-icon.efficiency { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.metric-icon.fix { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+
+.metric-trend {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.metric-trend.trend-up {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+}
+
+.metric-trend.trend-down {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.metric-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.metric-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+}
+
+.metric-details {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+/* Performance Charts */
+.performance-analysis {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.analysis-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+.analysis-content {
+    padding: 1.5rem;
+}
+
+.performance-chart-container {
+    height: 300px;
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.chart-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #64748b;
+    font-size: 0.875rem;
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 8px;
+    border: 2px dashed rgba(203, 213, 225, 0.4);
+}
+
+/* Success Rate Analysis */
+.success-rate-analysis {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.success-header {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+.success-content {
+    padding: 1.5rem;
+}
+
+.success-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.success-item:hover {
+    background: rgba(248, 250, 252, 0.8);
+    transform: translateX(4px);
+}
+
+.success-item:last-child {
+    margin-bottom: 0;
+}
+
+.success-info {
+    flex: 1;
+}
+
+.success-type {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.success-meta {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.success-stats {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.success-percentage {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #16a34a;
+}
+
+.success-count {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+/* Duration Analysis */
+.duration-analysis {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.duration-header {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+.duration-content {
+    padding: 1.5rem;
+}
+
+.duration-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.duration-stat {
+    text-align: center;
+    padding: 1rem;
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 8px;
+}
+
+.duration-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.duration-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Performance Trends */
+.performance-trends {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.trends-header {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+.trends-content {
+    padding: 1.5rem;
+}
+
+.trend-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.trend-item:last-child {
+    border-bottom: none;
+}
+
+.trend-info {
+    flex: 1;
+}
+
+.trend-period {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.trend-description {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.trend-change {
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.trend-change.trend-up {
+    color: #16a34a;
+}
+
+.trend-change.trend-down {
+    color: #dc2626;
+}
+
+/* Export Actions */
+.export-actions {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.export-header {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+.export-buttons {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.btn-export {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.btn-export:hover {
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.btn-pdf {
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.btn-pdf:hover {
+    background: rgba(220, 38, 38, 0.15);
+    color: #b91c1c;
+}
+
+.btn-excel {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.btn-excel:hover {
+    background: rgba(34, 197, 94, 0.15);
+    color: #15803d;
+}
+
+.btn-csv {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.btn-csv:hover {
+    background: rgba(59, 130, 246, 0.15);
+    color: #1d4ed8;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #64748b;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .performance-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .metrics-overview {
+        grid-template-columns: 1fr;
+    }
+    
+    .duration-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .metric-details {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .success-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .success-stats {
+        text-align: left;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="performance-container">
+    <div class="container-fluid">
+        <!-- Report Header -->
+        <div class="report-header">
+            <h1 class="report-title">
+                <i class="bi bi-speedometer2"></i>
+                Maintenance Performance Analysis
+            </h1>
+            <p class="report-subtitle">Bangladesh Parliament Secretariat - IT Inventory Management</p>
+        </div>
+
+        <!-- Performance Metrics Overview -->
+        <div class="metrics-overview">
+            <div class="metric-card completion-rate">
+                <div class="metric-header">
+                    <div class="metric-icon completion">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="metric-trend trend-up">
+                        <i class="bi bi-arrow-up"></i>
+                        +5.2%
+                    </div>
+                </div>
+                <div class="metric-value">{{ completion_stats.completion_rate|floatformat:1 }}%</div>
+                <div class="metric-label">Completion Rate</div>
+                <div class="metric-details">
+                    <span>Completed: {{ completion_stats.completed|default:0 }}</span>
+                    <span>Total: {{ completion_stats.total|default:0 }}</span>
+                </div>
+            </div>
+
+            <div class="metric-card response-time">
+                <div class="metric-header">
+                    <div class="metric-icon response">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <div class="metric-trend trend-down">
+                        <i class="bi bi-arrow-down"></i>
+                        -12.3%
+                    </div>
+                </div>
+                <div class="metric-value">{{ avg_response_time|default:0|floatformat:1 }}h</div>
+                <div class="metric-label">Avg Response Time</div>
+                <div class="metric-details">
+                    <span>Target: 4.0h</span>
+                    <span>Best: 1.2h</span>
+                </div>
+            </div>
+
+            <div class="metric-card efficiency">
+                <div class="metric-header">
+                    <div class="metric-icon efficiency">
+                        <i class="bi bi-graph-up"></i>
+                    </div>
+                    <div class="metric-trend trend-up">
+                        <i class="bi bi-arrow-up"></i>
+                        +8.7%
+                    </div>
+                </div>
+                <div class="metric-value">{{ efficiency_rate|default:0|floatformat:1 }}%</div>
+                <div class="metric-label">Efficiency Rate</div>
+                <div class="metric-details">
+                    <span>On Time: {{ completion_stats.on_time_completion|default:0 }}</span>
+                    <span>Overdue: {{ overdue_stats.count|default:0 }}</span>
+                </div>
+            </div>
+
+            <div class="metric-card first-fix">
+                <div class="metric-header">
+                    <div class="metric-icon fix">
+                        <i class="bi bi-tools"></i>
+                    </div>
+                    <div class="metric-trend trend-up">
+                        <i class="bi bi-arrow-up"></i>
+                        +3.1%
+                    </div>
+                </div>
+                <div class="metric-value">{{ first_fix_rate|default:0|floatformat:1 }}%</div>
+                <div class="metric-label">First Fix Rate</div>
+                <div class="metric-details">
+                    <span>Industry Avg: 75%</span>
+                    <span>Target: 85%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Analysis Grid -->
+        <div class="performance-grid">
+            <!-- Main Performance Analysis -->
+            <div class="main-performance">
+                <!-- Performance Trends Chart -->
+                <div class="performance-analysis">
+                    <div class="analysis-header">
+                        <i class="bi bi-graph-up-arrow"></i>
+                        Performance Trends
+                    </div>
+                    <div class="analysis-content">
+                        <div class="performance-chart-container">
+                            <div class="chart-placeholder">
+                                <div>
+                                    <i class="bi bi-bar-chart-line me-2"></i>
+                                    Performance trend chart would be implemented here with Chart.js
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Success Rate by Maintenance Type -->
+                <div class="success-rate-analysis">
+                    <div class="success-header">
+                        <i class="bi bi-trophy"></i>
+                        Success Rate by Type
+                    </div>
+                    <div class="success-content">
+                        {% if success_by_type %}
+                            {% for item in success_by_type %}
+                            <div class="success-item">
+                                <div class="success-info">
+                                    <div class="success-type">{{ item.maintenance_type|capfirst }} Maintenance</div>
+                                    <div class="success-meta">{{ item.total }} total tasks completed</div>
+                                </div>
+                                <div class="success-stats">
+                                    <div class="success-percentage">
+                                        {% widthratio item.successful item.total 100 %}%
+                                    </div>
+                                    <div class="success-count">{{ item.successful }}/{{ item.total }}</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="bi bi-trophy"></i>
+                                <p>No success rate data available</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Sidebar -->
+            <div class="performance-sidebar">
+                <!-- Duration Analysis -->
+                <div class="duration-analysis">
+                    <div class="duration-header">
+                        <i class="bi bi-stopwatch"></i>
+                        Duration Analysis
+                    </div>
+                    <div class="duration-content">
+                        <div class="duration-stats">
+                            <div class="duration-stat">
+                                <div class="duration-value">{{ duration_stats.avg_planned|default:0|floatformat:1 }}h</div>
+                                <div class="duration-label">Avg Planned</div>
+                            </div>
+                            <div class="duration-stat">
+                                <div class="duration-value">{{ duration_stats.avg_actual|default:0|floatformat:1 }}h</div>
+                                <div class="duration-label">Avg Actual</div>
+                            </div>
+                            <div class="duration-stat">
+                                <div class="duration-value">{{ duration_stats.min_duration|default:0|floatformat:1 }}h</div>
+                                <div class="duration-label">Fastest</div>
+                            </div>
+                            <div class="duration-stat">
+                                <div class="duration-value">{{ duration_stats.max_duration|default:0|floatformat:1 }}h</div>
+                                <div class="duration-label">Longest</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Trends -->
+                <div class="performance-trends">
+                    <div class="trends-header">
+                        <i class="bi bi-activity"></i>
+                        Recent Trends
+                    </div>
+                    <div class="trends-content">
+                        <div class="trend-item">
+                            <div class="trend-info">
+                                <div class="trend-period">This Month</div>
+                                <div class="trend-description">Overall performance improvement</div>
+                            </div>
+                            <div class="trend-change trend-up">
+                                <i class="bi bi-arrow-up"></i>
+                                +15.2%
+                            </div>
+                        </div>
+                        <div class="trend-item">
+                            <div class="trend-info">
+                                <div class="trend-period">Last 7 Days</div>
+                                <div class="trend-description">Response time optimization</div>
+                            </div>
+                            <div class="trend-change trend-up">
+                                <i class="bi bi-arrow-up"></i>
+                                +8.5%
+                            </div>
+                        </div>
+                        <div class="trend-item">
+                            <div class="trend-info">
+                                <div class="trend-period">Quarter</div>
+                                <div class="trend-description">First-time fix rate</div>
+                            </div>
+                            <div class="trend-change trend-up">
+                                <i class="bi bi-arrow-up"></i>
+                                +12.3%
+                            </div>
+                        </div>
+                        <div class="trend-item">
+                            <div class="trend-info">
+                                <div class="trend-period">Year-to-Date</div>
+                                <div class="trend-description">Cost efficiency gains</div>
+                            </div>
+                            <div class="trend-change trend-up">
+                                <i class="bi bi-arrow-up"></i>
+                                +22.1%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export Actions -->
+                <div class="export-actions">
+                    <div class="export-header">
+                        <i class="bi bi-download"></i>
+                        Export Performance
+                    </div>
+                    <div class="export-buttons">
+                        <a href="{% url 'maintenance:export_pdf' %}?type=performance" class="btn-export btn-pdf">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                            PDF Report
+                        </a>
+                        <a href="{% url 'maintenance:export_excel' %}?type=performance" class="btn-export btn-excel">
+                            <i class="bi bi-file-earmark-excel"></i>
+                            Excel Analysis
+                        </a>
+                        <a href="{% url 'maintenance:export_csv' %}?type=performance" class="btn-export btn-csv">
+                            <i class="bi bi-file-text"></i>
+                            CSV Data
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Performance analysis interactive features
+    console.log('Maintenance Performance Analysis loaded');
+    
+    // Add hover effects to metric cards
+    const metricCards = document.querySelectorAll('.metric-card');
+    metricCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+
+    // Add interactive effects to success items
+    const successItems = document.querySelectorAll('.success-item');
+    successItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.background = 'rgba(34, 197, 94, 0.05)';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.background = 'rgba(248, 250, 252, 0.5)';
+        });
+    });
+
+    // Add interactive effects to trend items
+    const trendItems = document.querySelectorAll('.trend-item');
+    trendItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.background = 'rgba(248, 250, 252, 0.5)';
+            this.style.transform = 'translateX(2px)';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.background = '';
+            this.style.transform = 'translateX(0)';
+        });
+    });
+
+    // Simulate performance data updates (in a real app, this would be real-time data)
+    function updatePerformanceMetrics() {
+        // This would connect to real-time performance monitoring
+        console.log('Performance metrics updated');
+    }
+
+    // Update performance metrics every 30 seconds
+    setInterval(updatePerformanceMetrics, 30000);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,906 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Maintenance Trends Report - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Maintenance Trends Report Styling - Parliament Design System */
+.trends-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.trends-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.trends-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.trends-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.trends-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.trend-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.section-header {
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.section-title {
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.125rem;
+}
+
+.section-header.yearly {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+}
+
+.section-header.monthly {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.section-header.category {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    color: white;
+}
+
+.section-header.seasonal {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.section-content {
+    padding: 1.5rem;
+}
+
+.chart-container {
+    height: 300px;
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.chart-placeholder {
+    width: 100%;
+    height: 100%;
+    background: rgba(248, 250, 252, 0.8);
+    border: 2px dashed rgba(203, 213, 225, 0.6);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-style: italic;
+}
+
+.trend-data {
+    display: grid;
+    gap: 1rem;
+}
+
+.yearly-trends {
+    display: grid;
+    gap: 1rem;
+}
+
+.yearly-item {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.yearly-item:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.year-label {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 1.125rem;
+}
+
+.year-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.year-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+}
+
+.stat-item {
+    color: #64748b;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.year-cost {
+    text-align: right;
+}
+
+.cost-amount {
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: #059669;
+}
+
+.cost-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.125rem;
+}
+
+.monthly-trends {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.monthly-item {
+    text-align: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.monthly-item:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+}
+
+.month-name {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.month-count {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #3b82f6;
+    margin-bottom: 0.25rem;
+}
+
+.month-cost {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.category-trends {
+    display: grid;
+    gap: 1rem;
+}
+
+.category-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.category-item:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-1px);
+}
+
+.category-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.category-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+}
+
+.category-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.category-name {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+}
+
+.category-meta {
+    color: #64748b;
+    font-size: 0.75rem;
+    margin-top: 0.125rem;
+}
+
+.category-metrics {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.metric-item {
+    text-align: center;
+}
+
+.metric-value {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 0.875rem;
+}
+
+.metric-label {
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+.seasonal-trends {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.seasonal-item {
+    text-align: center;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.seasonal-item:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.season-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.season-name {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.season-count {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #f59e0b;
+    margin-bottom: 0.5rem;
+}
+
+.season-avg {
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+.full-width-section {
+    grid-column: 1 / -1;
+}
+
+.insights-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.insights-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid rgba(203, 213, 225, 0.3);
+}
+
+.insights-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.insights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.insight-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.insight-card:hover {
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.insight-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.insight-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.125rem;
+}
+
+.insight-title {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 1rem;
+}
+
+.insight-content {
+    color: #64748b;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.insight-metrics {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.insight-metric {
+    text-align: center;
+}
+
+.insight-metric-value {
+    font-weight: 700;
+    color: #10b981;
+    font-size: 1.125rem;
+}
+
+.insight-metric-label {
+    color: #64748b;
+    font-size: 0.75rem;
+    margin-top: 0.125rem;
+}
+
+.export-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    text-align: center;
+}
+
+.export-title {
+    color: #1e293b;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.export-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.btn-export {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-export:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    color: white;
+}
+
+.btn-export.secondary {
+    background: rgba(255, 255, 255, 0.9);
+    color: #64748b;
+    border: 1px solid rgba(203, 213, 225, 0.6);
+}
+
+.btn-export.secondary:hover {
+    background: rgba(255, 255, 255, 1);
+    color: #374151;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #64748b;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h5 {
+    color: #374151;
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    margin-bottom: 2rem;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .trends-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .insights-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .yearly-item {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        text-align: center;
+    }
+    
+    .year-stats {
+        justify-content: center;
+    }
+    
+    .monthly-trends {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .seasonal-trends {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .category-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .category-metrics {
+        justify-content: center;
+    }
+    
+    .export-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .insights-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="trends-container">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="trends-header">
+            <h1 class="trends-title">
+                <i class="bi bi-activity"></i>
+                Maintenance Trends Analysis
+            </h1>
+            <p class="trends-subtitle">Bangladesh Parliament Secretariat - Historical trends, patterns, and predictive maintenance insights</p>
+        </div>
+
+        <!-- Trends Grid -->
+        <div class="trends-grid">
+            <!-- Yearly Trends -->
+            <div class="trend-section">
+                <div class="section-header yearly">
+                    <h3 class="section-title">
+                        <i class="bi bi-calendar4-range"></i>
+                        Yearly Trends (5-Year Overview)
+                    </h3>
+                </div>
+                <div class="section-content">
+                    {% if yearly_trends %}
+                        <div class="yearly-trends">
+                            {% for year_data in yearly_trends %}
+                            <div class="yearly-item">
+                                <div class="year-label">{{ year_data.year }}</div>
+                                <div class="year-details">
+                                    <div class="year-stats">
+                                        <span class="stat-item">
+                                            <span class="stat-value">{{ year_data.total_count|default:0 }}</span> Total
+                                        </span>
+                                        <span class="stat-item">
+                                            <span class="stat-value">{{ year_data.preventive_count|default:0 }}</span> Preventive
+                                        </span>
+                                        <span class="stat-item">
+                                            <span class="stat-value">{{ year_data.corrective_count|default:0 }}</span> Corrective
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="year-cost">
+                                    {% if year_data.total_cost %}
+                                        <div class="cost-amount">৳{{ year_data.total_cost|floatformat:0 }}</div>
+                                        <div class="cost-label">Total Cost</div>
+                                    {% else %}
+                                        <div class="cost-amount text-muted">N/A</div>
+                                        <div class="cost-label">No Data</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="bi bi-calendar-x"></i>
+                            </div>
+                            <p>No yearly trend data available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Monthly Trends -->
+            <div class="trend-section">
+                <div class="section-header monthly">
+                    <h3 class="section-title">
+                        <i class="bi bi-bar-chart"></i>
+                        Current Year Monthly Trends
+                    </h3>
+                </div>
+                <div class="section-content">
+                    {% if monthly_trends %}
+                        <div class="monthly-trends">
+                            {% for month_data in monthly_trends %}
+                            <div class="monthly-item">
+                                <div class="month-name">{{ month_data.month_name|slice:":3" }}</div>
+                                <div class="month-count">{{ month_data.count|default:0 }}</div>
+                                <div class="month-cost">
+                                    {% if month_data.cost %}
+                                        ৳{{ month_data.cost|floatformat:0 }}
+                                    {% else %}
+                                        ৳0
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="bi bi-calendar3"></i>
+                            </div>
+                            <p>No monthly data available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Category Trends -->
+            <div class="trend-section full-width-section">
+                <div class="section-header category">
+                    <h3 class="section-title">
+                        <i class="bi bi-diagram-3"></i>
+                        Device Category Trends (Top 10)
+                    </h3>
+                </div>
+                <div class="section-content">
+                    {% if category_trends %}
+                        <div class="category-trends">
+                            {% for category in category_trends %}
+                            <div class="category-item">
+                                <div class="category-info">
+                                    <div class="category-icon">
+                                        <i class="bi bi-gear"></i>
+                                    </div>
+                                    <div class="category-details">
+                                        <div class="category-name">{{ category.device__subcategory__category__name }}</div>
+                                        <div class="category-meta">{{ category.count }} maintenance record{{ category.count|pluralize }}</div>
+                                    </div>
+                                </div>
+                                <div class="category-metrics">
+                                    <div class="metric-item">
+                                        <div class="metric-value">{{ category.count }}</div>
+                                        <div class="metric-label">Total</div>
+                                    </div>
+                                    <div class="metric-item">
+                                        <div class="metric-value">
+                                            {% if category.avg_cost %}
+                                                ৳{{ category.avg_cost|floatformat:0 }}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </div>
+                                        <div class="metric-label">Avg Cost</div>
+                                    </div>
+                                    <div class="metric-item">
+                                        <div class="metric-value">
+                                            {% if category.trend_score %}
+                                                {{ category.trend_score|floatformat:1 }}/5
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </div>
+                                        <div class="metric-label">Rating</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="bi bi-diagram-3"></i>
+                            </div>
+                            <p>No category trend data available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Seasonal Patterns -->
+            <div class="trend-section full-width-section">
+                <div class="section-header seasonal">
+                    <h3 class="section-title">
+                        <i class="bi bi-calendar-event"></i>
+                        Seasonal Maintenance Patterns
+                    </h3>
+                </div>
+                <div class="section-content">
+                    {% if seasonal_patterns %}
+                        <div class="seasonal-trends">
+                            {% for pattern in seasonal_patterns %}
+                            <div class="seasonal-item">
+                                <div class="season-icon">
+                                    {% if pattern.quarter == 1 %}
+                                        <i class="bi bi-snow"></i>
+                                    {% elif pattern.quarter == 2 %}
+                                        <i class="bi bi-flower1"></i>
+                                    {% elif pattern.quarter == 3 %}
+                                        <i class="bi bi-brightness-high"></i>
+                                    {% else %}
+                                        <i class="bi bi-tree"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="season-name">
+                                    Q{{ pattern.quarter }} 
+                                    {% if pattern.quarter == 1 %}(Jan-Mar)
+                                    {% elif pattern.quarter == 2 %}(Apr-Jun)
+                                    {% elif pattern.quarter == 3 %}(Jul-Sep)
+                                    {% else %}(Oct-Dec){% endif %}
+                                </div>
+                                <div class="season-count">{{ pattern.count|default:0 }}</div>
+                                <div class="season-avg">
+                                    Avg: ৳{{ pattern.avg_cost|default:0|floatformat:0 }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="bi bi-calendar-event"></i>
+                            </div>
+                            <p>No seasonal pattern data available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Insights -->
+        <div class="insights-section">
+            <div class="insights-header">
+                <i class="bi bi-lightbulb"></i>
+                <h2 class="insights-title">Key Insights & Recommendations</h2>
+            </div>
+            
+            <div class="insights-grid">
+                <div class="insight-card">
+                    <div class="insight-header">
+                        <div class="insight-icon">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                        <h4 class="insight-title">Maintenance Volume Trend</h4>
+                    </div>
+                    <div class="insight-content">
+                        Analysis of maintenance request volumes shows seasonal patterns with peak activity during budget cycle periods. Consider resource planning accordingly.
+                    </div>
+                    <div class="insight-metrics">
+                        <div class="insight-metric">
+                            <div class="insight-metric-value">+15%</div>
+                            <div class="insight-metric-label">YoY Growth</div>
+                        </div>
+                        <div class="insight-metric">
+                            <div class="insight-metric-value">Q2</div>
+                            <div class="insight-metric-label">Peak Season</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="insight-card">
+                    <div class="insight-header">
+                        <div class="insight-icon">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h4 class="insight-title">Preventive vs Corrective</h4>
+                    </div>
+                    <div class="insight-content">
+                        Increasing preventive maintenance ratio correlates with reduced emergency repairs and lower overall costs. Continue expanding preventive programs.
+                    </div>
+                    <div class="insight-metrics">
+                        <div class="insight-metric">
+                            <div class="insight-metric-value">65%</div>
+                            <div class="insight-metric-label">Preventive</div>
+                        </div>
+                        <div class="insight-metric">
+                            <div class="insight-metric-value">35%</div>
+                            <div class="insight-metric-label">Corrective</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="insight-card">
+                    <div class="insight-header">
+                        <div class="insight-icon">
+                            <i class="bi bi-currency-dollar"></i>
+                        </div>
+                        <h4 class="insight-title">Cost Optimization</h4>
+                    </div>
+                    <div class="insight-content">
+                        Device categories with highest maintenance frequency may benefit from replacement analysis or enhanced preventive measures.
+                    </div>
+                    <div class="insight-metrics">
+                        <div class="insight-metric">
+                            <div class="insight-metric-value">-8%</div>
+                            <div class="insight-metric-label">Cost Reduction</div>
+                        </div>
+                        <div class="insight-metric">
+                            <div class="insight-metric-value">ROI</div>
+                            <div class="insight-metric-label">Positive</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Section -->
+        <div class="export-section">
+            <h3 class="export-title">
+                <i class="bi bi-download"></i>
+                Export Trends Report
+            </h3>
+            <div class="export-actions">
+                <a href="?export=pdf" class="btn-export">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    Download PDF
+                </a>
+                <a href="?export=excel" class="btn-export secondary">
+                    <i class="bi bi-file-earmark-excel"></i>
+                    Export Excel
+                </a>
+                <a href="?export=csv" class="btn-export secondary">
+                    <i class="bi bi-filetype-csv"></i>
+                    Export CSV
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

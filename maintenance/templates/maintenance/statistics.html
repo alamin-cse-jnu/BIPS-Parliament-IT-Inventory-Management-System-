@@ -1,0 +1,871 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Maintenance Statistics - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Maintenance Statistics Styling - Parliament Design System */
+.statistics-container {
+    background: var(--bg-gradient-primary);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.statistics-header {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.statistics-title {
+    color: var(--parliament-primary);
+    font-weight: 700;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.statistics-subtitle {
+    color: var(--parliament-neutral);
+    margin-bottom: 0;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.metric-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--glass-shadow-hover);
+}
+
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--metric-color, var(--parliament-primary));
+}
+
+.metric-card.total-maintenance::before {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.metric-card.completed-maintenance::before {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.metric-card.pending-maintenance::before {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.metric-card.overdue-maintenance::before {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.metric-card.average-cost::before {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.metric-card.efficiency-rate::before {
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+}
+
+.metric-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-lg);
+}
+
+.metric-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    background: var(--metric-gradient);
+}
+
+.metric-icon.total { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.metric-icon.completed { background: linear-gradient(135deg, #10b981, #059669); }
+.metric-icon.pending { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.metric-icon.overdue { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.metric-icon.cost { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.metric-icon.efficiency { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+
+.metric-trend {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.trend-up {
+    color: #10b981;
+}
+
+.trend-down {
+    color: #ef4444;
+}
+
+.trend-stable {
+    color: var(--parliament-neutral);
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+    line-height: 1;
+}
+
+.metric-label {
+    color: var(--parliament-neutral);
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: var(--spacing-sm);
+}
+
+.metric-details {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.875rem;
+    color: var(--parliament-neutral);
+}
+
+.charts-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+}
+
+.chart-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: between;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.chart-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.chart-container {
+    height: 300px;
+    position: relative;
+}
+
+.performance-overview {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.performance-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.performance-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.performance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.performance-item {
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--glass-border);
+    text-align: center;
+    transition: var(--transition);
+}
+
+.performance-item:hover {
+    background: rgba(255, 255, 255, 0.8);
+    transform: translateY(-2px);
+}
+
+.performance-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+}
+
+.performance-label {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.time-filter {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.filter-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.filter-label {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    font-size: 0.875rem;
+}
+
+.form-control,
+.form-select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+    transition: var(--transition);
+}
+
+.form-control:focus,
+.form-select:focus {
+    outline: none;
+    border-color: var(--parliament-primary);
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+    background: white;
+}
+
+.btn-filter {
+    background: linear-gradient(135deg, var(--parliament-primary), #2563eb);
+    color: white;
+    border: none;
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: var(--transition);
+}
+
+.btn-filter:hover {
+    background: linear-gradient(135deg, #1e40af, #1d4ed8);
+    transform: translateY(-1px);
+}
+
+.maintenance-trends {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.trends-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.trends-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.trends-list {
+    display: grid;
+    gap: var(--spacing-md);
+}
+
+.trend-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--glass-border);
+    transition: var(--transition);
+}
+
+.trend-item:hover {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.trend-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.trend-period {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    min-width: 80px;
+}
+
+.trend-description {
+    color: var(--parliament-neutral);
+}
+
+.trend-change {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.device-insights {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.insights-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.insights-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.insights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.insight-item {
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--glass-border);
+    transition: var(--transition);
+}
+
+.insight-item:hover {
+    background: rgba(255, 255, 255, 0.8);
+    transform: translateY(-2px);
+}
+
+.insight-category {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.insight-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-sm);
+}
+
+.insight-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--parliament-primary);
+}
+
+.insight-label {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+}
+
+.insight-progress {
+    height: 6px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(135deg, var(--parliament-primary), #2563eb);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .charts-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .metrics-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .statistics-container {
+        padding: 1rem 0;
+    }
+    
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .performance-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .insights-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .filter-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .metric-header {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="statistics-container">
+    <div class="container-fluid">
+        <!-- Statistics Header -->
+        <div class="statistics-header">
+            <h1 class="statistics-title">
+                <i class="bi bi-graph-up"></i>
+                Maintenance Statistics
+            </h1>
+            <p class="statistics-subtitle">Bangladesh Parliament Secretariat - Comprehensive Analytics Dashboard</p>
+        </div>
+
+        <!-- Time Filter -->
+        <div class="time-filter">
+            <form method="get" class="filter-form">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label class="filter-label">Time Period:</label>
+                        <select name="period" class="form-select">
+                            <option value="30" {% if request.GET.period == '30' %}selected{% endif %}>Last 30 Days</option>
+                            <option value="90" {% if request.GET.period == '90' %}selected{% endif %}>Last 3 Months</option>
+                            <option value="180" {% if request.GET.period == '180' %}selected{% endif %}>Last 6 Months</option>
+                            <option value="365" {% if request.GET.period == '365' %}selected{% endif %}>Last Year</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Category:</label>
+                        <select name="category" class="form-select">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <button type="submit" class="btn-filter">
+                            <i class="bi bi-funnel me-1"></i>Apply Filter
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Key Metrics Grid -->
+        <div class="metrics-grid">
+            <div class="metric-card total-maintenance">
+                <div class="metric-header">
+                    <div class="metric-icon total">
+                        <i class="bi bi-wrench"></i>
+                    </div>
+                    <div class="metric-trend trend-up">
+                        <i class="bi bi-arrow-up"></i>
+                        +{{ stats.growth_rate }}%
+                    </div>
+                </div>
+                <div class="metric-value">{{ stats.total_maintenance }}</div>
+                <div class="metric-label">Total Maintenance Tasks</div>
+                <div class="metric-details">
+                    <span>This Period: {{ stats.current_period }}</span>
+                    <span>Previous: {{ stats.previous_period }}</span>
+                </div>
+            </div>
+
+            <div class="metric-card completed-maintenance">
+                <div class="metric-header">
+                    <div class="metric-icon completed">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="metric-trend trend-up">
+                        <i class="bi bi-arrow-up"></i>
+                        +{{ stats.completion_growth }}%
+                    </div>
+                </div>
+                <div class="metric-value">{{ stats.completed_maintenance }}</div>
+                <div class="metric-label">Completed Tasks</div>
+                <div class="metric-details">
+                    <span>Success Rate: {{ stats.completion_rate }}%</span>
+                    <span>On Time: {{ stats.ontime_rate }}%</span>
+                </div>
+            </div>
+
+            <div class="metric-card pending-maintenance">
+                <div class="metric-header">
+                    <div class="metric-icon pending">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <div class="metric-trend trend-stable">
+                        <i class="bi bi-dash"></i>
+                        {{ stats.pending_change }}%
+                    </div>
+                </div>
+                <div class="metric-value">{{ stats.pending_maintenance }}</div>
+                <div class="metric-label">Pending Tasks</div>
+                <div class="metric-details">
+                    <span>Scheduled: {{ stats.scheduled_pending }}</span>
+                    <span>In Progress: {{ stats.inprogress_pending }}</span>
+                </div>
+            </div>
+
+            <div class="metric-card overdue-maintenance">
+                <div class="metric-header">
+                    <div class="metric-icon overdue">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div class="metric-trend trend-down">
+                        <i class="bi bi-arrow-down"></i>
+                        {{ stats.overdue_change }}%
+                    </div>
+                </div>
+                <div class="metric-value">{{ stats.overdue_maintenance }}</div>
+                <div class="metric-label">Overdue Tasks</div>
+                <div class="metric-details">
+                    <span>Critical: {{ stats.critical_overdue }}</span>
+                    <span>Avg Days: {{ stats.avg_overdue_days }}</span>
+                </div>
+            </div>
+
+            <div class="metric-card average-cost">
+                <div class="metric-header">
+                    <div class="metric-icon cost">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div class="metric-trend trend-up">
+                        <i class="bi bi-arrow-up"></i>
+                        +{{ stats.cost_change }}%
+                    </div>
+                </div>
+                <div class="metric-value">৳{{ stats.average_cost|floatformat:0 }}</div>
+                <div class="metric-label">Average Cost</div>
+                <div class="metric-details">
+                    <span>Total: ৳{{ stats.total_cost|floatformat:0 }}</span>
+                    <span>Budget: ৳{{ stats.budget|floatformat:0 }}</span>
+                </div>
+            </div>
+
+            <div class="metric-card efficiency-rate">
+                <div class="metric-header">
+                    <div class="metric-icon efficiency">
+                        <i class="bi bi-speedometer2"></i>
+                    </div>
+                    <div class="metric-trend trend-up">
+                        <i class="bi bi-arrow-up"></i>
+                        +{{ stats.efficiency_change }}%
+                    </div>
+                </div>
+                <div class="metric-value">{{ stats.efficiency_rate }}%</div>
+                <div class="metric-label">Efficiency Rate</div>
+                <div class="metric-details">
+                    <span>Target: {{ stats.target_efficiency }}%</span>
+                    <span>Avg Time: {{ stats.avg_completion_time }}h</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">
+                        <i class="bi bi-bar-chart"></i>
+                        Monthly Maintenance Trends
+                    </h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="monthlyTrendsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">
+                        <i class="bi bi-pie-chart"></i>
+                        Status Distribution
+                    </h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="statusDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Overview -->
+        <div class="performance-overview">
+            <div class="performance-header">
+                <h3 class="performance-title">
+                    <i class="bi bi-trophy"></i>
+                    Performance Overview
+                </h3>
+            </div>
+            <div class="performance-grid">
+                <div class="performance-item">
+                    <div class="performance-value">{{ performance.avg_response_time }}</div>
+                    <div class="performance-label">Avg Response Time (hours)</div>
+                </div>
+                <div class="performance-item">
+                    <div class="performance-value">{{ performance.first_time_fix_rate }}%</div>
+                    <div class="performance-label">First Time Fix Rate</div>
+                </div>
+                <div class="performance-item">
+                    <div class="performance-value">{{ performance.preventive_ratio }}%</div>
+                    <div class="performance-label">Preventive vs Corrective</div>
+                </div>
+                <div class="performance-item">
+                    <div class="performance-value">{{ performance.technician_utilization }}%</div>
+                    <div class="performance-label">Technician Utilization</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Maintenance Trends -->
+        <div class="maintenance-trends">
+            <div class="trends-header">
+                <h3 class="trends-title">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    Maintenance Trends Analysis
+                </h3>
+            </div>
+            <div class="trends-list">
+                {% for trend in trends %}
+                <div class="trend-item">
+                    <div class="trend-info">
+                        <div class="trend-period">{{ trend.period }}</div>
+                        <div class="trend-description">{{ trend.description }}</div>
+                    </div>
+                    <div class="trend-change {% if trend.change >= 0 %}trend-up{% else %}trend-down{% endif %}">
+                        <i class="bi bi-arrow-{% if trend.change >= 0 %}up{% else %}down{% endif %}"></i>
+                        {{ trend.change|floatformat:1 }}%
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Device Insights -->
+        <div class="device-insights">
+            <div class="insights-header">
+                <h3 class="insights-title">
+                    <i class="bi bi-gear"></i>
+                    Device Category Insights
+                </h3>
+            </div>
+            <div class="insights-grid">
+                {% for insight in device_insights %}
+                <div class="insight-item">
+                    <div class="insight-category">
+                        <i class="bi bi-tag"></i>
+                        {{ insight.category }}
+                    </div>
+                    <div class="insight-stats">
+                        <div class="insight-value">{{ insight.maintenance_count }}</div>
+                        <div class="insight-label">Maintenance Tasks</div>
+                    </div>
+                    <div class="insight-progress">
+                        <div class="progress-fill" style="width: {{ insight.percentage }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+// Monthly Trends Chart
+const monthlyCtx = document.getElementById('monthlyTrendsChart').getContext('2d');
+new Chart(monthlyCtx, {
+    type: 'line',
+    data: {
+        labels: {{ monthly_labels|safe }},
+        datasets: [{
+            label: 'Completed',
+            data: {{ monthly_completed|safe }},
+            borderColor: 'rgb(16, 185, 129)',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            tension: 0.4
+        }, {
+            label: 'Scheduled',
+            data: {{ monthly_scheduled|safe }},
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top',
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Status Distribution Chart
+const statusCtx = document.getElementById('statusDistributionChart').getContext('2d');
+new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ status_labels|safe }},
+        datasets: [{
+            data: {{ status_data|safe }},
+            backgroundColor: [
+                'rgb(16, 185, 129)',
+                'rgb(245, 158, 11)',
+                'rgb(59, 130, 246)',
+                'rgb(239, 68, 68)'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

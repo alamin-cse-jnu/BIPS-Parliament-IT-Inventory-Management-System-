@@ -1,0 +1,525 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Device Maintenance - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Device Maintenance Styling - Parliament Design System */
+.maintenance-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.maintenance-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.maintenance-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.maintenance-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.device-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #3b82f6;
+    transition: all 0.3s ease;
+}
+
+.device-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+}
+
+.device-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.device-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.device-info h5 {
+    color: #1e3a8a;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.device-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.meta-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.device-id-badge {
+    background: rgba(30, 58, 138, 0.1);
+    color: #1e3a8a;
+    border: 1px solid rgba(30, 58, 138, 0.2);
+}
+
+.category-badge {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.vendor-badge {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+    border: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+.maintenance-details {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.maintenance-section {
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    color: #1e3a8a;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.maintenance-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.maintenance-row:last-child {
+    border-bottom: none;
+}
+
+.maintenance-label {
+    font-weight: 500;
+    color: #374151;
+}
+
+.maintenance-value {
+    color: #6b7280;
+}
+
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+}
+
+.status-ongoing {
+    background: rgba(245, 158, 11, 0.15);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.status-completed {
+    background: rgba(34, 197, 94, 0.15);
+    color: #16a34a;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.status-pending {
+    background: rgba(107, 114, 128, 0.15);
+    color: #6b7280;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+.priority-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+}
+
+.priority-low {
+    background: rgba(107, 114, 128, 0.15);
+    color: #6b7280;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+.priority-medium {
+    background: rgba(245, 158, 11, 0.15);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.priority-high {
+    background: rgba(239, 68, 68, 0.15);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.priority-critical {
+    background: rgba(220, 38, 38, 0.9);
+    color: white;
+    border: 1px solid #dc2626;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.btn-maintenance {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-update {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+}
+
+.btn-update:hover {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    transform: translateY(-1px);
+    color: white;
+}
+
+.btn-complete {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+}
+
+.btn-complete:hover {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    transform: translateY(-1px);
+    color: white;
+}
+
+.btn-secondary {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+    border: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+.btn-secondary:hover {
+    background: rgba(107, 114, 128, 0.2);
+    color: #374151;
+}
+
+.history-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.history-item {
+    border-left: 3px solid #e5e7eb;
+    padding-left: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.history-item:last-child {
+    margin-bottom: 0;
+}
+
+.history-item::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 0.5rem;
+    width: 8px;
+    height: 8px;
+    background: #6b7280;
+    border-radius: 50%;
+}
+
+.history-date {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.history-content {
+    color: #374151;
+    margin-top: 0.25rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: #6b7280;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #d1d5db;
+}
+
+@media (max-width: 768px) {
+    .maintenance-container {
+        padding: 1rem 0;
+    }
+    
+    .maintenance-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .device-card {
+        padding: 1.25rem;
+    }
+    
+    .device-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .maintenance-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="maintenance-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="maintenance-header">
+            <h2 class="maintenance-title">
+                <i class="bi bi-wrench"></i>
+                Device Maintenance
+            </h2>
+            <p class="maintenance-subtitle">Monitor and manage device maintenance schedules at Bangladesh Parliament Secretariat</p>
+        </div>
+
+        {% if device %}
+        <!-- Device Information -->
+        <div class="device-card">
+            <div class="device-header">
+                <div class="device-icon">
+                    <i class="bi bi-cpu"></i>
+                </div>
+                <div class="device-info">
+                    <h5>{{ device.name }}</h5>
+                    <div class="device-meta">
+                        <span class="meta-badge device-id-badge">{{ device.device_id }}</span>
+                        <span class="meta-badge category-badge">{{ device.subcategory.category.name }}</span>
+                        {% if device.vendor %}
+                            <span class="meta-badge vendor-badge">{{ device.vendor.name }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if current_maintenance %}
+        <!-- Current Maintenance Details -->
+        <div class="maintenance-details">
+            <div class="maintenance-section">
+                <h6 class="section-title">
+                    <i class="bi bi-wrench"></i>
+                    Current Maintenance
+                </h6>
+                
+                <div class="maintenance-row">
+                    <span class="maintenance-label">Type:</span>
+                    <span class="maintenance-value">{{ current_maintenance.get_maintenance_type_display }}</span>
+                </div>
+                
+                <div class="maintenance-row">
+                    <span class="maintenance-label">Status:</span>
+                    <span class="status-badge {% if current_maintenance.is_completed %}status-completed{% elif current_maintenance.start_date %}status-ongoing{% else %}status-pending{% endif %}">
+                        {% if current_maintenance.is_completed %}
+                            Completed
+                        {% elif current_maintenance.start_date %}
+                            Ongoing
+                        {% else %}
+                            Pending
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="maintenance-row">
+                    <span class="maintenance-label">Priority:</span>
+                    <span class="priority-badge priority-{{ current_maintenance.priority }}">
+                        {{ current_maintenance.get_priority_display }}
+                    </span>
+                </div>
+                
+                <div class="maintenance-row">
+                    <span class="maintenance-label">Start Date:</span>
+                    <span class="maintenance-value">{{ current_maintenance.start_date|date:"M d, Y" }}</span>
+                </div>
+                
+                {% if current_maintenance.expected_end_date %}
+                <div class="maintenance-row">
+                    <span class="maintenance-label">Expected End:</span>
+                    <span class="maintenance-value">{{ current_maintenance.expected_end_date|date:"M d, Y" }}</span>
+                </div>
+                {% endif %}
+                
+                {% if current_maintenance.actual_end_date %}
+                <div class="maintenance-row">
+                    <span class="maintenance-label">Actual End:</span>
+                    <span class="maintenance-value">{{ current_maintenance.actual_end_date|date:"M d, Y" }}</span>
+                </div>
+                {% endif %}
+                
+                {% if current_maintenance.description %}
+                <div class="maintenance-row">
+                    <span class="maintenance-label">Description:</span>
+                    <span class="maintenance-value">{{ current_maintenance.description }}</span>
+                </div>
+                {% endif %}
+                
+                {% if current_maintenance.notes %}
+                <div class="maintenance-row">
+                    <span class="maintenance-label">Notes:</span>
+                    <span class="maintenance-value">{{ current_maintenance.notes }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <a href="{% url 'maintenance:edit' current_maintenance.id %}" class="btn-maintenance btn-update">
+                    <i class="bi bi-pencil"></i>
+                    Update Maintenance
+                </a>
+                
+                {% if not current_maintenance.is_completed %}
+                <a href="{% url 'maintenance:complete' current_maintenance.id %}" class="btn-maintenance btn-complete">
+                    <i class="bi bi-check-circle"></i>
+                    Mark Complete
+                </a>
+                {% endif %}
+                
+                <a href="{% url 'devices:detail' device.id %}" class="btn-maintenance btn-secondary">
+                    <i class="bi bi-arrow-left"></i>
+                    Back to Device
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Maintenance History -->
+        <div class="history-card">
+            <h6 class="section-title">
+                <i class="bi bi-clock-history"></i>
+                Maintenance History
+            </h6>
+            
+            {% if maintenance_history %}
+                {% for maintenance in maintenance_history %}
+                <div class="history-item">
+                    <div class="history-date">{{ maintenance.start_date|date:"M d, Y" }}</div>
+                    <div class="history-content">
+                        <strong>{{ maintenance.get_maintenance_type_display }}</strong>
+                        {% if maintenance.description %} - {{ maintenance.description }}{% endif %}
+                        <br>
+                        <small class="text-muted">
+                            Status: 
+                            {% if maintenance.is_completed %}
+                                Completed on {{ maintenance.actual_end_date|date:"M d, Y" }}
+                            {% elif maintenance.start_date %}
+                                Ongoing
+                            {% else %}
+                                Pending
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="bi bi-clipboard-data"></i>
+                    </div>
+                    <p>No maintenance history available for this device.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        {% else %}
+        <!-- No Device Selected -->
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="bi bi-laptop"></i>
+            </div>
+            <h5>No Device Selected</h5>
+            <p>Please select a device to view maintenance information.</p>
+            <a href="{% url 'devices:list' %}" class="btn-maintenance btn-update">
+                <i class="bi bi-list"></i>
+                Browse Devices
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

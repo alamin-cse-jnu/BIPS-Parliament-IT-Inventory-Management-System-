@@ -1,0 +1,907 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Maintenance Vendor Performance - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Vendor Report Styling - Parliament Design System */
+.vendor-report-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.report-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.report-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.report-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.vendor-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.vendor-summary-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease;
+}
+
+.vendor-summary-card:hover {
+    transform: translateY(-3px);
+}
+
+.vendor-summary-card.active-vendors {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.1));
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.vendor-summary-card.total-contracts {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.vendor-summary-card.avg-rating {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.vendor-summary-card.total-cost {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(124, 58, 237, 0.1));
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+.summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.summary-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+}
+
+.summary-icon.active { background: linear-gradient(135deg, #22c55e, #16a34a); }
+.summary-icon.contracts { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.summary-icon.rating { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.summary-icon.cost { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+
+.summary-trend {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.summary-trend.trend-up {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+}
+
+.summary-trend.trend-down {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.summary-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.summary-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+}
+
+.summary-details {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.vendor-analysis-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.main-analysis {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.analysis-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.analysis-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.analysis-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+.analysis-content {
+    padding: 1.5rem;
+}
+
+/* Vendor Performance Table */
+.vendor-performance-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.vendor-performance-table th {
+    background: rgba(248, 250, 252, 0.8);
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    color: #1e293b;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.4);
+}
+
+.vendor-performance-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.2);
+    color: #64748b;
+}
+
+.vendor-performance-table tr:hover {
+    background: rgba(248, 250, 252, 0.5);
+}
+
+.vendor-name {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.vendor-type {
+    display: inline-block;
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.performance-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.rating-stars {
+    display: flex;
+    gap: 0.125rem;
+}
+
+.star {
+    font-size: 0.875rem;
+    color: #fbbf24;
+}
+
+.star.empty {
+    color: #d1d5db;
+}
+
+.rating-value {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.completion-rate {
+    font-weight: 600;
+}
+
+.completion-rate.excellent {
+    color: #16a34a;
+}
+
+.completion-rate.good {
+    color: #059669;
+}
+
+.completion-rate.average {
+    color: #f59e0b;
+}
+
+.completion-rate.poor {
+    color: #dc2626;
+}
+
+.cost-value {
+    font-weight: 600;
+    color: #16a34a;
+}
+
+/* Vendor Rankings */
+.vendor-rankings {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.rankings-header {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+.rankings-content {
+    padding: 1.5rem;
+}
+
+.ranking-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.ranking-item:hover {
+    background: rgba(248, 250, 252, 0.8);
+    transform: translateX(4px);
+}
+
+.ranking-item:last-child {
+    margin-bottom: 0;
+}
+
+.ranking-position {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.ranking-position.first { background: #f59e0b; }
+.ranking-position.second { background: #6b7280; }
+.ranking-position.third { background: #d97706; }
+.ranking-position.other { background: #8b5cf6; }
+
+.ranking-info {
+    flex: 1;
+}
+
+.ranking-vendor {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.ranking-meta {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.ranking-score {
+    text-align: right;
+    font-weight: 700;
+    color: #16a34a;
+    font-size: 1rem;
+}
+
+/* Service Categories */
+.service-categories {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.categories-header {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+.categories-content {
+    padding: 1.5rem;
+}
+
+.category-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.category-item:last-child {
+    border-bottom: none;
+}
+
+.category-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.category-icon.suppliers { background: #059669; }
+.category-icon.manufacturers { background: #7c3aed; }
+.category-icon.maintenance { background: #ea580c; }
+.category-icon.support { background: #0891b2; }
+
+.category-info {
+    flex: 1;
+}
+
+.category-name {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.category-description {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.category-count {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Export Actions */
+.export-actions {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.export-header {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+.export-buttons {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.btn-export {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.btn-export:hover {
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.btn-pdf {
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.btn-pdf:hover {
+    background: rgba(220, 38, 38, 0.15);
+    color: #b91c1c;
+}
+
+.btn-excel {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.btn-excel:hover {
+    background: rgba(34, 197, 94, 0.15);
+    color: #15803d;
+}
+
+.btn-csv {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.btn-csv:hover {
+    background: rgba(59, 130, 246, 0.15);
+    color: #1d4ed8;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #64748b;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .vendor-overview {
+        grid-template-columns: 1fr;
+    }
+    
+    .vendor-analysis-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .summary-details {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .vendor-performance-table {
+        font-size: 0.8rem;
+    }
+    
+    .vendor-performance-table th,
+    .vendor-performance-table td {
+        padding: 0.5rem;
+    }
+    
+    .ranking-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .ranking-score {
+        text-align: left;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vendor-report-container">
+    <div class="container-fluid">
+        <!-- Report Header -->
+        <div class="report-header">
+            <h1 class="report-title">
+                <i class="bi bi-building"></i>
+                Maintenance Vendor Performance Report
+            </h1>
+            <p class="report-subtitle">Bangladesh Parliament Secretariat - IT Inventory Management</p>
+        </div>
+
+        <!-- Vendor Overview Cards -->
+        <div class="vendor-overview">
+            <div class="vendor-summary-card active-vendors">
+                <div class="summary-header">
+                    <div class="summary-icon active">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="summary-trend trend-up">
+                        <i class="bi bi-arrow-up"></i>
+                        +8.2%
+                    </div>
+                </div>
+                <div class="summary-value">{{ active_vendors|default:0 }}</div>
+                <div class="summary-label">Active Vendors</div>
+                <div class="summary-details">
+                    <span>Total: {{ total_vendors|default:0 }}</span>
+                    <span>Verified: {{ verified_vendors|default:0 }}</span>
+                </div>
+            </div>
+
+            <div class="vendor-summary-card total-contracts">
+                <div class="summary-header">
+                    <div class="summary-icon contracts">
+                        <i class="bi bi-file-earmark-text"></i>
+                    </div>
+                    <div class="summary-trend trend-up">
+                        <i class="bi bi-arrow-up"></i>
+                        +15.3%
+                    </div>
+                </div>
+                <div class="summary-value">{{ total_contracts|default:0 }}</div>
+                <div class="summary-label">Total Contracts</div>
+                <div class="summary-details">
+                    <span>Active: {{ active_contracts|default:0 }}</span>
+                    <span>Completed: {{ completed_contracts|default:0 }}</span>
+                </div>
+            </div>
+
+            <div class="vendor-summary-card avg-rating">
+                <div class="summary-header">
+                    <div class="summary-icon rating">
+                        <i class="bi bi-star"></i>
+                    </div>
+                    <div class="summary-trend trend-up">
+                        <i class="bi bi-arrow-up"></i>
+                        +3.7%
+                    </div>
+                </div>
+                <div class="summary-value">{{ average_rating|default:0|floatformat:1 }}</div>
+                <div class="summary-label">Average Rating</div>
+                <div class="summary-details">
+                    <span>Best: 5.0</span>
+                    <span>Lowest: {{ lowest_rating|default:0|floatformat:1 }}</span>
+                </div>
+            </div>
+
+            <div class="vendor-summary-card total-cost">
+                <div class="summary-header">
+                    <div class="summary-icon cost">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                    <div class="summary-trend trend-down">
+                        <i class="bi bi-arrow-down"></i>
+                        -2.1%
+                    </div>
+                </div>
+                <div class="summary-value">৳ {{ total_cost|default:0|floatformat:2 }}</div>
+                <div class="summary-label">Total Cost</div>
+                <div class="summary-details">
+                    <span>This Month: ৳{{ monthly_cost|default:0|floatformat:2 }}</span>
+                    <span>Budget: ৳{{ budget_allocated|default:0|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vendor Analysis Grid -->
+        <div class="vendor-analysis-grid">
+            <!-- Main Analysis -->
+            <div class="main-analysis">
+                <!-- Vendor Performance Table -->
+                <div class="analysis-card">
+                    <div class="analysis-header">
+                        <i class="bi bi-graph-up"></i>
+                        Vendor Performance Analysis
+                    </div>
+                    <div class="analysis-content">
+                        {% if vendor_performance %}
+                            <table class="vendor-performance-table">
+                                <thead>
+                                    <tr>
+                                        <th>Vendor</th>
+                                        <th>Type</th>
+                                        <th>Rating</th>
+                                        <th>Completion Rate</th>
+                                        <th>Avg Response Time</th>
+                                        <th>Total Cost</th>
+                                        <th>Active Tasks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for vendor in vendor_performance %}
+                                    <tr>
+                                        <td class="vendor-name">{{ vendor.name }}</td>
+                                        <td><span class="vendor-type">{{ vendor.service_type|capfirst }}</span></td>
+                                        <td>
+                                            <div class="performance-rating">
+                                                <div class="rating-stars">
+                                                    {% for i in "12345" %}
+                                                        <span class="star {% if forloop.counter <= vendor.rating %}filled{% else %}empty{% endif %}">★</span>
+                                                    {% endfor %}
+                                                </div>
+                                                <span class="rating-value">{{ vendor.rating|floatformat:1 }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="completion-rate {% if vendor.completion_rate >= 90 %}excellent{% elif vendor.completion_rate >= 80 %}good{% elif vendor.completion_rate >= 70 %}average{% else %}poor{% endif %}">
+                                            {{ vendor.completion_rate|floatformat:1 }}%
+                                        </td>
+                                        <td>{{ vendor.avg_response_time|floatformat:1 }}h</td>
+                                        <td class="cost-value">৳ {{ vendor.total_cost|floatformat:2 }}</td>
+                                        <td>{{ vendor.active_tasks|default:0 }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="bi bi-building"></i>
+                                <p>No vendor performance data available</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis Sidebar -->
+            <div class="analysis-sidebar">
+                <!-- Top Performing Vendors -->
+                <div class="vendor-rankings">
+                    <div class="rankings-header">
+                        <i class="bi bi-trophy"></i>
+                        Top Performers
+                    </div>
+                    <div class="rankings-content">
+                        {% if top_vendors %}
+                            {% for vendor in top_vendors %}
+                            <div class="ranking-item">
+                                <div class="ranking-position {% if forloop.counter == 1 %}first{% elif forloop.counter == 2 %}second{% elif forloop.counter == 3 %}third{% else %}other{% endif %}">
+                                    {{ forloop.counter }}
+                                </div>
+                                <div class="ranking-info">
+                                    <div class="ranking-vendor">{{ vendor.name }}</div>
+                                    <div class="ranking-meta">{{ vendor.service_type|capfirst }} • {{ vendor.active_contracts }} contracts</div>
+                                </div>
+                                <div class="ranking-score">{{ vendor.performance_score|floatformat:1 }}</div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="bi bi-trophy"></i>
+                                <p>No ranking data available</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Service Categories -->
+                <div class="service-categories">
+                    <div class="categories-header">
+                        <i class="bi bi-grid"></i>
+                        Service Categories
+                    </div>
+                    <div class="categories-content">
+                        <div class="category-item">
+                            <div class="category-icon suppliers">
+                                <i class="bi bi-box-seam"></i>
+                            </div>
+                            <div class="category-info">
+                                <div class="category-name">Suppliers</div>
+                                <div class="category-description">Equipment and parts suppliers</div>
+                            </div>
+                            <div class="category-count">{{ suppliers_count|default:0 }}</div>
+                        </div>
+                        <div class="category-item">
+                            <div class="category-icon manufacturers">
+                                <i class="bi bi-gear"></i>
+                            </div>
+                            <div class="category-info">
+                                <div class="category-name">Manufacturers</div>
+                                <div class="category-description">Original equipment manufacturers</div>
+                            </div>
+                            <div class="category-count">{{ manufacturers_count|default:0 }}</div>
+                        </div>
+                        <div class="category-item">
+                            <div class="category-icon maintenance">
+                                <i class="bi bi-wrench"></i>
+                            </div>
+                            <div class="category-info">
+                                <div class="category-name">Maintenance</div>
+                                <div class="category-description">Maintenance service providers</div>
+                            </div>
+                            <div class="category-count">{{ maintenance_providers_count|default:0 }}</div>
+                        </div>
+                        <div class="category-item">
+                            <div class="category-icon support">
+                                <i class="bi bi-headset"></i>
+                            </div>
+                            <div class="category-info">
+                                <div class="category-name">Support</div>
+                                <div class="category-description">Technical support services</div>
+                            </div>
+                            <div class="category-count">{{ support_providers_count|default:0 }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export Actions -->
+                <div class="export-actions">
+                    <div class="export-header">
+                        <i class="bi bi-download"></i>
+                        Export Vendor Data
+                    </div>
+                    <div class="export-buttons">
+                        <a href="{% url 'maintenance:export_pdf' %}?type=vendor" class="btn-export btn-pdf">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                            PDF Report
+                        </a>
+                        <a href="{% url 'maintenance:export_excel' %}?type=vendor" class="btn-export btn-excel">
+                            <i class="bi bi-file-earmark-excel"></i>
+                            Excel Analysis
+                        </a>
+                        <a href="{% url 'maintenance:export_csv' %}?type=vendor" class="btn-export btn-csv">
+                            <i class="bi bi-file-text"></i>
+                            CSV Data
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Vendor performance analysis interactive features
+    console.log('Vendor Performance Report loaded');
+    
+    // Add hover effects to summary cards
+    const summaryCards = document.querySelectorAll('.vendor-summary-card');
+    summaryCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+
+    // Add interactive effects to table rows
+    const tableRows = document.querySelectorAll('.vendor-performance-table tbody tr');
+    tableRows.forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.background = 'rgba(59, 130, 246, 0.05)';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.background = '';
+        });
+    });
+
+    // Add interactive effects to ranking items
+    const rankingItems = document.querySelectorAll('.ranking-item');
+    rankingItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.background = 'rgba(34, 197, 94, 0.05)';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.background = 'rgba(248, 250, 252, 0.5)';
+        });
+    });
+
+    // Star rating hover effects
+    const ratingStars = document.querySelectorAll('.rating-stars');
+    ratingStars.forEach(starGroup => {
+        const stars = starGroup.querySelectorAll('.star');
+        stars.forEach((star, index) => {
+            star.addEventListener('mouseenter', function() {
+                for (let i = 0; i <= index; i++) {
+                    stars[i].style.color = '#f59e0b';
+                }
+            });
+            
+            star.addEventListener('mouseleave', function() {
+                stars.forEach(s => {
+                    if (s.classList.contains('filled')) {
+                        s.style.color = '#fbbf24';
+                    } else {
+                        s.style.color = '#d1d5db';
+                    }
+                });
+            });
+        });
+    });
+
+    // Performance metrics tooltips
+    const performanceRatings = document.querySelectorAll('.performance-rating');
+    performanceRatings.forEach(rating => {
+        rating.addEventListener('mouseenter', function() {
+            const ratingValue = this.querySelector('.rating-value').textContent;
+            this.title = `Overall Rating: ${ratingValue}/5.0`;
+        });
+    });
+
+    // Completion rate color coding
+    const completionRates = document.querySelectorAll('.completion-rate');
+    completionRates.forEach(rate => {
+        const value = parseFloat(rate.textContent);
+        rate.addEventListener('mouseenter', function() {
+            let tooltip = '';
+            if (value >= 90) tooltip = 'Excellent Performance';
+            else if (value >= 80) tooltip = 'Good Performance';
+            else if (value >= 70) tooltip = 'Average Performance';
+            else tooltip = 'Needs Improvement';
+            this.title = tooltip;
+        });
+    });
+});

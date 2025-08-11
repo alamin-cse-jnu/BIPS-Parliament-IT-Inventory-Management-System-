@@ -1,0 +1,1017 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Due Soon Maintenance - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Due Soon Maintenance Styling - Parliament Design System */
+.due-soon-container {
+    background: var(--bg-gradient-primary);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.due-soon-header {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.due-soon-title {
+    color: var(--parliament-primary);
+    font-weight: 700;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.due-soon-subtitle {
+    color: var(--parliament-neutral);
+    margin-bottom: 0;
+}
+
+.urgency-banner {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+    border: 2px solid rgba(245, 158, 11, 0.3);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    position: relative;
+    overflow: hidden;
+}
+
+.urgency-banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.1), transparent);
+    animation: urgentSweep 3s infinite;
+}
+
+@keyframes urgentSweep {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    position: relative;
+    z-index: 1;
+}
+
+.banner-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    animation: pulse 2s infinite;
+}
+
+.banner-text {
+    flex: 1;
+}
+
+.banner-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #d97706;
+    margin-bottom: var(--spacing-xs);
+}
+
+.banner-message {
+    color: var(--parliament-neutral);
+    margin: 0;
+}
+
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.stat-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    text-align: center;
+    box-shadow: var(--glass-shadow);
+    transition: var(--transition);
+    position: relative;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--glass-shadow-hover);
+}
+
+.stat-card.urgent {
+    border-color: rgba(245, 158, 11, 0.4);
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.stat-card.critical {
+    border-color: rgba(239, 68, 68, 0.4);
+    background: rgba(239, 68, 68, 0.05);
+    animation: criticalPulse 3s infinite;
+}
+
+@keyframes criticalPulse {
+    0%, 100% { box-shadow: var(--glass-shadow); }
+    50% { box-shadow: 0 8px 32px rgba(239, 68, 68, 0.2); }
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--spacing-md);
+    font-size: 1.5rem;
+    color: white;
+}
+
+.stat-icon.today { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.stat-icon.tomorrow { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.stat-icon.week { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.stat-icon.critical { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-label {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.stat-sublabel {
+    color: var(--parliament-neutral);
+    font-size: 0.75rem;
+    margin-top: var(--spacing-xs);
+    opacity: 0.8;
+}
+
+.filters-section {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.filters-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+}
+
+.filter-controls {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.filter-label {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    font-size: 0.875rem;
+}
+
+.form-select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+    transition: var(--transition);
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: var(--parliament-primary);
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+    background: white;
+}
+
+.sort-controls {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.sort-btn {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.7);
+    color: var(--parliament-neutral);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.sort-btn.active,
+.sort-btn:hover {
+    background: linear-gradient(135deg, var(--parliament-primary), #2563eb);
+    color: white;
+    border-color: var(--parliament-primary);
+}
+
+.action-controls {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.btn-action {
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.btn-primary-action {
+    background: linear-gradient(135deg, var(--parliament-primary), #2563eb);
+    color: white;
+    border: none;
+}
+
+.btn-primary-action:hover {
+    background: linear-gradient(135deg, #1e40af, #1d4ed8);
+    transform: translateY(-1px);
+    color: white;
+}
+
+.btn-warning-action {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    border: none;
+}
+
+.btn-warning-action:hover {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    transform: translateY(-1px);
+    color: white;
+}
+
+.due-soon-list {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--glass-shadow);
+}
+
+.list-header {
+    background: linear-gradient(135deg, var(--parliament-primary) 0%, #3b82f6 100%);
+    color: white;
+    padding: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.list-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.list-content {
+    padding: var(--spacing-lg);
+}
+
+.maintenance-grid {
+    display: grid;
+    gap: var(--spacing-md);
+}
+
+.maintenance-card {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.maintenance-card:hover {
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.maintenance-card.urgent {
+    border-left: 4px solid #f59e0b;
+    background: rgba(245, 158, 11, 0.02);
+}
+
+.maintenance-card.critical {
+    border-left: 4px solid #ef4444;
+    background: rgba(239, 68, 68, 0.02);
+    animation: cardPulse 3s infinite;
+}
+
+@keyframes cardPulse {
+    0%, 100% { box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+    50% { box-shadow: 0 8px 25px rgba(239, 68, 68, 0.15); }
+}
+
+.card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.urgency-indicator {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.urgency-today {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    animation: pulse 2s infinite;
+}
+
+.urgency-tomorrow {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.urgency-week {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.urgency-critical {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    animation: pulse 1.5s infinite;
+}
+
+.card-info {
+    flex: 1;
+}
+
+.device-title {
+    font-weight: 700;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+    font-size: 1.125rem;
+}
+
+.maintenance-type {
+    color: var(--parliament-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+}
+
+.due-date {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 0.875rem;
+    color: var(--parliament-neutral);
+    margin-bottom: var(--spacing-sm);
+}
+
+.countdown-badge {
+    background: linear-gradient(135deg, var(--urgency-color, #f59e0b), var(--urgency-color-dark, #d97706));
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-left: auto;
+}
+
+.countdown-today {
+    --urgency-color: #ef4444;
+    --urgency-color-dark: #dc2626;
+    animation: pulse 2s infinite;
+}
+
+.countdown-tomorrow {
+    --urgency-color: #f59e0b;
+    --urgency-color-dark: #d97706;
+}
+
+.countdown-week {
+    --urgency-color: #3b82f6;
+    --urgency-color-dark: #2563eb;
+}
+
+.card-details {
+    margin-bottom: var(--spacing-md);
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-xs) 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-size: 0.875rem;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    color: var(--parliament-neutral);
+    font-weight: 500;
+}
+
+.detail-value {
+    color: var(--parliament-dark);
+    font-weight: 600;
+}
+
+.priority-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.priority-critical {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.priority-high {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+}
+
+.priority-medium {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+}
+
+.priority-low {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+
+.card-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+    justify-content: flex-end;
+}
+
+.card-action {
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--border-radius);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: var(--transition);
+    border: none;
+    cursor: pointer;
+}
+
+.action-view {
+    background: rgba(30, 58, 138, 0.1);
+    color: var(--parliament-primary);
+    border: 1px solid rgba(30, 58, 138, 0.2);
+}
+
+.action-view:hover {
+    background: var(--parliament-primary);
+    color: white;
+}
+
+.action-start {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.action-start:hover {
+    background: #059669;
+    color: white;
+}
+
+.action-reschedule {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.action-reschedule:hover {
+    background: #d97706;
+    color: white;
+}
+
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-3xl);
+    color: var(--parliament-neutral);
+}
+
+.empty-state i {
+    font-size: 4rem;
+    opacity: 0.3;
+    margin-bottom: var(--spacing-lg);
+    color: #10b981;
+}
+
+.empty-state h3 {
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-md);
+}
+
+.empty-state p {
+    margin-bottom: var(--spacing-lg);
+}
+
+.floating-action {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--parliament-primary), #2563eb);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    text-decoration: none;
+    box-shadow: 0 8px 25px rgba(30, 58, 138, 0.3);
+    transition: var(--transition);
+    z-index: 1000;
+}
+
+.floating-action:hover {
+    background: linear-gradient(135deg, #1e40af, #1d4ed8);
+    transform: scale(1.1);
+    color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .filters-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filter-controls {
+        justify-content: center;
+    }
+    
+    .quick-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .due-soon-container {
+        padding: 1rem 0;
+    }
+    
+    .banner-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .quick-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+    
+    .countdown-badge {
+        margin-left: 0;
+        margin-top: var(--spacing-xs);
+        align-self: flex-start;
+    }
+    
+    .card-actions {
+        justify-content: stretch;
+    }
+    
+    .card-action {
+        flex: 1;
+        text-align: center;
+    }
+    
+    .floating-action {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .sort-controls {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .sort-btn {
+        flex: 1;
+        text-align: center;
+    }
+    
+    .detail-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-xs);
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="due-soon-container">
+    <div class="container-fluid">
+        <!-- Due Soon Header -->
+        <div class="due-soon-header">
+            <h1 class="due-soon-title">
+                <i class="bi bi-clock-fill"></i>
+                Due Soon Maintenance
+            </h1>
+            <p class="due-soon-subtitle">Bangladesh Parliament Secretariat - Tasks Due Within 7 Days</p>
+        </div>
+
+        <!-- Urgency Banner -->
+        {% if urgent_count > 0 %}
+        <div class="urgency-banner">
+            <div class="banner-content">
+                <div class="banner-icon">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="banner-text">
+                    <div class="banner-title">Urgent Action Required</div>
+                    <p class="banner-message">{{ urgent_count }} maintenance task{{ urgent_count|pluralize }} require immediate attention</p>
+                </div>
+                <a href="{% url 'maintenance:alerts' %}?priority=critical" class="btn-action btn-warning-action">
+                    <i class="bi bi-eye"></i>
+                    View Critical
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Quick Statistics -->
+        <div class="quick-stats">
+            <div class="stat-card {% if stats.due_today > 0 %}urgent{% endif %}">
+                <div class="stat-icon today">
+                    <i class="bi bi-calendar-day"></i>
+                </div>
+                <div class="stat-number">{{ stats.due_today }}</div>
+                <div class="stat-label">Due Today</div>
+                <div class="stat-sublabel">Immediate attention needed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon tomorrow">
+                    <i class="bi bi-calendar-plus"></i>
+                </div>
+                <div class="stat-number">{{ stats.due_tomorrow }}</div>
+                <div class="stat-label">Due Tomorrow</div>
+                <div class="stat-sublabel">Prepare resources</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon week">
+                    <i class="bi bi-calendar-week"></i>
+                </div>
+                <div class="stat-number">{{ stats.due_this_week }}</div>
+                <div class="stat-label">This Week</div>
+                <div class="stat-sublabel">Plan ahead</div>
+            </div>
+            <div class="stat-card {% if stats.critical_priority > 0 %}critical{% endif %}">
+                <div class="stat-icon critical">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="stat-number">{{ stats.critical_priority }}</div>
+                <div class="stat-label">Critical Priority</div>
+                <div class="stat-sublabel">Highest urgency</div>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="filters-section">
+            <div class="filters-row">
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label class="filter-label">Priority:</label>
+                        <select class="form-select" name="priority" onchange="this.form.submit()">
+                            <option value="">All Priorities</option>
+                            <option value="critical" {% if request.GET.priority == 'critical' %}selected{% endif %}>Critical</option>
+                            <option value="high" {% if request.GET.priority == 'high' %}selected{% endif %}>High</option>
+                            <option value="medium" {% if request.GET.priority == 'medium' %}selected{% endif %}>Medium</option>
+                            <option value="low" {% if request.GET.priority == 'low' %}selected{% endif %}>Low</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Type:</label>
+                        <select class="form-select" name="type" onchange="this.form.submit()">
+                            <option value="">All Types</option>
+                            <option value="preventive" {% if request.GET.type == 'preventive' %}selected{% endif %}>Preventive</option>
+                            <option value="corrective" {% if request.GET.type == 'corrective' %}selected{% endif %}>Corrective</option>
+                            <option value="inspection" {% if request.GET.type == 'inspection' %}selected{% endif %}>Inspection</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="sort-controls">
+                    <a href="?sort=date" class="sort-btn {% if request.GET.sort == 'date' or not request.GET.sort %}active{% endif %}">
+                        <i class="bi bi-calendar me-1"></i>Date
+                    </a>
+                    <a href="?sort=priority" class="sort-btn {% if request.GET.sort == 'priority' %}active{% endif %}">
+                        <i class="bi bi-flag me-1"></i>Priority
+                    </a>
+                    <a href="?sort=device" class="sort-btn {% if request.GET.sort == 'device' %}active{% endif %}">
+                        <i class="bi bi-laptop me-1"></i>Device
+                    </a>
+                </div>
+                
+                <div class="action-controls">
+                    <a href="{% url 'maintenance:create' %}" class="btn-action btn-primary-action">
+                        <i class="bi bi-plus-circle"></i>
+                        New Task
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Due Soon List -->
+        <div class="due-soon-list">
+            <div class="list-header">
+                <i class="bi bi-list-check"></i>
+                <h3 class="list-title">Maintenance Tasks Due Soon</h3>
+            </div>
+            
+            <div class="list-content">
+                <div class="maintenance-grid">
+                    {% for maintenance in due_soon_maintenance %}
+                    <div class="maintenance-card {% if maintenance.priority == 'CRITICAL' %}critical{% elif maintenance.days_until <= 1 %}urgent{% endif %}">
+                        <div class="card-header">
+                            <div class="urgency-indicator {% if maintenance.days_until == 0 %}urgency-today{% elif maintenance.days_until == 1 %}urgency-tomorrow{% elif maintenance.priority == 'CRITICAL' %}urgency-critical{% else %}urgency-week{% endif %}">
+                                {% if maintenance.maintenance_type == 'PREVENTIVE' %}
+                                <i class="bi bi-shield-check"></i>
+                                {% elif maintenance.maintenance_type == 'CORRECTIVE' %}
+                                <i class="bi bi-wrench"></i>
+                                {% elif maintenance.maintenance_type == 'INSPECTION' %}
+                                <i class="bi bi-search"></i>
+                                {% else %}
+                                <i class="bi bi-gear"></i>
+                                {% endif %}
+                            </div>
+                            <div class="card-info">
+                                <div class="device-title">{{ maintenance.device.device_id }} - {{ maintenance.device.name }}</div>
+                                <div class="maintenance-type">{{ maintenance.get_maintenance_type_display }}</div>
+                                <div class="due-date">
+                                    <i class="bi bi-calendar me-1"></i>
+                                    Due: {{ maintenance.scheduled_date|date:"M d, Y" }}
+                                    <span class="countdown-badge {% if maintenance.days_until == 0 %}countdown-today{% elif maintenance.days_until == 1 %}countdown-tomorrow{% else %}countdown-week{% endif %}">
+                                        {% if maintenance.days_until == 0 %}
+                                        Due Today
+                                        {% elif maintenance.days_until == 1 %}
+                                        Due Tomorrow
+                                        {% else %}
+                                        {{ maintenance.days_until }} days left
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Priority:</span>
+                                <span class="priority-badge priority-{{ maintenance.priority|lower }}">
+                                    {{ maintenance.get_priority_display }}
+                                </span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Location:</span>
+                                <span class="detail-value">{{ maintenance.device.location|default:"Location TBD" }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Assigned To:</span>
+                                <span class="detail-value">{{ maintenance.assigned_to|default:"Unassigned" }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Estimated Duration:</span>
+                                <span class="detail-value">{{ maintenance.estimated_duration|default:"TBD" }}h</span>
+                            </div>
+                            {% if maintenance.estimated_cost %}
+                            <div class="detail-row">
+                                <span class="detail-label">Estimated Cost:</span>
+                                <span class="detail-value">৳{{ maintenance.estimated_cost|floatformat:0 }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="card-actions">
+                            <a href="{% url 'maintenance:detail' maintenance.id %}" class="card-action action-view">
+                                <i class="bi bi-eye me-1"></i>View
+                            </a>
+                            {% if maintenance.status == 'SCHEDULED' %}
+                            <a href="{% url 'maintenance:start' maintenance.id %}" class="card-action action-start">
+                                <i class="bi bi-play me-1"></i>Start
+                            </a>
+                            <a href="{% url 'maintenance:reschedule' maintenance.id %}" class="card-action action-reschedule">
+                                <i class="bi bi-calendar me-1"></i>Reschedule
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="empty-state">
+                        <i class="bi bi-check-circle"></i>
+                        <h3>All Caught Up!</h3>
+                        <p>No maintenance tasks are due in the next 7 days. Great job staying on top of your maintenance schedule!</p>
+                        <a href="{% url 'maintenance:upcoming' %}" class="btn-action btn-primary-action">
+                            <i class="bi bi-calendar me-1"></i>
+                            View Upcoming Tasks
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Action Button -->
+<a href="{% url 'maintenance:create' %}" class="floating-action" title="Schedule New Maintenance">
+    <i class="bi bi-plus"></i>
+</a>
+
+<script>
+// Auto-submit filter forms
+document.querySelectorAll('.form-select').forEach(select => {
+    select.addEventListener('change', function() {
+        const currentUrl = new URL(window.location);
+        currentUrl.searchParams.set(this.name, this.value);
+        window.location.href = currentUrl.toString();
+    });
+});
+
+// Real-time countdown updates
+function updateCountdowns() {
+    document.querySelectorAll('.countdown-badge').forEach(badge => {
+        // This would update in real-time in a production app
+        // For now, it's just static but framework is here
+    });
+}
+
+// Initialize tooltips and popovers
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Update countdowns every minute
+    setInterval(updateCountdowns, 60000);
+    
+    // Add urgency indicators for critical tasks
+    document.querySelectorAll('.maintenance-card.critical').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-4px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(-2px) scale(1)';
+        });
+    });
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+            case 'n':
+                e.preventDefault();
+                window.location.href = "{% url 'maintenance:create' %}";
+                break;
+            case 'a':
+                e.preventDefault();
+                window.location.href = "{% url 'maintenance:alerts' %}";
+                break;
+            case 'u':
+                e.preventDefault();
+                window.location.href = "{% url 'maintenance:upcoming' %}";
+                break;
+        }
+    }
+});
+
+// Notification system for critical tasks
+function showCriticalNotification() {
+    const criticalCount = {{ stats.critical_priority|default:0 }};
+    const todayCount = {{ stats.due_today|default:0 }};
+    
+    if (criticalCount > 0 || todayCount > 0) {
+        // This would show browser notifications in a real implementation
+        console.log(`Critical tasks: ${criticalCount}, Due today: ${todayCount}`);
+    }
+}
+
+// Show notifications on page load
+setTimeout(showCriticalNotification, 1000);
+
+// Auto-refresh page every 5 minutes to keep data current
+setInterval(function() {
+    if (document.visibilityState === 'visible') {
+        window.location.reload();
+    }
+}, 300000); // 5 minutes
+
+// Priority filter quick actions
+function filterByPriority(priority) {
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.set('priority', priority);
+    window.location.href = currentUrl.toString();
+}
+
+// Add click handlers for priority badges
+document.querySelectorAll('.priority-badge').forEach(badge => {
+    badge.style.cursor = 'pointer';
+    badge.addEventListener('click', function() {
+        const priority = this.textContent.toLowerCase().trim();
+        filterByPriority(priority);
+    });
+});
+
+// Bulk actions (placeholder for future implementation)
+function selectAllCards() {
+    document.querySelectorAll('.maintenance-card').forEach(card => {
+        card.classList.toggle('selected');
+    });
+}
+
+// Add visual feedback for urgent items
+document.querySelectorAll('.maintenance-card.urgent, .maintenance-card.critical').forEach(card => {
+    card.addEventListener('click', function(e) {
+        if (!e.target.closest('.card-action')) {
+            this.style.boxShadow = '0 0 20px rgba(245, 158, 11, 0.4)';
+            setTimeout(() => {
+                this.style.boxShadow = '';
+            }, 2000);
+        }
+    });
+});
+</script>
+{% endblock %}

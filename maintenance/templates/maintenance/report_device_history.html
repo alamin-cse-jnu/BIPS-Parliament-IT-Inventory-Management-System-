@@ -1,0 +1,773 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Device History Report - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Device History Report Styling - Parliament Design System */
+.device-history-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.history-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.history-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.history-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.filter-section {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.filter-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    color: #1e3a8a;
+    font-weight: 600;
+}
+
+.filter-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.form-control, .form-select {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.6);
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.btn-filter {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-filter:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    color: white;
+}
+
+.btn-reset {
+    background: rgba(255, 255, 255, 0.8);
+    color: #64748b;
+    border: 1px solid rgba(203, 213, 225, 0.6);
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-reset:hover {
+    background: rgba(255, 255, 255, 0.95);
+    color: #374151;
+    transform: translateY(-2px);
+}
+
+.history-content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.content-header {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.content-title {
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.export-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-export {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-export:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+.history-table {
+    padding: 0;
+}
+
+.table-responsive {
+    border-radius: 0;
+}
+
+.history-data-table {
+    margin: 0;
+    border: none;
+}
+
+.history-data-table thead th {
+    background: rgba(248, 250, 252, 0.8);
+    color: #1e293b;
+    font-weight: 600;
+    border-bottom: 2px solid rgba(203, 213, 225, 0.4);
+    padding: 1rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.history-data-table tbody td {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+    vertical-align: middle;
+}
+
+.history-data-table tbody tr:hover {
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.device-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.device-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+}
+
+.device-details h6 {
+    margin: 0;
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+}
+
+.device-meta {
+    color: #64748b;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.maintenance-info {
+    min-width: 200px;
+}
+
+.maintenance-title {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.maintenance-meta {
+    color: #64748b;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.maintenance-type {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.maintenance-type.preventive {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+}
+
+.maintenance-type.corrective {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.status-completed {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-in-progress {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.status-pending {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.status-cancelled {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+    border: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+.cost-info {
+    text-align: right;
+    min-width: 120px;
+}
+
+.cost-amount {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 0.875rem;
+}
+
+.cost-currency {
+    color: #64748b;
+    font-size: 0.75rem;
+    margin-top: 0.125rem;
+}
+
+.date-info {
+    min-width: 140px;
+}
+
+.date-primary {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+}
+
+.date-secondary {
+    color: #64748b;
+    font-size: 0.75rem;
+    margin-top: 0.125rem;
+}
+
+.vendor-info {
+    min-width: 120px;
+}
+
+.vendor-name {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+}
+
+.vendor-contact {
+    color: #64748b;
+    font-size: 0.75rem;
+    margin-top: 0.125rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #64748b;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h5 {
+    color: #374151;
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    margin-bottom: 2rem;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.pagination-wrapper {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.pagination {
+    margin: 0;
+    justify-content: center;
+}
+
+.page-link {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    color: #64748b;
+    font-weight: 500;
+}
+
+.page-link:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+    color: #2563eb;
+}
+
+.page-item.active .page-link {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border-color: #3b82f6;
+    color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .filter-controls {
+        grid-template-columns: 1fr;
+    }
+    
+    .filter-actions {
+        flex-direction: column;
+    }
+    
+    .content-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .export-actions {
+        justify-content: center;
+    }
+    
+    .device-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .maintenance-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    
+    .history-data-table thead {
+        display: none;
+    }
+    
+    .history-data-table tbody tr {
+        display: block;
+        margin-bottom: 1rem;
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(203, 213, 225, 0.4);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    
+    .history-data-table tbody td {
+        display: block;
+        border: none;
+        padding: 0.5rem 0;
+        text-align: left !important;
+    }
+    
+    .history-data-table tbody td:before {
+        content: attr(data-label) ": ";
+        font-weight: 600;
+        color: #374151;
+        display: inline-block;
+        width: 120px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="device-history-container">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="history-header">
+            <h1 class="history-title">
+                <i class="bi bi-clock-history"></i>
+                Device Maintenance History
+            </h1>
+            <p class="history-subtitle">Bangladesh Parliament Secretariat - Complete maintenance records and device history</p>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="filter-header">
+                <i class="bi bi-funnel"></i>
+                Filter History Records
+            </div>
+            
+            <form method="get" class="filter-form">
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label class="filter-label">Device</label>
+                        <select name="device_id" class="form-select">
+                            <option value="">All Devices</option>
+                            {% for device in devices %}
+                                <option value="{{ device.id }}" {% if request.GET.device_id == device.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ device.device_id }} - {{ device.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Category</label>
+                        <select name="category_id" class="form-select">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}" {% if request.GET.category_id == category.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Maintenance Type</label>
+                        <select name="maintenance_type" class="form-select">
+                            <option value="">All Types</option>
+                            <option value="preventive" {% if request.GET.maintenance_type == 'preventive' %}selected{% endif %}>Preventive</option>
+                            <option value="corrective" {% if request.GET.maintenance_type == 'corrective' %}selected{% endif %}>Corrective</option>
+                            <option value="emergency" {% if request.GET.maintenance_type == 'emergency' %}selected{% endif %}>Emergency</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="">All Statuses</option>
+                            <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                            <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Date From</label>
+                        <input type="date" name="date_from" class="form-control" value="{{ request.GET.date_from }}">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Date To</label>
+                        <input type="date" name="date_to" class="form-control" value="{{ request.GET.date_to }}">
+                    </div>
+                </div>
+                
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-filter">
+                        <i class="bi bi-search me-1"></i>
+                        Apply Filters
+                    </button>
+                    <a href="{% url 'maintenance:report_device_history' %}" class="btn btn-reset">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>
+                        Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- History Content -->
+        <div class="history-content">
+            <div class="content-header">
+                <h3 class="content-title">
+                    <i class="bi bi-list-ul"></i>
+                    Maintenance Records
+                    {% if maintenance_records %}
+                        <span class="badge bg-light text-dark ms-2">{{ page_obj.paginator.count }} total</span>
+                    {% endif %}
+                </h3>
+                
+                <div class="export-actions">
+                    <a href="?{{ request.GET.urlencode }}&export=pdf" class="btn btn-export">
+                        <i class="bi bi-file-earmark-pdf me-1"></i>
+                        PDF
+                    </a>
+                    <a href="?{{ request.GET.urlencode }}&export=excel" class="btn btn-export">
+                        <i class="bi bi-file-earmark-excel me-1"></i>
+                        Excel
+                    </a>
+                    <a href="?{{ request.GET.urlencode }}&export=csv" class="btn btn-export">
+                        <i class="bi bi-filetype-csv me-1"></i>
+                        CSV
+                    </a>
+                </div>
+            </div>
+
+            <div class="history-table">
+                {% if maintenance_records %}
+                    <div class="table-responsive">
+                        <table class="table history-data-table">
+                            <thead>
+                                <tr>
+                                    <th>Device</th>
+                                    <th>Maintenance Info</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Dates</th>
+                                    <th>Vendor</th>
+                                    <th>Cost</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for maintenance in maintenance_records %}
+                                <tr>
+                                    <td data-label="Device">
+                                        <div class="device-info">
+                                            <div class="device-icon">
+                                                <i class="bi bi-laptop"></i>
+                                            </div>
+                                            <div class="device-details">
+                                                <h6>
+                                                    <a href="{% url 'devices:detail' maintenance.device.pk %}" class="text-decoration-none">
+                                                        {{ maintenance.device.name }}
+                                                    </a>
+                                                </h6>
+                                                <div class="device-meta">
+                                                    {{ maintenance.device.device_id }} | {{ maintenance.device.subcategory.category.name }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    
+                                    <td data-label="Maintenance Info">
+                                        <div class="maintenance-info">
+                                            <div class="maintenance-title">
+                                                <a href="{% url 'maintenance:detail' maintenance.pk %}" class="text-decoration-none">
+                                                    {{ maintenance.title|default:"Maintenance #"|add:maintenance.maintenance_id }}
+                                                </a>
+                                            </div>
+                                            <div class="maintenance-meta">
+                                                <span><i class="bi bi-person me-1"></i>{{ maintenance.assigned_technician|default:"Unassigned" }}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    
+                                    <td data-label="Type">
+                                        <span class="maintenance-type {{ maintenance.maintenance_type|lower }}">
+                                            {{ maintenance.get_maintenance_type_display }}
+                                        </span>
+                                    </td>
+                                    
+                                    <td data-label="Status">
+                                        <span class="status-badge status-{{ maintenance.status|lower }}">
+                                            {{ maintenance.get_status_display }}
+                                        </span>
+                                    </td>
+                                    
+                                    <td data-label="Dates">
+                                        <div class="date-info">
+                                            <div class="date-primary">
+                                                {{ maintenance.start_date|date:"M d, Y" }}
+                                            </div>
+                                            <div class="date-secondary">
+                                                {% if maintenance.actual_end_date %}
+                                                    Completed: {{ maintenance.actual_end_date|date:"M d, Y" }}
+                                                {% elif maintenance.expected_end_date %}
+                                                    Expected: {{ maintenance.expected_end_date|date:"M d, Y" }}
+                                                {% else %}
+                                                    Ongoing
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    
+                                    <td data-label="Vendor">
+                                        <div class="vendor-info">
+                                            {% if maintenance.vendor %}
+                                                <div class="vendor-name">{{ maintenance.vendor.name }}</div>
+                                                {% if maintenance.vendor.contact_phone %}
+                                                    <div class="vendor-contact">{{ maintenance.vendor.contact_phone }}</div>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">Internal</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    
+                                    <td data-label="Cost">
+                                        <div class="cost-info">
+                                            {% if maintenance.actual_cost %}
+                                                <div class="cost-amount">৳{{ maintenance.actual_cost|floatformat:2 }}</div>
+                                                <div class="cost-currency">BDT</div>
+                                            {% elif maintenance.estimated_cost %}
+                                                <div class="cost-amount text-muted">৳{{ maintenance.estimated_cost|floatformat:2 }}</div>
+                                                <div class="cost-currency">Estimated</div>
+                                            {% else %}
+                                                <span class="text-muted">N/A</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <h5>No Maintenance History Found</h5>
+                        <p>No maintenance records match your current filter criteria. Try adjusting your filters or check back later.</p>
+                        <a href="{% url 'maintenance:create' %}" class="btn btn-filter">
+                            <i class="bi bi-plus-circle me-1"></i>
+                            Schedule New Maintenance
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="pagination-wrapper">
+            <nav aria-label="History pagination">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page=1">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.paginator.num_pages }}">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

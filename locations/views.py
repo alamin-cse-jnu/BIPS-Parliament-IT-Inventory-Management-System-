@@ -29,6 +29,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views import View
+
+
 from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 )
@@ -47,11 +49,17 @@ from reportlab.platypus import (
 
 # Local app imports
 from .models import (
-    Building, Floor, Block, Room, Office, Location
+    Building, Floor, Block, Room, Office, Location, LocationQRCode
 )
 from .forms import (
     BuildingForm, FloorForm, BlockForm, RoomForm, OfficeForm, 
     LocationForm, LocationSearchForm, CoordinateInputForm
+)
+
+from pims.utils.qr_code import (
+    create_location_qr_code, 
+    bulk_generate_location_qr_codes,
+    get_qr_code_for_location
 )
 
 # Additional imports for specific functionalities
@@ -60,6 +68,8 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.core.exceptions import ValidationError, PermissionDenied
+
+
 # ============================================================================
 # Building Management Views
 # ============================================================================
@@ -5126,53 +5136,28 @@ class CoordinatesExportView(LoginRequiredMixin, PermissionRequiredMixin, View):
 # ============================================================================
 # Phase 9: QR Code Management Views
 # ============================================================================
-class LocationQRCodeView(LoginRequiredMixin, DetailView):
+class LocationQRCodeView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
     """
-    Display location with QR code information and management options.
+    View and manage QR code for a specific location.
     """
     model = Location
-    template_name = 'locations/location_qrcode.html'
+    template_name = 'locations/qrcode.html'
     context_object_name = 'location'
-    
-    def get_queryset(self):
-        """Optimize queryset with related data."""
-        return Location.objects.select_related(
-            'building', 'floor', 'block', 'room', 'office'
-        )
+    permission_required = 'locations.view_location'
     
     def get_context_data(self, **kwargs):
-        """Add QR code context data."""
+        """Add QR code context."""
         context = super().get_context_data(**kwargs)
-        location = self.object
+        location = self.get_object()
         
-        context['page_title'] = f'QR Code - {location.name}'
-        context['full_description'] = location.get_full_location_description()
-        context['has_coordinates'] = location.has_coordinates()
+        # Get active QR code using centralized function
+        qr_code = get_qr_code_for_location(location)
         
-        # Generate QR code data
-        qr_data = {
-            'type': 'location',
-            'id': location.id,
-            'code': location.location_code,
-            'name': location.name,
-            'building': location.building.name if location.building else None,
-            'floor': location.floor.name if location.floor else None,
-            'room': location.room.name if location.room else None,
-            'office': location.office.name if location.office else None,
-            'coordinates': location.get_coordinates(),
-            'url': self.request.build_absolute_uri(
-                reverse('locations:detail', kwargs={'pk': location.pk})
-            )
-        }
-        
-        context['qr_data'] = json.dumps(qr_data, indent=2)
-        context['qr_data_string'] = json.dumps(qr_data)
-        
-        # Check if QR code image exists
-        qr_code_path = f'qrcodes/locations/{location.location_code}.png'
-        context['qr_code_exists'] = default_storage.exists(qr_code_path)
-        if context['qr_code_exists']:
-            context['qr_code_url'] = default_storage.url(qr_code_path)
+        context.update({
+            'qr_code': qr_code,
+            'has_qr_code': qr_code is not None,
+            'page_title': f'QR Code - {location.name}',
+        })
         
         return context
 
@@ -5184,82 +5169,46 @@ class LocationQRCodeGenerateView(LoginRequiredMixin, PermissionRequiredMixin, Vi
     permission_required = 'locations.change_location'
     
     def post(self, request, pk):
-        """Generate QR code for location."""
+        """Generate QR code for location using centralized function."""
         location = get_object_or_404(Location, pk=pk)
         
         try:
-            # Generate QR code data
-            qr_data = {
-                'type': 'location',
-                'id': location.id,
-                'code': location.location_code,
-                'name': location.name,
-                'building': location.building.name if location.building else None,
-                'floor': location.floor.name if location.floor else None,
-                'room': location.room.name if location.room else None,
-                'office': location.office.name if location.office else None,
-                'coordinates': location.get_coordinates(),
-                'url': request.build_absolute_uri(
-                    reverse('locations:detail', kwargs={'pk': location.pk})
+            # Use centralized QR generation
+            qr_code = create_location_qr_code(location, request)
+            
+            if qr_code:
+                messages.success(
+                    request, 
+                    f'QR code generated successfully for location "{location.name}"!'
                 )
-            }
-            
-            # Create QR code
-            qr = qrcode.QRCode(
-                version=1,
-                error_correction=qrcode.constants.ERROR_CORRECT_L,
-                box_size=10,
-                border=4,
-            )
-            qr.add_data(json.dumps(qr_data))
-            qr.make(fit=True)
-            
-            # Create QR code image
-            qr_image = qr.make_image(fill_color="black", back_color="white")
-            
-            # Save to storage
-            img_io = io.BytesIO()
-            qr_image.save(img_io, format='PNG')
-            img_io.seek(0)
-            
-            # Ensure directory exists
-            qr_code_path = f'qrcodes/locations/{location.location_code}.png'
-            
-            # Save file
-            default_storage.save(qr_code_path, ContentFile(img_io.getvalue()))
-            
-            messages.success(
-                request, 
-                f'QR code generated successfully for location "{location.name}"!'
-            )
-            
+            else:
+                messages.error(request, 'Error generating QR code. Please try again.')
+                
         except Exception as e:
             messages.error(request, f'Error generating QR code: {str(e)}')
         
         return redirect('locations:qrcode', pk=pk)
 
 
-class LocationQRCodeDownloadView(LoginRequiredMixin, View):
+class LocationQRCodeDownloadView(LoginRequiredMixin, PermissionRequiredMixin, View):
     """
-    Download QR code image for a specific location.
+    Download QR code image for a location.
     """
+    permission_required = 'locations.view_location'
     
     def get(self, request, pk):
-        """Download QR code image."""
+        """Download QR code image using the new model approach."""
         location = get_object_or_404(Location, pk=pk)
-        qr_code_path = f'qrcodes/locations/{location.location_code}.png'
+        qr_code = get_qr_code_for_location(location)
         
-        if not default_storage.exists(qr_code_path):
+        if not qr_code or not qr_code.qr_code:
             messages.error(request, 'QR code not found. Please generate it first.')
             return redirect('locations:qrcode', pk=pk)
         
         try:
-            # Get file from storage
-            file_content = default_storage.open(qr_code_path).read()
-            
-            response = HttpResponse(file_content, content_type='image/png')
-            response['Content-Disposition'] = f'attachment; filename="{location.location_code}_qrcode.png"'
-            
+            response = HttpResponse(qr_code.qr_code.read(), content_type='image/png')
+            filename = f"{location.name.replace(' ', '_')}_qrcode.png"
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
             return response
             
         except Exception as e:
@@ -5281,26 +5230,26 @@ class BulkQRCodeGenerateView(LoginRequiredMixin, PermissionRequiredMixin, Templa
         
         # Get filter options
         context['buildings'] = Building.objects.filter(is_active=True).order_by('name')
-        context['office_types'] = Office.OFFICE_TYPES
-        context['room_types'] = Room.ROOM_TYPES
         
-        # Get count of locations without QR codes
+        # Get all active locations
         all_locations = Location.objects.filter(is_active=True)
-        locations_without_qr = []
         
-        for location in all_locations:
-            qr_code_path = f'qrcodes/locations/{location.location_code}.png'
-            if not default_storage.exists(qr_code_path):
-                locations_without_qr.append(location)
+        # Get locations without QR codes
+        
+        locations_with_qr = LocationQRCode.objects.filter(
+            is_active=True
+        ).values_list('location_id', flat=True)
+        
+        locations_without_qr = all_locations.exclude(id__in=locations_with_qr)
         
         context['total_locations'] = all_locations.count()
-        context['locations_without_qr'] = len(locations_without_qr)
-        context['locations_with_qr'] = context['total_locations'] - context['locations_without_qr']
+        context['locations_without_qr'] = locations_without_qr.count()
+        context['locations_with_qr'] = len(locations_with_qr)
         
         return context
     
     def post(self, request):
-        """Process bulk QR code generation."""
+        """Process bulk QR code generation using centralized functions."""
         # Get filter parameters
         building_id = request.POST.get('building')
         office_type = request.POST.get('office_type')
@@ -5328,71 +5277,33 @@ class BulkQRCodeGenerateView(LoginRequiredMixin, PermissionRequiredMixin, Templa
                 longitude__isnull=False
             )
         
-        # Generate QR codes
-        generated_count = 0
-        skipped_count = 0
-        error_count = 0
-        
-        for location in queryset:
-            try:
-                qr_code_path = f'qrcodes/locations/{location.location_code}.png'
-                
-                # Skip if exists and not regenerating
-                if default_storage.exists(qr_code_path) and not regenerate_existing:
-                    skipped_count += 1
-                    continue
-                
-                # Generate QR code data
-                qr_data = {
-                    'type': 'location',
-                    'id': location.id,
-                    'code': location.location_code,
-                    'name': location.name,
-                    'building': location.building.name if location.building else None,
-                    'floor': location.floor.name if location.floor else None,
-                    'room': location.room.name if location.room else None,
-                    'office': location.office.name if location.office else None,
-                    'coordinates': location.get_coordinates(),
-                    'url': request.build_absolute_uri(
-                        reverse('locations:detail', kwargs={'pk': location.pk})
-                    )
-                }
-                
-                # Create QR code
-                qr = qrcode.QRCode(
-                    version=1,
-                    error_correction=qrcode.constants.ERROR_CORRECT_L,
-                    box_size=10,
-                    border=4,
-                )
-                qr.add_data(json.dumps(qr_data))
-                qr.make(fit=True)
-                
-                # Create QR code image
-                qr_image = qr.make_image(fill_color="black", back_color="white")
-                
-                # Save to storage
-                img_io = io.BytesIO()
-                qr_image.save(img_io, format='PNG')
-                img_io.seek(0)
-                
-                # Save file (delete existing if regenerating)
-                if default_storage.exists(qr_code_path):
-                    default_storage.delete(qr_code_path)
-                
-                default_storage.save(qr_code_path, ContentFile(img_io.getvalue()))
-                generated_count += 1
-                
-            except Exception as e:
-                error_count += 1
-                continue
-        
-        # Success message
-        messages.success(
-            request,
-            f'Bulk QR code generation completed! '
-            f'{generated_count} generated, {skipped_count} skipped, {error_count} errors.'
+        # Use centralized bulk generation
+        results = bulk_generate_location_qr_codes(
+            queryset, 
+            request, 
+            regenerate_existing=regenerate_existing
         )
+        
+        # Prepare success message
+        message_parts = []
+        if results['generated'] > 0:
+            message_parts.append(f'Generated {results["generated"]} new QR codes')
+        if results['updated'] > 0:
+            message_parts.append(f'Updated {results["updated"]} existing QR codes')
+        if results['skipped'] > 0:
+            message_parts.append(f'Skipped {results["skipped"]} existing QR codes')
+        if results['errors'] > 0:
+            message_parts.append(f'{results["errors"]} errors occurred')
+        
+        if message_parts:
+            if results['errors'] == 0:
+                messages.success(request, '. '.join(message_parts) + '!')
+            else:
+                messages.warning(request, '. '.join(message_parts) + '.')
+                # Show specific error locations
+                if results['error_locations']:
+                    for error in results['error_locations'][:5]:  # Show first 5 errors
+                        messages.error(request, f'Error: {error}')
         
         return redirect('locations:bulk_qrcode_generate')
 
@@ -5708,56 +5619,20 @@ class LocationQRCodeRegenerateView(LoginRequiredMixin, PermissionRequiredMixin, 
     permission_required = 'locations.change_location'
     
     def post(self, request, pk):
-        """Regenerate QR code for location."""
+        """Regenerate QR code for location using centralized function."""
         location = get_object_or_404(Location, pk=pk)
         
         try:
-            qr_code_path = f'qrcodes/locations/{location.location_code}.png'
+            # Use centralized QR generation (will automatically deactivate old ones)
+            qr_code = create_location_qr_code(location, request)
             
-            # Delete existing QR code if it exists
-            if default_storage.exists(qr_code_path):
-                default_storage.delete(qr_code_path)
-            
-            # Generate new QR code (same logic as generate view)
-            qr_data = {
-                'type': 'location',
-                'id': location.id,
-                'code': location.location_code,
-                'name': location.name,
-                'building': location.building.name if location.building else None,
-                'floor': location.floor.name if location.floor else None,
-                'room': location.room.name if location.room else None,
-                'office': location.office.name if location.office else None,
-                'coordinates': location.get_coordinates(),
-                'url': request.build_absolute_uri(
-                    reverse('locations:detail', kwargs={'pk': location.pk})
+            if qr_code:
+                messages.success(
+                    request, 
+                    f'QR code regenerated successfully for location "{location.name}"!'
                 )
-            }
-            
-            # Create QR code
-            qr = qrcode.QRCode(
-                version=1,
-                error_correction=qrcode.constants.ERROR_CORRECT_L,
-                box_size=10,
-                border=4,
-            )
-            qr.add_data(json.dumps(qr_data))
-            qr.make(fit=True)
-            
-            # Create QR code image
-            qr_image = qr.make_image(fill_color="black", back_color="white")
-            
-            # Save to storage
-            img_io = io.BytesIO()
-            qr_image.save(img_io, format='PNG')
-            img_io.seek(0)
-            
-            default_storage.save(qr_code_path, ContentFile(img_io.getvalue()))
-            
-            messages.success(
-                request, 
-                f'QR code regenerated successfully for location "{location.name}"!'
-            )
+            else:
+                messages.error(request, 'Error regenerating QR code. Please try again.')
             
         except Exception as e:
             messages.error(request, f'Error regenerating QR code: {str(e)}')

@@ -56,6 +56,11 @@ from .forms import (
     DeviceFilterForm, DeviceSearchForm, WarrantyForm,
     DeviceBulkUpdateForm
 )
+from pims.utils.qr_code import (
+    create_device_qr_code, 
+    bulk_generate_device_qr_codes,
+    get_qr_code_for_device
+)
 from vendors.models import Vendor
 from locations.models import Location
 from users.models import CustomUser
@@ -736,73 +741,33 @@ class QRCodeListView(LoginRequiredMixin, ListView):
         return QRCode.objects.select_related('device').filter(is_active=True)
 
 
-class GenerateQRCodeView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
+class GenerateQRCodeView(LoginRequiredMixin, PermissionRequiredMixin, View):
     """View for generating QR codes for devices."""
-    template_name = 'devices/qr/generate.html'
     permission_required = 'devices.add_qrcode'
     
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        device_pk = kwargs.get('device_pk')
-        context['device'] = get_object_or_404(Device, pk=device_pk)
-        return context
-    
-    def post(self, request, *args, **kwargs):
-        device = get_object_or_404(Device, pk=kwargs['device_pk'])
+    def post(self, request, pk):
+        """Generate QR code for a specific device."""
+        device = get_object_or_404(Device, pk=pk, is_active=True)
         
-        # Generate QR code
-        qr_code_obj = self.generate_qr_code(device)
-        
-        messages.success(request, f'QR code generated for device {device.device_id}!')
-        return redirect('devices:qr_view', pk=qr_code_obj.pk)
-    
-    def generate_qr_code(self, device):
-        """Generate QR code for device."""
-        # Create QR code data
-        qr_data = json.dumps({
-            'device_id': device.device_id,
-            'brand': device.brand,
-            'model': device.model,
-            'serial_number': device.serial_number,
-            'url': request.build_absolute_uri(device.get_absolute_url())
-        })
-        
-        # Generate QR code image
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=4,
-        )
-        qr.add_data(qr_data)
-        qr.make(fit=True)
-        
-        # Create image
-        img = qr.make_image(fill_color="black", back_color="white")
-        
-        # Save to file
-        from django.core.files.base import ContentFile
-        from io import BytesIO
-        
-        buffer = BytesIO()
-        img.save(buffer, format='PNG')
-        file_content = ContentFile(buffer.getvalue())
-        
-        # Create QR code object
-        qr_code_obj = QRCode.objects.create(
-            device=device,
-            qr_data=qr_data,
-            size=200,
-            format='PNG'
-        )
-        
-        # Save image
-        qr_code_obj.qr_code.save(
-            f'device_{device.device_id}_qr.png',
-            file_content
-        )
-        
-        return qr_code_obj
+        try:
+            # Use centralized QR generation
+            from pims.utils.qr_code import create_device_qr_code
+            
+            qr_code_obj = create_device_qr_code(device, request)
+            
+            if qr_code_obj:
+                messages.success(
+                    request, 
+                    f'QR code generated successfully for device "{device.device_id}"!'
+                )
+                return redirect('devices:qr_view', pk=qr_code_obj.pk)
+            else:
+                messages.error(request, 'Error generating QR code. Please try again.')
+                return redirect('devices:detail', pk=pk)
+                
+        except Exception as e:
+            messages.error(request, f'Error generating QR code: {str(e)}')
+            return redirect('devices:detail', pk=pk)
 
 
 class ViewQRCodeView(LoginRequiredMixin, DetailView):
@@ -875,7 +840,7 @@ class BulkGenerateQRView(LoginRequiredMixin, PermissionRequiredMixin, TemplateVi
         return context
     
     def post(self, request, *args, **kwargs):
-        """Process bulk QR code generation."""
+        """Process bulk QR code generation using centralized functions."""
         selected_devices = request.POST.getlist('devices')
         regenerate_existing = request.POST.get('regenerate_existing') == 'on'
         auto_download = request.POST.get('auto_download') == 'on'
@@ -884,125 +849,47 @@ class BulkGenerateQRView(LoginRequiredMixin, PermissionRequiredMixin, TemplateVi
             messages.error(request, 'Please select at least one device for QR code generation.')
             return self.get(request, *args, **kwargs)
         
-        generated_count = 0
-        updated_count = 0
-        error_count = 0
-        
-        # Process each selected device
-        for device_id in selected_devices:
-            try:
-                device = Device.objects.get(id=device_id, is_active=True)
-                
-                # Check if device already has an active QR code
-                existing_qr = device.qr_codes.filter(is_active=True).first()
-                
-                if existing_qr and not regenerate_existing:
-                    # Skip if QR already exists and regeneration not requested
-                    continue
-                elif existing_qr and regenerate_existing:
-                    # Deactivate existing QR code
-                    existing_qr.is_active = False
-                    existing_qr.save()
-                    updated_count += 1
-                
-                # Generate new QR code
-                self.generate_qr_code(device)
-                generated_count += 1
-                
-            except Device.DoesNotExist:
-                error_count += 1
-                continue
-            except Exception as e:
-                error_count += 1
-                messages.warning(
-                    request, 
-                    f'Error generating QR code for device {device_id}: {str(e)}'
-                )
-                continue
-        
-        # Prepare success message
-        message_parts = []
-        if generated_count > 0:
-            message_parts.append(f'Generated {generated_count} new QR codes')
-        if updated_count > 0:
-            message_parts.append(f'Updated {updated_count} existing QR codes')
-        if error_count > 0:
-            message_parts.append(f'{error_count} errors occurred')
-        
-        if message_parts:
-            if error_count == 0:
-                messages.success(request, '. '.join(message_parts) + '!')
-            else:
-                messages.warning(request, '. '.join(message_parts) + '.')
-        
-        # Handle auto-download
-        if auto_download and generated_count > 0:
-            return redirect('devices:qr_bulk_download')
-        
-        return redirect('devices:qr_list')
-    
-    def generate_qr_code(self, device):
-        """Generate QR code for a device."""
-        from django.core.files.base import ContentFile
-        from io import BytesIO
-        import json
-        import qrcode
-        
-        # Create QR code data with comprehensive device information
-        qr_data = {
-            'type': 'device',
-            'device_id': device.device_id,
-            'device_pk': device.pk,
-            'brand': device.brand,
-            'model': device.model,
-            'serial_number': device.serial_number,
-            'category': device.subcategory.category.name,
-            'subcategory': device.subcategory.name,
-            'status': device.status,
-            'url': request.build_absolute_uri(
-                reverse('devices:detail', kwargs={'pk': device.pk})
-            ),
-            'generated_at': timezone.now().isoformat(),
-            'generated_for': 'Bangladesh Parliament Secretariat - PIMS'
-        }
-        
-        # Convert to JSON string
-        qr_data_json = json.dumps(qr_data, ensure_ascii=False)
-        
-        # Generate QR code image
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_M,  # Medium error correction
-            box_size=10,
-            border=4,
-        )
-        qr.add_data(qr_data_json)
-        qr.make(fit=True)
-        
-        # Create image with high contrast
-        img = qr.make_image(fill_color="black", back_color="white")
-        
-        # Save to memory buffer
-        buffer = BytesIO()
-        img.save(buffer, format='PNG', optimize=True)
-        file_content = ContentFile(buffer.getvalue())
-        
-        # Create QR code object
-        qr_code_obj = QRCode.objects.create(
-            device=device,
-            qr_data=qr_data_json,
-            size=200,
-            format='PNG',
+        # Get selected devices
+        devices = Device.objects.filter(
+            id__in=selected_devices, 
             is_active=True
         )
         
-        # Generate filename
-        filename = f'device_{device.device_id}_qr_{timezone.now().strftime("%Y%m%d_%H%M%S")}.png'
+        # Use centralized bulk generation
+        from pims.utils.qr_code import bulk_generate_device_qr_codes
         
-        # Save image to QR code object
-        qr_code_obj.qr_code.save(filename, file_content, save=True)
+        results = bulk_generate_device_qr_codes(
+            devices, 
+            request, 
+            regenerate_existing=regenerate_existing
+        )
         
-        return qr_code_obj
+        # Prepare success message
+        message_parts = []
+        if results['generated'] > 0:
+            message_parts.append(f'Generated {results["generated"]} new QR codes')
+        if results['updated'] > 0:
+            message_parts.append(f'Updated {results["updated"]} existing QR codes')
+        if results['skipped'] > 0:
+            message_parts.append(f'Skipped {results["skipped"]} existing QR codes')
+        if results['errors'] > 0:
+            message_parts.append(f'{results["errors"]} errors occurred')
+        
+        if message_parts:
+            if results['errors'] == 0:
+                messages.success(request, '. '.join(message_parts) + '!')
+            else:
+                messages.warning(request, '. '.join(message_parts) + '.')
+                # Show specific error devices
+                if results['error_devices']:
+                    for error in results['error_devices'][:5]:  # Show first 5 errors
+                        messages.error(request, f'Error: {error}')
+        
+        # Handle auto-download
+        if auto_download and (results['generated'] > 0 or results['updated'] > 0):
+            return redirect('devices:qr_bulk_download')
+        
+        return redirect('devices:qr_list')
 
 
 class BulkDownloadQRView(LoginRequiredMixin, TemplateView):

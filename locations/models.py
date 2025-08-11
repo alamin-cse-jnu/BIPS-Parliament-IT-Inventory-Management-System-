@@ -2,7 +2,9 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-
+import uuid
+import os
+from django.urls import reverse
 
 class Building(models.Model):
     """
@@ -542,3 +544,89 @@ class Location(models.Model):
             longitude__isnull=False,
             is_active=True
         )
+
+class LocationQRCode(models.Model):
+    """
+    QR codes for location identification and tracking.
+    Generated automatically when locations are created or updated.
+    Follows the same pattern as Device QRCode model for consistency.
+    """
+    
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.CASCADE,
+        related_name='qr_codes',
+        help_text="Location this QR code represents"
+    )
+    
+    # QR Code Details
+    qr_code_id = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        help_text="Unique QR code identifier"
+    )
+    qr_code = models.ImageField(
+        upload_to='qrcodes/locations/',
+        help_text="Generated QR code image"
+    )
+    qr_data = models.TextField(
+        help_text="Data encoded in the QR code"
+    )
+    
+    # Metadata
+    size = models.PositiveIntegerField(
+        default=200,
+        help_text="QR code size in pixels"
+    )
+    format = models.CharField(
+        max_length=10,
+        default='PNG',
+        help_text="Image format"
+    )
+    
+    # Status
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this QR code is currently active"
+    )
+    
+    # Audit fields
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'locations_locationqrcode'
+        verbose_name = 'Location QR Code'
+        verbose_name_plural = 'Location QR Codes'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['location', 'is_active']),
+            models.Index(fields=['qr_code_id']),
+        ]
+    
+    def __str__(self):
+        return f"QR Code for {self.location.name}"
+    
+    def save(self, *args, **kwargs):
+        # Deactivate other QR codes for this location
+        if self.is_active:
+            LocationQRCode.objects.filter(location=self.location, is_active=True).exclude(
+                pk=self.pk
+            ).update(is_active=False)
+        
+        super().save(*args, **kwargs)
+    
+    def delete(self, *args, **kwargs):
+        """Delete QR code file when model is deleted."""
+        if self.qr_code and os.path.isfile(self.qr_code.path):
+            os.remove(self.qr_code.path)
+        super().delete(*args, **kwargs)
+    
+    def get_download_url(self):
+        """Return URL for downloading QR code."""
+        return reverse('locations:qr_download', kwargs={'pk': self.pk})
+    
+    @property
+    def file_exists(self):
+        """Check if QR code file exists."""
+        return self.qr_code and os.path.isfile(self.qr_code.path)

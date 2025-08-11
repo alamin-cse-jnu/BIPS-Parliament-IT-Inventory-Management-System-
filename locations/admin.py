@@ -2,8 +2,81 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from .models import Building, Floor, Block, Room, Office, Location
+from .models import Building, Floor, Block, Room, Office, Location, LocationQRCode
 
+
+# ============================================================================
+# QR CODE INLINE AND ADMIN CLASSES
+# ============================================================================
+
+class LocationQRCodeInline(admin.TabularInline):
+    """Inline admin for Location QR codes."""
+    model = LocationQRCode
+    extra = 0
+    fields = ('qr_code_preview', 'qr_data', 'is_active', 'created_at')
+    readonly_fields = ('qr_code_preview', 'qr_data', 'created_at')
+    
+    def qr_code_preview(self, obj):
+        """Display QR code image preview."""
+        if obj.qr_code:
+            return format_html(
+                '<img src="{}" width="50" height="50" />',
+                obj.qr_code.url
+            )
+        return "No QR Code"
+    qr_code_preview.short_description = "QR Code"
+
+
+@admin.register(LocationQRCode)
+class LocationQRCodeAdmin(admin.ModelAdmin):
+    """Admin interface for Location QR Codes."""
+    
+    list_display = (
+        'location',
+        'qr_code_preview',
+        'is_active',
+        'size',
+        'format',
+        'created_at'
+    )
+    list_filter = ('is_active', 'format', 'size', 'created_at')
+    search_fields = (
+        'location__name', 
+        'location__location_code',
+        'location__building__name'
+    )
+    readonly_fields = ('qr_code_id', 'qr_code_preview', 'created_at', 'updated_at')
+    
+    fieldsets = (
+        ('Location Information', {
+            'fields': ('location',)
+        }),
+        ('QR Code Details', {
+            'fields': ('qr_code_id', 'qr_code', 'qr_code_preview', 'qr_data')
+        }),
+        ('Settings', {
+            'fields': ('size', 'format', 'is_active')
+        }),
+        ('Audit Information', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    def qr_code_preview(self, obj):
+        """Display QR code image preview in admin."""
+        if obj.qr_code:
+            return format_html(
+                '<img src="{}" width="100" height="100" style="border: 1px solid #ddd;" />',
+                obj.qr_code.url
+            )
+        return "No QR Code"
+    qr_code_preview.short_description = "QR Code Preview"
+
+
+# ============================================================================
+#  ADMIN CLASSES 
+# ============================================================================
 
 @admin.register(Building)
 class BuildingAdmin(admin.ModelAdmin):
@@ -181,10 +254,14 @@ class OfficeAdmin(admin.ModelAdmin):
         verbose_name_plural = "Offices"
 
 
+# ============================================================================
+# LOCATION ADMIN WITH QR CODE INTEGRATION
+# ============================================================================
+
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
     """
-    Admin configuration for Location model with comprehensive display and filtering.
+    Admin configuration for Location model with comprehensive display and QR code management.
     """
     list_display = [
         'location_code', 
@@ -195,6 +272,7 @@ class LocationAdmin(admin.ModelAdmin):
         'get_room_info',
         'get_office_info',
         'has_coordinates_display',
+        'has_qr_code_display',  # NEW: QR code status
         'is_active'
     ]
     
@@ -248,14 +326,25 @@ class LocationAdmin(admin.ModelAdmin):
     
     readonly_fields = ('created_at', 'updated_at')
     
+    # ADD: QR Code inline
+    inlines = [LocationQRCodeInline]
+    
+    # ADD: QR code generation action
+    actions = [
+        'make_active', 
+        'make_inactive', 
+        'export_coordinates',
+        'generate_qr_codes'  # NEW: QR code generation action
+    ]
+    
     # Optimize database queries
     def get_queryset(self, request):
         """Optimize queryset with select_related for foreign keys."""
         return super().get_queryset(request).select_related(
             'building', 'floor', 'block', 'room', 'office'
-        )
+        ).prefetch_related('qr_codes')  # NEW: Prefetch QR codes
 
-    # Custom display methods for list view
+    # Custom display methods for list view (existing methods unchanged)
     def get_building_info(self, obj):
         """Display building information in list view."""
         if obj.building:
@@ -323,9 +412,20 @@ class LocationAdmin(admin.ModelAdmin):
     has_coordinates_display.short_description = 'Coordinates'
     has_coordinates_display.admin_order_field = 'latitude'
 
-    # Custom actions
-    actions = ['make_active', 'make_inactive', 'export_coordinates']
+    # NEW: QR code status display
+    def has_qr_code_display(self, obj):
+        """Display QR code status with icon and link."""
+        active_qr = obj.qr_codes.filter(is_active=True).first()
+        if active_qr:
+            download_url = reverse('admin:locations_locationqrcode_change', args=[active_qr.pk])
+            return format_html(
+                '<a href="{}" title="View QR Code"><span class="text-success">✓ QR Code</span></a>',
+                download_url
+            )
+        return format_html('<span class="text-muted">✗ No QR</span>')
+    has_qr_code_display.short_description = 'QR Code'
 
+    # Custom actions (existing actions unchanged)
     def make_active(self, request, queryset):
         """Bulk action to activate selected locations."""
         updated = queryset.update(is_active=True)
@@ -372,12 +472,63 @@ class LocationAdmin(admin.ModelAdmin):
         )
     export_coordinates.short_description = "Export coordinates for selected locations"
 
+    # NEW: QR code generation action
+    def generate_qr_codes(self, request, queryset):
+        """Generate QR codes for selected locations."""
+        from pims.utils.qr_code import create_location_qr_code
+        
+        generated_count = 0
+        updated_count = 0
+        error_count = 0
+        
+        for location in queryset:
+            try:
+                # Check if location already has active QR code
+                existing_qr = location.qr_codes.filter(is_active=True).first()
+                
+                # Generate QR code
+                qr_code = create_location_qr_code(location, request)
+                
+                if qr_code:
+                    if existing_qr:
+                        updated_count += 1
+                    else:
+                        generated_count += 1
+                else:
+                    error_count += 1
+                    
+            except Exception as e:
+                error_count += 1
+                continue
+        
+        # Prepare success message
+        message_parts = []
+        if generated_count > 0:
+            message_parts.append(f'Generated {generated_count} new QR codes')
+        if updated_count > 0:
+            message_parts.append(f'Updated {updated_count} existing QR codes')
+        if error_count > 0:
+            message_parts.append(f'{error_count} errors occurred')
+        
+        if message_parts:
+            if error_count == 0:
+                self.message_user(request, '. '.join(message_parts) + '!')
+            else:
+                self.message_user(request, '. '.join(message_parts) + '.', level='warning')
+        else:
+            self.message_user(request, 'No QR codes were generated.', level='warning')
+    
+    generate_qr_codes.short_description = "Generate QR codes for selected locations"
+
     class Meta:
         verbose_name = "Location"
         verbose_name_plural = "Locations"
 
 
-# Additional admin configurations for better management
+# ============================================================================
+# ADDITIONAL ADMIN CONFIGURATIONS
+# ============================================================================
+
 class LocationInline(admin.TabularInline):
     """
     Inline admin for locations - can be used in other models if needed.

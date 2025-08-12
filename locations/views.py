@@ -5220,7 +5220,7 @@ class BulkQRCodeGenerateView(LoginRequiredMixin, PermissionRequiredMixin, Templa
     """
     Generate QR codes for multiple locations in bulk.
     """
-    template_name = 'locations/qrcode.html'  # Updated to use existing template
+    template_name = 'locations/bulk_qrcode_generate.html'
     permission_required = 'locations.change_location'
     
     def get_context_data(self, **kwargs):

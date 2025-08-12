@@ -1,0 +1,770 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - PIMS - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Dashboard Specific Styling - Parliament Design System */
+.dashboard-container {
+    background: var(--bg-gradient-primary);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.dashboard-header {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-xl);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.dashboard-title {
+    color: var(--parliament-primary);
+    font-weight: 700;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.dashboard-subtitle {
+    color: var(--parliament-neutral);
+    margin-bottom: 0;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.stat-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-xl);
+    padding: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--stat-color, var(--parliament-primary));
+    border-radius: var(--border-radius-xl) var(--border-radius-xl) 0 0;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--glass-shadow-hover);
+}
+
+.stat-card.users { --stat-color: linear-gradient(90deg, #3b82f6, #2563eb); }
+.stat-card.devices { --stat-color: linear-gradient(90deg, #10b981, #059669); }
+.stat-card.locations { --stat-color: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+.stat-card.assignments { --stat-color: linear-gradient(90deg, #f59e0b, #d97706); }
+
+.stat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-lg);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--border-radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    background: var(--stat-color, var(--parliament-primary));
+}
+
+.stat-icon.users { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.stat-icon.devices { background: linear-gradient(135deg, #10b981, #059669); }
+.stat-icon.locations { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.stat-icon.assignments { background: linear-gradient(135deg, #f59e0b, #d97706); }
+
+.stat-content {
+    text-align: left;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--parliament-dark);
+    line-height: 1;
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-label {
+    color: var(--parliament-neutral);
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-change {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.stat-change.positive { color: #059669; }
+.stat-change.negative { color: #dc2626; }
+.stat-change.neutral { color: var(--parliament-neutral); }
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+}
+
+.activity-section {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--glass-shadow);
+    overflow: hidden;
+}
+
+.section-header {
+    padding: var(--spacing-xl);
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: between;
+}
+
+.section-title {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.section-content {
+    padding: var(--spacing-xl);
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) 0;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.activity-icon.device { background: linear-gradient(135deg, #10b981, #059669); }
+.activity-icon.assignment { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.activity-icon.maintenance { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.activity-icon.user { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-title {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+    font-size: 0.875rem;
+}
+
+.activity-meta {
+    color: var(--parliament-neutral);
+    font-size: 0.75rem;
+}
+
+.quick-actions {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--glass-shadow);
+    overflow: hidden;
+}
+
+.action-grid {
+    display: grid;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xl);
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: var(--glass-bg-secondary);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    text-decoration: none;
+    transition: var(--transition);
+    color: var(--parliament-dark);
+}
+
+.action-btn:hover {
+    transform: translateX(4px);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: var(--shadow-md);
+    color: var(--parliament-primary);
+}
+
+.action-icon {
+    width: 35px;
+    height: 35px;
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.action-icon.add-device { background: linear-gradient(135deg, #10b981, #059669); }
+.action-icon.add-user { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.action-icon.qr-bulk { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.action-icon.reports { background: linear-gradient(135deg, #f59e0b, #d97706); }
+
+.action-content {
+    flex: 1;
+}
+
+.action-title {
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+    font-size: 0.875rem;
+}
+
+.action-desc {
+    color: var(--parliament-neutral);
+    font-size: 0.75rem;
+}
+
+.chart-section {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--glass-shadow);
+    overflow: hidden;
+}
+
+.chart-container {
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--glass-bg-secondary);
+    margin: var(--spacing-xl);
+    border-radius: var(--border-radius-lg);
+    border: 2px dashed var(--glass-border);
+}
+
+.chart-placeholder {
+    text-align: center;
+    color: var(--parliament-neutral);
+}
+
+.chart-placeholder i {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-md);
+    opacity: 0.5;
+}
+
+.alerts-section {
+    grid-column: 1 / -1;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--glass-shadow);
+    overflow: hidden;
+}
+
+.alerts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl);
+}
+
+.alert-card {
+    background: var(--glass-bg-secondary);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.alert-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--alert-color, var(--parliament-accent));
+}
+
+.alert-card.warning { --alert-color: #f59e0b; }
+.alert-card.danger { --alert-color: #ef4444; }
+.alert-card.info { --alert-color: #3b82f6; }
+
+.alert-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.alert-icon {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: white;
+    background: var(--alert-color, var(--parliament-accent));
+}
+
+.alert-title {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+.alert-content {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 1rem 0;
+    }
+    
+    .dashboard-header,
+    .activity-section,
+    .quick-actions,
+    .chart-section,
+    .alerts-section {
+        margin-left: 1rem;
+        margin-right: 1rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+    
+    .stat-card {
+        padding: var(--spacing-lg);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .alerts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="dashboard-title">
+                    <i class="bi bi-speedometer2"></i>
+                    System Dashboard
+                </h1>
+                <p class="dashboard-subtitle">
+                    Real-time overview of PIMS operations at Bangladesh Parliament Secretariat
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <div class="text-muted">
+                    <i class="bi bi-clock me-1"></i>
+                    Last updated: <span id="last-updated">Just now</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Grid -->
+    <div class="stats-grid">
+        <div class="stat-card users">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <div class="stat-number" id="users-count">247</div>
+                    <div class="stat-label">Active Users</div>
+                    <div class="stat-change positive">
+                        <i class="bi bi-arrow-up"></i>
+                        <span>+12 this month</span>
+                    </div>
+                </div>
+                <div class="stat-icon users">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card devices">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <div class="stat-number" id="devices-count">1,856</div>
+                    <div class="stat-label">IT Devices</div>
+                    <div class="stat-change positive">
+                        <i class="bi bi-arrow-up"></i>
+                        <span>+45 this month</span>
+                    </div>
+                </div>
+                <div class="stat-icon devices">
+                    <i class="bi bi-laptop"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card locations">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <div class="stat-number" id="locations-count">128</div>
+                    <div class="stat-label">Locations</div>
+                    <div class="stat-change neutral">
+                        <i class="bi bi-dash"></i>
+                        <span>No change</span>
+                    </div>
+                </div>
+                <div class="stat-icon locations">
+                    <i class="bi bi-geo-alt"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card assignments">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <div class="stat-number" id="assignments-count">892</div>
+                    <div class="stat-label">Active Assignments</div>
+                    <div class="stat-change positive">
+                        <i class="bi bi-arrow-up"></i>
+                        <span>+23 this week</span>
+                    </div>
+                </div>
+                <div class="stat-icon assignments">
+                    <i class="bi bi-arrow-left-right"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Grid -->
+    <div class="dashboard-grid">
+        <!-- Recent Activity -->
+        <div class="activity-section">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="bi bi-activity"></i>
+                    Recent Activity
+                </h3>
+            </div>
+            <div class="section-content">
+                <div class="activity-item">
+                    <div class="activity-icon device">
+                        <i class="bi bi-laptop"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">New device added: Dell OptiPlex 7090</div>
+                        <div class="activity-meta">2 minutes ago • IT Admin</div>
+                    </div>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon assignment">
+                        <i class="bi bi-arrow-right"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Device assigned to Dr. Rahman (Finance)</div>
+                        <div class="activity-meta">15 minutes ago • Assignment Manager</div>
+                    </div>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon maintenance">
+                        <i class="bi bi-wrench"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Maintenance completed for Printer-HP-2840</div>
+                        <div class="activity-meta">1 hour ago • Maintenance Team</div>
+                    </div>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon user">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">New user registered: Md. Karim (Secretary)</div>
+                        <div class="activity-meta">3 hours ago • User Admin</div>
+                    </div>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon device">
+                        <i class="bi bi-qr-code"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Bulk QR codes generated for 25 devices</div>
+                        <div class="activity-meta">5 hours ago • System</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="bi bi-lightning"></i>
+                    Quick Actions
+                </h3>
+            </div>
+            <div class="action-grid">
+                <a href="{% url 'devices:create' %}" class="action-btn">
+                    <div class="action-icon add-device">
+                        <i class="bi bi-plus"></i>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-title">Add New Device</div>
+                        <div class="action-desc">Register new IT equipment</div>
+                    </div>
+                </a>
+
+                <a href="{% url 'users:create' %}" class="action-btn">
+                    <div class="action-icon add-user">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-title">Add New User</div>
+                        <div class="action-desc">Create user account</div>
+                    </div>
+                </div>
+
+                <a href="{% url 'locations:bulk_qrcode_generate' %}" class="action-btn">
+                    <div class="action-icon qr-bulk">
+                        <i class="bi bi-qr-code-scan"></i>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-title">Generate QR Codes</div>
+                        <div class="action-desc">Bulk QR code creation</div>
+                    </div>
+                </a>
+
+                <a href="{% url 'devices:reports' %}" class="action-btn">
+                    <div class="action-icon reports">
+                        <i class="bi bi-file-earmark-text"></i>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-title">Generate Report</div>
+                        <div class="action-desc">System reports & analytics</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="chart-section">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="bi bi-bar-chart"></i>
+                System Analytics
+            </h3>
+        </div>
+        <div class="chart-container">
+            <div class="chart-placeholder">
+                <i class="bi bi-graph-up"></i>
+                <p>Device Assignment Trends</p>
+                <small>Chart visualization will be implemented with Chart.js</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Alerts -->
+    <div class="alerts-section">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="bi bi-exclamation-triangle"></i>
+                System Alerts & Notifications
+            </h3>
+        </div>
+        <div class="alerts-grid">
+            <div class="alert-card warning">
+                <div class="alert-header">
+                    <div class="alert-icon">
+                        <i class="bi bi-exclamation"></i>
+                    </div>
+                    <h4 class="alert-title">Maintenance Due</h4>
+                </div>
+                <div class="alert-content">
+                    12 devices require scheduled maintenance within the next 7 days.
+                </div>
+            </div>
+
+            <div class="alert-card danger">
+                <div class="alert-header">
+                    <div class="alert-icon">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <h4 class="alert-title">Overdue Assignments</h4>
+                </div>
+                <div class="alert-content">
+                    3 device assignments are overdue for return. Immediate action required.
+                </div>
+            </div>
+
+            <div class="alert-card info">
+                <div class="alert-header">
+                    <div class="alert-icon">
+                        <i class="bi bi-info"></i>
+                    </div>
+                    <h4 class="alert-title">QR Code Coverage</h4>
+                </div>
+                <div class="alert-content">
+                    87% of devices have QR codes generated. Generate codes for remaining 156 devices.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Dashboard JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // Update last updated timestamp
+    updateTimestamp();
+    
+    // Animate statistics on load
+    animateStats();
+    
+    // Auto-refresh every 5 minutes
+    setInterval(updateTimestamp, 300000);
+});
+
+function updateTimestamp() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-BD', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
+    document.getElementById('last-updated').textContent = timeString;
+}
+
+function animateStats() {
+    const statNumbers = document.querySelectorAll('.stat-number');
+    
+    statNumbers.forEach(stat => {
+        const finalValue = parseInt(stat.textContent.replace(/,/g, ''));
+        const increment = finalValue / 50;
+        let currentValue = 0;
+        
+        stat.textContent = '0';
+        
+        const timer = setInterval(() => {
+            currentValue += increment;
+            if (currentValue >= finalValue) {
+                currentValue = finalValue;
+                clearInterval(timer);
+            }
+            
+            stat.textContent = Math.floor(currentValue).toLocaleString();
+        }, 30);
+    });
+}
+
+// Stat card hover effects
+document.querySelectorAll('.stat-card').forEach(card => {
+    card.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-4px) scale(1.02)';
+    });
+    
+    card.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(-4px)';
+    });
+});
+
+// Action button effects
+document.querySelectorAll('.action-btn').forEach(btn => {
+    btn.addEventListener('mouseenter', function() {
+        const icon = this.querySelector('.action-icon');
+        icon.style.transform = 'rotate(5deg) scale(1.1)';
+    });
+    
+    btn.addEventListener('mouseleave', function() {
+        const icon = this.querySelector('.action-icon');
+        icon.style.transform = 'rotate(0deg) scale(1)';
+    });
+});
+</script>
+{% endblock %}

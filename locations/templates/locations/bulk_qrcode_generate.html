@@ -1,0 +1,646 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Bulk QR Code Generation - Locations - PIMS - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Bulk QR Generation Specific Styling - Parliament Design System */
+.page-header {
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.1), rgba(5, 150, 105, 0.1));
+    border: 1px solid rgba(30, 58, 138, 0.2);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.08);
+}
+
+.page-title {
+    color: var(--parliament-primary);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.page-subtitle {
+    color: #64748b;
+    font-size: 1rem;
+    margin: 0;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.filter-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.form-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.section-title {
+    color: var(--parliament-primary);
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-control, .form-select {
+    border: 1px solid rgba(203, 213, 225, 0.8);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--parliament-primary);
+    box-shadow: 0 0 0 0.2rem rgba(30, 58, 138, 0.15);
+    background: #ffffff;
+}
+
+.form-check {
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-check:hover {
+    background: rgba(248, 250, 252, 1);
+    border-color: var(--parliament-primary);
+}
+
+.form-check-input:checked {
+    background-color: var(--parliament-primary);
+    border-color: var(--parliament-primary);
+}
+
+.btn-parliament-primary {
+    background: linear-gradient(135deg, var(--parliament-primary), var(--parliament-primary-hover));
+    border: none;
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(30, 58, 138, 0.2);
+}
+
+.btn-parliament-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(30, 58, 138, 0.3);
+    background: linear-gradient(135deg, var(--parliament-primary-hover), var(--parliament-primary-active));
+}
+
+.btn-parliament-secondary {
+    background: linear-gradient(135deg, var(--parliament-secondary), var(--parliament-secondary-hover));
+    border: none;
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(5, 150, 105, 0.2);
+}
+
+.btn-parliament-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(5, 150, 105, 0.3);
+    background: linear-gradient(135deg, var(--parliament-secondary-hover), #047857);
+}
+
+.alert-info {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(99, 179, 237, 0.1));
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    color: #1e40af;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.progress-container {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 1rem;
+    display: none;
+}
+
+.progress {
+    height: 8px;
+    border-radius: 6px;
+    background: rgba(203, 213, 225, 0.3);
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, var(--parliament-primary), var(--parliament-secondary));
+    border-radius: 6px;
+    transition: width 0.3s ease;
+}
+
+.coverage-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.coverage-bar {
+    flex: 1;
+    height: 6px;
+    background: rgba(203, 213, 225, 0.3);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.coverage-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--parliament-secondary), var(--parliament-primary));
+    transition: width 0.3s ease;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(203, 213, 225, 0.4);
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .page-header {
+        padding: 1.5rem;
+    }
+    
+    .filter-section, .form-section {
+        padding: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <h1 class="page-title">
+                <i class="bi bi-qr-code-scan"></i>
+                Bulk QR Code Generation
+            </h1>
+            <p class="page-subtitle">
+                Generate QR codes for multiple locations simultaneously in Bangladesh Parliament Secretariat
+            </p>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+            <a href="{% url 'locations:list' %}" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left me-1"></i>
+                Back to Locations
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Overview -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number text-primary">{{ bulk_stats.total_locations }}</div>
+        <div class="stat-label">Total Locations</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number text-success">{{ bulk_stats.locations_with_qr }}</div>
+        <div class="stat-label">With QR Codes</div>
+        <div class="coverage-indicator">
+            <div class="coverage-bar">
+                <div class="coverage-fill" style="width: {{ bulk_stats.coverage_percentage }}%"></div>
+            </div>
+            <small class="text-muted">{{ bulk_stats.coverage_percentage }}%</small>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number text-warning">{{ bulk_stats.locations_without_qr }}</div>
+        <div class="stat-label">Without QR Codes</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number text-info">{{ buildings.count }}</div>
+        <div class="stat-label">Buildings Available</div>
+    </div>
+</div>
+
+<!-- Information Alert -->
+<div class="alert alert-info">
+    <div class="d-flex align-items-start">
+        <i class="bi bi-info-circle me-3" style="font-size: 1.25rem;"></i>
+        <div>
+            <strong>Bulk QR Generation Information</strong>
+            <p class="mb-0 mt-1">This tool allows you to generate QR codes for multiple locations at once. Use the filters below to select specific locations, or generate QR codes for all locations. Existing QR codes can be regenerated if needed.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Filter Section -->
+    <div class="col-lg-4 mb-4">
+        <div class="filter-section">
+            <h4 class="section-title">
+                <i class="bi bi-funnel"></i>
+                Filter Options
+            </h4>
+            
+            <form method="post" id="bulkQRForm">
+                {% csrf_token %}
+                
+                <!-- Building Filter -->
+                <div class="mb-3">
+                    <label for="building" class="form-label">
+                        <i class="bi bi-building me-1"></i>
+                        Building
+                    </label>
+                    <select name="building" id="building" class="form-select">
+                        <option value="">All Buildings</option>
+                        {% for building in buildings %}
+                            <option value="{{ building.id }}">{{ building.name }} ({{ building.code }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Office Type Filter -->
+                <div class="mb-3">
+                    <label for="office_type" class="form-label">
+                        <i class="bi bi-briefcase me-1"></i>
+                        Office Type
+                    </label>
+                    <select name="office_type" id="office_type" class="form-select">
+                        <option value="">All Office Types</option>
+                        {% for office_type in office_types %}
+                            <option value="{{ office_type }}">{{ office_type|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Room Type Filter -->
+                <div class="mb-3">
+                    <label for="room_type" class="form-label">
+                        <i class="bi bi-door-open me-1"></i>
+                        Room Type
+                    </label>
+                    <select name="room_type" id="room_type" class="form-select">
+                        <option value="">All Room Types</option>
+                        {% for room_type in room_types %}
+                            <option value="{{ room_type }}">{{ room_type|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Options -->
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="regenerate_existing" id="regenerate_existing">
+                        <label class="form-check-label" for="regenerate_existing">
+                            <strong>Regenerate existing QR codes</strong>
+                            <br><small class="text-muted">Replace QR codes that already exist</small>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="only_with_coordinates" id="only_with_coordinates">
+                        <label class="form-check-label" for="only_with_coordinates">
+                            <strong>Only locations with coordinates</strong>
+                            <br><small class="text-muted">Include geo-location data in QR codes</small>
+                        </label>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Generation Section -->
+    <div class="col-lg-8 mb-4">
+        <div class="form-section">
+            <h4 class="section-title">
+                <i class="bi bi-gear"></i>
+                Generation Control
+            </h4>
+            
+            <!-- Preview Section -->
+            <div class="mb-4">
+                <h6 class="text-muted mb-3">
+                    <i class="bi bi-eye me-1"></i>
+                    Preview Selected Locations
+                </h6>
+                <div id="location-preview" class="border rounded-3 p-3" style="max-height: 300px; overflow-y: auto;">
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-search" style="font-size: 2rem;"></i>
+                        <p class="mt-2 mb-0">Use filters to preview locations</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress Section -->
+            <div class="progress-container" id="progress-container">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">Generation Progress</span>
+                    <span class="text-muted" id="progress-text">0%</span>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar" id="progress-bar" role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button type="button" class="btn btn-parliament-primary" onclick="generateQRCodes()">
+                    <i class="bi bi-qr-code me-2"></i>
+                    Generate QR Codes
+                </button>
+                
+                <button type="button" class="btn btn-parliament-secondary" onclick="previewLocations()">
+                    <i class="bi bi-eye me-2"></i>
+                    Preview Selection
+                </button>
+                
+                <a href="{% url 'locations:bulk_qrcode_download' %}" class="btn btn-outline-success">
+                    <i class="bi bi-download me-2"></i>
+                    Download Existing QR Codes
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Locations (if available) -->
+{% if locations_for_bulk %}
+<div class="form-section">
+    <h4 class="section-title">
+        <i class="bi bi-geo-alt"></i>
+        Recent Locations
+        <small class="text-muted">(First 20 for reference)</small>
+    </h4>
+    
+    <div class="row">
+        {% for location in locations_for_bulk|slice:":20" %}
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-3">
+                    <h6 class="card-title mb-2">{{ location.name }}</h6>
+                    <p class="card-text small text-muted mb-2">
+                        <i class="bi bi-hash"></i> {{ location.location_code }}
+                    </p>
+                    {% if location.building %}
+                    <p class="card-text small text-muted mb-0">
+                        <i class="bi bi-building"></i> {{ location.building.name }}
+                    </p>
+                    {% endif %}
+                    {% if location.qr_codes.count > 0 %}
+                    <span class="badge bg-success small">
+                        <i class="bi bi-check-circle"></i> Has QR
+                    </span>
+                    {% else %}
+                    <span class="badge bg-warning small">
+                        <i class="bi bi-exclamation-circle"></i> No QR
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Bulk QR Code Generation JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize form interactions
+    initializeFilters();
+    previewLocations();
+});
+
+function initializeFilters() {
+    // Add change event listeners to all filter elements
+    const filters = ['building', 'office_type', 'room_type', 'regenerate_existing', 'only_with_coordinates'];
+    
+    filters.forEach(filterId => {
+        const element = document.getElementById(filterId);
+        if (element) {
+            element.addEventListener('change', previewLocations);
+        }
+    });
+}
+
+function previewLocations() {
+    const formData = new FormData(document.getElementById('bulkQRForm'));
+    const params = new URLSearchParams();
+    
+    // Build query parameters
+    for (let [key, value] of formData.entries()) {
+        if (value) {
+            params.append(key, value);
+        }
+    }
+    
+    // Show loading in preview
+    const preview = document.getElementById('location-preview');
+    preview.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 mb-0 text-muted">Loading locations...</p>
+        </div>
+    `;
+    
+    // Simulate preview loading (replace with actual AJAX call)
+    setTimeout(() => {
+        updatePreview();
+    }, 1000);
+}
+
+function updatePreview() {
+    const preview = document.getElementById('location-preview');
+    
+    // Get filter values
+    const building = document.getElementById('building').value;
+    const officeType = document.getElementById('office_type').value;
+    const roomType = document.getElementById('room_type').value;
+    const regenerate = document.getElementById('regenerate_existing').checked;
+    const onlyCoords = document.getElementById('only_with_coordinates').checked;
+    
+    // Simulate filtered results
+    let filterCount = 0;
+    if (building) filterCount++;
+    if (officeType) filterCount++;
+    if (roomType) filterCount++;
+    
+    const estimatedLocations = Math.max(1, Math.floor({{ bulk_stats.total_locations }} / Math.max(1, filterCount)));
+    
+    preview.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">
+                <i class="bi bi-funnel text-primary"></i>
+                Filtered Results
+            </h6>
+            <span class="badge bg-primary">${estimatedLocations} locations</span>
+        </div>
+        
+        <div class="row small">
+            <div class="col-md-6">
+                <div class="mb-2">
+                    <strong>Building:</strong> ${building ? document.querySelector('#building option:checked').text : 'All Buildings'}
+                </div>
+                <div class="mb-2">
+                    <strong>Office Type:</strong> ${officeType || 'All Types'}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-2">
+                    <strong>Room Type:</strong> ${roomType || 'All Types'}
+                </div>
+                <div class="mb-2">
+                    <strong>Options:</strong> 
+                    ${regenerate ? '<span class="badge bg-warning me-1">Regenerate</span>' : ''}
+                    ${onlyCoords ? '<span class="badge bg-info">Coordinates Only</span>' : ''}
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-light mt-3 mb-0">
+            <small>
+                <i class="bi bi-info-circle text-info"></i>
+                This will generate QR codes for approximately <strong>${estimatedLocations}</strong> locations.
+            </small>
+        </div>
+    `;
+}
+
+function generateQRCodes() {
+    // Show confirmation
+    const estimated = document.querySelector('#location-preview .badge.bg-primary');
+    const count = estimated ? estimated.textContent.split(' ')[0] : 'selected';
+    
+    if (!confirm(`This will generate QR codes for ${count} locations. Continue?`)) {
+        return;
+    }
+    
+    // Show progress
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    
+    progressContainer.style.display = 'block';
+    
+    // Disable the button
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
+    
+    // Simulate progress (replace with actual form submission)
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 100) progress = 100;
+        
+        progressBar.style.width = progress + '%';
+        progressText.textContent = Math.round(progress) + '%';
+        
+        if (progress >= 100) {
+            clearInterval(interval);
+            
+            // Submit the form
+            setTimeout(() => {
+                document.getElementById('bulkQRForm').submit();
+            }, 500);
+        }
+    }, 200);
+}
+
+// Add smooth animations
+function addSmoothAnimations() {
+    // Animate stat cards on load
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+}
+
+// Initialize animations
+document.addEventListener('DOMContentLoaded', addSmoothAnimations);
+</script>
+{% endblock %}

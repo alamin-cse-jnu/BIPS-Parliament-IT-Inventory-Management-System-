@@ -175,29 +175,6 @@ class Assignment(models.Model):
         help_text="Device condition when returned"
     )
     
-    # Assignment Agreement and Acknowledgment
-    agreement_signed = models.BooleanField(
-        default=False,
-        help_text="Whether assignment agreement was signed"
-    )
-    acknowledgment_received = models.BooleanField(
-        default=False,
-        help_text="Whether user acknowledged receipt"
-    )
-    
-    # Financial Responsibility
-    security_deposit = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=Decimal('0.00'),
-        validators=[MinValueValidator(Decimal('0'))],
-        help_text="Security deposit amount (BDT)"
-    )
-    deposit_returned = models.BooleanField(
-        default=False,
-        help_text="Whether security deposit was returned"
-    )
-    
     # Contact and Emergency Information
     emergency_contact = models.CharField(
         max_length=100,
@@ -214,10 +191,6 @@ class Assignment(models.Model):
     is_active = models.BooleanField(
         default=True,
         help_text="Whether this assignment is currently active"
-    )
-    requires_approval = models.BooleanField(
-        default=False,
-        help_text="Whether this assignment required special approval"
     )
     is_overdue = models.BooleanField(
         default=False,
@@ -302,10 +275,6 @@ class Assignment(models.Model):
         
         if self.condition_at_return and not self.actual_return_date:
             errors['condition_at_return'] = "Return condition can only be set when device is returned"
-        
-        # Validate security deposit
-        if self.security_deposit > 0 and self.deposit_returned and self.status != 'RETURNED':
-            errors['deposit_returned'] = "Deposit can only be marked as returned when assignment is returned"
         
         if errors:
             raise ValidationError(errors)
@@ -419,13 +388,90 @@ class Assignment(models.Model):
         if self.actual_return_date:
             return (self.actual_return_date - self.assigned_date).days
         return (timezone.now().date() - self.assigned_date).days
-    
+
     def days_overdue(self):
         """Calculate number of days assignment is overdue."""
         if not self.expected_return_date or self.status != 'OVERDUE':
             return 0
         return (timezone.now().date() - self.expected_return_date).days
     
+    def get_export_data(self):
+        """Get assignment data formatted for export."""
+        return {
+            'assignment_id': self.assignment_id,
+            'device_id': self.device.device_id if self.device else '',
+            'device_name': self.device.name if self.device else '',
+            'device_brand': self.device.brand if self.device else '',
+            'device_model': self.device.model if self.device else '',
+            'employee_name': self.assigned_to.get_full_name() if self.assigned_to else '',
+            'employee_id': getattr(self.assigned_to, 'employee_id', '') if self.assigned_to else '',
+            'location_name': self.assigned_location.name if self.assigned_location else '',
+            'assignment_type': self.get_assignment_type_display(),
+            'status': self.get_status_display(),
+            'assigned_date': self.assigned_date,
+            'expected_return_date': self.expected_return_date,
+            'actual_return_date': self.actual_return_date,
+            'purpose': self.purpose,
+            'days_assigned': self.days_assigned(),
+            'condition_at_assignment': self.get_condition_at_assignment_display(),
+            'condition_at_return': self.get_condition_at_return_display() if self.condition_at_return else '',
+            'assigned_by': self.assigned_by.get_full_name() if self.assigned_by else ''
+        }
+    
+    @classmethod
+    def get_export_queryset(cls, filters=None):
+        """Get optimized queryset for exports."""
+        queryset = cls.objects.select_related(
+            'device', 'assigned_to', 'assigned_location', 'assigned_by'
+        ).order_by('-assigned_date')
+        
+        if filters:
+            # Apply filters
+            if 'status' in filters and filters['status']:
+                queryset = queryset.filter(status__in=filters['status'])
+            if 'assignment_type' in filters and filters['assignment_type']:
+                queryset = queryset.filter(assignment_type__in=filters['assignment_type'])
+            if 'date_from' in filters and filters['date_from']:
+                queryset = queryset.filter(assigned_date__gte=filters['date_from'])
+            if 'date_to' in filters and filters['date_to']:
+                queryset = queryset.filter(assigned_date__lte=filters['date_to'])
+            if 'employee' in filters and filters['employee']:
+                queryset = queryset.filter(assigned_to_id=filters['employee'])
+            if 'location' in filters and filters['location']:
+                queryset = queryset.filter(assigned_location_id=filters['location'])
+        
+        return queryset
+    
+    @classmethod
+    def get_export_statistics(cls):
+        """Get statistics for export summaries."""
+        from django.db.models import Count, Q
+        
+        return {
+            'total': cls.objects.count(),
+            'active': cls.objects.filter(status='ACTIVE').count(),
+            'returned': cls.objects.filter(status='RETURNED').count(),
+            'overdue': cls.objects.filter(
+                status='ACTIVE',
+                expected_return_date__lt=timezone.now().date()
+            ).count(),
+            'temporary': cls.objects.filter(assignment_type='TEMPORARY').count(),
+            'permanent': cls.objects.filter(assignment_type='PERMANENT').count(),
+            'this_month': cls.objects.filter(
+                assigned_date__month=timezone.now().month,
+                assigned_date__year=timezone.now().year
+            ).count(),
+            'by_status': cls.objects.values('status').annotate(count=Count('id')),
+            'by_type': cls.objects.values('assignment_type').annotate(count=Count('id')),
+            'top_devices': cls.objects.values('device__name', 'device__device_id')
+                .annotate(count=Count('id'))
+                .order_by('-count')[:10],
+            'top_employees': cls.objects.values('assigned_to__first_name', 'assigned_to__last_name')
+                .annotate(count=Count('id'))
+                .order_by('-count')[:10]
+        }
+
+
     def get_absolute_url(self):
         """Return URL for assignment detail view."""
         return reverse('assignments:detail', kwargs={'pk': self.pk})

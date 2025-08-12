@@ -1,0 +1,594 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Return Assignment - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Return Assignment Page - Parliament Design System */
+.return-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.return-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.return-title {
+    color: #dc2626;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.return-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.return-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.assignment-info {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.info-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.info-header h4 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.info-body {
+    padding: 1.5rem;
+}
+
+.info-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.info-value {
+    color: #6b7280;
+    font-size: 0.875rem;
+    text-align: right;
+}
+
+.info-value.highlight {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.info-value.status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.info-value.status.assigned {
+    background: rgba(34, 197, 94, 0.1);
+    color: #15803d;
+}
+
+.return-form-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.form-header {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.form-header h4 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.form-body {
+    padding: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.form-control, .form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    outline: none;
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+    background: white;
+}
+
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: rgba(248, 250, 252, 0.8);
+    border-radius: 8px;
+    border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.form-check-input {
+    width: 1.25rem;
+    height: 1.25rem;
+    cursor: pointer;
+}
+
+.form-check-label {
+    color: #374151;
+    font-weight: 500;
+    cursor: pointer;
+    margin: 0;
+}
+
+.form-text {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding: 1.5rem;
+    border-top: 1px solid rgba(203, 213, 225, 0.3);
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 0 0 16px 16px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.btn-outline-secondary {
+    background: rgba(255, 255, 255, 0.9);
+    color: #6b7280;
+    border: 1px solid rgba(203, 213, 225, 0.4);
+}
+
+.btn-outline-secondary:hover {
+    background: #f3f4f6;
+    color: #374151;
+    border-color: #9ca3af;
+    transform: translateY(-1px);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+}
+
+.alert {
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: none;
+}
+
+.alert-warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #92400e;
+    border-left: 4px solid #f59e0b;
+}
+
+/* Device Preview */
+.device-preview {
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.device-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.device-details h6 {
+    margin: 0 0 0.25rem 0;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.device-details p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .return-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .info-value {
+        text-align: left;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="return-container">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="return-header">
+            <h1 class="return-title">
+                <i class="bi bi-arrow-return-left"></i>
+                Return Assignment
+            </h1>
+            <p class="return-subtitle">Process device return and update assignment status</p>
+        </div>
+
+        <form method="post" id="returnForm">
+            {% csrf_token %}
+            
+            <div class="return-grid">
+                <!-- Assignment Information -->
+                <div class="assignment-info">
+                    <div class="info-header">
+                        <i class="bi bi-info-circle"></i>
+                        <h4>Assignment Details</h4>
+                    </div>
+                    <div class="info-body">
+                        <!-- Device Preview -->
+                        <div class="device-preview">
+                            <div class="device-icon">
+                                <i class="bi bi-{{ object.device.subcategory.category.name|lower|default:'laptop' }}"></i>
+                            </div>
+                            <div class="device-details">
+                                <h6>{{ object.device.brand }} {{ object.device.model }}</h6>
+                                <p>{{ object.device.device_id }} • {{ object.device.subcategory.name }}</p>
+                            </div>
+                        </div>
+
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Assignment ID</span>
+                                <span class="info-value highlight">{{ object.assignment_id }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Assigned To</span>
+                                <span class="info-value">{{ object.assigned_to.get_full_name }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Assignment Date</span>
+                                <span class="info-value">{{ object.assigned_date|date:"M d, Y" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Expected Return</span>
+                                <span class="info-value">{{ object.expected_return_date|date:"M d, Y" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Location</span>
+                                <span class="info-value">{{ object.assigned_location.name }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Assignment Type</span>
+                                <span class="info-value">{{ object.get_assignment_type_display }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Current Status</span>
+                                <span class="info-value status assigned">{{ object.get_status_display }}</span>
+                            </div>
+                            {% if object.deposit_amount %}
+                            <div class="info-item">
+                                <span class="info-label">Deposit Amount</span>
+                                <span class="info-value">৳{{ object.deposit_amount|floatformat:2 }}</span>
+                            </div>
+                            {% endif %}
+                            <div class="info-item">
+                                <span class="info-label">Days Assigned</span>
+                                <span class="info-value">{{ object.days_assigned }} days</span>
+                            </div>
+                            {% if object.expected_return_date < today %}
+                            <div class="info-item">
+                                <span class="info-label">Days Overdue</span>
+                                <span class="info-value" style="color: #dc2626; font-weight: 600;">{{ object.days_overdue }} days</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Return Form -->
+                <div class="return-form-card">
+                    <div class="form-header">
+                        <i class="bi bi-clipboard-check"></i>
+                        <h4>Return Information</h4>
+                    </div>
+                    <div class="form-body">
+                        {% if object.expected_return_date < today %}
+                        <div class="alert alert-warning">
+                            <strong>Note:</strong> This assignment is overdue by {{ object.days_overdue }} days.
+                        </div>
+                        {% endif %}
+
+                        <div class="form-group">
+                            <label for="{{ form.actual_return_date.id_for_label }}" class="form-label">
+                                Actual Return Date *
+                            </label>
+                            {{ form.actual_return_date }}
+                            {% if form.actual_return_date.help_text %}
+                            <div class="form-text">{{ form.actual_return_date.help_text }}</div>
+                            {% endif %}
+                            {% for error in form.actual_return_date.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.condition_at_return.id_for_label }}" class="form-label">
+                                Device Condition *
+                            </label>
+                            {{ form.condition_at_return }}
+                            {% if form.condition_at_return.help_text %}
+                            <div class="form-text">{{ form.condition_at_return.help_text }}</div>
+                            {% endif %}
+                            {% for error in form.condition_at_return.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.return_notes.id_for_label }}" class="form-label">
+                                Return Notes
+                            </label>
+                            {{ form.return_notes }}
+                            {% if form.return_notes.help_text %}
+                            <div class="form-text">{{ form.return_notes.help_text }}</div>
+                            {% endif %}
+                            {% for error in form.return_notes.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        {% if object.deposit_amount %}
+                        <div class="form-group">
+                            <div class="form-check">
+                                {{ form.deposit_returned }}
+                                <label for="{{ form.deposit_returned.id_for_label }}" class="form-check-label">
+                                    Return deposit amount (৳{{ object.deposit_amount|floatformat:2 }})
+                                </label>
+                            </div>
+                            {% for error in form.deposit_returned.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <a href="{% url 'assignments:detail' object.pk %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i>
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-check-circle"></i>
+                            Process Return
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('returnForm');
+    const returnDateInput = document.getElementById('{{ form.actual_return_date.id_for_label }}');
+    const conditionSelect = document.getElementById('{{ form.condition_at_return.id_for_label }}');
+    const notesTextarea = document.getElementById('{{ form.return_notes.id_for_label }}');
+    
+    // Set default return date to today
+    if (!returnDateInput.value) {
+        returnDateInput.value = new Date().toISOString().split('T')[0];
+    }
+    
+    // Auto-focus on condition select after date is set
+    returnDateInput.addEventListener('change', function() {
+        conditionSelect.focus();
+    });
+    
+    // Auto-expand notes textarea based on condition
+    conditionSelect.addEventListener('change', function() {
+        if (this.value === 'DAMAGED' || this.value === 'NEEDS_REPAIR') {
+            notesTextarea.focus();
+            notesTextarea.placeholder = 'Please describe the damage or issues found...';
+        } else {
+            notesTextarea.placeholder = 'Notes about device return, condition, or any issues...';
+        }
+    });
+    
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        const errors = [];
+        
+        // Check required fields
+        if (!returnDateInput.value) {
+            errors.push('Return date is required.');
+            isValid = false;
+        }
+        
+        if (!conditionSelect.value) {
+            errors.push('Device condition is required.');
+            isValid = false;
+        }
+        
+        // Check if return date is not in future
+        const returnDate = new Date(returnDateInput.value);
+        const today = new Date();
+        today.setHours(23, 59, 59, 999); // End of today
+        
+        if (returnDate > today) {
+            errors.push('Return date cannot be in the future.');
+            isValid = false;
+        }
+        
+        // Check if condition requires notes
+        if ((conditionSelect.value === 'DAMAGED' || conditionSelect.value === 'NEEDS_REPAIR') && 
+            !notesTextarea.value.trim()) {
+            errors.push('Notes are required when device condition is damaged or needs repair.');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fix the following errors:\n\n' + errors.join('\n'));
+            return false;
+        }
+        
+        // Confirmation dialog
+        const confirmMessage = `Are you sure you want to process this return?\n\n` +
+                             `Device: {{ object.device.brand }} {{ object.device.model }}\n` +
+                             `Assignment ID: {{ object.assignment_id }}\n` +
+                             `Return Date: ${returnDateInput.value}\n` +
+                             `Condition: ${conditionSelect.options[conditionSelect.selectedIndex].text}`;
+        
+        if (!confirm(confirmMessage)) {
+            e.preventDefault();
+            return false;
+        }
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + Enter to submit
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            form.submit();
+        }
+        
+        // Escape to cancel
+        if (e.key === 'Escape') {
+            window.location.href = "{% url 'assignments:detail' object.pk %}";
+        }
+    });
+});
+</script>
+{% endblock %}

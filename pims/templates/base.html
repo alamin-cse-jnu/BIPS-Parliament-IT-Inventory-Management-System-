@@ -69,6 +69,70 @@
                     </ul>
                 </div>
                 
+                <!-- Assignments Menu -->
+                <div class="nav-item dropdown me-2">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-clipboard-check me-2"></i>Assignments
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'assignments:list' %}">
+                            <i class="bi bi-list me-2"></i>All Assignments
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'assignments:active' %}">
+                            <i class="bi bi-check-circle me-2"></i>Active
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'assignments:returned' %}">
+                            <i class="bi bi-arrow-return-left me-2"></i>Returned
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'assignments:overdue' %}">
+                            <i class="bi bi-exclamation-triangle me-2"></i>Overdue
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'assignments:create' %}">
+                            <i class="bi bi-plus-circle me-2"></i>New Assignment
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'assignments:quick' %}">
+                            <i class="bi bi-lightning me-2"></i>Quick Assign
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'assignments:filter' %}">
+                            <i class="bi bi-funnel me-2"></i>Advanced Filter
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'assignments:export' %}">
+                            <i class="bi bi-download me-2"></i>Export Data
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'assignments:reports' %}">
+                            <i class="bi bi-graph-up me-2"></i>Reports
+                        </a></li>
+                    </ul>
+                </div>
+                
+                <!-- Quick Export Actions -->
+                <div class="nav-item dropdown me-2">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-download me-1"></i>Export
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><h6 class="dropdown-header">Assignment Exports</h6></li>
+                        <li><a class="dropdown-item" href="{% url 'assignments:export_csv' %}">
+                            <i class="bi bi-file-earmark-spreadsheet me-2"></i>CSV Data
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'assignments:export_excel' %}">
+                            <i class="bi bi-file-earmark-excel me-2"></i>Excel Report
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'assignments:export_pdf' %}">
+                            <i class="bi bi-file-earmark-pdf me-2"></i>PDF Summary
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'assignments:export_json' %}">
+                            <i class="bi bi-file-earmark-code me-2"></i>JSON Data
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'assignments:export' %}">
+                            <i class="bi bi-gear me-2"></i>Advanced Export
+                        </a></li>
+                    </ul>
+                </div>
+                
                 <!-- User Profile Dropdown -->
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" 

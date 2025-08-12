@@ -5220,13 +5220,14 @@ class BulkQRCodeGenerateView(LoginRequiredMixin, PermissionRequiredMixin, Templa
     """
     Generate QR codes for multiple locations in bulk.
     """
-    template_name = 'locations/bulk_qrcode_generate.html'
+    template_name = 'locations/qrcode.html'  # Updated to use existing template
     permission_required = 'locations.change_location'
     
     def get_context_data(self, **kwargs):
         """Add bulk generation context."""
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Bulk QR Code Generation'
+        context['is_bulk_view'] = True  # Flag to modify template behavior
         
         # Get filter options
         context['buildings'] = Building.objects.filter(is_active=True).order_by('name')
@@ -5235,16 +5236,35 @@ class BulkQRCodeGenerateView(LoginRequiredMixin, PermissionRequiredMixin, Templa
         all_locations = Location.objects.filter(is_active=True)
         
         # Get locations without QR codes
-        
         locations_with_qr = LocationQRCode.objects.filter(
             is_active=True
         ).values_list('location_id', flat=True)
         
         locations_without_qr = all_locations.exclude(id__in=locations_with_qr)
         
-        context['total_locations'] = all_locations.count()
-        context['locations_without_qr'] = locations_without_qr.count()
-        context['locations_with_qr'] = len(locations_with_qr)
+        # Statistics for bulk operations
+        context['bulk_stats'] = {
+            'total_locations': all_locations.count(),
+            'locations_without_qr': locations_without_qr.count(),
+            'locations_with_qr': len(locations_with_qr),
+            'coverage_percentage': round(
+                (len(locations_with_qr) / all_locations.count()) * 100, 1
+            ) if all_locations.count() > 0 else 0
+        }
+        
+        # Locations for selection (limit for performance)
+        context['locations_for_bulk'] = all_locations.select_related(
+            'building', 'floor', 'block', 'room', 'office'
+        ).order_by('building__name', 'name')[:500]  # Limit for UI performance
+        
+        # Office and room types for filtering
+        context['office_types'] = Office.objects.filter(
+            is_active=True
+        ).values_list('office_type', flat=True).distinct()
+        
+        context['room_types'] = Room.objects.filter(
+            is_active=True
+        ).values_list('room_type', flat=True).distinct()
         
         return context
     

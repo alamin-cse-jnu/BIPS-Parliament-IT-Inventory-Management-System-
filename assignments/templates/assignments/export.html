@@ -1,0 +1,1043 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Export Assignments - PIMS{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+/* Assignment Export Interface - Parliament Design System */
+.export-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.export-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.export-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.export-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+    font-size: 1rem;
+}
+
+.export-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.export-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.section-header {
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-header.formats {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+}
+
+.section-header.filters {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.section-title {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.125rem;
+}
+
+.section-body {
+    padding: 1.5rem;
+}
+
+.format-options {
+    display: grid;
+    gap: 1rem;
+}
+
+.format-card {
+    background: rgba(248, 250, 252, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+
+.format-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border-color: rgba(30, 58, 138, 0.3);
+    text-decoration: none;
+    color: inherit;
+}
+
+.format-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.format-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.format-icon.pdf {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.format-icon.excel {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.format-icon.csv {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.format-icon.json {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.format-details {
+    flex: 1;
+}
+
+.format-title {
+    color: #1e293b;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    font-size: 1rem;
+}
+
+.format-description {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.format-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.feature-tag {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    padding: 0.125rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.filter-section {
+    background: rgba(248, 250, 252, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.filter-title {
+    color: #374151;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-label {
+    color: #374151;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    display: block;
+    font-size: 0.875rem;
+}
+
+.form-control,
+.form-select {
+    border: 1px solid rgba(203, 213, 225, 0.6);
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #1e3a8a;
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+    background: rgba(255, 255, 255, 1);
+    outline: none;
+}
+
+.checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.checkbox-item:hover {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.form-check-input {
+    margin: 0;
+}
+
+.form-check-label {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #374151;
+    font-weight: 500;
+}
+
+.date-range-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.export-actions {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.actions-title {
+    color: #1e3a8a;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.btn-export {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-export.primary {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    color: white;
+}
+
+.btn-export.primary:hover {
+    background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-export.secondary {
+    background: transparent;
+    border: 1px solid rgba(107, 114, 128, 0.5);
+    color: #6b7280;
+}
+
+.btn-export.secondary:hover {
+    background: rgba(107, 114, 128, 0.1);
+    border-color: #6b7280;
+    color: #4b5563;
+    text-decoration: none;
+}
+
+.quick-export {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+}
+
+.quick-title {
+    color: #7c3aed;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.quick-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.quick-btn {
+    background: rgba(124, 58, 237, 0.1);
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    color: #7c3aed;
+    padding: 1rem;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.quick-btn:hover {
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(124, 58, 237, 0.3);
+}
+
+.quick-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(124, 58, 237, 0.2);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.quick-btn:hover .quick-icon {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.quick-details {
+    flex: 1;
+}
+
+.quick-label {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.quick-description {
+    font-size: 0.875rem;
+    opacity: 0.8;
+}
+
+.stats-preview {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.stats-title {
+    color: #f59e0b;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    border-radius: 12px;
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .export-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .date-range-group {
+        grid-template-columns: 1fr;
+    }
+    
+    .quick-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .checkbox-group {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Loading States */
+.loading-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+
+.loading-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e2e8f0;
+    border-top: 4px solid #1e3a8a;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="export-container">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="export-header">
+            <h1 class="export-title">
+                <i class="bi bi-download"></i>
+                Export Assignments
+            </h1>
+            <p class="export-subtitle">
+                Export assignment data in various formats for reporting and analysis - Parliament IT Inventory Management System
+            </p>
+        </div>
+
+        <!-- Quick Export Options -->
+        <div class="quick-export">
+            <h3 class="quick-title">
+                <i class="bi bi-lightning"></i>
+                Quick Export
+            </h3>
+            <div class="quick-options">
+                <a href="{% url 'assignments:export_csv' %}" class="quick-btn">
+                    <div class="quick-icon">
+                        <i class="bi bi-file-earmark-spreadsheet"></i>
+                    </div>
+                    <div class="quick-details">
+                        <div class="quick-label">All Assignments (CSV)</div>
+                        <div class="quick-description">Complete assignment data</div>
+                    </div>
+                </a>
+                <a href="{% url 'assignments:export_excel' %}" class="quick-btn">
+                    <div class="quick-icon">
+                        <i class="bi bi-file-earmark-excel"></i>
+                    </div>
+                    <div class="quick-details">
+                        <div class="quick-label">Excel Report</div>
+                        <div class="quick-description">Formatted Excel workbook</div>
+                    </div>
+                </a>
+                <a href="{% url 'assignments:export_pdf' %}" class="quick-btn">
+                    <div class="quick-icon">
+                        <i class="bi bi-file-earmark-pdf"></i>
+                    </div>
+                    <div class="quick-details">
+                        <div class="quick-label">PDF Summary</div>
+                        <div class="quick-description">Print-ready report</div>
+                    </div>
+                </a>
+                <a href="{% url 'assignments:active' %}" class="quick-btn">
+                    <div class="quick-icon">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="quick-details">
+                        <div class="quick-label">Active Only</div>
+                        <div class="quick-description">Current assignments</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="export-grid">
+            <!-- Export Formats -->
+            <div class="export-section">
+                <div class="section-header formats">
+                    <i class="bi bi-file-earmark"></i>
+                    <h3 class="section-title">Export Formats</h3>
+                </div>
+                <div class="section-body">
+                    <div class="format-options">
+                        <a href="#" class="format-card" data-format="pdf">
+                            <div class="format-header">
+                                <div class="format-icon pdf">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                </div>
+                                <div class="format-details">
+                                    <div class="format-title">PDF Report</div>
+                                    <div class="format-description">Professional formatted report</div>
+                                    <div class="format-features">
+                                        <span class="feature-tag">Print Ready</span>
+                                        <span class="feature-tag">Charts</span>
+                                        <span class="feature-tag">Summary</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+
+                        <a href="#" class="format-card" data-format="excel">
+                            <div class="format-header">
+                                <div class="format-icon excel">
+                                    <i class="bi bi-file-earmark-excel"></i>
+                                </div>
+                                <div class="format-details">
+                                    <div class="format-title">Excel Workbook</div>
+                                    <div class="format-description">Spreadsheet with multiple sheets</div>
+                                    <div class="format-features">
+                                        <span class="feature-tag">Formulas</span>
+                                        <span class="feature-tag">Pivot Tables</span>
+                                        <span class="feature-tag">Charts</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+
+                        <a href="#" class="format-card" data-format="csv">
+                            <div class="format-header">
+                                <div class="format-icon csv">
+                                    <i class="bi bi-file-earmark-spreadsheet"></i>
+                                </div>
+                                <div class="format-details">
+                                    <div class="format-title">CSV Data</div>
+                                    <div class="format-description">Raw data for import/analysis</div>
+                                    <div class="format-features">
+                                        <span class="feature-tag">Lightweight</span>
+                                        <span class="feature-tag">Universal</span>
+                                        <span class="feature-tag">Fast</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+
+                        <a href="#" class="format-card" data-format="json">
+                            <div class="format-header">
+                                <div class="format-icon json">
+                                    <i class="bi bi-file-earmark-code"></i>
+                                </div>
+                                <div class="format-details">
+                                    <div class="format-title">JSON Data</div>
+                                    <div class="format-description">Structured data for developers</div>
+                                    <div class="format-features">
+                                        <span class="feature-tag">API Ready</span>
+                                        <span class="feature-tag">Structured</span>
+                                        <span class="feature-tag">Machine Readable</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Filters -->
+            <div class="export-section">
+                <div class="section-header filters">
+                    <i class="bi bi-funnel"></i>
+                    <h3 class="section-title">Filter Options</h3>
+                </div>
+                <div class="section-body">
+                    <form id="exportForm" method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Status Filter -->
+                        <div class="filter-section">
+                            <h4 class="filter-title">
+                                <i class="bi bi-check-square"></i>
+                                Assignment Status
+                            </h4>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="status" value="ACTIVE" class="form-check-input" checked>
+                                    <span class="form-check-label">Active Assignments</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="status" value="RETURNED" class="form-check-input">
+                                    <span class="form-check-label">Returned Assignments</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="status" value="OVERDUE" class="form-check-input">
+                                    <span class="form-check-label">Overdue Assignments</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Type Filter -->
+                        <div class="filter-section">
+                            <h4 class="filter-title">
+                                <i class="bi bi-tag"></i>
+                                Assignment Type
+                            </h4>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="assignment_type" value="TEMPORARY" class="form-check-input" checked>
+                                    <span class="form-check-label">Temporary</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="assignment_type" value="PERMANENT" class="form-check-input" checked>
+                                    <span class="form-check-label">Permanent</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Date Range -->
+                        <div class="filter-section">
+                            <h4 class="filter-title">
+                                <i class="bi bi-calendar-range"></i>
+                                Date Range
+                            </h4>
+                            <div class="form-group">
+                                <label class="form-label">Assignment Date Range</label>
+                                <div class="date-range-group">
+                                    <input type="date" name="date_from" class="form-control" placeholder="From date">
+                                    <input type="date" name="date_to" class="form-control" placeholder="To date">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Employee Filter -->
+                        <div class="filter-section">
+                            <h4 class="filter-title">
+                                <i class="bi bi-person"></i>
+                                Employee Filter
+                            </h4>
+                            <div class="form-group">
+                                <label class="form-label">Specific Employee</label>
+                                <select name="employee" class="form-select">
+                                    <option value="">All Employees</option>
+                                    {% for employee in employees %}
+                                    <option value="{{ employee.id }}">{{ employee.get_full_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Location Filter -->
+                        <div class="filter-section">
+                            <h4 class="filter-title">
+                                <i class="bi bi-geo-alt"></i>
+                                Location Filter
+                            </h4>
+                            <div class="form-group">
+                                <label class="form-label">Specific Location</label>
+                                <select name="location" class="form-select">
+                                    <option value="">All Locations</option>
+                                    {% for location in locations %}
+                                    <option value="{{ location.id }}">{{ location.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Preview -->
+        <div class="stats-preview">
+            <h3 class="stats-title">
+                <i class="bi bi-graph-up"></i>
+                Export Preview
+            </h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">{{ total_assignments|default:0 }}</div>
+                    <div class="stat-label">Total Assignments</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ active_assignments|default:0 }}</div>
+                    <div class="stat-label">Active</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ returned_assignments|default:0 }}</div>
+                    <div class="stat-label">Returned</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ overdue_assignments|default:0 }}</div>
+                    <div class="stat-label">Overdue</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ temporary_assignments|default:0 }}</div>
+                    <div class="stat-label">Temporary</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ permanent_assignments|default:0 }}</div>
+                    <div class="stat-label">Permanent</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Actions -->
+        <div class="export-actions">
+            <h3 class="actions-title">
+                <i class="bi bi-play"></i>
+                Export Actions
+            </h3>
+            <div class="action-buttons">
+                <button type="button" class="btn-export primary" onclick="exportData('pdf')">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    Export as PDF
+                </button>
+                <button type="button" class="btn-export primary" onclick="exportData('excel')">
+                    <i class="bi bi-file-earmark-excel"></i>
+                    Export as Excel
+                </button>
+                <button type="button" class="btn-export primary" onclick="exportData('csv')">
+                    <i class="bi bi-file-earmark-spreadsheet"></i>
+                    Export as CSV
+                </button>
+                <button type="button" class="btn-export primary" onclick="exportData('json')">
+                    <i class="bi bi-file-earmark-code"></i>
+                    Export as JSON
+                </button>
+                <a href="{% url 'assignments:list' %}" class="btn-export secondary">
+                    <i class="bi bi-arrow-left"></i>
+                    Back to Assignments
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <h4>Preparing Export</h4>
+        <p>Please wait while we generate your assignment report...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Format card interactions
+    const formatCards = document.querySelectorAll('.format-card');
+    let selectedFormat = 'pdf';
+    
+    formatCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active from all cards
+            formatCards.forEach(c => c.classList.remove('active'));
+            
+            // Add active to clicked card
+            this.classList.add('active');
+            
+            // Update selected format
+            selectedFormat = this.dataset.format;
+        });
+    });
+    
+    // Set default active format
+    document.querySelector('[data-format="pdf"]').classList.add('active');
+    
+    // Form validation
+    const form = document.getElementById('exportForm');
+    const statusCheckboxes = form.querySelectorAll('input[name="status"]');
+    const typeCheckboxes = form.querySelectorAll('input[name="assignment_type"]');
+    
+    function validateForm() {
+        const hasStatus = Array.from(statusCheckboxes).some(cb => cb.checked);
+        const hasType = Array.from(typeCheckboxes).some(cb => cb.checked);
+        
+        if (!hasStatus) {
+            alert('Please select at least one assignment status.');
+            return false;
+        }
+        
+        if (!hasType) {
+            alert('Please select at least one assignment type.');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // Export functionality
+    window.exportData = function(format) {
+        if (!validateForm()) {
+            return;
+        }
+        
+        // Show loading overlay
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        
+        // Get form data
+        const formData = new FormData(form);
+        formData.append('format', format);
+        
+        // Create download URL based on format
+        let exportUrl;
+        switch(format) {
+            case 'pdf':
+                exportUrl = '{% url "assignments:export_pdf" %}';
+                break;
+            case 'excel':
+                exportUrl = '{% url "assignments:export_excel" %}';
+                break;
+            case 'csv':
+                exportUrl = '{% url "assignments:export_csv" %}';
+                break;
+            case 'json':
+                exportUrl = '{% url "assignments:export_json" %}';
+                break;
+            default:
+                exportUrl = '{% url "assignments:export_csv" %}';
+        }
+        
+        // Create form for submission
+        const exportForm = document.createElement('form');
+        exportForm.method = 'POST';
+        exportForm.action = exportUrl;
+        exportForm.style.display = 'none';
+        
+        // Add CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfField = document.createElement('input');
+        csrfField.type = 'hidden';
+        csrfField.name = 'csrfmiddlewaretoken';
+        csrfField.value = csrfToken;
+        exportForm.appendChild(csrfField);
+        
+        // Add form data
+        for (let [key, value] of formData.entries()) {
+            const field = document.createElement('input');
+            field.type = 'hidden';
+            field.name = key;
+            field.value = value;
+            exportForm.appendChild(field);
+        }
+        
+        // Submit form
+        document.body.appendChild(exportForm);
+        exportForm.submit();
+        document.body.removeChild(exportForm);
+        
+        // Hide loading overlay after a delay
+        setTimeout(() => {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }, 3000);
+    };
+    
+    // Quick export buttons
+    const quickBtns = document.querySelectorAll('.quick-btn');
+    quickBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            // If it's a direct URL, let it proceed normally
+            if (this.href && this.href.includes('assignments')) {
+                // Show loading for direct links
+                document.getElementById('loadingOverlay').style.display = 'flex';
+                setTimeout(() => {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                }, 2000);
+            }
+        });
+    });
+    
+    // Real-time statistics update (if needed)
+    function updateStats() {
+        const formData = new FormData(form);
+        
+        // Here you could make an AJAX call to get filtered statistics
+        // For now, we'll just update the display
+        console.log('Stats updated based on current filters');
+    }
+    
+    // Listen for filter changes
+    form.addEventListener('change', updateStats);
+    
+    // Auto-select today's date for 'to' field when 'from' is selected
+    const dateFromInput = form.querySelector('input[name="date_from"]');
+    const dateToInput = form.querySelector('input[name="date_to"]');
+    
+    if (dateFromInput && dateToInput) {
+        dateFromInput.addEventListener('change', function() {
+            if (this.value && !dateToInput.value) {
+                dateToInput.value = new Date().toISOString().split('T')[0];
+            }
+        });
+    }
+    
+    // Enhanced format card styling
+    formatCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-4px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            if (!this.classList.contains('active')) {
+                this.style.transform = 'translateY(0) scale(1)';
+            }
+        });
+    });
+});
+
+// Additional utility functions
+function selectAllStatus(checked) {
+    const checkboxes = document.querySelectorAll('input[name="status"]');
+    checkboxes.forEach(cb => cb.checked = checked);
+}
+
+function selectAllTypes(checked) {
+    const checkboxes = document.querySelectorAll('input[name="assignment_type"]');
+    checkboxes.forEach(cb => cb.checked = checked);
+}
+
+function resetFilters() {
+    const form = document.getElementById('exportForm');
+    form.reset();
+    
+    // Re-check default options
+    document.querySelector('input[name="status"][value="ACTIVE"]').checked = true;
+    document.querySelector('input[name="assignment_type"][value="TEMPORARY"]').checked = true;
+    document.querySelector('input[name="assignment_type"][value="PERMANENT"]').checked = true;
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+            case 'e':
+                e.preventDefault();
+                exportData(selectedFormat || 'pdf');
+                break;
+            case 'r':
+                e.preventDefault();
+                resetFilters();
+                break;
+        }
+    }
+});
+</script>
+{% endblock %}

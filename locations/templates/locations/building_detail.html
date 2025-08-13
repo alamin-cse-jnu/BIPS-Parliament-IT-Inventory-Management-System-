@@ -1,0 +1,739 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ building.name }} - Building Details - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'locations:list' %}">Locations</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:building_list' %}">Buildings</a></li>
+    <li class="breadcrumb-item active">{{ building.name }}</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-header {
+        background: linear-gradient(135deg, var(--parliament-primary), #1e40af);
+        color: white;
+        padding: var(--spacing-xl);
+        margin: -var(--spacing-lg) -var(--spacing-lg) var(--spacing-xl) -var(--spacing-lg);
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        position: relative;
+    }
+    
+    .detail-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+    }
+    
+    .detail-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+    
+    .detail-subtitle {
+        opacity: 0.9;
+        font-size: 1.125rem;
+        margin: 0;
+    }
+    
+    .detail-actions {
+        position: absolute;
+        top: var(--spacing-lg);
+        right: var(--spacing-lg);
+    }
+    
+    .detail-container {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .detail-body {
+        padding: var(--spacing-xl);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow);
+        text-align: center;
+        border-left: 4px solid;
+        transition: var(--transition);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .stat-card.locations {
+        border-left-color: var(--parliament-primary);
+    }
+    
+    .stat-card.active {
+        border-left-color: var(--parliament-success);
+    }
+    
+    .stat-card.status {
+        border-left-color: var(--parliament-info);
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .stat-label {
+        color: var(--parliament-neutral);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 500;
+    }
+    
+    .detail-section {
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .detail-section:last-child {
+        margin-bottom: 0;
+    }
+    
+    .detail-section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-lg);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 2px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--spacing-lg);
+    }
+    
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+    
+    .info-label {
+        font-size: 0.875rem;
+        color: var(--parliament-neutral);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+    
+    .info-value {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+    }
+    
+    .building-code {
+        font-family: 'Monaco', 'Consolas', monospace;
+        background: linear-gradient(135deg, var(--parliament-primary), #1e40af);
+        color: white;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--border-radius);
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        display: inline-block;
+        box-shadow: var(--shadow);
+    }
+    
+    .status-badge {
+        font-size: 1rem;
+        font-weight: 600;
+        padding: var(--spacing-sm) var(--spacing-lg);
+        border-radius: var(--border-radius-full);
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+    
+    .status-active {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-inactive {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .locations-table-container {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+    
+    .table-header {
+        background-color: #f8f9fa;
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .table-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .table th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #e5e7eb;
+        color: var(--parliament-dark);
+        font-weight: 600;
+        padding: var(--spacing-md);
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .table td {
+        padding: var(--spacing-md);
+        vertical-align: middle;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+    
+    .location-code {
+        font-family: 'Monaco', 'Consolas', monospace;
+        background-color: #f3f4f6;
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--border-radius);
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--parliament-primary);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: var(--spacing-xxl);
+        color: var(--parliament-neutral);
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .empty-state-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .empty-state-text {
+        font-size: 1.125rem;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    @media (max-width: 768px) {
+        .detail-actions {
+            position: static;
+            margin-top: var(--spacing-md);
+            text-align: center;
+        }
+        
+        .detail-header {
+            text-align: center;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .table-header {
+            flex-direction: column;
+            gap: var(--spacing-md);
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card locations">
+            <div class="stat-number text-primary">{{ locations_count }}</div>
+            <div class="stat-label">Total Locations</div>
+        </div>
+        <div class="stat-card active">
+            <div class="stat-number text-success">{{ active_locations_count }}</div>
+            <div class="stat-label">Active Locations</div>
+        </div>
+        <div class="stat-card status">
+            <div class="stat-number {% if building.is_active %}text-success{% else %}text-warning{% endif %}">
+                {% if building.is_active %}
+                    <i class="bi bi-check-circle"></i>
+                {% else %}
+                    <i class="bi bi-pause-circle"></i>
+                {% endif %}
+            </div>
+            <div class="stat-label">Building Status</div>
+        </div>
+    </div>
+
+    <!-- Building Details -->
+    <div class="detail-container">
+        <div class="detail-header">
+            <div class="detail-actions">
+                <div class="btn-group">
+                    {% if perms.locations.change_building %}
+                        <a href="{% url 'locations:building_edit' building.pk %}" class="btn btn-light">
+                            <i class="bi bi-pencil me-2"></i>
+                            Edit Building
+                        </a>
+                    {% endif %}
+                    {% if perms.locations.change_building %}
+                        <form method="post" action="{% url 'locations:building_toggle_status' building.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn {% if building.is_active %}btn-warning{% else %}btn-success{% endif %}"
+                                    onclick="return confirm('Are you sure you want to {% if building.is_active %}deactivate{% else %}activate{% endif %} this building?')">
+                                <i class="bi bi-{% if building.is_active %}pause-circle{% else %}play-circle{% endif %} me-2"></i>
+                                {% if building.is_active %}Deactivate{% else %}Activate{% endif %}
+                            </button>
+                        </form>
+                    {% endif %}
+                    {% if perms.locations.delete_building %}
+                        <a href="{% url 'locations:building_delete' building.pk %}" class="btn btn-danger"
+                           onclick="return confirm('Are you sure you want to delete this building?')">
+                            <i class="bi bi-trash me-2"></i>
+                            Delete
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <h1 class="detail-title">
+                <i class="bi bi-building"></i>
+                {{ building.name }}
+            </h1>
+            <p class="detail-subtitle">Building Information and Related Locations</p>
+        </div>
+
+        <div class="detail-body">
+            <!-- Basic Information -->
+            <div class="detail-section">
+                <h3 class="detail-section-title">
+                    <i class="bi bi-info-circle"></i>
+                    Basic Information
+                </h3>
+                
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="bi bi-building"></i>
+                            Building Name
+                        </div>
+                        <div class="info-value">{{ building.name }}</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="bi bi-hash"></i>
+                            Building Code
+                        </div>
+                        <div class="info-value">
+                            <span class="building-code">{{ building.code }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="bi bi-toggle-on"></i>
+                            Status
+                        </div>
+                        <div class="info-value">
+                            {% if building.is_active %}
+                                <span class="status-badge status-active">
+                                    <i class="bi bi-check-circle"></i>
+                                    Active
+                                </span>
+                            {% else %}
+                                <span class="status-badge status-inactive">
+                                    <i class="bi bi-pause-circle"></i>
+                                    Inactive
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="bi bi-calendar-plus"></i>
+                            Created Date
+                        </div>
+                        <div class="info-value">{{ building.created_at|date:"F d, Y" }}</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="bi bi-calendar-check"></i>
+                            Last Updated
+                        </div>
+                        <div class="info-value">{{ building.updated_at|date:"F d, Y" }}</div>
+                    </div>
+                </div>
+                
+                {% if building.description %}
+                    <div class="mt-4">
+                        <div class="info-label">
+                            <i class="bi bi-card-text"></i>
+                            Description
+                        </div>
+                        <div class="info-value mt-2">
+                            <p class="mb-0">{{ building.description|linebreaks }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Locations -->
+    <div class="locations-table-container">
+        <div class="table-header">
+            <h2 class="table-title">
+                <i class="bi bi-geo-alt"></i>
+                Related Locations
+            </h2>
+            <div class="d-flex align-items-center gap-3">
+                <small class="text-muted">
+                    {{ locations_count }} location{{ locations_count|pluralize }} found
+                </small>
+                {% if perms.locations.add_location %}
+                    <a href="{% url 'locations:create' %}?building={{ building.pk }}" class="btn btn-sm btn-parliament-primary">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Add Location
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if related_locations %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Location Code</th>
+                            <th>Location Name</th>
+                            <th>Floor</th>
+                            <th>Block</th>
+                            <th>Room</th>
+                            <th>Office</th>
+                            <th>Coordinates</th>
+                            <th>Status</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for location in related_locations %}
+                            <tr>
+                                <td>
+                                    <span class="location-code">{{ location.location_code }}</span>
+                                </td>
+                                <td>
+                                    <strong>{{ location.name }}</strong>
+                                </td>
+                                <td>
+                                    {% if location.floor %}
+                                        <span class="badge bg-light text-dark">
+                                            <i class="bi bi-layers me-1"></i>
+                                            {{ location.floor.name }} ({{ location.floor.floor_number }})
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if location.block %}
+                                        <span class="badge bg-light text-dark">
+                                            <i class="bi bi-grid-3x3-gap me-1"></i>
+                                            {{ location.block.name }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if location.room %}
+                                        <span class="badge bg-light text-dark">
+                                            <i class="bi bi-door-open me-1"></i>
+                                            {{ location.room.name }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if location.office %}
+                                        <span class="badge bg-light text-dark">
+                                            <i class="bi bi-briefcase me-1"></i>
+                                            {{ location.office.name }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if location.has_coordinates %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-geo-alt-fill me-1"></i>
+                                            GPS
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">
+                                            <i class="bi bi-geo-alt me-1"></i>
+                                            No GPS
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if location.is_active %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle me-1"></i>
+                                            Active
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">
+                                            <i class="bi bi-pause-circle me-1"></i>
+                                            Inactive
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'locations:detail' location.pk %}" 
+                                           class="btn btn-outline-primary" 
+                                           data-bs-toggle="tooltip" 
+                                           title="View Location">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        {% if perms.locations.change_location %}
+                                            <a href="{% url 'locations:edit' location.pk %}" 
+                                               class="btn btn-outline-warning" 
+                                               data-bs-toggle="tooltip" 
+                                               title="Edit Location">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        {% endif %}
+                                        {% if location.has_coordinates %}
+                                            <a href="{% url 'locations:coordinates' location.pk %}" 
+                                               class="btn btn-outline-info" 
+                                               data-bs-toggle="tooltip" 
+                                               title="View Coordinates">
+                                                <i class="bi bi-geo-alt"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="bi bi-geo-alt text-muted"></i>
+                </div>
+                <h3 class="empty-state-title">No Locations Found</h3>
+                <p class="empty-state-text">
+                    This building doesn't have any locations assigned yet.
+                </p>
+                {% if perms.locations.add_location %}
+                    <a href="{% url 'locations:create' %}?building={{ building.pk }}" class="btn btn-parliament-primary">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Add First Location
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Navigation -->
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <a href="{% url 'locations:building_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>
+            Back to Buildings
+        </a>
+        
+        <div class="btn-group">
+            <a href="{% url 'locations:building_export' %}?building={{ building.pk }}" class="btn btn-outline-info">
+                <i class="bi bi-download me-2"></i>
+                Export Building Data
+            </a>
+            {% if perms.locations.view_location and locations_count > 0 %}
+                <a href="{% url 'locations:list' %}?building={{ building.pk }}" class="btn btn-outline-primary">
+                    <i class="bi bi-list me-2"></i>
+                    View All Locations
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Copy building code to clipboard
+        const buildingCode = document.querySelector('.building-code');
+        if (buildingCode) {
+            buildingCode.style.cursor = 'pointer';
+            buildingCode.title = 'Click to copy building code';
+            
+            buildingCode.addEventListener('click', function() {
+                const text = this.textContent;
+                navigator.clipboard.writeText(text).then(function() {
+                    // Show success feedback
+                    const originalBg = buildingCode.style.background;
+                    buildingCode.style.background = 'linear-gradient(135deg, #059669, #10b981)';
+                    
+                    setTimeout(() => {
+                        buildingCode.style.background = originalBg;
+                    }, 1000);
+                    
+                    // Show tooltip
+                    const tooltip = new bootstrap.Tooltip(buildingCode, {
+                        title: 'Copied!',
+                        trigger: 'manual'
+                    });
+                    tooltip.show();
+                    setTimeout(() => tooltip.dispose(), 2000);
+                });
+            });
+        }
+
+        // Confirm actions for status toggle and delete
+        const forms = document.querySelectorAll('form[action*="toggle_status"]');
+        forms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const isActive = {{ building.is_active|yesno:"true,false" }};
+                const action = isActive ? 'deactivate' : 'activate';
+                const message = `Are you sure you want to ${action} this building?`;
+                
+                if (!confirm(message)) {
+                    e.preventDefault();
+                }
+            });
+        });
+
+        // Animate stat cards on page load
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'all 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+
+        // Enhanced table interactions
+        const tableRows = document.querySelectorAll('.table tbody tr');
+        tableRows.forEach(row => {
+            row.addEventListener('click', function(e) {
+                // Don't trigger on button clicks
+                if (e.target.closest('.btn')) return;
+                
+                const detailLink = this.querySelector('a[href*="detail"]');
+                if (detailLink) {
+                    window.location.href = detailLink.href;
+                }
+            });
+            
+            // Add pointer cursor
+            row.style.cursor = 'pointer';
+        });
+
+        // Auto-refresh page data every 5 minutes
+        setInterval(function() {
+            // Only refresh if user is still active on the page
+            if (document.hasFocus()) {
+                fetch(window.location.href)
+                    .then(response => response.text())
+                    .then(html => {
+                        // Update only the stats without full page reload
+                        const parser = new DOMParser();
+                        const newDoc = parser.parseFromString(html, 'text/html');
+                        
+                        // Update stat numbers
+                        const currentStats = document.querySelectorAll('.stat-number');
+                        const newStats = newDoc.querySelectorAll('.stat-number');
+                        
+                        currentStats.forEach((stat, index) => {
+                            if (newStats[index] && stat.textContent !== newStats[index].textContent) {
+                                stat.style.transform = 'scale(1.1)';
+                                stat.textContent = newStats[index].textContent;
+                                setTimeout(() => {
+                                    stat.style.transform = 'scale(1)';
+                                }, 200);
+                            }
+                        });
+                    })
+                    .catch(console.error);
+            }
+        }, 300000); // 5 minutes
+    });
+</script>
+{% endblock %}

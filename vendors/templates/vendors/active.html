@@ -1,0 +1,463 @@
+{% extends 'vendors/base_vendor.html' %}
+{% load static %}
+
+{% block vendor_title %}Active Vendors{% endblock %}
+
+{% block vendor_header_title %}Active Vendors{% endblock %}
+{% block vendor_header_subtitle %}Currently active vendors available for business operations{% endblock %}
+
+{% block vendor_breadcrumb_items %}
+    <li class="breadcrumb-item active">Active Vendors</li>
+{% endblock %}
+
+{% block vendor_content %}
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number success">{{ total_count }}</div>
+                <div class="text-muted">Active Vendors</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number warning">
+                    {{ vendors|length|default:0 }}
+                    {% for vendor in vendors %}
+                        {% if vendor.is_preferred %}
+                            {% if forloop.first %}1{% else %}{{ forloop.counter }}{% endif %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="text-muted">Preferred Active</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number primary">
+                    {% regroup vendors by vendor_type as vendor_groups %}
+                    {{ vendor_groups|length }}
+                </div>
+                <div class="text-muted">Vendor Types</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number info">
+                    {% regroup vendors by city as city_groups %}
+                    {{ city_groups|length }}
+                </div>
+                <div class="text-muted">Cities</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Filters -->
+    <div class="card vendor-card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="search-box">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="text" id="quickSearch" class="form-control search-input" 
+                               placeholder="Quick search active vendors..." autocomplete="off">
+                    </div>
+                </div>
+                
+                <div class="col-md-2">
+                    <select id="typeFilter" class="form-select filter-dropdown">
+                        <option value="">All Types</option>
+                        {% regroup vendors by vendor_type as vendor_groups %}
+                        {% for group in vendor_groups %}
+                            <option value="{{ group.grouper }}">{{ group.list.0.get_vendor_type_display }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <select id="cityFilter" class="form-select filter-dropdown">
+                        <option value="">All Cities</option>
+                        {% regroup vendors by city as city_groups %}
+                        {% for group in city_groups %}
+                            <option value="{{ group.grouper }}">{{ group.grouper }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <select id="preferredFilter" class="form-select filter-dropdown">
+                        <option value="">All Active</option>
+                        <option value="preferred">Preferred Only</option>
+                        <option value="regular">Regular Only</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <button type="button" id="clearFilters" class="btn btn-vendor-secondary w-100">
+                        <i class="bi bi-arrow-clockwise me-1"></i>
+                        Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-0">
+                <span id="visibleCount">{{ vendors|length }}</span> of {{ total_count }} active vendor{{ total_count|pluralize }}
+            </h4>
+            <small class="text-muted" id="filterStatus">All active vendors displayed</small>
+        </div>
+        
+        <div class="d-flex gap-2">
+            {% if vendors %}
+                <!-- Export Options -->
+                <div class="dropdown">
+                    <button class="btn btn-vendor-secondary dropdown-toggle" type="button" 
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-download me-1"></i>
+                        Export
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'vendors:export_csv' %}?is_active=true">
+                                <i class="bi bi-file-earmark-spreadsheet me-2"></i>
+                                Export Active Vendors (CSV)
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'vendors:export_contacts' %}?is_active=true">
+                                <i class="bi bi-person-lines-fill me-2"></i>
+                                Export Active Contacts
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- View Toggle -->
+                <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="viewMode" id="gridView" autocomplete="off" checked>
+                    <label class="btn btn-outline-secondary" for="gridView" title="Grid View">
+                        <i class="bi bi-grid-3x2"></i>
+                    </label>
+                    
+                    <input type="radio" class="btn-check" name="viewMode" id="compactView" autocomplete="off">
+                    <label class="btn btn-outline-secondary" for="compactView" title="Compact View">
+                        <i class="bi bi-list"></i>
+                    </label>
+                </div>
+            {% endif %}
+            
+            {% if perms.vendors.add_vendor %}
+                <a href="{% url 'vendors:create' %}" class="btn btn-vendor-primary">
+                    <i class="bi bi-plus-circle me-1"></i>
+                    Add Vendor
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Vendors List -->
+    {% if vendors %}
+        <!-- Grid View (Default) -->
+        <div id="gridContainer" class="vendors-list">
+            {% for vendor in vendors %}
+                <div class="vendor-item" 
+                     data-type="{{ vendor.vendor_type }}" 
+                     data-city="{{ vendor.city }}" 
+                     data-preferred="{{ vendor.is_preferred|yesno:'true,false' }}"
+                     data-search="{{ vendor.name|lower }} {{ vendor.vendor_code|lower }} {{ vendor.contact_person|lower }}">
+                    {% include 'vendors/_vendor_card.html' %}
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Compact View -->
+        <div id="compactContainer" class="vendors-list d-none">
+            <div class="row">
+                {% for vendor in vendors %}
+                    <div class="col-lg-6 mb-3 vendor-item" 
+                         data-type="{{ vendor.vendor_type }}" 
+                         data-city="{{ vendor.city }}" 
+                         data-preferred="{{ vendor.is_preferred|yesno:'true,false' }}"
+                         data-search="{{ vendor.name|lower }} {{ vendor.vendor_code|lower }} {{ vendor.contact_person|lower }}">
+                        <div class="card vendor-card h-100">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-start">
+                                    <div class="vendor-type-icon vendor-type-{{ vendor.vendor_type|lower }} me-3">
+                                        <i class="{{ vendor.get_vendor_type_display_icon }}"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">
+                                            <a href="{% url 'vendors:detail' vendor.pk %}" class="text-decoration-none">
+                                                {{ vendor.name }}
+                                            </a>
+                                            {% if vendor.is_preferred %}
+                                                <i class="bi bi-star-fill text-warning ms-1" title="Preferred Vendor"></i>
+                                            {% endif %}
+                                        </h6>
+                                        <p class="mb-2 small text-muted">
+                                            <strong>{{ vendor.vendor_code }}</strong> • {{ vendor.get_vendor_type_display }}
+                                        </p>
+                                        <div class="small mb-2">
+                                            <div><i class="bi bi-person me-1"></i>{{ vendor.contact_person }}</div>
+                                            <div><i class="bi bi-telephone me-1"></i>{{ vendor.phone_primary }}</div>
+                                            <div><i class="bi bi-geo-alt me-1"></i>{{ vendor.city }}</div>
+                                        </div>
+                                        {% if vendor.performance_rating %}
+                                            <div class="performance-stars">
+                                                {% with rating=vendor.performance_rating|floatformat:1 %}
+                                                    {% for i in "12345" %}
+                                                        {% if forloop.counter <= rating|floatformat:0 %}
+                                                            <i class="bi bi-star-fill"></i>
+                                                        {% elif forloop.counter <= rating|add:0.5 %}
+                                                            <i class="bi bi-star-half"></i>
+                                                        {% else %}
+                                                            <i class="bi bi-star"></i>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                {% endwith %}
+                                                <small class="ms-1">({{ vendor.performance_rating }})</small>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="vendor-badge active">Active</span>
+                                        <div class="dropdown mt-2">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'vendors:detail' vendor.pk %}">
+                                                        <i class="bi bi-eye me-2"></i>View Details
+                                                    </a>
+                                                </li>
+                                                {% if perms.vendors.change_vendor %}
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'vendors:edit' vendor.pk %}">
+                                                            <i class="bi bi-pencil me-2"></i>Edit
+                                                        </a>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'vendors:deactivate' vendor.pk %}"
+                                                           onclick="return confirm('Deactivate this vendor?')">
+                                                            <i class="bi bi-pause-circle me-2"></i>Deactivate
+                                                        </a>
+                                                    </li>
+                                                {% endif %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- No Results Message (Hidden by default) -->
+        <div id="noResults" class="text-center py-5 d-none">
+            <div class="mb-4">
+                <i class="bi bi-funnel" style="font-size: 4rem; color: #e5e7eb;"></i>
+            </div>
+            <h4 class="text-muted mb-3">No active vendors match your filters</h4>
+            <p class="text-muted mb-4">
+                Try adjusting your search terms or clearing some filters.
+            </p>
+            <button type="button" onclick="clearAllFilters()" class="btn btn-vendor-secondary">
+                <i class="bi bi-arrow-clockwise me-1"></i>
+                Clear All Filters
+            </button>
+        </div>
+    {% else %}
+        <!-- No Active Vendors -->
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-check-circle" style="font-size: 4rem; color: #e5e7eb;"></i>
+            </div>
+            <h4 class="text-muted mb-3">No active vendors found</h4>
+            <p class="text-muted mb-4">
+                There are currently no active vendors in the system. Add your first active vendor to get started.
+            </p>
+            <div class="d-flex justify-content-center gap-3">
+                {% if perms.vendors.add_vendor %}
+                    <a href="{% url 'vendors:create' %}" class="btn btn-vendor-primary">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        Add First Active Vendor
+                    </a>
+                {% endif %}
+                <a href="{% url 'vendors:inactive' %}" class="btn btn-vendor-secondary">
+                    <i class="bi bi-pause-circle me-1"></i>
+                    View Inactive Vendors
+                </a>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block vendor_extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const quickSearch = document.getElementById('quickSearch');
+            const typeFilter = document.getElementById('typeFilter');
+            const cityFilter = document.getElementById('cityFilter');
+            const preferredFilter = document.getElementById('preferredFilter');
+            const clearFiltersBtn = document.getElementById('clearFilters');
+            const vendorItems = document.querySelectorAll('.vendor-item');
+            const visibleCount = document.getElementById('visibleCount');
+            const filterStatus = document.getElementById('filterStatus');
+            const noResults = document.getElementById('noResults');
+            const gridContainer = document.getElementById('gridContainer');
+            const compactContainer = document.getElementById('compactContainer');
+            const gridView = document.getElementById('gridView');
+            const compactView = document.getElementById('compactView');
+            
+            // Filter functionality
+            function applyFilters() {
+                const searchTerm = quickSearch.value.toLowerCase();
+                const typeValue = typeFilter.value;
+                const cityValue = cityFilter.value;
+                const preferredValue = preferredFilter.value;
+                
+                let visibleItems = 0;
+                
+                vendorItems.forEach(item => {
+                    let show = true;
+                    
+                    // Search filter
+                    if (searchTerm && !item.dataset.search.includes(searchTerm)) {
+                        show = false;
+                    }
+                    
+                    // Type filter
+                    if (typeValue && item.dataset.type !== typeValue) {
+                        show = false;
+                    }
+                    
+                    // City filter
+                    if (cityValue && item.dataset.city !== cityValue) {
+                        show = false;
+                    }
+                    
+                    // Preferred filter
+                    if (preferredValue === 'preferred' && item.dataset.preferred !== 'true') {
+                        show = false;
+                    } else if (preferredValue === 'regular' && item.dataset.preferred === 'true') {
+                        show = false;
+                    }
+                    
+                    if (show) {
+                        item.style.display = '';
+                        visibleItems++;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                
+                // Update counters and messages
+                visibleCount.textContent = visibleItems;
+                
+                if (visibleItems === 0) {
+                    gridContainer.style.display = 'none';
+                    compactContainer.style.display = 'none';
+                    noResults.classList.remove('d-none');
+                } else {
+                    noResults.classList.add('d-none');
+                    if (gridView.checked) {
+                        gridContainer.style.display = '';
+                        compactContainer.style.display = 'none';
+                    } else {
+                        gridContainer.style.display = 'none';
+                        compactContainer.style.display = '';
+                    }
+                }
+                
+                // Update filter status
+                const activeFilters = [];
+                if (searchTerm) activeFilters.push(`search: "${searchTerm}"`);
+                if (typeValue) activeFilters.push(`type: ${typeValue}`);
+                if (cityValue) activeFilters.push(`city: ${cityValue}`);
+                if (preferredValue) activeFilters.push(`${preferredValue} vendors`);
+                
+                if (activeFilters.length > 0) {
+                    filterStatus.textContent = `Filtered by ${activeFilters.join(', ')}`;
+                } else {
+                    filterStatus.textContent = 'All active vendors displayed';
+                }
+            }
+            
+            // Event listeners for filters
+            let searchTimeout;
+            quickSearch.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(applyFilters, 300);
+            });
+            
+            typeFilter.addEventListener('change', applyFilters);
+            cityFilter.addEventListener('change', applyFilters);
+            preferredFilter.addEventListener('change', applyFilters);
+            
+            // Clear filters
+            function clearAllFilters() {
+                quickSearch.value = '';
+                typeFilter.selectedIndex = 0;
+                cityFilter.selectedIndex = 0;
+                preferredFilter.selectedIndex = 0;
+                applyFilters();
+            }
+            
+            clearFiltersBtn.addEventListener('click', clearAllFilters);
+            window.clearAllFilters = clearAllFilters;
+            
+            // View switching
+            gridView.addEventListener('change', function() {
+                if (this.checked) {
+                    gridContainer.classList.remove('d-none');
+                    compactContainer.classList.add('d-none');
+                    localStorage.setItem('activeVendorsView', 'grid');
+                }
+            });
+            
+            compactView.addEventListener('change', function() {
+                if (this.checked) {
+                    gridContainer.classList.add('d-none');
+                    compactContainer.classList.remove('d-none');
+                    localStorage.setItem('activeVendorsView', 'compact');
+                }
+            });
+            
+            // Restore view preference
+            const savedView = localStorage.getItem('activeVendorsView');
+            if (savedView === 'compact') {
+                compactView.checked = true;
+                gridContainer.classList.add('d-none');
+                compactContainer.classList.remove('d-none');
+            }
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                    e.preventDefault();
+                    quickSearch.focus();
+                }
+                
+                if (e.key === 'Escape' && document.activeElement === quickSearch) {
+                    quickSearch.value = '';
+                    applyFilters();
+                }
+            });
+            
+            // Initialize tooltips for preferred vendors
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+            const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+{% endblock %}

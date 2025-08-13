@@ -1,0 +1,718 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Profile - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'users:profile' %}">My Profile</a></li>
+    <li class="breadcrumb-item active">Edit Profile</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="bi bi-pencil-square me-2 text-primary"></i>
+                Edit Profile
+            </h1>
+            <p class="text-muted mb-0">Update your personal information and preferences</p>
+        </div>
+        <a href="{% url 'users:profile' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>
+            Back to Profile
+        </a>
+    </div>
+
+    <!-- Profile Edit Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-6">
+            <!-- Current Profile Preview -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        {% if user.profile_image %}
+                            <img src="{{ user.profile_image.url }}" alt="{{ user.get_full_name }}" class="current-profile-image me-3">
+                        {% else %}
+                            <div class="current-profile-placeholder me-3">
+                                <i class="bi bi-person fs-4"></i>
+                            </div>
+                        {% endif %}
+                        <div class="flex-grow-1">
+                            <h5 class="mb-1">{{ user.get_full_name }}</h5>
+                            <p class="text-muted mb-0">{{ user.username }} • {{ user.email|default:"No email" }}</p>
+                            <small class="text-muted">{{ user.designation|default:"No designation" }} • {{ user.office|default:"No office" }}</small>
+                        </div>
+                        <div class="text-end">
+                            {% if user.is_active and user.is_active_employee %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Form -->
+            <div class="form-container">
+                <div class="form-header">
+                    <h2 class="form-title">
+                        <i class="bi bi-person-gear"></i>
+                        Update Profile Information
+                    </h2>
+                </div>
+
+                <div class="form-body">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+
+                        <!-- Personal Information Section -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">Personal Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="{{ form.first_name.id_for_label }}" class="form-label required">
+                                        <i class="bi bi-person me-2"></i>First Name
+                                    </label>
+                                    {{ form.first_name }}
+                                    {% if form.first_name.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.first_name.errors %}
+                                                <small class="text-danger">{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.last_name.id_for_label }}" class="form-label required">
+                                        <i class="bi bi-person me-2"></i>Last Name
+                                    </label>
+                                    {{ form.last_name }}
+                                    {% if form.last_name.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.last_name.errors %}
+                                                <small class="text-danger">{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label required">
+                                        <i class="bi bi-envelope me-2"></i>Email Address
+                                    </label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.email.errors %}
+                                                <small class="text-danger">{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Used for system notifications and password recovery
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.phone_number.id_for_label }}" class="form-label">
+                                        <i class="bi bi-telephone me-2"></i>Phone Number
+                                    </label>
+                                    {{ form.phone_number }}
+                                    {% if form.phone_number.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.phone_number.errors %}
+                                                <small class="text-danger">{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Format: +8801XXXXXXXXX or 01XXXXXXXXX
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Employment Information Section -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">Employment Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="{{ form.designation.id_for_label }}" class="form-label">
+                                        <i class="bi bi-briefcase me-2"></i>Designation
+                                    </label>
+                                    {{ form.designation }}
+                                    {% if form.designation.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.designation.errors %}
+                                                <small class="text-danger">{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Your job title or position
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.office.id_for_label }}" class="form-label">
+                                        <i class="bi bi-building me-2"></i>Office
+                                    </label>
+                                    {{ form.office }}
+                                    {% if form.office.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.office.errors %}
+                                                <small class="text-danger">{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Your department or office within Parliament Secretariat
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Profile Picture Section -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">Profile Picture</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="{{ form.profile_image.id_for_label }}" class="form-label">
+                                        <i class="bi bi-camera me-2"></i>Profile Image
+                                    </label>
+                                    {{ form.profile_image }}
+                                    {% if form.profile_image.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.profile_image.errors %}
+                                                <small class="text-danger">{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Upload a profile picture (JPG, PNG, GIF, WebP - Max 2MB)
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="image-preview-container">
+                                        {% if user.profile_image %}
+                                            <div class="current-image">
+                                                <label class="form-label">Current Image:</label>
+                                                <div class="image-wrapper">
+                                                    <img src="{{ user.profile_image.url }}" alt="Current profile" class="current-image-preview">
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        <div id="imagePreview" class="new-image-preview" style="display: none;">
+                                            <label class="form-label">New Image Preview:</label>
+                                            <div class="image-wrapper">
+                                                <img id="previewImg" class="preview-image">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Read-Only Information Section -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">System Information</h3>
+                            <div class="readonly-info">
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <div class="info-label">
+                                            <i class="bi bi-person-circle me-2"></i>Username
+                                        </div>
+                                        <div class="info-value">
+                                            <code>{{ user.username }}</code>
+                                        </div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">
+                                            <i class="bi bi-badge-4k me-2"></i>Employee ID
+                                        </div>
+                                        <div class="info-value">
+                                            <code>{{ user.employee_id }}</code>
+                                        </div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">
+                                            <i class="bi bi-calendar3 me-2"></i>Member Since
+                                        </div>
+                                        <div class="info-value">
+                                            {{ user.created_at|date:"F j, Y" }}
+                                        </div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">
+                                            <i class="bi bi-clock me-2"></i>Last Login
+                                        </div>
+                                        <div class="info-value">
+                                            {% if user.last_login %}
+                                                {{ user.last_login|date:"F j, Y g:i A" }}
+                                            {% else %}
+                                                Never
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="info-note">
+                                    <i class="bi bi-info-circle text-muted me-2"></i>
+                                    <small class="text-muted">
+                                        These system fields cannot be changed. Contact your administrator if updates are needed.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-footer">
+                            <div class="text-muted">
+                                <i class="bi bi-shield-check me-1"></i>
+                                <small>Your information is encrypted and stored securely</small>
+                            </div>
+                            <div class="btn-group">
+                                <button type="submit" class="btn btn-parliament-primary">
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    Update Profile
+                                </button>
+                                <a href="{% url 'users:profile' %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle me-2"></i>
+                                    Cancel
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Additional Actions -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-gear me-2"></i>
+                        Additional Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="action-item">
+                                <div class="action-icon">
+                                    <i class="bi bi-key text-warning"></i>
+                                </div>
+                                <div class="action-content">
+                                    <h6>Change Password</h6>
+                                    <p class="text-muted mb-2">Update your account password for security</p>
+                                    <a href="{% url 'users:password_change' %}" class="btn btn-outline-warning btn-sm">
+                                        <i class="bi bi-key me-1"></i>
+                                        Change Password
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="action-item">
+                                <div class="action-icon">
+                                    <i class="bi bi-shield-check text-info"></i>
+                                </div>
+                                <div class="action-content">
+                                    <h6>View Permissions</h6>
+                                    <p class="text-muted mb-2">See your system permissions and roles</p>
+                                    <a href="{% url 'users:permissions' user.pk %}" class="btn btn-outline-info btn-sm">
+                                        <i class="bi bi-eye me-1"></i>
+                                        View Permissions
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Image preview functionality
+        const imageInput = document.getElementById('{{ form.profile_image.id_for_label }}');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        
+        if (imageInput && imagePreview && previewImg) {
+            imageInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    // Validate file type
+                    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                    if (!allowedTypes.includes(file.type)) {
+                        alert('Please select a valid image file (JPG, PNG, GIF, WebP)');
+                        this.value = '';
+                        imagePreview.style.display = 'none';
+                        return;
+                    }
+                    
+                    // Validate file size (2MB)
+                    if (file.size > 2 * 1024 * 1024) {
+                        alert('File size must be less than 2MB');
+                        this.value = '';
+                        imagePreview.style.display = 'none';
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                        imagePreview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    imagePreview.style.display = 'none';
+                }
+            });
+        }
+
+        // Phone number validation
+        const phoneInput = document.getElementById('{{ form.phone_number.id_for_label }}');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function() {
+                const value = this.value;
+                const isValid = /^(\+?8801[3-9]\d{8}|01[3-9]\d{8})$/.test(value) || value === '';
+                
+                this.setCustomValidity(isValid ? '' : 'Enter a valid Bangladesh phone number');
+                this.classList.toggle('is-valid', isValid && value.length > 0);
+                this.classList.toggle('is-invalid', !isValid && value.length > 0);
+            });
+        }
+
+        // Email validation
+        const emailInput = document.getElementById('{{ form.email.id_for_label }}');
+        if (emailInput) {
+            const currentEmail = '{{ user.email|escapejs }}';
+            
+            emailInput.addEventListener('blur', function() {
+                const value = this.value;
+                if (value && value !== currentEmail) {
+                    // Check if email already exists via AJAX
+                    fetch(`/users/check-email/?email=${encodeURIComponent(value)}&exclude={{ user.pk }}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.exists) {
+                                this.setCustomValidity('This email is already registered');
+                                this.classList.add('is-invalid');
+                                this.classList.remove('is-valid');
+                            } else {
+                                this.setCustomValidity('');
+                                this.classList.remove('is-invalid');
+                                this.classList.add('is-valid');
+                            }
+                        })
+                        .catch(() => {
+                            this.setCustomValidity('');
+                        });
+                } else {
+                    this.setCustomValidity('');
+                    this.classList.remove('is-invalid');
+                    if (value) {
+                        this.classList.add('is-valid');
+                    }
+                }
+            });
+        }
+
+        // Form validation
+        const form = document.querySelector('.needs-validation');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Focus on first invalid field
+                    const firstInvalid = form.querySelector('.is-invalid, :invalid');
+                    if (firstInvalid) {
+                        firstInvalid.focus();
+                    }
+                }
+                form.classList.add('was-validated');
+            });
+        }
+
+        // Show changes indicator
+        const originalValues = {};
+        const inputs = form.querySelectorAll('input, select, textarea');
+        
+        inputs.forEach(input => {
+            originalValues[input.name] = input.value;
+            
+            input.addEventListener('input', function() {
+                const hasChanges = Object.keys(originalValues).some(key => {
+                    const currentInput = form.querySelector(`[name="${key}"]`);
+                    return currentInput && currentInput.value !== originalValues[key];
+                });
+                
+                // Show/hide unsaved changes indicator
+                const indicator = document.getElementById('unsavedChanges');
+                if (hasChanges && !indicator) {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.id = 'unsavedChanges';
+                    alertDiv.className = 'alert alert-warning position-fixed';
+                    alertDiv.style.cssText = 'top: 80px; right: 20px; z-index: 1050;';
+                    alertDiv.innerHTML = `
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        You have unsaved changes
+                    `;
+                    document.body.appendChild(alertDiv);
+                } else if (!hasChanges && indicator) {
+                    indicator.remove();
+                }
+            });
+        });
+
+        // Warn before leaving with unsaved changes
+        window.addEventListener('beforeunload', function(e) {
+            const indicator = document.getElementById('unsavedChanges');
+            if (indicator) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+            }
+        });
+
+        // Remove warning when form is submitted
+        form.addEventListener('submit', function() {
+            window.removeEventListener('beforeunload', arguments.callee);
+        });
+
+        // Auto-save draft functionality (optional)
+        let autoSaveTimeout;
+        inputs.forEach(input => {
+            input.addEventListener('input', function() {
+                clearTimeout(autoSaveTimeout);
+                autoSaveTimeout = setTimeout(() => {
+                    // Save draft to localStorage
+                    const formData = {};
+                    inputs.forEach(inp => {
+                        if (inp.name && inp.value) {
+                            formData[inp.name] = inp.value;
+                        }
+                    });
+                    localStorage.setItem('profile_draft', JSON.stringify(formData));
+                }, 2000);
+            });
+        });
+
+        // Load draft on page load
+        const savedDraft = localStorage.getItem('profile_draft');
+        if (savedDraft) {
+            try {
+                const draftData = JSON.parse(savedDraft);
+                Object.keys(draftData).forEach(key => {
+                    const input = form.querySelector(`[name="${key}"]`);
+                    if (input && input.value !== draftData[key]) {
+                        // Show option to restore draft
+                        const restoreButton = document.createElement('button');
+                        restoreButton.type = 'button';
+                        restoreButton.className = 'btn btn-sm btn-outline-info';
+                        restoreButton.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>Restore Draft';
+                        restoreButton.addEventListener('click', function() {
+                            Object.keys(draftData).forEach(draftKey => {
+                                const draftInput = form.querySelector(`[name="${draftKey}"]`);
+                                if (draftInput) {
+                                    draftInput.value = draftData[draftKey];
+                                }
+                            });
+                            this.remove();
+                            localStorage.removeItem('profile_draft');
+                        });
+                        
+                        const formHeader = document.querySelector('.form-header');
+                        if (formHeader) {
+                            formHeader.appendChild(restoreButton);
+                        }
+                    }
+                });
+            } catch (e) {
+                localStorage.removeItem('profile_draft');
+            }
+        }
+
+        // Clear draft on successful form submission
+        form.addEventListener('submit', function() {
+            localStorage.removeItem('profile_draft');
+        });
+    });
+</script>
+
+<style>
+    .form-label.required::after {
+        content: ' *';
+        color: var(--parliament-danger);
+    }
+    
+    .current-profile-image {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--parliament-primary);
+    }
+    
+    .current-profile-placeholder {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: var(--parliament-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    
+    .image-preview-container {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-lg);
+    }
+    
+    .image-wrapper {
+        text-align: center;
+    }
+    
+    .current-image-preview,
+    .preview-image {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: var(--border-radius);
+        border: 2px solid var(--parliament-primary);
+    }
+    
+    .preview-image {
+        border-color: var(--parliament-success);
+    }
+    
+    .readonly-info {
+        background-color: #f8f9fa;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-lg);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: var(--parliament-neutral);
+        font-size: 0.875rem;
+    }
+    
+    .info-value {
+        font-weight: 500;
+        color: var(--parliament-dark);
+    }
+    
+    .info-note {
+        text-align: center;
+        padding-top: var(--spacing-md);
+        border-top: 1px solid #e5e7eb;
+    }
+    
+    .action-item {
+        display: flex;
+        align-items: start;
+        gap: var(--spacing-md);
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius);
+        background-color: #f8f9fa;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .action-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 1.2rem;
+    }
+    
+    .action-content {
+        flex: 1;
+    }
+    
+    .action-content h6 {
+        margin-bottom: var(--spacing-xs);
+        color: var(--parliament-dark);
+    }
+    
+    .action-content p {
+        font-size: 0.875rem;
+        line-height: 1.4;
+    }
+    
+    code {
+        background-color: rgba(var(--parliament-primary-rgb), 0.1);
+        color: var(--parliament-primary);
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--border-radius);
+        font-size: 0.875rem;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    @media (max-width: 991.98px) {
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+        
+        .btn-group .btn {
+            width: 100%;
+        }
+    }
+    
+    @media (max-width: 767.98px) {
+        .action-item {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .action-icon {
+            align-self: center;
+        }
+    }
+</style>
+{% endblock %}

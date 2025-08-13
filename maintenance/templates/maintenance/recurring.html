@@ -1,0 +1,650 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Recurring Maintenance - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Recurring Maintenance Styling - Parliament Design System */
+.recurring-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.page-header {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.page-title {
+    color: #1e40af;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.page-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.action-bar {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.filter-controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.filter-select {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(203, 213, 225, 0.5);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.recurring-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.main-content {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.content-header {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: between;
+    align-items: center;
+}
+
+.content-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.content-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.content-body {
+    padding: 1.5rem;
+}
+
+.maintenance-item {
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+    padding: 1rem 0;
+    transition: all 0.2s ease;
+}
+
+.maintenance-item:hover {
+    background: rgba(248, 250, 252, 0.8);
+    margin: 0 -1.5rem;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+}
+
+.maintenance-item:last-child {
+    border-bottom: none;
+}
+
+.maintenance-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 1rem;
+    align-items: center;
+}
+
+.maintenance-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+}
+
+.maintenance-icon.pending { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.maintenance-icon.scheduled { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.maintenance-icon.overdue { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+.maintenance-details {
+    flex: 1;
+}
+
+.maintenance-title {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.maintenance-title a {
+    color: #1e293b;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.maintenance-title a:hover {
+    color: #3b82f6;
+}
+
+.maintenance-meta {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.meta-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.device-badge { background: rgba(16, 185, 129, 0.1); color: #059669; }
+.priority-high { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+.priority-medium { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+.priority-low { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
+
+.maintenance-dates {
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+.follow-up-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.follow-up-pending { background: rgba(245, 158, 11, 0.1); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3); }
+.follow-up-today { background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); }
+.follow-up-soon { background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+
+.maintenance-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.sidebar {
+    display: grid;
+    gap: 2rem;
+}
+
+.stats-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.stats-header {
+    color: #1e40af;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.stat-item.pending { background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(124, 58, 237, 0.1)); }
+.stat-item.scheduled { background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1)); }
+.stat-item.overdue { background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1)); }
+.stat-item.patterns { background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1)); }
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.patterns-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.patterns-header {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.patterns-body {
+    padding: 1.5rem;
+}
+
+.pattern-item {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.pattern-item:last-child {
+    border-bottom: none;
+}
+
+.pattern-name {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+}
+
+.pattern-count {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #64748b;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.pagination-wrapper {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1rem;
+    margin-top: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .recurring-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filter-controls {
+        flex-direction: column;
+    }
+    
+    .maintenance-row {
+        grid-template-columns: auto 1fr;
+        gap: 0.75rem;
+    }
+    
+    .maintenance-actions {
+        grid-column: 1 / -1;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid rgba(203, 213, 225, 0.3);
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="recurring-container">
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-arrow-repeat"></i>
+                Recurring Maintenance
+            </h1>
+            <p class="page-subtitle">Manage recurring maintenance schedules and preventive maintenance patterns for devices across Parliament House Complex, Dhaka</p>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="action-bar">
+            <div class="filter-controls">
+                <select class="filter-select" id="statusFilter">
+                    <option value="">All Follow-ups</option>
+                    <option value="pending">Pending</option>
+                    <option value="today">Due Today</option>
+                    <option value="overdue">Overdue</option>
+                </select>
+                <select class="filter-select" id="priorityFilter">
+                    <option value="">All Priorities</option>
+                    <option value="high">High Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="low">Low Priority</option>
+                </select>
+            </div>
+            <div class="filter-controls">
+                <a href="{% url 'maintenance:create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-lg"></i> Schedule Maintenance
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="recurring-grid">
+            <!-- Main Content -->
+            <div class="main-content">
+                <div class="content-header">
+                    <h3 class="content-title">
+                        <i class="bi bi-clock-history"></i>
+                        Follow-up Required
+                    </h3>
+                    <div class="content-actions">
+                        <a href="{% url 'maintenance:list' %}" class="btn btn-outline-light btn-sm">
+                            <i class="bi bi-list"></i> All Maintenance
+                        </a>
+                    </div>
+                </div>
+                <div class="content-body">
+                    {% if recurring_maintenance %}
+                        {% for maintenance in recurring_maintenance %}
+                        <div class="maintenance-item">
+                            <div class="maintenance-row">
+                                <div class="maintenance-icon {% if maintenance.follow_up_date <= today %}overdue{% elif maintenance.follow_up_date <= tomorrow %}scheduled{% else %}pending{% endif %}">
+                                    {% if maintenance.follow_up_date <= today %}
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                    {% elif maintenance.follow_up_date <= tomorrow %}
+                                        <i class="bi bi-clock"></i>
+                                    {% else %}
+                                        <i class="bi bi-calendar-event"></i>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="maintenance-details">
+                                    <div class="maintenance-title">
+                                        <a href="{% url 'maintenance:detail' maintenance.pk %}">
+                                            {{ maintenance.maintenance_id }} - {{ maintenance.device.device_id }}
+                                        </a>
+                                    </div>
+                                    <div class="maintenance-meta">
+                                        <span class="meta-badge device-badge">
+                                            {{ maintenance.device.subcategory.name }}
+                                        </span>
+                                        {% if maintenance.priority == 'HIGH' %}
+                                        <span class="meta-badge priority-high">High Priority</span>
+                                        {% elif maintenance.priority == 'MEDIUM' %}
+                                        <span class="meta-badge priority-medium">Medium Priority</span>
+                                        {% else %}
+                                        <span class="meta-badge priority-low">Low Priority</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="maintenance-dates">
+                                        <i class="bi bi-calendar3"></i> Follow-up: {{ maintenance.follow_up_date|date:"M d, Y" }}
+                                        {% if maintenance.vendor %}
+                                        | <i class="bi bi-building"></i> {{ maintenance.vendor.name }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="follow-up-badge {% if maintenance.follow_up_date <= today %}follow-up-today{% elif maintenance.follow_up_date <= tomorrow %}follow-up-soon{% else %}follow-up-pending{% endif %}">
+                                    {% if maintenance.follow_up_date <= today %}
+                                        Due Today
+                                    {% elif maintenance.follow_up_date <= tomorrow %}
+                                        Due Soon
+                                    {% else %}
+                                        Pending
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="maintenance-actions">
+                                    <a href="{% url 'maintenance:detail' maintenance.pk %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'maintenance:edit' maintenance.pk %}" class="btn btn-outline-warning btn-sm">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="bi bi-check-circle"></i>
+                            <h4>No Recurring Maintenance</h4>
+                            <p>All maintenance schedules are up to date.</p>
+                            <a href="{% url 'maintenance:create' %}" class="btn btn-primary">
+                                Schedule New Maintenance
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Statistics -->
+                <div class="stats-card">
+                    <div class="stats-header">
+                        <i class="bi bi-graph-up"></i>
+                        Recurring Statistics
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-item pending">
+                            <div class="stat-number">{{ recurring_maintenance|length }}</div>
+                            <div class="stat-label">Follow-ups</div>
+                        </div>
+                        <div class="stat-item scheduled">
+                            <div class="stat-number">
+                                {% for maintenance in recurring_maintenance %}
+                                    {% if maintenance.follow_up_date <= tomorrow %}{{ forloop.counter }}{% endif %}
+                                {% empty %}0{% endfor %}
+                            </div>
+                            <div class="stat-label">Due Soon</div>
+                        </div>
+                        <div class="stat-item overdue">
+                            <div class="stat-number">
+                                {% for maintenance in recurring_maintenance %}
+                                    {% if maintenance.follow_up_date <= today %}{{ forloop.counter }}{% endif %}
+                                {% empty %}0{% endfor %}
+                            </div>
+                            <div class="stat-label">Overdue</div>
+                        </div>
+                        <div class="stat-item patterns">
+                            <div class="stat-number">{{ preventive_patterns|length }}</div>
+                            <div class="stat-label">Patterns</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preventive Patterns -->
+                <div class="patterns-card">
+                    <div class="patterns-header">
+                        <i class="bi bi-shield-check"></i>
+                        <span>Preventive Patterns</span>
+                    </div>
+                    <div class="patterns-body">
+                        {% if preventive_patterns %}
+                            {% for pattern in preventive_patterns %}
+                            <div class="pattern-item">
+                                <div class="pattern-name">{{ pattern.device__subcategory__category__name }}</div>
+                                <div class="pattern-count">{{ pattern.count }}</div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="bi bi-clipboard-data"></i>
+                                <p>No patterns available</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if recurring_maintenance.has_other_pages %}
+        <div class="pagination-wrapper">
+            <nav aria-label="Recurring maintenance navigation">
+                <ul class="pagination justify-content-center">
+                    {% if recurring_maintenance.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ recurring_maintenance.previous_page_number }}">
+                                <i class="bi bi-chevron-left"></i> Previous
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in recurring_maintenance.paginator.page_range %}
+                        {% if recurring_maintenance.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if recurring_maintenance.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ recurring_maintenance.next_page_number }}">
+                                Next <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const statusFilter = document.getElementById('statusFilter');
+    const priorityFilter = document.getElementById('priorityFilter');
+    
+    function filterMaintenanceItems() {
+        const statusValue = statusFilter.value;
+        const priorityValue = priorityFilter.value;
+        const items = document.querySelectorAll('.maintenance-item');
+        
+        items.forEach(item => {
+            let showItem = true;
+            
+            // Filter by status
+            if (statusValue) {
+                const followUpBadge = item.querySelector('.follow-up-badge');
+                if (followUpBadge) {
+                    const isMatch = followUpBadge.classList.contains(`follow-up-${statusValue}`);
+                    if (!isMatch) showItem = false;
+                }
+            }
+            
+            // Filter by priority
+            if (priorityValue) {
+                const priorityBadge = item.querySelector(`.priority-${priorityValue}`);
+                if (!priorityBadge) showItem = false;
+            }
+            
+            item.style.display = showItem ? 'block' : 'none';
+        });
+        
+        // Show empty state if no items visible
+        const visibleItems = document.querySelectorAll('.maintenance-item[style="display: block"], .maintenance-item:not([style*="display: none"])');
+        const emptyState = document.querySelector('.empty-state');
+        
+        if (visibleItems.length === 0 && !emptyState) {
+            const contentBody = document.querySelector('.content-body');
+            contentBody.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-funnel"></i>
+                    <h4>No Matching Results</h4>
+                    <p>No maintenance items match your current filters.</p>
+                </div>
+            `;
+        }
+    }
+    
+    statusFilter.addEventListener('change', filterMaintenanceItems);
+    priorityFilter.addEventListener('change', filterMaintenanceItems);
+});
+</script>
+{% endblock %}

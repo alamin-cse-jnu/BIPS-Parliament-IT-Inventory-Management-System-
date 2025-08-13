@@ -1,0 +1,952 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'locations:list' %}">Locations</a></li>
+    <li class="breadcrumb-item active">{{ page_title }}</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-header {
+        background: linear-gradient(135deg, var(--parliament-primary), #1e40af);
+        color: white;
+        padding: var(--spacing-xl);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: var(--spacing-lg);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .create-header::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 100px;
+        background: linear-gradient(45deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+    }
+    
+    .create-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+    
+    .create-subtitle {
+        opacity: 0.9;
+        font-size: 1.125rem;
+        margin: 0;
+    }
+    
+    .form-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+    
+    .form-header {
+        background-color: #f8f9fa;
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .form-header-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .form-body {
+        padding: var(--spacing-xl);
+    }
+    
+    .form-section {
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .form-section:last-child {
+        margin-bottom: 0;
+    }
+    
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-lg);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 2px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .section-description {
+        color: var(--parliament-neutral);
+        font-size: 0.9rem;
+        margin-bottom: var(--spacing-lg);
+        line-height: 1.5;
+    }
+    
+    .form-row {
+        display: grid;
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .form-row.two-cols {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .form-row.three-cols {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+    
+    .form-row.four-cols {
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+    
+    .form-group {
+        position: relative;
+    }
+    
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+    
+    .form-label.required::after {
+        content: ' *';
+        color: #dc2626;
+        font-weight: bold;
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid #e5e7eb;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
+        font-size: 1rem;
+        transition: all 0.2s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--parliament-primary);
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .form-control.is-valid {
+        border-color: #198754;
+    }
+    
+    .form-control.is-invalid {
+        border-color: #dc3545;
+    }
+    
+    .form-text {
+        color: var(--parliament-neutral);
+        font-size: 0.875rem;
+        margin-top: var(--spacing-xs);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+    
+    .invalid-feedback {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: var(--spacing-xs);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+    
+    .code-preview {
+        background: linear-gradient(135deg, var(--parliament-primary), #1e40af);
+        color: white;
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius);
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-size: 1.125rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-align: center;
+        box-shadow: var(--shadow);
+        margin-top: var(--spacing-sm);
+    }
+    
+    .coordinates-helper {
+        background-color: #f0f9ff;
+        border: 1px solid #bfdbfe;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
+        margin-top: var(--spacing-sm);
+    }
+    
+    .coordinates-example {
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-size: 0.875rem;
+        color: var(--parliament-primary);
+        margin-top: var(--spacing-xs);
+    }
+    
+    .component-selection {
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-lg);
+    }
+    
+    .component-note {
+        background-color: #fffbeb;
+        border: 1px solid #fbbf24;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
+        margin-top: var(--spacing-lg);
+        color: #92400e;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+    
+    .form-actions {
+        background-color: #f8f9fa;
+        padding: var(--spacing-lg);
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: var(--spacing-sm);
+    }
+    
+    .preview-section {
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-lg);
+        margin-top: var(--spacing-lg);
+    }
+    
+    .preview-title {
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-md);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .preview-content {
+        font-family: 'Monaco', 'Consolas', monospace;
+        background-color: white;
+        border: 1px solid #e5e7eb;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
+        font-size: 0.875rem;
+        color: var(--parliament-dark);
+    }
+    
+    .status-toggle {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        background-color: #f9fafb;
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .status-toggle .form-check-input {
+        margin: 0;
+    }
+    
+    @media (max-width: 768px) {
+        .create-title {
+            font-size: 1.5rem;
+        }
+        
+        .form-row.two-cols,
+        .form-row.three-cols,
+        .form-row.four-cols {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+            gap: var(--spacing-md);
+            text-align: center;
+        }
+        
+        .btn-group {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Create Header -->
+    <div class="create-header">
+        <h1 class="create-title">
+            <i class="bi bi-plus-circle-fill"></i>
+            {{ page_title }}
+        </h1>
+        <p class="create-subtitle">
+            Create a new location entry for Bangladesh Parliament Secretariat
+        </p>
+    </div>
+
+    <div class="form-container">
+        <div class="form-card">
+            <div class="form-header">
+                <h2 class="form-header-title">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    Location Information
+                </h2>
+            </div>
+            
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <div class="form-body">
+                    <!-- Basic Information Section -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="bi bi-info-circle"></i>
+                            Basic Information
+                        </h3>
+                        <p class="section-description">
+                            Enter the basic details for this location including name, code, and address.
+                        </p>
+                        
+                        <div class="form-row two-cols">
+                            <div class="form-group">
+                                <label for="{{ form.name.id_for_label }}" class="form-label required">
+                                    <i class="bi bi-geo-alt"></i>
+                                    {{ form.name.label }}
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.name.errors %}
+                                            <i class="bi bi-exclamation-circle"></i>
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i>
+                                    A descriptive name for this location
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ form.location_code.id_for_label }}" class="form-label required">
+                                    <i class="bi bi-upc-scan"></i>
+                                    {{ form.location_code.label }}
+                                </label>
+                                {{ form.location_code }}
+                                {% if form.location_code.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.location_code.errors %}
+                                            <i class="bi bi-exclamation-circle"></i>
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="code-preview" id="codePreview">Enter code above</div>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i>
+                                    Unique identifier (e.g., LOC-001, MAIN-101)
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label for="{{ form.address.id_for_label }}" class="form-label">
+                                    <i class="bi bi-geo"></i>
+                                    {{ form.address.label }}
+                                </label>
+                                {{ form.address }}
+                                {% if form.address.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.address.errors %}
+                                            <i class="bi bi-exclamation-circle"></i>
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i>
+                                    Full address or detailed location description
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location Components Section -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="bi bi-diagram-3"></i>
+                            Location Components
+                        </h3>
+                        <p class="section-description">
+                            Select the physical components that make up this location. At least one component must be selected.
+                        </p>
+                        
+                        <div class="component-selection">
+                            <div class="form-row two-cols">
+                                <div class="form-group">
+                                    <label for="{{ form.building.id_for_label }}" class="form-label">
+                                        <i class="bi bi-building"></i>
+                                        {{ form.building.label }}
+                                    </label>
+                                    {{ form.building }}
+                                    {% if form.building.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.building.errors %}
+                                                <i class="bi bi-exclamation-circle"></i>
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle"></i>
+                                        {{ components.buildings.count }} buildings available
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.floor.id_for_label }}" class="form-label">
+                                        <i class="bi bi-layers"></i>
+                                        {{ form.floor.label }}
+                                    </label>
+                                    {{ form.floor }}
+                                    {% if form.floor.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.floor.errors %}
+                                                <i class="bi bi-exclamation-circle"></i>
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle"></i>
+                                        {{ components.floors.count }} floors available
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row three-cols">
+                                <div class="form-group">
+                                    <label for="{{ form.block.id_for_label }}" class="form-label">
+                                        <i class="bi bi-grid-3x3"></i>
+                                        {{ form.block.label }}
+                                    </label>
+                                    {{ form.block }}
+                                    {% if form.block.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.block.errors %}
+                                                <i class="bi bi-exclamation-circle"></i>
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle"></i>
+                                        {{ components.blocks.count }} blocks available
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.room.id_for_label }}" class="form-label">
+                                        <i class="bi bi-door-open"></i>
+                                        {{ form.room.label }}
+                                    </label>
+                                    {{ form.room }}
+                                    {% if form.room.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.room.errors %}
+                                                <i class="bi bi-exclamation-circle"></i>
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle"></i>
+                                        {{ components.rooms.count }} rooms available
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.office.id_for_label }}" class="form-label">
+                                        <i class="bi bi-building-gear"></i>
+                                        {{ form.office.label }}
+                                    </label>
+                                    {{ form.office }}
+                                    {% if form.office.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.office.errors %}
+                                                <i class="bi bi-exclamation-circle"></i>
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle"></i>
+                                        {{ components.offices.count }} offices available
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="component-note">
+                            <i class="bi bi-lightbulb"></i>
+                            <div>
+                                <strong>Tip:</strong> At least one location component (Building, Floor, Block, Room, or Office) must be selected. 
+                                You can combine multiple components to create precise location references.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GPS Coordinates Section -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="bi bi-geo-alt-fill"></i>
+                            GPS Coordinates (Optional)
+                        </h3>
+                        <p class="section-description">
+                            Provide GPS coordinates for precise location mapping. Both latitude and longitude must be provided together.
+                        </p>
+                        
+                        <div class="form-row two-cols">
+                            <div class="form-group">
+                                <label for="{{ form.latitude.id_for_label }}" class="form-label">
+                                    <i class="bi bi-geo-alt"></i>
+                                    {{ form.latitude.label }}
+                                </label>
+                                {{ form.latitude }}
+                                {% if form.latitude.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.latitude.errors %}
+                                            <i class="bi bi-exclamation-circle"></i>
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="coordinates-helper">
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle"></i>
+                                        Range: -90 to 90 (North/South)
+                                    </div>
+                                    <div class="coordinates-example">Example: 23.7465 (Dhaka)</div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ form.longitude.id_for_label }}" class="form-label">
+                                    <i class="bi bi-geo-alt"></i>
+                                    {{ form.longitude.label }}
+                                </label>
+                                {{ form.longitude }}
+                                {% if form.longitude.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.longitude.errors %}
+                                            <i class="bi bi-exclamation-circle"></i>
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="coordinates-helper">
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle"></i>
+                                        Range: -180 to 180 (East/West)
+                                    </div>
+                                    <div class="coordinates-example">Example: 90.3915 (Dhaka)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Information Section -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="bi bi-file-text"></i>
+                            Additional Information
+                        </h3>
+                        <p class="section-description">
+                            Add any additional notes and set the location status.
+                        </p>
+                        
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                    <i class="bi bi-journal-text"></i>
+                                    {{ form.notes.label }}
+                                </label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.notes.errors %}
+                                            <i class="bi bi-exclamation-circle"></i>
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i>
+                                    Additional notes, special instructions, or important information
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="bi bi-toggle-on"></i>
+                                    Status
+                                </label>
+                                <div class="status-toggle">
+                                    {{ form.is_active }}
+                                    <label for="{{ form.is_active.id_for_label }}" class="form-label mb-0">
+                                        {{ form.is_active.label }}
+                                    </label>
+                                    {% if form.is_active.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.is_active.errors %}
+                                                <i class="bi bi-exclamation-circle"></i>
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i>
+                                    Active locations are available for device assignments and tracking
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location Preview -->
+                    <div class="preview-section">
+                        <h4 class="preview-title">
+                            <i class="bi bi-eye"></i>
+                            Location Preview
+                        </h4>
+                        <div class="preview-content" id="locationPreview">
+                            Complete the form above to see a preview of the location structure
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <div class="d-flex align-items-center">
+                <small class="text-muted">
+                    <i class="bi bi-shield-check me-1"></i>
+                    All fields marked with * are required
+                </small>
+            </div>
+            <div class="btn-group">
+                <a href="{% url 'locations:list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-2"></i>
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-parliament-primary" form="locationForm" id="submitBtn">
+                    <i class="bi bi-check-circle me-2"></i>
+                    {{ form_action }} Location
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('.needs-validation');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        // Set form id for submit button reference
+        if (form) {
+            form.setAttribute('id', 'locationForm');
+        }
+        
+        // Form elements
+        const nameInput = document.getElementById('{{ form.name.id_for_label }}');
+        const codeInput = document.getElementById('{{ form.location_code.id_for_label }}');
+        const codePreview = document.getElementById('codePreview');
+        const locationPreview = document.getElementById('locationPreview');
+        
+        // Component selects
+        const buildingSelect = document.getElementById('{{ form.building.id_for_label }}');
+        const floorSelect = document.getElementById('{{ form.floor.id_for_label }}');
+        const blockSelect = document.getElementById('{{ form.block.id_for_label }}');
+        const roomSelect = document.getElementById('{{ form.room.id_for_label }}');
+        const officeSelect = document.getElementById('{{ form.office.id_for_label }}');
+        
+        // Coordinate inputs
+        const latitudeInput = document.getElementById('{{ form.latitude.id_for_label }}');
+        const longitudeInput = document.getElementById('{{ form.longitude.id_for_label }}');
+        
+        // Real-time code preview
+        function updateCodePreview() {
+            const code = codeInput.value.trim().toUpperCase();
+            codePreview.textContent = code || 'Enter code above';
+            codePreview.style.color = code ? 'white' : 'rgba(255,255,255,0.7)';
+        }
+        
+        // Real-time location preview
+        function updateLocationPreview() {
+            const components = [];
+            
+            if (buildingSelect.value) {
+                const buildingText = buildingSelect.options[buildingSelect.selectedIndex].text;
+                components.push(`Building: ${buildingText}`);
+            }
+            
+            if (floorSelect.value) {
+                const floorText = floorSelect.options[floorSelect.selectedIndex].text;
+                components.push(`Floor: ${floorText}`);
+            }
+            
+            if (blockSelect.value) {
+                const blockText = blockSelect.options[blockSelect.selectedIndex].text;
+                components.push(`Block: ${blockText}`);
+            }
+            
+            if (roomSelect.value) {
+                const roomText = roomSelect.options[roomSelect.selectedIndex].text;
+                components.push(`Room: ${roomText}`);
+            }
+            
+            if (officeSelect.value) {
+                const officeText = officeSelect.options[officeSelect.selectedIndex].text;
+                components.push(`Office: ${officeText}`);
+            }
+            
+            const name = nameInput.value.trim();
+            const code = codeInput.value.trim().toUpperCase();
+            
+            let preview = '';
+            if (name) preview += `Name: ${name}\n`;
+            if (code) preview += `Code: ${code}\n`;
+            if (components.length > 0) {
+                preview += `Components:\n${components.join('\n')}`;
+            }
+            
+            const lat = latitudeInput.value.trim();
+            const lng = longitudeInput.value.trim();
+            if (lat && lng) {
+                preview += `\nCoordinates: ${lat}, ${lng}`;
+            }
+            
+            locationPreview.textContent = preview || 'Complete the form above to see a preview of the location structure';
+        }
+        
+        // Event listeners
+        codeInput.addEventListener('input', updateCodePreview);
+        nameInput.addEventListener('input', updateLocationPreview);
+        codeInput.addEventListener('input', updateLocationPreview);
+        buildingSelect.addEventListener('change', updateLocationPreview);
+        floorSelect.addEventListener('change', updateLocationPreview);
+        blockSelect.addEventListener('change', updateLocationPreview);
+        roomSelect.addEventListener('change', updateLocationPreview);
+        officeSelect.addEventListener('change', updateLocationPreview);
+        latitudeInput.addEventListener('input', updateLocationPreview);
+        longitudeInput.addEventListener('input', updateLocationPreview);
+        
+        // Form validation
+        function validateField(field, isValid) {
+            if (isValid) {
+                field.classList.remove('is-invalid');
+                field.classList.add('is-valid');
+            } else {
+                field.classList.remove('is-valid');
+                field.classList.add('is-invalid');
+            }
+        }
+        
+        // Real-time validation
+        nameInput.addEventListener('input', function() {
+            const isValid = this.value.trim().length > 0;
+            validateField(this, isValid);
+        });
+        
+        codeInput.addEventListener('input', function() {
+            const isValid = this.value.trim().length > 0;
+            validateField(this, isValid);
+        });
+        
+        // Coordinate validation
+        latitudeInput.addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            const isValid = !this.value || (!isNaN(value) && value >= -90 && value <= 90);
+            validateField(this, isValid);
+        });
+        
+        longitudeInput.addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            const isValid = !this.value || (!isNaN(value) && value >= -180 && value <= 180);
+            validateField(this, isValid);
+        });
+        
+        // Component validation - at least one must be selected
+        function validateComponents() {
+            const hasComponent = buildingSelect.value || floorSelect.value || 
+                               blockSelect.value || roomSelect.value || officeSelect.value;
+            
+            [buildingSelect, floorSelect, blockSelect, roomSelect, officeSelect].forEach(select => {
+                if (hasComponent) {
+                    select.classList.remove('is-invalid');
+                } else {
+                    select.classList.add('is-invalid');
+                }
+            });
+            
+            return hasComponent;
+        }
+        
+        [buildingSelect, floorSelect, blockSelect, roomSelect, officeSelect].forEach(select => {
+            select.addEventListener('change', validateComponents);
+        });
+        
+        // Auto-generate location code suggestion
+        function suggestLocationCode() {
+            if (!codeInput.value.trim()) {
+                const building = buildingSelect.value ? buildingSelect.options[buildingSelect.selectedIndex].text : '';
+                const floor = floorSelect.value ? floorSelect.options[floorSelect.selectedIndex].text : '';
+                const room = roomSelect.value ? roomSelect.options[roomSelect.selectedIndex].text : '';
+                
+                let suggestion = '';
+                if (building) {
+                    const buildingCode = building.substring(0, 3).toUpperCase();
+                    suggestion += buildingCode;
+                }
+                if (floor) {
+                    const floorNum = floor.match(/\d+/);
+                    if (floorNum) suggestion += `-F${floorNum[0]}`;
+                }
+                if (room) {
+                    const roomNum = room.match(/\d+/);
+                    if (roomNum) suggestion += `-R${roomNum[0]}`;
+                }
+                
+                if (suggestion) {
+                    codeInput.value = suggestion;
+                    updateCodePreview();
+                    updateLocationPreview();
+                }
+            }
+        }
+        
+        buildingSelect.addEventListener('change', suggestLocationCode);
+        floorSelect.addEventListener('change', suggestLocationCode);
+        roomSelect.addEventListener('change', suggestLocationCode);
+        
+        // Form submission with loading state and validation
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validate required fields
+            let isValid = true;
+            
+            if (!nameInput.value.trim()) {
+                validateField(nameInput, false);
+                isValid = false;
+            }
+            
+            if (!codeInput.value.trim()) {
+                validateField(codeInput, false);
+                isValid = false;
+            }
+            
+            if (!validateComponents()) {
+                isValid = false;
+            }
+            
+            // Coordinate validation
+            const lat = latitudeInput.value.trim();
+            const lng = longitudeInput.value.trim();
+            if ((lat && !lng) || (!lat && lng)) {
+                alert('Both latitude and longitude must be provided together, or both left empty.');
+                isValid = false;
+            }
+            
+            if (isValid) {
+                submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Creating Location...';
+                submitBtn.disabled = true;
+                this.submit();
+            } else {
+                alert('Please fill in all required fields and correct any errors before submitting.');
+            }
+        });
+        
+        // Initialize
+        updateCodePreview();
+        updateLocationPreview();
+        nameInput.focus();
+        
+        // Auto-uppercase code input
+        codeInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+        
+        // Clear button functionality
+        const clearBtn = document.createElement('button');
+        clearBtn.type = 'button';
+        clearBtn.className = 'btn btn-outline-warning ms-2';
+        clearBtn.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Clear Form';
+        clearBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to clear all form data?')) {
+                form.reset();
+                updateCodePreview();
+                updateLocationPreview();
+                nameInput.focus();
+                
+                // Remove validation classes
+                document.querySelectorAll('.is-valid, .is-invalid').forEach(el => {
+                    el.classList.remove('is-valid', 'is-invalid');
+                });
+            }
+        });
+        
+        document.querySelector('.btn-group').appendChild(clearBtn);
+    });
+</script>
+{% endblock %}

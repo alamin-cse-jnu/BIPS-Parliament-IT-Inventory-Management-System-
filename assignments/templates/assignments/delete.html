@@ -1,0 +1,566 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Assignment - {{ object.device.device_id }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+/* Assignment Delete Confirmation - Parliament Design System */
+.delete-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.danger-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 2px solid #ef4444;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(239, 68, 68, 0.15);
+    overflow: hidden;
+}
+
+.danger-header {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+}
+
+.danger-title {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.danger-subtitle {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+.warning-content {
+    padding: 2rem;
+}
+
+.assignment-details {
+    background: rgba(248, 250, 252, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.detail-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.detail-value {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.badge-warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.badge-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.badge-info {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.impact-warning {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.impact-title {
+    color: #d97706;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.impact-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.impact-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    color: #b45309;
+}
+
+.alternative-actions {
+    margin-bottom: 2rem;
+}
+
+.alternative-title {
+    color: #1e3a8a;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-group-vertical .btn {
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.btn-group-vertical .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.confirmation-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.confirmation-header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    color: white;
+    padding: 1.5rem;
+}
+
+.confirmation-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.confirmation-body {
+    padding: 2rem;
+}
+
+.form-control {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    background: rgba(255, 255, 255, 1);
+    border-color: #1e3a8a;
+    box-shadow: 0 0 0 0.2rem rgba(30, 58, 138, 0.25);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.btn-danger:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-outline-secondary {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.btn-outline-secondary:hover {
+    background: rgba(248, 250, 252, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Form Validation Styling */
+.is-valid {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.is-invalid {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.form-text.text-danger {
+    color: #dc2626 !important;
+    font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .delete-container {
+        padding: 1rem 0;
+    }
+    
+    .danger-header {
+        padding: 1.5rem 1rem;
+    }
+    
+    .danger-title {
+        font-size: 1.5rem;
+    }
+    
+    .warning-content,
+    .confirmation-body {
+        padding: 1.5rem;
+    }
+    
+    .btn-group-vertical .btn {
+        padding: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Danger Warning Card -->
+                <div class="danger-card">
+                    <div class="danger-header">
+                        <h1 class="danger-title">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            Delete Assignment
+                        </h1>
+                        <p class="danger-subtitle">This action cannot be undone</p>
+                    </div>
+                    
+                    <div class="warning-content">
+                        <!-- Assignment Details -->
+                        <div class="assignment-details">
+                            <h5 class="mb-3 text-primary">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Assignment Details
+                            </h5>
+                            
+                            <div class="detail-grid">
+                                <div class="detail-row">
+                                    <span class="detail-label">
+                                        <i class="bi bi-laptop"></i>
+                                        Device
+                                    </span>
+                                    <span class="detail-value">
+                                        {{ object.device.device_id }} - {{ object.device.subcategory.name }}
+                                    </span>
+                                </div>
+                                
+                                <div class="detail-row">
+                                    <span class="detail-label">
+                                        <i class="bi bi-person"></i>
+                                        Assigned To
+                                    </span>
+                                    <span class="detail-value">
+                                        {{ object.assigned_to.get_full_name|default:object.assigned_to.username }}
+                                    </span>
+                                </div>
+                                
+                                <div class="detail-row">
+                                    <span class="detail-label">
+                                        <i class="bi bi-calendar"></i>
+                                        Assignment Date
+                                    </span>
+                                    <span class="detail-value">
+                                        {{ object.assigned_date|date:"F d, Y" }}
+                                    </span>
+                                </div>
+                                
+                                <div class="detail-row">
+                                    <span class="detail-label">
+                                        <i class="bi bi-geo-alt"></i>
+                                        Location
+                                    </span>
+                                    <span class="detail-value">
+                                        {{ object.location|default:"Not specified" }}
+                                    </span>
+                                </div>
+                                
+                                <div class="detail-row">
+                                    <span class="detail-label">
+                                        <i class="bi bi-flag"></i>
+                                        Status
+                                    </span>
+                                    <span class="detail-value">
+                                        {% if object.status == 'ACTIVE' %}
+                                            <span class="badge badge-success">Active</span>
+                                        {% elif object.status == 'RETURNED' %}
+                                            <span class="badge badge-info">Returned</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">{{ object.status }}</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                
+                                {% if object.notes %}
+                                <div class="detail-row">
+                                    <span class="detail-label">
+                                        <i class="bi bi-sticky"></i>
+                                        Notes
+                                    </span>
+                                    <span class="detail-value">
+                                        {{ object.notes|truncatewords:15 }}
+                                    </span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Impact Warning -->
+                        <div class="impact-warning">
+                            <h6 class="impact-title">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                Deletion Impact
+                            </h6>
+                            <ul class="impact-list">
+                                <li class="impact-item">
+                                    <i class="bi bi-arrow-right"></i>
+                                    Device will become available for new assignments
+                                </li>
+                                <li class="impact-item">
+                                    <i class="bi bi-arrow-right"></i>
+                                    Assignment history will be permanently removed
+                                </li>
+                                <li class="impact-item">
+                                    <i class="bi bi-arrow-right"></i>
+                                    QR code assignment link will be broken
+                                </li>
+                                <li class="impact-item">
+                                    <i class="bi bi-arrow-right"></i>
+                                    Reports referencing this assignment will show incomplete data
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Alternative Actions -->
+                        <div class="alternative-actions">
+                            <h6 class="alternative-title">
+                                <i class="bi bi-lightbulb"></i>
+                                Consider These Alternatives
+                            </h6>
+                            <div class="btn-group-vertical w-100">
+                                <a href="{% url 'assignments:detail' object.pk %}" class="btn btn-outline-primary">
+                                    <i class="bi bi-eye me-2"></i>
+                                    Review Assignment Details
+                                </a>
+                                
+                                <a href="{% url 'assignments:edit' object.pk %}" class="btn btn-outline-info">
+                                    <i class="bi bi-pencil me-2"></i>
+                                    Edit Assignment Instead
+                                </a>
+                                
+                                {% if object.status == 'ACTIVE' %}
+                                <a href="{% url 'assignments:return' object.pk %}" class="btn btn-outline-warning">
+                                    <i class="bi bi-arrow-counterclockwise me-2"></i>
+                                    Return Device Instead
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="text-center">
+                            <h6 class="text-danger mb-3">Still want to delete?</h6>
+                            <p class="text-muted small">
+                                Complete the confirmation steps below
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delete Confirmation Form -->
+                <div class="confirmation-card mt-4">
+                    <div class="confirmation-header">
+                        <h3 class="confirmation-title">
+                            <i class="bi bi-shield-exclamation"></i>
+                            Confirm Deletion
+                        </h3>
+                    </div>
+                    
+                    <div class="confirmation-body">
+                        <form method="post" id="deleteForm">
+                            {% csrf_token %}
+                            
+                            <div class="mb-4">
+                                <label for="confirmDeviceId" class="form-label fw-bold">
+                                    Type device ID to confirm: <span class="text-danger">{{ object.device.device_id }}</span>
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="confirmDeviceId" 
+                                       placeholder="Enter {{ object.device.device_id }}"
+                                       autocomplete="off"
+                                       required>
+                                <div class="form-text text-danger">
+                                    <i class="bi bi-exclamation-circle me-1"></i>
+                                    This action cannot be undone
+                                </div>
+                            </div>
+                            
+                            <div class="form-check mb-4">
+                                <input type="checkbox" class="form-check-input" id="confirmUnderstand" required>
+                                <label class="form-check-label fw-semibold" for="confirmUnderstand">
+                                    I understand that deleting this assignment will permanently remove all associated data and cannot be undone
+                                </label>
+                            </div>
+                            
+                            <div class="d-grid gap-3">
+                                <button type="submit" class="btn btn-danger" id="deleteButton" disabled>
+                                    <i class="bi bi-trash me-2"></i>
+                                    Delete Assignment Permanently
+                                </button>
+                                <a href="{% url 'assignments:detail' object.pk %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle me-2"></i>
+                                    Cancel and Go Back
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteForm = document.getElementById('deleteForm');
+    const confirmDeviceId = document.getElementById('confirmDeviceId');
+    const confirmUnderstand = document.getElementById('confirmUnderstand');
+    const deleteButton = document.getElementById('deleteButton');
+    const expectedDeviceId = '{{ object.device.device_id|escapejs }}';
+    
+    function validateForm() {
+        const deviceIdValid = confirmDeviceId.value.trim() === expectedDeviceId;
+        const understandChecked = confirmUnderstand.checked;
+        
+        if (deviceIdValid && understandChecked) {
+            deleteButton.disabled = false;
+            confirmDeviceId.classList.remove('is-invalid');
+            confirmDeviceId.classList.add('is-valid');
+        } else {
+            deleteButton.disabled = true;
+            if (confirmDeviceId.value.trim() !== '' && !deviceIdValid) {
+                confirmDeviceId.classList.remove('is-valid');
+                confirmDeviceId.classList.add('is-invalid');
+            } else if (confirmDeviceId.value.trim() === '') {
+                confirmDeviceId.classList.remove('is-valid', 'is-invalid');
+            }
+        }
+    }
+    
+    confirmDeviceId.addEventListener('input', validateForm);
+    confirmUnderstand.addEventListener('change', validateForm);
+    
+    // Form submission with final confirmation
+    deleteForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const finalConfirm = confirm(
+            `Are you absolutely sure you want to delete this assignment?\n\n` +
+            `Device: ${expectedDeviceId}\n` +
+            `Assigned to: {{ object.assigned_to.get_full_name|default:object.assigned_to.username|escapejs }}\n\n` +
+            'This action will:\n' +
+            '• Permanently remove the assignment record\n' +
+            '• Make the device available for new assignments\n' +
+            '• Remove all assignment history\n' +
+            '• Cannot be undone\n\n' +
+            'Click OK to proceed with deletion or Cancel to abort.'
+        );
+        
+        if (finalConfirm) {
+            this.submit();
+        }
+    });
+    
+    // Add visual feedback on form interaction
+    confirmDeviceId.addEventListener('focus', function() {
+        this.style.transform = 'scale(1.02)';
+    });
+    
+    confirmDeviceId.addEventListener('blur', function() {
+        this.style.transform = 'scale(1)';
+    });
+});
+</script>
+{% endblock %}

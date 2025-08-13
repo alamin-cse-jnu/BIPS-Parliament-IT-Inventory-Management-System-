@@ -1,0 +1,795 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Locations with GPS Coordinates{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+/* Custom styles for locations with coordinates page */
+.coordinates-header {
+    background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0 0 20px 20px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #198754;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.stat-description {
+    color: #adb5bd;
+    font-size: 0.8rem;
+}
+
+.percentage-display {
+    background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+    color: white;
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    display: inline-block;
+    margin-top: 0.5rem;
+}
+
+.filter-controls {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+}
+
+.location-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.location-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #e9ecef;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.location-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.location-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.location-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 0.25rem;
+}
+
+.location-code {
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-family: 'Courier New', monospace;
+    background: #f8f9fa;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.coordinates-display {
+    background: linear-gradient(135deg, #e7f3ff 0%, #f8f9fa 100%);
+    border: 1px solid #bee5eb;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.coordinates-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.coordinates-value {
+    font-family: 'Courier New', monospace;
+    font-size: 0.95rem;
+    color: #198754;
+    font-weight: 600;
+}
+
+.precision-badge {
+    background: rgba(25, 135, 84, 0.1);
+    color: #198754;
+    border: 1px solid rgba(25, 135, 84, 0.2);
+    border-radius: 12px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
+.component-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.component-tag {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 15px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.component-tag.building { border-color: #0d6efd; color: #0d6efd; background: rgba(13, 110, 253, 0.1); }
+.component-tag.floor { border-color: #6610f2; color: #6610f2; background: rgba(102, 16, 242, 0.1); }
+.component-tag.block { border-color: #6f42c1; color: #6f42c1; background: rgba(111, 66, 193, 0.1); }
+.component-tag.room { border-color: #20c997; color: #20c997; background: rgba(32, 201, 151, 0.1); }
+.component-tag.office { border-color: #fd7e14; color: #fd7e14; background: rgba(253, 126, 20, 0.1); }
+
+.location-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.action-btn.primary {
+    background: #0d6efd;
+    color: white;
+    border: 1px solid #0d6efd;
+}
+
+.action-btn.primary:hover {
+    background: #0b5ed7;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.action-btn.success {
+    background: #198754;
+    color: white;
+    border: 1px solid #198754;
+}
+
+.action-btn.success:hover {
+    background: #157347;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.action-btn.info {
+    background: #0dcaf0;
+    color: #212529;
+    border: 1px solid #0dcaf0;
+}
+
+.action-btn.info:hover {
+    background: #31d2f2;
+    color: #212529;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.action-btn.warning {
+    background: #ffc107;
+    color: #212529;
+    border: 1px solid #ffc107;
+}
+
+.action-btn.warning:hover {
+    background: #ffcd39;
+    color: #212529;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #dee2e6;
+    margin-bottom: 1.5rem;
+}
+
+.empty-state-title {
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+.empty-state-text {
+    color: #adb5bd;
+    margin-bottom: 2rem;
+}
+
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.bulk-actions {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid #dee2e6;
+}
+
+.bulk-actions-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.75rem;
+}
+
+.view-options {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.view-toggle {
+    padding: 0.5rem;
+    border: 1px solid #dee2e6;
+    background: white;
+    border-radius: 6px;
+    color: #6c757d;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.view-toggle:hover, .view-toggle.active {
+    background: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+    text-decoration: none;
+}
+
+.search-highlight {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffffff 100%);
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .location-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .location-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .action-btn {
+        flex: 1;
+        justify-content: center;
+        font-size: 0.8rem;
+        padding: 0.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="coordinates-header">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb text-white-50">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'locations:list' %}" class="text-white">
+                                <i class="bi bi-geo-alt me-1"></i>Locations
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">With GPS Coordinates</li>
+                    </ol>
+                </nav>
+                
+                <h1 class="mb-0">
+                    <i class="bi bi-geo-alt-fill me-3"></i>
+                    Locations with GPS Coordinates
+                </h1>
+                <p class="mb-0 mt-2 text-white-75">
+                    Manage and view all locations that have GPS coordinate data
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Statistics Overview -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_with_coordinates }}</div>
+            <div class="stat-label">GPS Mapped</div>
+            <div class="stat-description">Locations with coordinates</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-number">{{ total_locations }}</div>
+            <div class="stat-label">Total Locations</div>
+            <div class="stat-description">All locations in system</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-number">{{ percentage_mapped }}%</div>
+            <div class="stat-label">Mapping Progress</div>
+            <div class="stat-description">GPS coverage percentage</div>
+            <div class="percentage-display">
+                {{ percentage_mapped }}% Complete
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-number">{{ page_obj.paginator.count|default:0 }}</div>
+            <div class="stat-label">Current View</div>
+            <div class="stat-description">Filtered results</div>
+        </div>
+    </div>
+
+    <!-- Filter Controls -->
+    <div class="filter-controls">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h5 class="mb-1">
+                    <i class="bi bi-funnel me-2"></i>
+                    GPS-Enabled Locations
+                </h5>
+                <p class="mb-0 text-muted">
+                    All locations with latitude and longitude coordinates
+                </p>
+            </div>
+            
+            <div class="d-flex gap-2 align-items-center">
+                <div class="view-options">
+                    <span class="text-muted me-2">View:</span>
+                    <a href="#" class="view-toggle active" data-view="cards">
+                        <i class="bi bi-grid"></i>
+                    </a>
+                    <a href="#" class="view-toggle" data-view="list">
+                        <i class="bi bi-list"></i>
+                    </a>
+                    <a href="#" class="view-toggle" data-view="map">
+                        <i class="bi bi-map"></i>
+                    </a>
+                </div>
+                
+                <a href="{% url 'locations:map' %}" class="action-btn info">
+                    <i class="bi bi-map"></i>
+                    View Map
+                </a>
+                
+                <a href="{% url 'locations:coordinates_export' %}" class="action-btn success">
+                    <i class="bi bi-download"></i>
+                    Export GPS Data
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Display -->
+    {% if locations %}
+        <!-- Bulk Actions -->
+        <div class="bulk-actions">
+            <div class="bulk-actions-title">Bulk Actions</div>
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="action-btn primary" onclick="selectAllLocations()">
+                    <i class="bi bi-check-square"></i>
+                    Select All
+                </button>
+                <button class="action-btn warning" onclick="exportSelected()">
+                    <i class="bi bi-download"></i>
+                    Export Selected
+                </button>
+                <button class="action-btn info" onclick="viewSelectedOnMap()">
+                    <i class="bi bi-map"></i>
+                    View on Map
+                </button>
+            </div>
+        </div>
+
+        <!-- Location Cards -->
+        <div class="location-grid" id="locationGrid">
+            {% for location in locations %}
+            <div class="location-card" data-location-id="{{ location.pk }}">
+                <div class="location-header">
+                    <div>
+                        <h4 class="location-title">{{ location.name }}</h4>
+                        {% if location.location_code %}
+                            <div class="location-code">{{ location.location_code }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <input type="checkbox" class="form-check-input location-checkbox" 
+                               value="{{ location.pk }}" id="loc_{{ location.pk }}">
+                        <label for="loc_{{ location.pk }}" class="ms-2">
+                            {% if location.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </label>
+                    </div>
+                </div>
+
+                <!-- GPS Coordinates Display -->
+                <div class="coordinates-display">
+                    <div class="coordinates-label">
+                        <i class="bi bi-geo-alt-fill"></i>
+                        GPS Coordinates
+                        <span class="precision-badge">8-digit precision</span>
+                    </div>
+                    <div class="coordinates-value">
+                        {{ location.latitude|floatformat:8 }}°, {{ location.longitude|floatformat:8 }}°
+                    </div>
+                </div>
+
+                <!-- Component Tags -->
+                {% if location.building or location.floor or location.block or location.room or location.office %}
+                <div class="component-tags">
+                    {% if location.building %}
+                        <span class="component-tag building">
+                            <i class="bi bi-building"></i>
+                            {{ location.building.name }}
+                        </span>
+                    {% endif %}
+                    {% if location.floor %}
+                        <span class="component-tag floor">
+                            <i class="bi bi-layers"></i>
+                            Floor {{ location.floor.floor_number }}
+                        </span>
+                    {% endif %}
+                    {% if location.block %}
+                        <span class="component-tag block">
+                            <i class="bi bi-grid-3x3"></i>
+                            {{ location.block.name }}
+                        </span>
+                    {% endif %}
+                    {% if location.room %}
+                        <span class="component-tag room">
+                            <i class="bi bi-door-open"></i>
+                            {{ location.room.name }}
+                        </span>
+                    {% endif %}
+                    {% if location.office %}
+                        <span class="component-tag office">
+                            <i class="bi bi-briefcase"></i>
+                            {{ location.office.name }}
+                        </span>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Address/Description -->
+                {% if location.address %}
+                <div class="mb-3">
+                    <div class="text-muted small">
+                        <i class="bi bi-geo-alt me-1"></i>
+                        {{ location.address|truncatewords:15 }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Action Buttons -->
+                <div class="location-actions">
+                    <a href="{% url 'locations:detail' location.pk %}" class="action-btn primary">
+                        <i class="bi bi-eye"></i>
+                        Details
+                    </a>
+                    
+                    <a href="{% url 'locations:coordinates' location.pk %}" class="action-btn warning">
+                        <i class="bi bi-geo-alt"></i>
+                        Edit GPS
+                    </a>
+                    
+                    <a href="https://maps.google.com/?q={{ location.latitude }},{{ location.longitude }}" 
+                       target="_blank" class="action-btn info">
+                        <i class="bi bi-map"></i>
+                        Map
+                    </a>
+                    
+                    <a href="{% url 'locations:edit' location.pk %}" class="action-btn warning">
+                        <i class="bi bi-pencil"></i>
+                        Edit
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="pagination-container">
+            <nav aria-label="GPS locations pagination">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+
+    {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="bi bi-geo-alt-slash"></i>
+            </div>
+            <h3 class="empty-state-title">No GPS-Enabled Locations Found</h3>
+            <p class="empty-state-text">
+                There are currently no locations with GPS coordinates in the system.
+                <br>Add GPS coordinates to existing locations to enable mapping features.
+            </p>
+            <div class="d-flex gap-2 justify-content-center">
+                <a href="{% url 'locations:list' %}" class="action-btn primary">
+                    <i class="bi bi-list"></i>
+                    View All Locations
+                </a>
+                <a href="{% url 'locations:without_coordinates' %}" class="action-btn warning">
+                    <i class="bi bi-geo-alt-slash"></i>
+                    Unmapped Locations
+                </a>
+                <a href="{% url 'locations:create' %}" class="action-btn success">
+                    <i class="bi bi-plus"></i>
+                    Add Location
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // View toggle functionality
+    const viewToggles = document.querySelectorAll('.view-toggle');
+    const locationGrid = document.getElementById('locationGrid');
+    
+    viewToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Update active state
+            viewToggles.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            const view = this.dataset.view;
+            updateView(view);
+        });
+    });
+    
+    function updateView(viewType) {
+        switch(viewType) {
+            case 'cards':
+                locationGrid.style.display = 'grid';
+                break;
+            case 'list':
+                // Convert to list view (would need additional implementation)
+                break;
+            case 'map':
+                // Redirect to map view
+                window.location.href = "{% url 'locations:map' %}";
+                break;
+        }
+    }
+    
+    // Bulk selection functionality
+    window.selectAllLocations = function() {
+        const checkboxes = document.querySelectorAll('.location-checkbox');
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = !allChecked;
+        });
+        
+        updateBulkActions();
+    };
+    
+    // Export selected locations
+    window.exportSelected = function() {
+        const selected = getSelectedLocations();
+        if (selected.length === 0) {
+            alert('Please select at least one location to export.');
+            return;
+        }
+        
+        const params = new URLSearchParams();
+        selected.forEach(id => params.append('location_ids', id));
+        
+        window.location.href = `{% url 'locations:coordinates_export' %}?${params.toString()}`;
+    };
+    
+    // View selected on map
+    window.viewSelectedOnMap = function() {
+        const selected = getSelectedLocations();
+        if (selected.length === 0) {
+            alert('Please select at least one location to view on map.');
+            return;
+        }
+        
+        const params = new URLSearchParams();
+        selected.forEach(id => params.append('location_ids', id));
+        
+        window.location.href = `{% url 'locations:map' %}?${params.toString()}`;
+    };
+    
+    function getSelectedLocations() {
+        const checkboxes = document.querySelectorAll('.location-checkbox:checked');
+        return Array.from(checkboxes).map(cb => cb.value);
+    }
+    
+    function updateBulkActions() {
+        const selectedCount = getSelectedLocations().length;
+        const bulkActions = document.querySelector('.bulk-actions');
+        
+        if (selectedCount > 0) {
+            bulkActions.style.display = 'block';
+        } else {
+            bulkActions.style.display = 'none';
+        }
+    }
+    
+    // Add event listeners to checkboxes
+    document.querySelectorAll('.location-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkActions);
+    });
+    
+    // Initialize bulk actions visibility
+    updateBulkActions();
+    
+    // Animate cards on page load
+    const cards = document.querySelectorAll('.location-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 50);
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + A to select all
+        if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+            e.preventDefault();
+            selectAllLocations();
+        }
+        
+        // Ctrl/Cmd + E to export selected
+        if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+            e.preventDefault();
+            exportSelected();
+        }
+        
+        // Ctrl/Cmd + M to view on map
+        if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
+            e.preventDefault();
+            viewSelectedOnMap();
+        }
+    });
+});
+</script>
+{% endblock %}

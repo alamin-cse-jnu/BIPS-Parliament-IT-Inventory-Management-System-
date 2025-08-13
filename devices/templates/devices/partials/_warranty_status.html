@@ -1,0 +1,521 @@
+{% load static %}
+
+<!-- Warranty Status Partial Component -->
+<!-- Usage: {% include 'devices/partials/_warranty_status.html' with device=device display_type="badge" %} -->
+
+{% if device.warranties.exists %}
+    {% with active_warranty=device.warranties.filter.first %}
+        
+        <!-- Badge Display Type -->
+        {% if display_type == "badge" or not display_type %}
+            {% if active_warranty.is_expired %}
+                <span class="warranty-badge warranty-expired" data-bs-toggle="tooltip" 
+                      title="Warranty expired on {{ active_warranty.end_date|date:'M d, Y' }}">
+                    <i class="bi bi-shield-x me-1"></i>
+                    Expired
+                </span>
+            {% elif active_warranty.is_expiring_soon %}
+                <span class="warranty-badge warranty-expiring" data-bs-toggle="tooltip" 
+                      title="{{ active_warranty.days_remaining }} days remaining">
+                    <i class="bi bi-shield-exclamation me-1"></i>
+                    Expires in {{ active_warranty.days_remaining }} days
+                </span>
+            {% else %}
+                <span class="warranty-badge warranty-active" data-bs-toggle="tooltip" 
+                      title="Valid until {{ active_warranty.end_date|date:'M d, Y' }}">
+                    <i class="bi bi-shield-check me-1"></i>
+                    Under Warranty
+                </span>
+            {% endif %}
+        
+        <!-- Detailed Card Display Type -->
+        {% elif display_type == "card" %}
+            <div class="warranty-status-card">
+                <div class="warranty-card-header">
+                    <div class="warranty-icon">
+                        {% if active_warranty.is_expired %}
+                            <i class="bi bi-shield-x"></i>
+                        {% elif active_warranty.is_expiring_soon %}
+                            <i class="bi bi-shield-exclamation"></i>
+                        {% else %}
+                            <i class="bi bi-shield-check"></i>
+                        {% endif %}
+                    </div>
+                    <div class="warranty-info">
+                        <div class="warranty-title">
+                            {% if active_warranty.is_expired %}
+                                Warranty Expired
+                            {% elif active_warranty.is_expiring_soon %}
+                                Warranty Expiring Soon
+                            {% else %}
+                                Under Warranty
+                            {% endif %}
+                        </div>
+                        <div class="warranty-details">
+                            {% if active_warranty.provider %}
+                                <div class="provider-info">
+                                    <i class="bi bi-building me-1"></i>
+                                    {{ active_warranty.provider }}
+                                </div>
+                            {% endif %}
+                            <div class="period-info">
+                                <i class="bi bi-calendar-range me-1"></i>
+                                {{ active_warranty.start_date|date:"M d, Y" }} - {{ active_warranty.end_date|date:"M d, Y" }}
+                            </div>
+                            {% if active_warranty.warranty_number %}
+                                <div class="warranty-number">
+                                    <i class="bi bi-hash me-1"></i>
+                                    {{ active_warranty.warranty_number }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                {% if active_warranty.is_expiring_soon and not active_warranty.is_expired %}
+                    <div class="warranty-alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        This warranty will expire in {{ active_warranty.days_remaining }} day{{ active_warranty.days_remaining|pluralize }}.
+                        Contact {{ active_warranty.provider|default:"the warranty provider" }} for renewal.
+                    </div>
+                {% endif %}
+            </div>
+        
+        <!-- Compact Inline Display Type -->
+        {% elif display_type == "inline" %}
+            <div class="warranty-inline">
+                {% if active_warranty.is_expired %}
+                    <span class="warranty-status-indicator expired">
+                        <i class="bi bi-shield-x me-1"></i>
+                        Expired {{ active_warranty.end_date|date:"M d, Y" }}
+                    </span>
+                {% elif active_warranty.is_expiring_soon %}
+                    <span class="warranty-status-indicator expiring">
+                        <i class="bi bi-shield-exclamation me-1"></i>
+                        {{ active_warranty.days_remaining }} days left
+                    </span>
+                {% else %}
+                    <span class="warranty-status-indicator active">
+                        <i class="bi bi-shield-check me-1"></i>
+                        Valid until {{ active_warranty.end_date|date:"M d, Y" }}
+                    </span>
+                {% endif %}
+            </div>
+        
+        <!-- List Item Display Type -->
+        {% elif display_type == "list" %}
+            <div class="warranty-list-item">
+                <div class="warranty-status-icon">
+                    {% if active_warranty.is_expired %}
+                        <i class="bi bi-shield-x text-danger"></i>
+                    {% elif active_warranty.is_expiring_soon %}
+                        <i class="bi bi-shield-exclamation text-warning"></i>
+                    {% else %}
+                        <i class="bi bi-shield-check text-success"></i>
+                    {% endif %}
+                </div>
+                <div class="warranty-content">
+                    <div class="warranty-primary">
+                        {% if active_warranty.provider %}
+                            {{ active_warranty.provider }} Warranty
+                        {% else %}
+                            Device Warranty
+                        {% endif %}
+                    </div>
+                    <div class="warranty-secondary">
+                        {% if active_warranty.is_expired %}
+                            Expired on {{ active_warranty.end_date|date:"M d, Y" }}
+                        {% elif active_warranty.is_expiring_soon %}
+                            Expires {{ active_warranty.end_date|date:"M d, Y" }} ({{ active_warranty.days_remaining }} days)
+                        {% else %}
+                            Valid until {{ active_warranty.end_date|date:"M d, Y" }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="warranty-actions">
+                    <a href="{% url 'devices:warranty_detail' active_warranty.pk %}" 
+                       class="btn btn-sm btn-outline-primary" 
+                       data-bs-toggle="tooltip" 
+                       title="View warranty details">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                </div>
+            </div>
+        
+        <!-- Summary Display Type -->
+        {% elif display_type == "summary" %}
+            <div class="warranty-summary">
+                <div class="warranty-count">
+                    <span class="count-number">{{ device.warranties.count }}</span>
+                    <span class="count-label">warrant{{ device.warranties.count|pluralize:"y,ies" }}</span>
+                </div>
+                <div class="warranty-status-summary">
+                    {% with active_count=device.warranties.active.count expired_count=device.warranties.expired.count %}
+                        {% if active_count > 0 %}
+                            <span class="status-summary active">
+                                <i class="bi bi-shield-check me-1"></i>
+                                {{ active_count }} active
+                            </span>
+                        {% endif %}
+                        {% if expired_count > 0 %}
+                            <span class="status-summary expired">
+                                <i class="bi bi-shield-x me-1"></i>
+                                {{ expired_count }} expired
+                            </span>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        {% endif %}
+        
+    {% endwith %}
+{% else %}
+    <!-- No Warranty Display -->
+    {% if display_type == "badge" or not display_type %}
+        <span class="warranty-badge warranty-none" data-bs-toggle="tooltip" title="No warranty information available">
+            <i class="bi bi-shield-slash me-1"></i>
+            No Warranty
+        </span>
+    {% elif display_type == "card" %}
+        <div class="warranty-status-card no-warranty">
+            <div class="warranty-card-header">
+                <div class="warranty-icon">
+                    <i class="bi bi-shield-slash"></i>
+                </div>
+                <div class="warranty-info">
+                    <div class="warranty-title">No Warranty Information</div>
+                    <div class="warranty-details">
+                        <div class="text-muted">No warranty records found for this device</div>
+                    </div>
+                </div>
+            </div>
+            <div class="warranty-actions">
+                <a href="{% url 'devices:warranty_create' %}?device={{ device.id }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i>
+                    Add Warranty
+                </a>
+            </div>
+        </div>
+    {% elif display_type == "inline" %}
+        <div class="warranty-inline">
+            <span class="warranty-status-indicator none">
+                <i class="bi bi-shield-slash me-1"></i>
+                No warranty
+            </span>
+        </div>
+    {% elif display_type == "list" %}
+        <div class="warranty-list-item no-warranty">
+            <div class="warranty-status-icon">
+                <i class="bi bi-shield-slash text-muted"></i>
+            </div>
+            <div class="warranty-content">
+                <div class="warranty-primary">No Warranty</div>
+                <div class="warranty-secondary">No warranty information available</div>
+            </div>
+            <div class="warranty-actions">
+                <a href="{% url 'devices:warranty_create' %}?device={{ device.id }}" 
+                   class="btn btn-sm btn-outline-success" 
+                   data-bs-toggle="tooltip" 
+                   title="Add warranty">
+                    <i class="bi bi-plus"></i>
+                </a>
+            </div>
+        </div>
+    {% elif display_type == "summary" %}
+        <div class="warranty-summary no-warranty">
+            <div class="warranty-count">
+                <span class="count-number">0</span>
+                <span class="count-label">warranties</span>
+            </div>
+            <div class="warranty-status-summary">
+                <span class="status-summary none">
+                    <i class="bi bi-shield-slash me-1"></i>
+                    No warranty coverage
+                </span>
+            </div>
+        </div>
+    {% endif %}
+{% endif %}
+
+<style>
+/* Warranty Status Component Styles - Parliament Design System */
+
+/* Badge Styles */
+.warranty-badge {
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.5rem 0.75rem;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.warranty-active {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-color: #10b981;
+}
+
+.warranty-expiring {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    border-color: #f59e0b;
+}
+
+.warranty-expired {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    border-color: #ef4444;
+}
+
+.warranty-none {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+    border-color: #6b7280;
+}
+
+/* Card Styles */
+.warranty-status-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.warranty-status-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.warranty-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.warranty-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.warranty-status-card.no-warranty .warranty-icon {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+}
+
+.warranty-info {
+    flex: 1;
+}
+
+.warranty-title {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.warranty-details {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.warranty-details > div {
+    margin-bottom: 0.25rem;
+}
+
+.warranty-alert {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: 6px;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    color: #d97706;
+}
+
+/* Inline Styles */
+.warranty-inline {
+    display: inline-flex;
+    align-items: center;
+}
+
+.warranty-status-indicator {
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+.warranty-status-indicator.active {
+    color: #059669;
+}
+
+.warranty-status-indicator.expiring {
+    color: #d97706;
+}
+
+.warranty-status-indicator.expired {
+    color: #dc2626;
+}
+
+.warranty-status-indicator.none {
+    color: #6b7280;
+}
+
+/* List Item Styles */
+.warranty-list-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+    background: rgba(248, 250, 252, 0.5);
+    transition: all 0.3s ease;
+}
+
+.warranty-list-item:hover {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.warranty-status-icon {
+    font-size: 1.25rem;
+}
+
+.warranty-content {
+    flex: 1;
+}
+
+.warranty-primary {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.warranty-secondary {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.warranty-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Summary Styles */
+.warranty-summary {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+}
+
+.warranty-count {
+    text-align: center;
+}
+
+.count-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    display: block;
+}
+
+.count-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.warranty-status-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.status-summary {
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.status-summary.active {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+
+.status-summary.expired {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.status-summary.none {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .warranty-badge {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.5rem;
+    }
+    
+    .warranty-card-header {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .warranty-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
+    
+    .warranty-list-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .warranty-summary {
+        flex-direction: column;
+        gap: 0.75rem;
+        text-align: center;
+    }
+    
+    .warranty-status-summary {
+        justify-content: center;
+    }
+}
+
+/* Animation for status changes */
+@keyframes warrantyStatusUpdate {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.warranty-status-update {
+    animation: warrantyStatusUpdate 0.3s ease-in-out;
+}
+</style>

@@ -1,0 +1,1036 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Location Reports - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'locations:dashboard' %}">Location Dashboard</a></li>
+    <li class="breadcrumb-item active">Reports</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Reports Header -->
+    <div class="reports-header mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="reports-title">
+                    <i class="bi bi-file-earmark-bar-graph me-3 text-primary"></i>
+                    Location Reports
+                </h1>
+                <p class="reports-subtitle mb-0">Generate comprehensive reports for Bangladesh Parliament Secretariat locations</p>
+            </div>
+            <div class="btn-group">
+                <a href="{% url 'locations:dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-speedometer2 me-2"></i>
+                    Back to Dashboard
+                </a>
+                <a href="{% url 'locations:analytics' %}" class="btn btn-outline-info">
+                    <i class="bi bi-graph-up me-2"></i>
+                    View Analytics
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions mb-4">
+        <div class="action-card">
+            <div class="action-icon bg-primary">
+                <i class="bi bi-download"></i>
+            </div>
+            <div class="action-content">
+                <div class="action-title">Quick Export</div>
+                <div class="action-desc">Export all locations data</div>
+            </div>
+            <div class="action-buttons">
+                <a href="{% url 'locations:export' %}?format=excel" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-file-excel me-1"></i>Excel
+                </a>
+                <a href="{% url 'locations:export' %}?format=pdf" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-file-pdf me-1"></i>PDF
+                </a>
+            </div>
+        </div>
+        
+        <div class="action-card">
+            <div class="action-icon bg-info">
+                <i class="bi bi-geo-alt"></i>
+            </div>
+            <div class="action-content">
+                <div class="action-title">GPS Coordinates</div>
+                <div class="action-desc">Export coordinate data</div>
+            </div>
+            <div class="action-buttons">
+                <a href="{% url 'locations:coordinates_export' %}?format=csv" class="btn btn-sm btn-outline-info">
+                    <i class="bi bi-filetype-csv me-1"></i>CSV
+                </a>
+                <a href="{% url 'locations:coordinates_export' %}?format=kml" class="btn btn-sm btn-outline-info">
+                    <i class="bi bi-map me-1"></i>KML
+                </a>
+            </div>
+        </div>
+        
+        <div class="action-card">
+            <div class="action-icon bg-success">
+                <i class="bi bi-diagram-3"></i>
+            </div>
+            <div class="action-content">
+                <div class="action-title">Hierarchy Report</div>
+                <div class="action-desc">Building structure analysis</div>
+            </div>
+            <div class="action-buttons">
+                <a href="{% url 'locations:hierarchy_report' %}?format=pdf" class="btn btn-sm btn-outline-success">
+                    <i class="bi bi-file-pdf me-1"></i>Generate
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Categories -->
+    <div class="reports-grid">
+        <!-- Standard Reports -->
+        <div class="report-category">
+            <div class="category-header">
+                <h3 class="category-title">
+                    <i class="bi bi-file-earmark-text"></i>
+                    Standard Reports
+                </h3>
+                <p class="category-desc">Pre-configured reports for common location data needs</p>
+            </div>
+            
+            <div class="report-list">
+                <div class="report-item">
+                    <div class="report-icon bg-primary">
+                        <i class="bi bi-building"></i>
+                    </div>
+                    <div class="report-info">
+                        <div class="report-name">Complete Location Inventory</div>
+                        <div class="report-description">Comprehensive list of all locations with full details including building, floor, room, and office information</div>
+                        <div class="report-stats">
+                            <span class="stat-item">
+                                <i class="bi bi-geo-alt me-1"></i>
+                                {{ stats.total_locations }} locations
+                            </span>
+                            <span class="stat-item">
+                                <i class="bi bi-building me-1"></i>
+                                {{ stats.total_buildings }} buildings
+                            </span>
+                        </div>
+                    </div>
+                    <div class="report-actions">
+                        <div class="btn-group">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-download me-2"></i>Generate
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'locations:export' %}?format=pdf&type=complete">
+                                    <i class="bi bi-file-pdf me-2"></i>PDF Report
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'locations:export' %}?format=excel&type=complete">
+                                    <i class="bi bi-file-excel me-2"></i>Excel Spreadsheet
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'locations:export' %}?format=csv&type=complete">
+                                    <i class="bi bi-filetype-csv me-2"></i>CSV Data
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="report-item">
+                    <div class="report-icon bg-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="report-info">
+                        <div class="report-name">Active Locations Summary</div>
+                        <div class="report-description">Summary of all active locations with status information and basic statistics</div>
+                        <div class="report-stats">
+                            <span class="stat-item">
+                                <i class="bi bi-check-circle me-1"></i>
+                                {{ stats.active_locations }} active
+                            </span>
+                            <span class="stat-item">
+                                <i class="bi bi-percent me-1"></i>
+                                {{ percentages.active_percent }}% active rate
+                            </span>
+                        </div>
+                    </div>
+                    <div class="report-actions">
+                        <div class="btn-group">
+                            <button class="btn btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-download me-2"></i>Generate
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'locations:export' %}?format=pdf&filter=active">
+                                    <i class="bi bi-file-pdf me-2"></i>PDF Report
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'locations:export' %}?format=excel&filter=active">
+                                    <i class="bi bi-file-excel me-2"></i>Excel Spreadsheet
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="report-item">
+                    <div class="report-icon bg-info">
+                        <i class="bi bi-geo-alt-fill"></i>
+                    </div>
+                    <div class="report-info">
+                        <div class="report-name">GPS Coordinate Mapping</div>
+                        <div class="report-description">Locations with GPS coordinates for mapping and navigation applications</div>
+                        <div class="report-stats">
+                            <span class="stat-item">
+                                <i class="bi bi-pin-map me-1"></i>
+                                {{ stats.locations_with_coordinates }} mapped
+                            </span>
+                            <span class="stat-item">
+                                <i class="bi bi-percent me-1"></i>
+                                {{ percentages.mapped_percent }}% coverage
+                            </span>
+                        </div>
+                    </div>
+                    <div class="report-actions">
+                        <div class="btn-group">
+                            <button class="btn btn-outline-info dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-download me-2"></i>Generate
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'locations:coordinates_export' %}?format=csv">
+                                    <i class="bi bi-filetype-csv me-2"></i>CSV Coordinates
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'locations:coordinates_export' %}?format=kml">
+                                    <i class="bi bi-map me-2"></i>KML for Maps
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'locations:coordinates_export' %}?format=gpx">
+                                    <i class="bi bi-compass me-2"></i>GPX for GPS
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytical Reports -->
+        <div class="report-category">
+            <div class="category-header">
+                <h3 class="category-title">
+                    <i class="bi bi-graph-up"></i>
+                    Analytical Reports
+                </h3>
+                <p class="category-desc">Advanced analysis and statistical breakdowns</p>
+            </div>
+            
+            <div class="report-list">
+                <div class="report-item">
+                    <div class="report-icon bg-warning">
+                        <i class="bi bi-diagram-3"></i>
+                    </div>
+                    <div class="report-info">
+                        <div class="report-name">Location Hierarchy Analysis</div>
+                        <div class="report-description">Detailed breakdown of building-floor-room-office relationships and hierarchy structure</div>
+                        <div class="report-stats">
+                            <span class="stat-item">
+                                <i class="bi bi-layers me-1"></i>
+                                {{ stats.total_floors }} floors
+                            </span>
+                            <span class="stat-item">
+                                <i class="bi bi-door-open me-1"></i>
+                                {{ stats.total_rooms }} rooms
+                            </span>
+                        </div>
+                    </div>
+                    <div class="report-actions">
+                        <div class="btn-group">
+                            <button class="btn btn-outline-warning dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-download me-2"></i>Generate
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'locations:hierarchy_report' %}?format=pdf">
+                                    <i class="bi bi-file-pdf me-2"></i>PDF Analysis
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'locations:hierarchy_report' %}?format=excel">
+                                    <i class="bi bi-file-excel me-2"></i>Excel Workbook
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="report-item">
+                    <div class="report-icon bg-secondary">
+                        <i class="bi bi-briefcase"></i>
+                    </div>
+                    <div class="report-info">
+                        <div class="report-name">Office Utilization Report</div>
+                        <div class="report-description">Analysis of office types, capacity utilization, and organizational structure</div>
+                        <div class="report-stats">
+                            <span class="stat-item">
+                                <i class="bi bi-briefcase me-1"></i>
+                                {{ stats.total_offices }} offices
+                            </span>
+                            <span class="stat-item">
+                                <i class="bi bi-people me-1"></i>
+                                {{ component_usage.offices_used }} used
+                            </span>
+                        </div>
+                    </div>
+                    <div class="report-actions">
+                        <div class="btn-group">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-download me-2"></i>Generate
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'locations:office_stats' %}?export=pdf">
+                                    <i class="bi bi-file-pdf me-2"></i>PDF Report
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'locations:office_stats' %}?export=excel">
+                                    <i class="bi bi-file-excel me-2"></i>Excel Analysis
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="report-item">
+                    <div class="report-icon bg-dark">
+                        <i class="bi bi-bar-chart"></i>
+                    </div>
+                    <div class="report-info">
+                        <div class="report-name">Statistical Summary</div>
+                        <div class="report-description">Comprehensive statistical analysis with charts, trends, and key performance indicators</div>
+                        <div class="report-stats">
+                            <span class="stat-item">
+                                <i class="bi bi-clipboard-data me-1"></i>
+                                Full statistics
+                            </span>
+                            <span class="stat-item">
+                                <i class="bi bi-graph-up me-1"></i>
+                                Trend analysis
+                            </span>
+                        </div>
+                    </div>
+                    <div class="report-actions">
+                        <div class="btn-group">
+                            <button class="btn btn-outline-dark dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-download me-2"></i>Generate
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'locations:summary_report' %}?format=pdf">
+                                    <i class="bi bi-file-pdf me-2"></i>PDF Report
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'locations:summary_report' %}?format=excel">
+                                    <i class="bi bi-file-excel me-2"></i>Excel Dashboard
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Report Builder -->
+    <div class="custom-report-section">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="bi bi-sliders"></i>
+                Custom Report Builder
+            </h3>
+            <p class="section-desc">Create customized reports with specific filters and criteria</p>
+        </div>
+        
+        <div class="custom-report-card">
+            <form method="get" action="{% url 'locations:export' %}" id="customReportForm">
+                <div class="custom-report-grid">
+                    <!-- Filters Section -->
+                    <div class="filter-section">
+                        <h4 class="filter-title">
+                            <i class="bi bi-funnel"></i>
+                            Report Filters
+                        </h4>
+                        
+                        <div class="filter-grid">
+                            <div class="filter-group">
+                                <label class="filter-label">
+                                    <i class="bi bi-building me-2"></i>
+                                    Building
+                                </label>
+                                <select name="building" class="form-select">
+                                    <option value="">All Buildings</option>
+                                    {% for building in buildings %}
+                                    <option value="{{ building.id }}">{{ building.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label class="filter-label">
+                                    <i class="bi bi-layers me-2"></i>
+                                    Floor
+                                </label>
+                                <select name="floor" class="form-select">
+                                    <option value="">All Floors</option>
+                                    {% for floor in floors %}
+                                    <option value="{{ floor.id }}">Floor {{ floor.floor_number }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label class="filter-label">
+                                    <i class="bi bi-briefcase me-2"></i>
+                                    Office Type
+                                </label>
+                                <select name="office_type" class="form-select">
+                                    <option value="">All Office Types</option>
+                                    <option value="wing">Wing</option>
+                                    <option value="section">Section</option>
+                                    <option value="desk">Desk</option>
+                                    <option value="branch">Branch</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label class="filter-label">
+                                    <i class="bi bi-toggle-on me-2"></i>
+                                    Status
+                                </label>
+                                <select name="status" class="form-select">
+                                    <option value="">All Statuses</option>
+                                    <option value="active">Active Only</option>
+                                    <option value="inactive">Inactive Only</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label class="filter-label">
+                                    <i class="bi bi-geo-alt me-2"></i>
+                                    GPS Coordinates
+                                </label>
+                                <select name="coordinates" class="form-select">
+                                    <option value="">All Locations</option>
+                                    <option value="with">With Coordinates</option>
+                                    <option value="without">Without Coordinates</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label class="filter-label">
+                                    <i class="bi bi-calendar3 me-2"></i>
+                                    Date Range
+                                </label>
+                                <div class="input-group">
+                                    <input type="date" name="date_from" class="form-control" placeholder="From">
+                                    <input type="date" name="date_to" class="form-control" placeholder="To">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Options Section -->
+                    <div class="options-section">
+                        <h4 class="options-title">
+                            <i class="bi bi-gear"></i>
+                            Report Options
+                        </h4>
+                        
+                        <div class="options-grid">
+                            <div class="option-group">
+                                <label class="option-label">Export Format</label>
+                                <div class="format-options">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="format" value="pdf" id="formatPdf" checked>
+                                        <label class="form-check-label" for="formatPdf">
+                                            <i class="bi bi-file-pdf me-2"></i>PDF Report
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="format" value="excel" id="formatExcel">
+                                        <label class="form-check-label" for="formatExcel">
+                                            <i class="bi bi-file-excel me-2"></i>Excel Spreadsheet
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="format" value="csv" id="formatCsv">
+                                        <label class="form-check-label" for="formatCsv">
+                                            <i class="bi bi-filetype-csv me-2"></i>CSV Data
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="option-group">
+                                <label class="option-label">Include in Report</label>
+                                <div class="include-options">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="include_images" value="1" id="includeImages">
+                                        <label class="form-check-label" for="includeImages">
+                                            <i class="bi bi-image me-2"></i>QR Codes
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="include_stats" value="1" id="includeStats" checked>
+                                        <label class="form-check-label" for="includeStats">
+                                            <i class="bi bi-bar-chart me-2"></i>Statistics
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="include_coordinates" value="1" id="includeCoords">
+                                        <label class="form-check-label" for="includeCoords">
+                                            <i class="bi bi-geo-alt me-2"></i>GPS Data
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="generate-section">
+                            <button type="submit" class="btn btn-parliament-primary btn-lg">
+                                <i class="bi bi-download me-2"></i>
+                                Generate Custom Report
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-lg" onclick="resetForm()">
+                                <i class="bi bi-arrow-clockwise me-2"></i>
+                                Reset Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Recent Reports -->
+    <div class="recent-reports-section">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="bi bi-clock-history"></i>
+                Recent Reports
+            </h3>
+            <p class="section-desc">Previously generated reports and downloads</p>
+        </div>
+        
+        <div class="recent-reports-list">
+            <div class="recent-report-item">
+                <div class="report-icon bg-primary">
+                    <i class="bi bi-file-pdf"></i>
+                </div>
+                <div class="report-details">
+                    <div class="report-name">Complete Location Inventory</div>
+                    <div class="report-meta">
+                        <span class="report-date">
+                            <i class="bi bi-calendar3 me-1"></i>
+                            Generated on {{ today|date:"M d, Y" }}
+                        </span>
+                        <span class="report-size">
+                            <i class="bi bi-file-earmark me-1"></i>
+                            2.4 MB
+                        </span>
+                    </div>
+                </div>
+                <div class="report-actions">
+                    <button class="btn btn-sm btn-outline-primary" onclick="alert('Download feature will be implemented')">
+                        <i class="bi bi-download"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="recent-report-item">
+                <div class="report-icon bg-success">
+                    <i class="bi bi-file-excel"></i>
+                </div>
+                <div class="report-details">
+                    <div class="report-name">Active Locations Summary</div>
+                    <div class="report-meta">
+                        <span class="report-date">
+                            <i class="bi bi-calendar3 me-1"></i>
+                            Generated on {{ yesterday|date:"M d, Y" }}
+                        </span>
+                        <span class="report-size">
+                            <i class="bi bi-file-earmark me-1"></i>
+                            1.8 MB
+                        </span>
+                    </div>
+                </div>
+                <div class="report-actions">
+                    <button class="btn btn-sm btn-outline-success" onclick="alert('Download feature will be implemented')">
+                        <i class="bi bi-download"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Reports Specific Styles */
+.reports-header {
+    background: linear-gradient(135deg, var(--parliament-primary) 0%, var(--parliament-secondary) 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.reports-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.reports-subtitle {
+    font-size: 1.125rem;
+    opacity: 0.9;
+}
+
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.action-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--bs-border-color);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.action-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.action-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.action-content {
+    flex: 1;
+}
+
+.action-title {
+    font-weight: 600;
+    font-size: 1.125rem;
+    color: var(--parliament-dark);
+    margin-bottom: 0.25rem;
+}
+
+.action-desc {
+    font-size: 0.875rem;
+    color: var(--bs-secondary);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.report-category {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--bs-border-color);
+}
+
+.category-header {
+    padding: 1.5rem 1.5rem 0;
+    border-bottom: 1px solid var(--bs-border-color);
+    margin-bottom: 1.5rem;
+}
+
+.category-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.category-desc {
+    color: var(--bs-secondary);
+    margin: 0;
+}
+
+.report-list {
+    padding: 0 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.report-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bs-light);
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.report-item:hover {
+    background: rgba(var(--parliament-primary-rgb), 0.05);
+}
+
+.report-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.125rem;
+    flex-shrink: 0;
+}
+
+.report-info {
+    flex: 1;
+}
+
+.report-name {
+    font-weight: 600;
+    font-size: 1.125rem;
+    color: var(--parliament-dark);
+    margin-bottom: 0.5rem;
+}
+
+.report-description {
+    font-size: 0.875rem;
+    color: var(--bs-secondary);
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.report-stats {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    font-size: 0.75rem;
+    color: var(--parliament-primary);
+    background: rgba(var(--parliament-primary-rgb), 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    font-weight: 500;
+}
+
+.report-actions {
+    flex-shrink: 0;
+}
+
+.custom-report-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--bs-border-color);
+    margin-bottom: 2rem;
+}
+
+.section-header {
+    padding: 1.5rem 1.5rem 0;
+    border-bottom: 1px solid var(--bs-border-color);
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-desc {
+    color: var(--bs-secondary);
+    margin: 0;
+}
+
+.custom-report-card {
+    padding: 0 1.5rem 1.5rem;
+}
+
+.custom-report-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.filter-section {
+    background: var(--bs-light);
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+
+.filter-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--parliament-dark);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.options-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.options-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.option-group {
+    background: var(--bs-light);
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.option-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin-bottom: 0.75rem;
+    display: block;
+}
+
+.format-options, .include-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-check-label {
+    font-size: 0.875rem;
+    color: var(--parliament-dark);
+    display: flex;
+    align-items: center;
+}
+
+.generate-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: auto;
+}
+
+.recent-reports-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--bs-border-color);
+}
+
+.recent-reports-list {
+    padding: 0 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.recent-report-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bs-light);
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.recent-report-item:hover {
+    background: rgba(var(--parliament-primary-rgb), 0.05);
+}
+
+.report-details {
+    flex: 1;
+}
+
+.report-meta {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.25rem;
+}
+
+.report-date, .report-size {
+    font-size: 0.75rem;
+    color: var(--bs-secondary);
+    display: flex;
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .custom-report-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .reports-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .quick-actions {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .action-card {
+        padding: 1rem;
+    }
+    
+    .reports-title {
+        font-size: 1.75rem;
+    }
+}
+
+/* Custom styles for better visual hierarchy */
+:root {
+    --parliament-primary-rgb: 54, 96, 146;
+}
+
+.btn-parliament-primary {
+    background-color: var(--parliament-primary);
+    border-color: var(--parliament-primary);
+    color: white;
+}
+
+.btn-parliament-primary:hover {
+    background-color: #2d5aa0;
+    border-color: #2d5aa0;
+    color: white;
+}
+</style>
+
+<script>
+// Form handling and interactions
+function resetForm() {
+    document.getElementById('customReportForm').reset();
+}
+
+// Form validation before submission
+document.getElementById('customReportForm').addEventListener('submit', function(e) {
+    const format = document.querySelector('input[name="format"]:checked');
+    if (!format) {
+        e.preventDefault();
+        alert('Please select an export format.');
+        return;
+    }
+    
+    // Show loading state
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating Report...';
+    submitBtn.disabled = true;
+    
+    // Reset button after a delay (simulating report generation)
+    setTimeout(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }, 3000);
+});
+
+// Dynamic filter updates
+document.querySelector('select[name="building"]').addEventListener('change', function() {
+    const buildingId = this.value;
+    // This would typically make an AJAX call to filter floors based on building
+    console.log('Building changed:', buildingId);
+});
+
+// Quick action handlers
+document.querySelectorAll('.dropdown-item').forEach(item => {
+    item.addEventListener('click', function(e) {
+        const href = this.getAttribute('href');
+        if (href && href !== '#') {
+            // Show loading indicator for export actions
+            const icon = this.querySelector('i');
+            if (icon) {
+                const originalClass = icon.className;
+                icon.className = 'bi bi-hourglass-split me-2';
+                setTimeout(() => {
+                    icon.className = originalClass;
+                }, 2000);
+            }
+        }
+    });
+});
+
+// Tooltip initialization for better UX
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap tooltips if needed
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

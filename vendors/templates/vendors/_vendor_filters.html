@@ -1,0 +1,404 @@
+{% load static %}
+
+<div class="vendor-filters">
+    <form method="GET" class="filter-form" id="vendorFilterForm">
+        <div class="row g-3 align-items-end">
+            <!-- Search Input -->
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label small text-muted">Search</label>
+                <div class="search-box">
+                    <i class="bi bi-search search-icon"></i>
+                    <input type="text" name="search" class="form-control search-input" 
+                           placeholder="Search vendors..." 
+                           value="{{ form.search.value|default:'' }}"
+                           autocomplete="off">
+                </div>
+            </div>
+            
+            <!-- Vendor Type Filter -->
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label small text-muted">Type</label>
+                <select name="vendor_type" class="form-select filter-dropdown">
+                    <option value="">All Types</option>
+                    {% for value, label in form.vendor_type.field.choices %}
+                        {% if value %}
+                            <option value="{{ value }}" {% if form.vendor_type.value == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Status Filter -->
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label small text-muted">Status</label>
+                <select name="status" class="form-select filter-dropdown">
+                    <option value="">All Status</option>
+                    {% for value, label in form.status.field.choices %}
+                        {% if value %}
+                            <option value="{{ value }}" {% if form.status.value == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Active Status Filter -->
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label small text-muted">Active</label>
+                <select name="is_active" class="form-select filter-dropdown">
+                    {% for value, label in form.is_active.field.choices %}
+                        <option value="{{ value }}" {% if form.is_active.value == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Location Filters -->
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label small text-muted">City</label>
+                <input type="text" name="city" class="form-control" 
+                       placeholder="City..." 
+                       value="{{ form.city.value|default:'' }}">
+            </div>
+            
+            <!-- Filter Actions -->
+            <div class="col-lg-1 col-md-12">
+                <div class="d-flex gap-1">
+                    <button type="submit" class="btn btn-vendor-primary" title="Apply Filters">
+                        <i class="bi bi-funnel"></i>
+                    </button>
+                    <button type="button" class="btn btn-vendor-secondary" onclick="clearFilters()" title="Clear Filters">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Advanced Filters Toggle -->
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-link p-0 text-decoration-none small" 
+                            data-bs-toggle="collapse" data-bs-target="#advancedFilters" 
+                            aria-expanded="false" aria-controls="advancedFilters">
+                        <i class="bi bi-chevron-right me-1" id="advancedToggleIcon"></i>
+                        Advanced Filters
+                    </button>
+                    
+                    <!-- Quick Filter Badges -->
+                    <div class="quick-filters d-flex gap-1 flex-wrap">
+                        {% if form.search.value %}
+                            <span class="badge bg-primary d-flex align-items-center">
+                                Search: "{{ form.search.value }}"
+                                <button type="button" class="btn-close btn-close-white ms-2" 
+                                        onclick="clearFilter('search')" aria-label="Clear search"></button>
+                            </span>
+                        {% endif %}
+                        
+                        {% if form.vendor_type.value %}
+                            <span class="badge bg-info d-flex align-items-center">
+                                Type: {{ form.vendor_type.value|capfirst }}
+                                <button type="button" class="btn-close btn-close-white ms-2" 
+                                        onclick="clearFilter('vendor_type')" aria-label="Clear type filter"></button>
+                            </span>
+                        {% endif %}
+                        
+                        {% if form.status.value %}
+                            <span class="badge bg-warning d-flex align-items-center">
+                                Status: {{ form.status.value|capfirst }}
+                                <button type="button" class="btn-close btn-close-white ms-2" 
+                                        onclick="clearFilter('status')" aria-label="Clear status filter"></button>
+                            </span>
+                        {% endif %}
+                        
+                        {% if form.is_active.value and form.is_active.value != '' %}
+                            <span class="badge bg-success d-flex align-items-center">
+                                Active: {% if form.is_active.value == 'true' %}Yes{% else %}No{% endif %}
+                                <button type="button" class="btn-close btn-close-white ms-2" 
+                                        onclick="clearFilter('is_active')" aria-label="Clear active filter"></button>
+                            </span>
+                        {% endif %}
+                        
+                        {% if form.city.value %}
+                            <span class="badge bg-secondary d-flex align-items-center">
+                                City: {{ form.city.value }}
+                                <button type="button" class="btn-close btn-close-white ms-2" 
+                                        onclick="clearFilter('city')" aria-label="Clear city filter"></button>
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Advanced Filters Collapse -->
+        <div class="collapse mt-3" id="advancedFilters">
+            <div class="row g-3">
+                <!-- District Filter -->
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label small text-muted">District</label>
+                    <input type="text" name="district" class="form-control" 
+                           placeholder="District..." 
+                           value="{{ form.district.value|default:'' }}">
+                </div>
+                
+                <!-- Preferred Filter -->
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label small text-muted">Preferred</label>
+                    <select name="is_preferred" class="form-select filter-dropdown">
+                        {% for value, label in form.is_preferred.field.choices %}
+                            <option value="{{ value }}" {% if form.is_preferred.value == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Performance Rating Filter -->
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label small text-muted">Rating</label>
+                    <select name="performance_rating" class="form-select filter-dropdown">
+                        {% for value, label in form.performance_rating.field.choices %}
+                            <option value="{{ value }}" {% if form.performance_rating.value == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Date Range Filters -->
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label small text-muted">Created From</label>
+                    <input type="date" name="created_from" class="form-control" 
+                           value="{{ request.GET.created_from }}">
+                </div>
+                
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label small text-muted">Created To</label>
+                    <input type="date" name="created_to" class="form-control" 
+                           value="{{ request.GET.created_to }}">
+                </div>
+                
+                <!-- Service Categories Filter -->
+                <div class="col-lg-4 col-md-6">
+                    <label class="form-label small text-muted">Service Categories</label>
+                    <input type="text" name="service_categories" class="form-control" 
+                           placeholder="Search service categories..." 
+                           value="{{ request.GET.service_categories }}">
+                </div>
+                
+                <!-- Specialization Filter -->
+                <div class="col-lg-4 col-md-6">
+                    <label class="form-label small text-muted">Specialization</label>
+                    <input type="text" name="specialization" class="form-control" 
+                           placeholder="Search specialization..." 
+                           value="{{ request.GET.specialization }}">
+                </div>
+                
+                <!-- Country Filter -->
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label small text-muted">Country</label>
+                    <select name="country" class="form-select filter-dropdown">
+                        <option value="">All Countries</option>
+                        <option value="bangladesh" {% if request.GET.country == 'bangladesh' %}selected{% endif %}>Bangladesh</option>
+                        <option value="international" {% if request.GET.country == 'international' %}selected{% endif %}>International</option>
+                    </select>
+                </div>
+                
+                <!-- Sort Options -->
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label small text-muted">Sort By</label>
+                    <select name="sort" class="form-select filter-dropdown">
+                        <option value="">Default</option>
+                        <option value="name" {% if request.GET.sort == 'name' %}selected{% endif %}>Name A-Z</option>
+                        <option value="-name" {% if request.GET.sort == '-name' %}selected{% endif %}>Name Z-A</option>
+                        <option value="vendor_code" {% if request.GET.sort == 'vendor_code' %}selected{% endif %}>Code A-Z</option>
+                        <option value="-vendor_code" {% if request.GET.sort == '-vendor_code' %}selected{% endif %}>Code Z-A</option>
+                        <option value="created_at" {% if request.GET.sort == 'created_at' %}selected{% endif %}>Oldest First</option>
+                        <option value="-created_at" {% if request.GET.sort == '-created_at' %}selected{% endif %}>Newest First</option>
+                        <option value="-performance_rating" {% if request.GET.sort == '-performance_rating' %}selected{% endif %}>Highest Rated</option>
+                        <option value="performance_rating" {% if request.GET.sort == 'performance_rating' %}selected{% endif %}>Lowest Rated</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </form>
+    
+    <!-- Filter Summary -->
+    {% if form.is_bound %}
+        <div class="filter-summary mt-3 p-2 bg-light rounded small text-muted">
+            <i class="bi bi-info-circle me-1"></i>
+            {% if form.search.value or form.vendor_type.value or form.status.value or form.is_active.value != '' or form.city.value %}
+                Active filters applied. 
+                <a href="javascript:void(0)" onclick="clearAllFilters()" class="text-decoration-none">Clear all filters</a>
+            {% else %}
+                No filters applied. Showing all vendors.
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<script>
+// Filter management functions
+function clearFilter(filterName) {
+    const form = document.getElementById('vendorFilterForm');
+    const input = form.querySelector(`[name="${filterName}"]`);
+    if (input) {
+        if (input.type === 'select-one') {
+            input.selectedIndex = 0;
+        } else {
+            input.value = '';
+        }
+        form.submit();
+    }
+}
+
+function clearFilters() {
+    const form = document.getElementById('vendorFilterForm');
+    const inputs = form.querySelectorAll('input, select');
+    inputs.forEach(input => {
+        if (input.type === 'select-one') {
+            input.selectedIndex = 0;
+        } else if (input.type !== 'hidden') {
+            input.value = '';
+        }
+    });
+    form.submit();
+}
+
+function clearAllFilters() {
+    window.location.href = window.location.pathname;
+}
+
+// Auto-submit on filter change
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('vendorFilterForm');
+    
+    // Auto-submit on select change
+    form.querySelectorAll('select.filter-dropdown').forEach(select => {
+        select.addEventListener('change', function() {
+            form.submit();
+        });
+    });
+    
+    // Search with debounce
+    const searchInput = form.querySelector('.search-input');
+    if (searchInput) {
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (this.value.length >= 2 || this.value.length === 0) {
+                    form.submit();
+                }
+            }, 500);
+        });
+        
+        // Search on Enter
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(searchTimeout);
+                form.submit();
+            }
+        });
+    }
+    
+    // Toggle advanced filters icon
+    const advancedToggle = document.querySelector('[data-bs-target="#advancedFilters"]');
+    const advancedIcon = document.getElementById('advancedToggleIcon');
+    
+    if (advancedToggle && advancedIcon) {
+        advancedToggle.addEventListener('click', function() {
+            setTimeout(() => {
+                const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                advancedIcon.className = isExpanded ? 'bi bi-chevron-down me-1' : 'bi bi-chevron-right me-1';
+            }, 10);
+        });
+    }
+    
+    // Date range validation
+    const createdFrom = form.querySelector('[name="created_from"]');
+    const createdTo = form.querySelector('[name="created_to"]');
+    
+    if (createdFrom && createdTo) {
+        function validateDateRange() {
+            if (createdFrom.value && createdTo.value) {
+                if (new Date(createdFrom.value) > new Date(createdTo.value)) {
+                    createdTo.setCustomValidity('End date must be after start date');
+                } else {
+                    createdTo.setCustomValidity('');
+                }
+            }
+        }
+        
+        createdFrom.addEventListener('change', validateDateRange);
+        createdTo.addEventListener('change', validateDateRange);
+    }
+    
+    // Auto-submit date filters
+    form.querySelectorAll('input[type="date"]').forEach(dateInput => {
+        dateInput.addEventListener('change', function() {
+            form.submit();
+        });
+    });
+});
+</script>
+
+<style>
+.vendor-filters .form-control,
+.vendor-filters .form-select {
+    font-size: 0.875rem;
+}
+
+.vendor-filters .search-box {
+    position: relative;
+}
+
+.vendor-filters .search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.vendor-filters .search-input {
+    padding-left: 2.75rem;
+}
+
+.vendor-filters .quick-filters .badge {
+    font-size: 0.75rem;
+}
+
+.vendor-filters .btn-close {
+    font-size: 0.6rem;
+    width: 0.8rem;
+    height: 0.8rem;
+}
+
+.vendor-filters .filter-summary {
+    border: 1px solid #e9ecef;
+}
+
+@media (max-width: 768px) {
+    .vendor-filters .row.g-3 > div {
+        margin-bottom: 1rem;
+    }
+    
+    .vendor-filters .quick-filters {
+        margin-top: 0.5rem;
+    }
+    
+    .vendor-filters .d-flex.justify-content-between {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+}
+</style>

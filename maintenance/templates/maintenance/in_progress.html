@@ -1,0 +1,869 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}In Progress Maintenance - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* In Progress Maintenance Styling - Parliament Design System */
+.in-progress-container {
+    background: var(--bg-gradient-primary);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.in-progress-header {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.in-progress-title {
+    color: #f59e0b;
+    font-weight: 700;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.in-progress-subtitle {
+    color: var(--parliament-neutral);
+    margin-bottom: 0;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.stat-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--glass-shadow);
+    transition: var(--transition);
+}
+
+.stat-card:hover {
+    box-shadow: var(--glass-shadow-hover);
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    margin-bottom: var(--spacing-md);
+}
+
+.stat-icon.in-progress { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.stat-icon.overdue { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.stat-icon.today { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.stat-icon.this-week { background: linear-gradient(135deg, #10b981, #059669); }
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-label {
+    color: var(--parliament-neutral);
+    font-weight: 500;
+}
+
+.filters-section {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.filters-header {
+    color: var(--parliament-primary);
+    font-weight: 600;
+    margin-bottom: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.filter-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+    align-items: end;
+}
+
+.form-group {
+    margin-bottom: 0;
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-sm);
+}
+
+.form-control, .form-select {
+    border: 1px solid rgba(203, 213, 225, 0.5);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    transition: var(--transition);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 0.2rem rgba(245, 158, 11, 0.25);
+    background: white;
+}
+
+.priority-alerts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.alert {
+    border: none;
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    backdrop-filter: var(--glass-backdrop);
+}
+
+.alert-warning {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #92400e;
+}
+
+.alert-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #991b1b;
+}
+
+.in-progress-list {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--glass-shadow);
+}
+
+.list-header {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    padding: var(--spacing-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.list-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.list-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.maintenance-item {
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+    padding: var(--spacing-lg);
+    transition: var(--transition);
+    position: relative;
+}
+
+.maintenance-item:hover {
+    background: rgba(248, 250, 252, 0.8);
+}
+
+.maintenance-item:last-child {
+    border-bottom: none;
+}
+
+.maintenance-item.overdue {
+    background: rgba(239, 68, 68, 0.02);
+    border-left: 4px solid #ef4444;
+}
+
+.maintenance-item.critical {
+    background: rgba(147, 51, 234, 0.02);
+    border-left: 4px solid #9333ea;
+}
+
+.maintenance-content {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: var(--spacing-lg);
+    align-items: center;
+}
+
+.maintenance-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    position: relative;
+}
+
+.maintenance-icon.overdue {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.maintenance-details {
+    flex: 1;
+}
+
+.maintenance-title {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+}
+
+.maintenance-title a {
+    color: var(--parliament-dark);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.maintenance-title a:hover {
+    color: #f59e0b;
+}
+
+.maintenance-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+}
+
+.meta-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.maintenance-id {
+    background: rgba(71, 85, 105, 0.1);
+    color: #475569;
+}
+
+.device-badge {
+    background: rgba(59, 130, 246, 0.1);
+    color: #1e40af;
+}
+
+.priority-low {
+    background: rgba(34, 197, 94, 0.1);
+    color: #166534;
+}
+
+.priority-medium {
+    background: rgba(245, 158, 11, 0.1);
+    color: #92400e;
+}
+
+.priority-high {
+    background: rgba(239, 68, 68, 0.1);
+    color: #991b1b;
+}
+
+.priority-critical {
+    background: rgba(147, 51, 234, 0.1);
+    color: #6b21a8;
+}
+
+.maintenance-dates {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.progress-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-xs);
+}
+
+.progress-bar {
+    flex: 1;
+    height: 6px;
+    background: rgba(203, 213, 225, 0.3);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #f59e0b;
+}
+
+.status-badge {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.status-badge.overdue {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.maintenance-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-weight: 600;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+.btn-outline-primary {
+    background: transparent;
+    border: 1px solid var(--parliament-primary);
+    color: var(--parliament-primary);
+}
+
+.btn-outline-primary:hover {
+    background: var(--parliament-primary);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-outline-warning {
+    background: transparent;
+    border: 1px solid #f59e0b;
+    color: #d97706;
+}
+
+.btn-outline-warning:hover {
+    background: #f59e0b;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-outline-success {
+    background: transparent;
+    border: 1px solid #10b981;
+    color: #059669;
+}
+
+.btn-outline-success:hover {
+    background: #10b981;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-outline-danger {
+    background: transparent;
+    border: 1px solid #ef4444;
+    color: #dc2626;
+}
+
+.btn-outline-danger:hover {
+    background: #ef4444;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--parliament-primary), #3b82f6);
+    color: white;
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1e40af, #2563eb);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+    color: white;
+}
+
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-3xl);
+    color: var(--parliament-neutral);
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-lg);
+    opacity: 0.5;
+    color: #f59e0b;
+}
+
+.empty-state h5 {
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-md);
+}
+
+.pagination-wrapper {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.page-link {
+    color: #f59e0b;
+    border-color: rgba(203, 213, 225, 0.5);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.page-link:hover {
+    color: white;
+    background: #f59e0b;
+    border-color: #f59e0b;
+}
+
+.page-item.active .page-link {
+    background: #f59e0b;
+    border-color: #f59e0b;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .filter-form {
+        grid-template-columns: 1fr;
+    }
+    
+    .priority-alerts {
+        grid-template-columns: 1fr;
+    }
+    
+    .maintenance-content {
+        grid-template-columns: auto 1fr;
+        gap: var(--spacing-md);
+    }
+    
+    .maintenance-actions {
+        grid-column: 1 / -1;
+        justify-self: start;
+        margin-top: var(--spacing-md);
+    }
+    
+    .list-header {
+        flex-direction: column;
+        gap: var(--spacing-md);
+        align-items: stretch;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="in-progress-container">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="in-progress-header">
+            <h1 class="in-progress-title">
+                <i class="bi bi-gear"></i>
+                In Progress Maintenance
+            </h1>
+            <p class="in-progress-subtitle">
+                Monitor and manage ongoing maintenance activities
+            </p>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon in-progress">
+                    <i class="bi bi-gear"></i>
+                </div>
+                <div class="stat-value">{{ total_in_progress }}</div>
+                <div class="stat-label">In Progress</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon overdue">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="stat-value">{{ overdue_count|default:0 }}</div>
+                <div class="stat-label">Overdue</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon today">
+                    <i class="bi bi-calendar-day"></i>
+                </div>
+                <div class="stat-value">{{ due_today|default:0 }}</div>
+                <div class="stat-label">Due Today</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon this-week">
+                    <i class="bi bi-calendar-week"></i>
+                </div>
+                <div class="stat-value">{{ this_week|default:0 }}</div>
+                <div class="stat-label">Due This Week</div>
+            </div>
+        </div>
+
+        <!-- Priority Alerts -->
+        {% if overdue_count > 0 or critical_count > 0 %}
+        <div class="priority-alerts">
+            {% if overdue_count > 0 %}
+            <div class="alert alert-danger">
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-exclamation-triangle me-2 mt-1"></i>
+                    <div>
+                        <strong>{{ overdue_count }} Overdue Maintenance</strong>
+                        <p class="mb-0">These maintenance tasks are past their expected completion date and require immediate attention.</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if critical_count > 0 %}
+            <div class="alert alert-warning">
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-exclamation-circle me-2 mt-1"></i>
+                    <div>
+                        <strong>{{ critical_count }} Critical Priority</strong>
+                        <p class="mb-0">High priority maintenance tasks currently in progress that need close monitoring.</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Filters -->
+        <div class="filters-section">
+            <h5 class="filters-header">
+                <i class="bi bi-funnel"></i>
+                Filter In Progress Maintenance
+            </h5>
+            
+            <form method="get" class="filter-form">
+                <div class="form-group">
+                    <label for="device" class="form-label">Device</label>
+                    <select name="device" id="device" class="form-select">
+                        <option value="">All Devices</option>
+                        {% for device in devices %}
+                        <option value="{{ device.pk }}" {% if request.GET.device == device.pk|stringformat:"s" %}selected{% endif %}>
+                            {{ device.device_id }} - {{ device.subcategory.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="priority" class="form-label">Priority</label>
+                    <select name="priority" id="priority" class="form-select">
+                        <option value="">All Priorities</option>
+                        <option value="LOW" {% if request.GET.priority == "LOW" %}selected{% endif %}>Low</option>
+                        <option value="MEDIUM" {% if request.GET.priority == "MEDIUM" %}selected{% endif %}>Medium</option>
+                        <option value="HIGH" {% if request.GET.priority == "HIGH" %}selected{% endif %}>High</option>
+                        <option value="CRITICAL" {% if request.GET.priority == "CRITICAL" %}selected{% endif %}>Critical</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="status_filter" class="form-label">Status</label>
+                    <select name="status_filter" id="status_filter" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="on_time" {% if request.GET.status_filter == "on_time" %}selected{% endif %}>On Time</option>
+                        <option value="overdue" {% if request.GET.status_filter == "overdue" %}selected{% endif %}>Overdue</option>
+                        <option value="critical" {% if request.GET.status_filter == "critical" %}selected{% endif %}>Critical Priority</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" name="search" id="search" class="form-control" 
+                           placeholder="Search maintenance..." value="{{ request.GET.search }}">
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i>
+                        Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Maintenance List -->
+        <div class="in-progress-list">
+            <div class="list-header">
+                <h5 class="list-title">
+                    <i class="bi bi-list-task"></i>
+                    In Progress Maintenance Records
+                    {% if maintenance_records %}({{ maintenance_records|length }}){% endif %}
+                </h5>
+                <div class="list-actions">
+                    <a href="{% url 'maintenance:create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i>
+                        New Maintenance
+                    </a>
+                </div>
+            </div>
+
+            {% if maintenance_records %}
+                {% for maintenance in maintenance_records %}
+                <div class="maintenance-item {% if maintenance.is_overdue %}overdue{% elif maintenance.priority == 'CRITICAL' %}critical{% endif %}">
+                    <div class="maintenance-content">
+                        <!-- Status Icon -->
+                        <div class="maintenance-icon {% if maintenance.is_overdue %}overdue{% endif %}">
+                            <i class="bi bi-gear"></i>
+                        </div>
+
+                        <!-- Maintenance Details -->
+                        <div class="maintenance-details">
+                            <h6 class="maintenance-title">
+                                <a href="{% url 'maintenance:detail' maintenance.pk %}">
+                                    {{ maintenance.title|default:"Maintenance for "|add:maintenance.device.name }}
+                                </a>
+                            </h6>
+                            
+                            <div class="maintenance-meta">
+                                <span class="meta-badge maintenance-id">{{ maintenance.maintenance_id }}</span>
+                                <span class="meta-badge device-badge">{{ maintenance.device.device_id }}</span>
+                                <span class="meta-badge priority-{{ maintenance.priority|lower }}">
+                                    {{ maintenance.get_priority_display }}
+                                </span>
+                                {% if maintenance.maintenance_type %}
+                                <span class="meta-badge" style="background: rgba(34, 197, 94, 0.1); color: #059669;">
+                                    {{ maintenance.get_maintenance_type_display }}
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            <div class="maintenance-dates">
+                                <i class="bi bi-calendar me-1"></i>
+                                Started: {{ maintenance.actual_start_date|date:"M d, Y H:i" }}
+                                {% if maintenance.expected_end_date %}
+                                    | Expected End: {{ maintenance.expected_end_date|date:"M d, Y" }}
+                                    {% if maintenance.is_overdue %}
+                                        <span class="text-danger fw-bold">(Overdue)</span>
+                                    {% endif %}
+                                {% endif %}
+                                {% if maintenance.vendor %}
+                                    <br><i class="bi bi-building me-1"></i>Vendor: {{ maintenance.vendor.name }}
+                                {% endif %}
+                            </div>
+
+                            {% if maintenance.expected_end_date %}
+                            <div class="progress-info">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: {{ maintenance.progress_percentage|default:0 }}%;"></div>
+                                </div>
+                                <span class="progress-text">{{ maintenance.progress_percentage|default:0 }}%</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Status Badge -->
+                        <div class="status-badge {% if maintenance.is_overdue %}overdue{% endif %}">
+                            {% if maintenance.is_overdue %}
+                                Overdue
+                            {% else %}
+                                In Progress
+                            {% endif %}
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="maintenance-actions">
+                            <a href="{% url 'maintenance:detail' maintenance.pk %}" 
+                               class="btn btn-sm btn-outline-primary" 
+                               title="View Details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            {% if perms.maintenance.change_maintenance %}
+                            <a href="{% url 'maintenance:edit' maintenance.pk %}" 
+                               class="btn btn-sm btn-outline-warning" 
+                               title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            {% endif %}
+                            {% if perms.maintenance.change_maintenance %}
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-success" 
+                                    onclick="completeMaintenance('{{ maintenance.pk }}')"
+                                    title="Mark Complete">
+                                <i class="bi bi-check-circle"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-gear"></i>
+                    <h5>No In Progress Maintenance Found</h5>
+                    <p>No maintenance is currently in progress or matches your filters.</p>
+                    <a href="{% url 'maintenance:scheduled' %}" class="btn btn-primary">
+                        <i class="bi bi-calendar-check me-2"></i>
+                        View Scheduled Maintenance
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="pagination-wrapper">
+            <nav aria-label="In progress maintenance pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-submit filter form on change
+document.addEventListener('DOMContentLoaded', function() {
+    const filterSelects = document.querySelectorAll('.filters-section select');
+    filterSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+});
+
+// Complete maintenance function
+function completeMaintenance(maintenanceId) {
+    if (confirm('Are you sure you want to mark this maintenance as complete? This will change its status to "Completed".')) {
+        fetch(`/maintenance/${maintenanceId}/complete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error completing maintenance: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while completing the maintenance.');
+        });
+    }
+}
+</script>
+{% endblock %}

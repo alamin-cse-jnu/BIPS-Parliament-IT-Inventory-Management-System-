@@ -1,0 +1,319 @@
+{% extends 'vendors/base_vendor.html' %}
+{% load static %}
+
+{% block vendor_title %}All Vendors{% endblock %}
+
+{% block vendor_breadcrumb_items %}
+    <li class="breadcrumb-item active">All Vendors</li>
+{% endblock %}
+
+{% block vendor_content %}
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number primary">{{ total_vendors }}</div>
+                <div class="text-muted">Total Vendors</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number success">{{ active_vendors }}</div>
+                <div class="text-muted">Active Vendors</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number warning">{{ preferred_vendors }}</div>
+                <div class="text-muted">Preferred Vendors</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number info">{{ suppliers }}</div>
+                <div class="text-muted">Suppliers</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <div class="search-box">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="text" name="search" class="form-control search-input" 
+                               placeholder="Search vendors..." value="{{ search_form.search.value|default:'' }}">
+                    </div>
+                </div>
+                
+                <div class="col-md-2">
+                    <select name="vendor_type" class="form-select filter-dropdown">
+                        <option value="">All Types</option>
+                        {% for value, label in search_form.vendor_type.field.choices %}
+                            {% if value %}
+                                <option value="{{ value }}" {% if search_form.vendor_type.value == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <select name="status" class="form-select filter-dropdown">
+                        <option value="">All Status</option>
+                        {% for value, label in search_form.status.field.choices %}
+                            {% if value %}
+                                <option value="{{ value }}" {% if search_form.status.value == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <select name="is_active" class="form-select filter-dropdown">
+                        {% for value, label in search_form.is_active.field.choices %}
+                            <option value="{{ value }}" {% if search_form.is_active.value == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-vendor-primary">
+                            <i class="bi bi-funnel me-1"></i>
+                            Filter
+                        </button>
+                        <a href="{% url 'vendors:list' %}" class="btn btn-vendor-secondary">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-0">
+                {% if vendors %}
+                    {{ vendors|length }} of {{ page_obj.paginator.count }} vendor{{ page_obj.paginator.count|pluralize }}
+                {% else %}
+                    No vendors found
+                {% endif %}
+            </h4>
+            {% if search_form.search.value %}
+                <small class="text-muted">
+                    Search results for "<strong>{{ search_form.search.value }}</strong>"
+                </small>
+            {% endif %}
+        </div>
+        
+        <div class="d-flex gap-2">
+            {% if vendors %}
+                <div class="dropdown">
+                    <button class="btn btn-vendor-secondary dropdown-toggle" type="button" 
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-download me-1"></i>
+                        Export
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'vendors:export_csv' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
+                                <i class="bi bi-file-earmark-spreadsheet me-2"></i>
+                                Export CSV
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'vendors:export_contacts' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
+                                <i class="bi bi-person-lines-fill me-2"></i>
+                                Contact List
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            {% endif %}
+            
+            {% if perms.vendors.add_vendor %}
+                <a href="{% url 'vendors:create' %}" class="btn btn-vendor-primary">
+                    <i class="bi bi-plus-circle me-1"></i>
+                    Add Vendor
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Vendors List -->
+    {% if vendors %}
+        <div class="vendors-list">
+            {% for vendor in vendors %}
+                {% include 'vendors/_vendor_card.html' %}
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+            <nav aria-label="Vendors pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page=1">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="bi bi-chevron-double-left"></i></span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.paginator.num_pages }}">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="bi bi-chevron-double-right"></i></span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-building" style="font-size: 4rem; color: #e5e7eb;"></i>
+            </div>
+            <h4 class="text-muted mb-3">
+                {% if search_form.search.value or search_form.vendor_type.value or search_form.status.value %}
+                    No vendors match your search criteria
+                {% else %}
+                    No vendors found
+                {% endif %}
+            </h4>
+            <p class="text-muted mb-4">
+                {% if search_form.search.value or search_form.vendor_type.value or search_form.status.value %}
+                    Try adjusting your search filters or clearing them to see all vendors.
+                {% else %}
+                    Get started by adding your first vendor to the system.
+                {% endif %}
+            </p>
+            <div class="d-flex justify-content-center gap-3">
+                {% if search_form.search.value or search_form.vendor_type.value or search_form.status.value %}
+                    <a href="{% url 'vendors:list' %}" class="btn btn-vendor-secondary">
+                        <i class="bi bi-arrow-clockwise me-1"></i>
+                        Clear Filters
+                    </a>
+                {% endif %}
+                {% if perms.vendors.add_vendor %}
+                    <a href="{% url 'vendors:create' %}" class="btn btn-vendor-primary">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        Add First Vendor
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block vendor_extra_js %}
+    <script>
+        // Auto-submit form on filter change
+        document.querySelectorAll('.filter-dropdown').forEach(function(select) {
+            select.addEventListener('change', function() {
+                this.closest('form').submit();
+            });
+        });
+
+        // Clear individual filters
+        function clearFilter(filterName) {
+            const form = document.querySelector('form');
+            const input = form.querySelector(`[name="${filterName}"]`);
+            if (input) {
+                if (input.type === 'select-one') {
+                    input.selectedIndex = 0;
+                } else {
+                    input.value = '';
+                }
+                form.submit();
+            }
+        }
+
+        // Bulk selection functionality
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const vendorCheckboxes = document.querySelectorAll('.vendor-checkbox');
+
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                vendorCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+                updateBulkActions();
+            });
+        }
+
+        vendorCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                updateBulkActions();
+                if (!this.checked) {
+                    selectAllCheckbox.checked = false;
+                }
+            });
+        });
+
+        function updateBulkActions() {
+            const checkedBoxes = document.querySelectorAll('.vendor-checkbox:checked');
+            const bulkActions = document.querySelector('.bulk-actions');
+            
+            if (bulkActions) {
+                bulkActions.style.display = checkedBoxes.length > 0 ? 'block' : 'none';
+            }
+        }
+
+        // Search with Enter key
+        document.querySelector('.search-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.closest('form').submit();
+            }
+        });
+    </script>
+{% endblock %}

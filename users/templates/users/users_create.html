@@ -1,0 +1,582 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create User - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'users:list' %}">Users</a></li>
+    <li class="breadcrumb-item active">Create User</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="bi bi-person-plus me-2 text-primary"></i>
+                Create New User
+            </h1>
+            <p class="text-muted mb-0">Add a new user to the PIMS system</p>
+        </div>
+        <a href="{% url 'users:list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>
+            Back to Users
+        </a>
+    </div>
+
+    <!-- Form Container -->
+    <div class="form-container">
+        <div class="form-header">
+            <h2 class="form-title">
+                <i class="bi bi-person-badge"></i>
+                User Information
+            </h2>
+        </div>
+
+        <div class="form-body">
+            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                {% csrf_token %}
+
+                <!-- Authentication Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Authentication Details</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.username.id_for_label }}" class="form-label required">
+                                <i class="bi bi-person-circle me-2"></i>Username
+                            </label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.username.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Username will be used for login. Must be unique.
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.employee_id.id_for_label }}" class="form-label required">
+                                <i class="bi bi-badge-4k me-2"></i>Employee ID
+                            </label>
+                            {{ form.employee_id }}
+                            {% if form.employee_id.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.employee_id.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Numbers only, minimum 3 digits. Used for alternative login.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.password1.id_for_label }}" class="form-label required">
+                                <i class="bi bi-lock me-2"></i>Password
+                            </label>
+                            <div class="input-group">
+                                {{ form.password1 }}
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword1">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            {% if form.password1.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.password1.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-shield-check me-1"></i>
+                                Password must be at least 8 characters long
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.password2.id_for_label }}" class="form-label required">
+                                <i class="bi bi-lock-fill me-2"></i>Confirm Password
+                            </label>
+                            <div class="input-group">
+                                {{ form.password2 }}
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword2">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            {% if form.password2.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.password2.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-check-circle me-1"></i>
+                                Re-enter password to confirm
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personal Information Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Personal Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label required">
+                                <i class="bi bi-person me-2"></i>First Name
+                            </label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.first_name.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label required">
+                                <i class="bi bi-person me-2"></i>Last Name
+                            </label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.last_name.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.email.id_for_label }}" class="form-label required">
+                                <i class="bi bi-envelope me-2"></i>Email Address
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.email.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Official email address for notifications
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.phone_number.id_for_label }}" class="form-label">
+                                <i class="bi bi-telephone me-2"></i>Phone Number
+                            </label>
+                            {{ form.phone_number }}
+                            {% if form.phone_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.phone_number.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Format: +8801XXXXXXXXX or 01XXXXXXXXX
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Employee Information Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Employee Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.designation.id_for_label }}" class="form-label">
+                                <i class="bi bi-briefcase me-2"></i>Designation
+                            </label>
+                            {{ form.designation }}
+                            {% if form.designation.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.designation.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Job title or position
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.office.id_for_label }}" class="form-label">
+                                <i class="bi bi-building me-2"></i>Office
+                            </label>
+                            {{ form.office }}
+                            {% if form.office.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.office.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Department or office within Parliament Secretariat
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Picture Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Profile Picture</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.profile_image.id_for_label }}" class="form-label">
+                                <i class="bi bi-camera me-2"></i>Profile Image
+                            </label>
+                            {{ form.profile_image }}
+                            {% if form.profile_image.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.profile_image.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Upload a profile picture (JPG, PNG, GIF, WebP - Max 2MB)
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div id="imagePreview" class="image-preview" style="display: none;">
+                                <img id="previewImg" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Roles & Permissions Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Roles & Permissions</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="bi bi-shield-check me-2"></i>User Groups/Roles
+                            </label>
+                            <div class="form-check-group">
+                                {% for group in form.groups %}
+                                    <div class="form-check">
+                                        {{ group.tag }}
+                                        <label class="form-check-label" for="{{ group.id_for_label }}">
+                                            {{ group.choice_label }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% if form.groups.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.groups.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Select appropriate roles for this user
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-footer">
+                    <div class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        <small>Fields marked with * are required</small>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-parliament-primary">
+                            <i class="bi bi-person-plus me-2"></i>
+                            Create User
+                        </button>
+                        <a href="{% url 'users:list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>
+                            Cancel
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Password toggle functionality
+        function setupPasswordToggle(toggleId, passwordId) {
+            const toggleBtn = document.getElementById(toggleId);
+            const passwordInput = document.getElementById(passwordId);
+            
+            if (toggleBtn && passwordInput) {
+                toggleBtn.addEventListener('click', function() {
+                    const type = passwordInput.type === 'password' ? 'text' : 'password';
+                    passwordInput.type = type;
+                    
+                    const icon = this.querySelector('i');
+                    icon.classList.toggle('bi-eye');
+                    icon.classList.toggle('bi-eye-slash');
+                });
+            }
+        }
+
+        setupPasswordToggle('togglePassword1', '{{ form.password1.id_for_label }}');
+        setupPasswordToggle('togglePassword2', '{{ form.password2.id_for_label }}');
+
+        // Image preview functionality
+        const imageInput = document.getElementById('{{ form.profile_image.id_for_label }}');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        
+        if (imageInput && imagePreview && previewImg) {
+            imageInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                        imagePreview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    imagePreview.style.display = 'none';
+                }
+            });
+        }
+
+        // Employee ID validation
+        const employeeIdInput = document.getElementById('{{ form.employee_id.id_for_label }}');
+        if (employeeIdInput) {
+            employeeIdInput.addEventListener('input', function() {
+                const value = this.value;
+                const isValid = /^\d+$/.test(value) && value.length >= 3;
+                
+                this.setCustomValidity(isValid ? '' : 'Employee ID must contain only numbers and be at least 3 digits');
+                this.classList.toggle('is-valid', isValid && value.length > 0);
+                this.classList.toggle('is-invalid', !isValid && value.length > 0);
+            });
+        }
+
+        // Phone number validation
+        const phoneInput = document.getElementById('{{ form.phone_number.id_for_label }}');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function() {
+                const value = this.value;
+                const isValid = /^(\+?8801[3-9]\d{8}|01[3-9]\d{8})$/.test(value) || value === '';
+                
+                this.setCustomValidity(isValid ? '' : 'Enter a valid Bangladesh phone number');
+                this.classList.toggle('is-valid', isValid && value.length > 0);
+                this.classList.toggle('is-invalid', !isValid && value.length > 0);
+            });
+        }
+
+        // Email validation
+        const emailInput = document.getElementById('{{ form.email.id_for_label }}');
+        if (emailInput) {
+            emailInput.addEventListener('blur', function() {
+                const value = this.value;
+                if (value) {
+                    // Check if email already exists via AJAX
+                    fetch(`/users/check-email/?email=${encodeURIComponent(value)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.exists) {
+                                this.setCustomValidity('This email is already registered');
+                                this.classList.add('is-invalid');
+                                this.classList.remove('is-valid');
+                            } else {
+                                this.setCustomValidity('');
+                                this.classList.remove('is-invalid');
+                                this.classList.add('is-valid');
+                            }
+                        })
+                        .catch(() => {
+                            // If AJAX fails, use default validation
+                            this.setCustomValidity('');
+                        });
+                }
+            });
+        }
+
+        // Username validation
+        const usernameInput = document.getElementById('{{ form.username.id_for_label }}');
+        if (usernameInput) {
+            usernameInput.addEventListener('blur', function() {
+                const value = this.value;
+                if (value) {
+                    // Check if username already exists via AJAX
+                    fetch(`/users/check-username/?username=${encodeURIComponent(value)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.exists) {
+                                this.setCustomValidity('This username is already taken');
+                                this.classList.add('is-invalid');
+                                this.classList.remove('is-valid');
+                            } else {
+                                this.setCustomValidity('');
+                                this.classList.remove('is-invalid');
+                                this.classList.add('is-valid');
+                            }
+                        })
+                        .catch(() => {
+                            // If AJAX fails, use default validation
+                            this.setCustomValidity('');
+                        });
+                }
+            });
+        }
+
+        // Password strength indicator
+        const password1Input = document.getElementById('{{ form.password1.id_for_label }}');
+        if (password1Input) {
+            password1Input.addEventListener('input', function() {
+                const password = this.value;
+                let strength = 0;
+                
+                if (password.length >= 8) strength++;
+                if (/[a-z]/.test(password)) strength++;
+                if (/[A-Z]/.test(password)) strength++;
+                if (/[0-9]/.test(password)) strength++;
+                if (/[^A-Za-z0-9]/.test(password)) strength++;
+                
+                // Update visual feedback based on strength
+                this.classList.remove('is-valid', 'is-invalid');
+                if (password.length > 0) {
+                    if (strength >= 3) {
+                        this.classList.add('is-valid');
+                    } else {
+                        this.classList.add('is-invalid');
+                    }
+                }
+            });
+        }
+
+        // Password confirmation validation
+        const password2Input = document.getElementById('{{ form.password2.id_for_label }}');
+        if (password2Input && password1Input) {
+            password2Input.addEventListener('input', function() {
+                const password1 = password1Input.value;
+                const password2 = this.value;
+                
+                if (password2.length > 0) {
+                    if (password1 === password2) {
+                        this.setCustomValidity('');
+                        this.classList.remove('is-invalid');
+                        this.classList.add('is-valid');
+                    } else {
+                        this.setCustomValidity('Passwords do not match');
+                        this.classList.add('is-invalid');
+                        this.classList.remove('is-valid');
+                    }
+                } else {
+                    this.setCustomValidity('');
+                    this.classList.remove('is-invalid', 'is-valid');
+                }
+            });
+        }
+
+        // Form validation
+        const form = document.querySelector('.needs-validation');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Focus on first invalid field
+                    const firstInvalid = form.querySelector('.is-invalid, :invalid');
+                    if (firstInvalid) {
+                        firstInvalid.focus();
+                    }
+                }
+                form.classList.add('was-validated');
+            });
+        }
+
+        // Auto-generate username from name
+        const firstNameInput = document.getElementById('{{ form.first_name.id_for_label }}');
+        const lastNameInput = document.getElementById('{{ form.last_name.id_for_label }}');
+        
+        function generateUsername() {
+            const firstName = firstNameInput.value.trim();
+            const lastName = lastNameInput.value.trim();
+            
+            if (firstName && lastName && !usernameInput.value) {
+                const suggestion = (firstName.charAt(0) + lastName).toLowerCase().replace(/[^a-z0-9]/g, '');
+                usernameInput.value = suggestion;
+                usernameInput.dispatchEvent(new Event('blur'));
+            }
+        }
+
+        if (firstNameInput && lastNameInput && usernameInput) {
+            firstNameInput.addEventListener('blur', generateUsername);
+            lastNameInput.addEventListener('blur', generateUsername);
+        }
+    });
+</script>
+
+<style>
+    .form-label.required::after {
+        content: ' *';
+        color: var(--parliament-danger);
+    }
+    
+    .form-check-group {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
+    }
+    
+    .form-check {
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .form-check:last-child {
+        margin-bottom: 0;
+    }
+    
+    .image-preview {
+        text-align: center;
+        margin-top: var(--spacing-md);
+    }
+    
+    .input-group .form-control.is-valid,
+    .input-group .form-control.is-invalid {
+        border-right-width: 1px;
+    }
+    
+    .input-group .form-control.is-valid:focus,
+    .input-group .form-control.is-invalid:focus {
+        border-right-width: 2px;
+    }
+</style>
+{% endblock %}

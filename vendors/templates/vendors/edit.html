@@ -1,0 +1,694 @@
+{% extends 'vendors/base_vendor.html' %}
+{% load static %}
+
+{% block vendor_title %}Edit {{ object.name }}{% endblock %}
+
+{% block vendor_header_title %}Edit {{ object.name }}{% endblock %}
+{% block vendor_header_subtitle %}Update vendor information • {{ object.vendor_code }}{% endblock %}
+
+{% block vendor_header_actions %}
+    <a href="{% url 'vendors:detail' object.pk %}" class="btn btn-light btn-lg">
+        <i class="bi bi-arrow-left me-2"></i>
+        Back to Details
+    </a>
+{% endblock %}
+
+{% block vendor_breadcrumb_items %}
+    <li class="breadcrumb-item">
+        <a href="{% url 'vendors:detail' object.pk %}">{{ object.name }}</a>
+    </li>
+    <li class="breadcrumb-item active">Edit</li>
+{% endblock %}
+
+{% block vendor_content %}
+    <form method="post" class="vendor-form" novalidate>
+        {% csrf_token %}
+        
+        <div class="row">
+            <!-- Main Form -->
+            <div class="col-lg-8">
+                <!-- Basic Information -->
+                <div class="card vendor-card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Basic Information
+                            <span class="text-danger">*</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.vendor_code.id_for_label }}" class="form-label">
+                                        Vendor Code <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.vendor_code }}
+                                    {% if form.vendor_code.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.vendor_code.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Unique code (e.g., VND001, DELL001)</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.vendor_type.id_for_label }}" class="form-label">
+                                        Vendor Type <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.vendor_type }}
+                                    {% if form.vendor_type.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.vendor_type.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label">
+                                        Company Name <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.name.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.trade_name.id_for_label }}" class="form-label">
+                                        Trade Name
+                                    </label>
+                                    {{ form.trade_name }}
+                                    {% if form.trade_name.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.trade_name.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">If different from company name</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.status.id_for_label }}" class="form-label">
+                                        Status
+                                    </label>
+                                    {{ form.status }}
+                                    {% if form.status.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.status.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        {{ form.is_active }}
+                                        <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
+                                            Active Vendor
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        {{ form.is_preferred }}
+                                        <label for="{{ form.is_preferred.id_for_label }}" class="form-check-label">
+                                            Preferred Vendor
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="card vendor-card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="bi bi-person-lines-fill me-2"></i>
+                            Contact Information
+                            <span class="text-danger">*</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.contact_person.id_for_label }}" class="form-label">
+                                        Contact Person <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.contact_person }}
+                                    {% if form.contact_person.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.contact_person.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.contact_designation.id_for_label }}" class="form-label">
+                                        Designation
+                                    </label>
+                                    {{ form.contact_designation }}
+                                    {% if form.contact_designation.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.contact_designation.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.phone_primary.id_for_label }}" class="form-label">
+                                        Primary Phone <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.phone_primary }}
+                                    {% if form.phone_primary.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.phone_primary.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">e.g., 01712345678</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.phone_secondary.id_for_label }}" class="form-label">
+                                        Secondary Phone
+                                    </label>
+                                    {{ form.phone_secondary }}
+                                    {% if form.phone_secondary.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.phone_secondary.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.email_primary.id_for_label }}" class="form-label">
+                                        Primary Email <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.email_primary }}
+                                    {% if form.email_primary.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.email_primary.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.email_secondary.id_for_label }}" class="form-label">
+                                        Secondary Email
+                                    </label>
+                                    {{ form.email_secondary }}
+                                    {% if form.email_secondary.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.email_secondary.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Address Information -->
+                <div class="card vendor-card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="bi bi-geo-alt me-2"></i>
+                            Address Information
+                            <span class="text-danger">*</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="{{ form.address.id_for_label }}" class="form-label">
+                                Address <span class="text-danger">*</span>
+                            </label>
+                            {{ form.address }}
+                            {% if form.address.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.address.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.city.id_for_label }}" class="form-label">
+                                        City
+                                    </label>
+                                    {{ form.city }}
+                                    {% if form.city.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.city.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.district.id_for_label }}" class="form-label">
+                                        District
+                                    </label>
+                                    {{ form.district }}
+                                    {% if form.district.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.district.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.country.id_for_label }}" class="form-label">
+                                        Country
+                                    </label>
+                                    {{ form.country }}
+                                    {% if form.country.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.country.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.postal_code.id_for_label }}" class="form-label">
+                                        Postal Code
+                                    </label>
+                                    {{ form.postal_code }}
+                                    {% if form.postal_code.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.postal_code.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Business Information -->
+                <div class="card vendor-card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="bi bi-building me-2"></i>
+                            Business Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.business_registration_no.id_for_label }}" class="form-label">
+                                        Business Registration Number
+                                    </label>
+                                    {{ form.business_registration_no }}
+                                    {% if form.business_registration_no.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.business_registration_no.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.tax_identification_no.id_for_label }}" class="form-label">
+                                        Tax Identification Number (TIN)
+                                    </label>
+                                    {{ form.tax_identification_no }}
+                                    {% if form.tax_identification_no.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.tax_identification_no.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.website.id_for_label }}" class="form-label">
+                                Website
+                            </label>
+                            {{ form.website }}
+                            {% if form.website.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.website.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Services & Specialization -->
+                <div class="card vendor-card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="bi bi-gear-wide-connected me-2"></i>
+                            Services & Specialization
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="{{ form.specialization.id_for_label }}" class="form-label">
+                                Specialization
+                            </label>
+                            {{ form.specialization }}
+                            {% if form.specialization.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.specialization.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Describe areas of specialization or products/services offered</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.service_categories.id_for_label }}" class="form-label">
+                                Service Categories
+                            </label>
+                            {{ form.service_categories }}
+                            {% if form.service_categories.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.service_categories.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Comma-separated categories (e.g., Hardware Supply, Software Installation, Maintenance)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance & Notes -->
+                <div class="card vendor-card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="bi bi-star me-2"></i>
+                            Performance & Notes
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.performance_rating.id_for_label }}" class="form-label">
+                                        Performance Rating
+                                    </label>
+                                    {{ form.performance_rating }}
+                                    {% if form.performance_rating.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.performance_rating.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Rating from 0.00 to 5.00</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                Notes
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.notes.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Additional notes about the vendor</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Form Actions -->
+                <div class="card vendor-card mb-4 sticky-top">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="bi bi-check-circle me-2"></i>
+                            Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-vendor-primary btn-lg">
+                                <i class="bi bi-check-circle me-2"></i>
+                                Update Vendor
+                            </button>
+                            
+                            <a href="{% url 'vendors:detail' object.pk %}" class="btn btn-vendor-secondary">
+                                <i class="bi bi-x-circle me-2"></i>
+                                Cancel
+                            </a>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="small text-muted">
+                            <p class="mb-2">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Fields marked with <span class="text-danger">*</span> are required.
+                            </p>
+                            <p class="mb-0">
+                                <i class="bi bi-shield-check me-1"></i>
+                                Changes will be validated before saving.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Information -->
+                <div class="card vendor-card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="bi bi-info-square me-2"></i>
+                            Current Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="small">
+                            <div class="mb-2">
+                                <strong>Current Status:</strong>
+                                <span class="vendor-badge {% if object.status == 'ACTIVE' %}active{% elif object.status == 'INACTIVE' %}inactive{% elif object.status == 'SUSPENDED' %}suspended{% elif object.status == 'BLACKLISTED' %}blacklisted{% endif %} ms-1">
+                                    {{ object.get_status_display }}
+                                </span>
+                            </div>
+                            
+                            {% if object.is_preferred %}
+                                <div class="mb-2">
+                                    <span class="vendor-badge preferred">
+                                        <i class="bi bi-star-fill me-1"></i>
+                                        Preferred Vendor
+                                    </span>
+                                </div>
+                            {% endif %}
+                            
+                            {% if object.performance_rating %}
+                                <div class="mb-2">
+                                    <strong>Performance:</strong>
+                                    <div class="performance-stars">
+                                        {% with rating=object.performance_rating|floatformat:1 %}
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= rating|floatformat:0 %}
+                                                    <i class="bi bi-star-fill"></i>
+                                                {% elif forloop.counter <= rating|add:0.5 %}
+                                                    <i class="bi bi-star-half"></i>
+                                                {% else %}
+                                                    <i class="bi bi-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endwith %}
+                                        <small class="ms-1">({{ object.performance_rating }})</small>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="mb-2">
+                                <strong>Last Updated:</strong><br>
+                                {{ object.updated_at|date:"M d, Y H:i" }}
+                                {% if object.updated_by %}
+                                    <br><small class="text-muted">by {{ object.updated_by.get_display_name }}</small>
+                                {% endif %}
+                            </div>
+                            
+                            <div>
+                                <strong>Created:</strong><br>
+                                {{ object.created_at|date:"M d, Y" }}
+                                {% if object.created_by %}
+                                    <br><small class="text-muted">by {{ object.created_by.get_display_name }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Related Information -->
+                <div class="card vendor-card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="bi bi-link-45deg me-2"></i>
+                            Related Records
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="small">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Associated Devices:</span>
+                                <span class="badge bg-primary">{{ object.get_device_count }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Maintenance Records:</span>
+                                <span class="badge bg-success">{{ object.get_maintenance_count }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Eligible for Orders:</span>
+                                {% if object.is_eligible_for_new_orders %}
+                                    <span class="badge bg-success">Yes</span>
+                                {% else %}
+                                    <span class="badge bg-danger">No</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}
+
+{% block vendor_extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const originalVendorCode = '{{ object.vendor_code }}';
+            
+            // Real-time vendor code validation
+            const vendorCodeInput = document.getElementById('{{ form.vendor_code.id_for_label }}');
+            let validationTimeout;
+            
+            if (vendorCodeInput) {
+                vendorCodeInput.addEventListener('input', function() {
+                    clearTimeout(validationTimeout);
+                    const code = this.value.toUpperCase();
+                    this.value = code;
+                    
+                    // Skip validation if code hasn't changed
+                    if (code === originalVendorCode) {
+                        this.classList.remove('is-invalid', 'is-valid');
+                        return;
+                    }
+                    
+                    if (code.length >= 3) {
+                        validationTimeout = setTimeout(function() {
+                            validateVendorCode(code, '{{ object.pk }}');
+                        }, 500);
+                    }
+                });
+            }
+            
+            function validateVendorCode(code, vendorId) {
+                fetch('{% url "vendors:validate_code" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'vendor_code=' + encodeURIComponent(code) + '&vendor_id=' + vendorId
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const input = vendorCodeInput;
+                    const feedback = input.parentElement.querySelector('.invalid-feedback');
+                    
+                    if (data.valid) {
+                        input.classList.remove('is-invalid');
+                        input.classList.add('is-valid');
+                        if (feedback) feedback.style.display = 'none';
+                    } else {
+                        input.classList.remove('is-valid');
+                        input.classList.add('is-invalid');
+                        if (feedback) {
+                            feedback.textContent = data.message;
+                            feedback.style.display = 'block';
+                        }
+                    }
+                });
+            }
+            
+            // Form validation on submit
+            const form = document.querySelector('.vendor-form');
+            form.addEventListener('submit', function(e) {
+                const requiredFields = form.querySelectorAll('[required]');
+                let isValid = true;
+                
+                requiredFields.forEach(function(field) {
+                    if (!field.value.trim()) {
+                        field.classList.add('is-invalid');
+                        isValid = false;
+                    } else {
+                        field.classList.remove('is-invalid');
+                    }
+                });
+                
+                if (!isValid) {
+                    e.preventDefault();
+                    alert('Please fill in all required fields.');
+                }
+            });
+            
+            // Auto-format phone numbers
+            const phoneInputs = document.querySelectorAll('input[type="text"][name*="phone"]');
+            phoneInputs.forEach(function(input) {
+                input.addEventListener('input', function() {
+                    let value = this.value.replace(/\D/g, '');
+                    if (value.startsWith('880')) {
+                        value = value.substring(3);
+                    }
+                    if (value.startsWith('0')) {
+                        value = value.substring(1);
+                    }
+                    if (value.length <= 10) {
+                        this.value = '01' + value;
+                    }
+                });
+            });
+            
+            // Highlight changes
+            const formFields = form.querySelectorAll('input, select, textarea');
+            formFields.forEach(function(field) {
+                const originalValue = field.value;
+                field.addEventListener('input', function() {
+                    if (this.value !== originalValue) {
+                        this.classList.add('border-warning');
+                    } else {
+                        this.classList.remove('border-warning');
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

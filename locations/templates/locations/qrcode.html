@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}QR Code - {{ location.name }} - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<style>
+.qr-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.qr-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(30, 58, 138, 0.15);
+}
+
+.qr-image-container {
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 2rem;
+    display: inline-block;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.qr-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.btn-qr {
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    border: 1px solid;
+}
+
+.btn-primary-qr {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border-color: #3b82f6;
+}
+
+.btn-success-qr {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-color: #10b981;
+}
+
+.btn-qr:hover {
+    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="qr-container">
+    <div class="container">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'locations:list' %}">Locations</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'locations:detail' location.pk %}">{{ location.name }}</a></li>
+                <li class="breadcrumb-item active">QR Code</li>
+            </ol>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <h2 class="mb-0">
+                    <i class="bi bi-qr-code me-2 text-primary"></i>
+                    QR Code - {{ location.name }}
+                </h2>
+                <p class="text-muted mt-2">{{ location.get_full_location_description }}</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- QR Code Display -->
+            <div class="col-lg-8">
+                <div class="qr-card">
+                    <div class="card-body text-center p-4">
+                        {% if has_qr_code and qr_code.qr_code %}
+                            <!-- Display QR Code -->
+                            <div class="mb-4">
+                                <div class="qr-image-container">
+                                    <img src="{{ qr_code.qr_code.url }}" 
+                                         alt="QR Code for {{ location.name }}" 
+                                         class="qr-image">
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex gap-3 justify-content-center flex-wrap">
+                                <a href="{% url 'locations:qrcode_download' location.pk %}" 
+                                   class="btn-qr btn-success-qr">
+                                    <i class="bi bi-download"></i>
+                                    Download QR Code
+                                </a>
+                                
+                                <form method="post" action="{% url 'locations:qrcode_generate' location.pk %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-qr btn-primary-qr"
+                                            onclick="return confirm('This will replace the existing QR code. Continue?')">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                        Regenerate QR Code
+                                    </button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <!-- No QR Code -->
+                            <div class="mb-4">
+                                <div class="qr-image-container">
+                                    <div class="text-center p-4">
+                                        <i class="bi bi-qr-code text-muted" style="font-size: 4rem;"></i>
+                                        <h5 class="text-muted mt-3">No QR Code Generated</h5>
+                                        <p class="text-muted">Generate a QR code for this location to enable easy scanning and identification.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <form method="post" action="{% url 'locations:qrcode_generate' location.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-qr btn-primary-qr">
+                                    <i class="bi bi-plus-circle"></i>
+                                    Generate QR Code
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Information -->
+            <div class="col-lg-4">
+                <div class="qr-card">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0">
+                            <i class="bi bi-geo-alt me-2"></i>
+                            Location Information
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>Location Code:</strong><br>
+                            <span class="font-monospace">{{ location.location_code }}</span>
+                        </div>
+                        
+                        {% if location.building %}
+                        <div class="mb-3">
+                            <strong>Building:</strong><br>
+                            {{ location.building.name }}
+                        </div>
+                        {% endif %}
+                        
+                        {% if location.floor %}
+                        <div class="mb-3">
+                            <strong>Floor:</strong><br>
+                            {{ location.floor.name }}
+                        </div>
+                        {% endif %}
+                        
+                        {% if location.room %}
+                        <div class="mb-3">
+                            <strong>Room:</strong><br>
+                            {{ location.room.name }}
+                        </div>
+                        {% endif %}
+                        
+                        {% if location.office %}
+                        <div class="mb-3">
+                            <strong>Office:</strong><br>
+                            {{ location.office.name }}
+                        </div>
+                        {% endif %}
+                        
+                        {% if location.has_coordinates %}
+                        <div class="mb-3">
+                            <strong>Coordinates:</strong><br>
+                            {{ location.coordinate_string }}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-grid">
+                            <a href="{% url 'locations:detail' location.pk %}" 
+                               class="btn btn-outline-primary">
+                                <i class="bi bi-arrow-left me-1"></i>
+                                Back to Location
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

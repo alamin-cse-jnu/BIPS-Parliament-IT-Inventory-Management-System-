@@ -1,0 +1,796 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Schedule New Maintenance - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Maintenance Create Form Styling - Parliament Design System */
+.create-container {
+    background: var(--bg-gradient-primary);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.create-header {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.create-title {
+    color: var(--parliament-primary);
+    font-weight: 700;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.create-subtitle {
+    color: var(--parliament-neutral);
+    margin-bottom: 0;
+}
+
+.form-section {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.section-header {
+    background: linear-gradient(135deg, var(--parliament-primary) 0%, #3b82f6 100%);
+    color: white;
+    padding: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.section-content {
+    padding: var(--spacing-xl);
+}
+
+.form-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.form-label.required::after {
+    content: '*';
+    color: #ef4444;
+    margin-left: 0.25rem;
+}
+
+.form-control, .form-select {
+    border: 1px solid rgba(203, 213, 225, 0.6);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-sm) var(--spacing-md);
+    transition: var(--transition);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--parliament-primary);
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+    background: white;
+}
+
+.form-text {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+    margin-top: var(--spacing-xs);
+}
+
+.invalid-feedback {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: var(--spacing-xs);
+}
+
+.device-suggestion {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.device-suggestion-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.device-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--border-radius);
+    background: linear-gradient(135deg, #10b981, #059669);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.device-info h5 {
+    color: var(--parliament-dark);
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.device-meta {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.priority-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.priority-option {
+    padding: var(--spacing-md);
+    border: 2px solid transparent;
+    border-radius: var(--border-radius);
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    background: rgba(248, 250, 252, 0.8);
+}
+
+.priority-option:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-1px);
+}
+
+.priority-option.selected {
+    border-color: var(--parliament-primary);
+    background: rgba(30, 58, 138, 0.1);
+}
+
+.priority-low { border-left: 4px solid #10b981; }
+.priority-medium { border-left: 4px solid #f59e0b; }
+.priority-high { border-left: 4px solid #ef4444; }
+.priority-critical { border-left: 4px solid #dc2626; }
+.priority-emergency { border-left: 4px solid #991b1b; }
+
+.priority-icon {
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-xs);
+}
+
+.priority-label {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    font-size: 0.875rem;
+}
+
+.cost-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.cost-input-group {
+    position: relative;
+}
+
+.cost-input-group::before {
+    content: '৳';
+    position: absolute;
+    left: var(--spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--parliament-neutral);
+    font-weight: 600;
+    z-index: 2;
+}
+
+.cost-input-group .form-control {
+    padding-left: 2.5rem;
+}
+
+.date-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-lg);
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(248, 250, 252, 0.8);
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+}
+
+.checkbox-item:hover {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.form-actions {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-md);
+    box-shadow: var(--glass-shadow);
+}
+
+.action-buttons {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+.action-info {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--parliament-primary), #3b82f6);
+    border: none;
+    padding: var(--spacing-md) var(--spacing-xl);
+    font-weight: 600;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1e40af, #2563eb);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 2px solid var(--parliament-neutral);
+    color: var(--parliament-neutral);
+    padding: calc(var(--spacing-md) - 2px) calc(var(--spacing-xl) - 2px);
+    font-weight: 600;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+}
+
+.btn-secondary:hover {
+    background: var(--parliament-neutral);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.help-card {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.help-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.help-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+}
+
+.help-title {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin: 0;
+}
+
+.help-content {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .priority-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .cost-inputs {
+        grid-template-columns: 1fr;
+    }
+    
+    .date-inputs {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .action-buttons {
+        width: 100%;
+    }
+    
+    .action-buttons .btn {
+        flex: 1;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="create-container">
+    <div class="container-fluid">
+        <!-- Create Header -->
+        <div class="create-header">
+            <h1 class="create-title">
+                <i class="bi bi-calendar-plus"></i>
+                Schedule New Maintenance
+            </h1>
+            <p class="create-subtitle">Bangladesh Parliament Secretariat - IT Inventory Management</p>
+        </div>
+
+        <!-- Suggested Device (if provided) -->
+        {% if suggested_device %}
+        <div class="device-suggestion">
+            <div class="device-suggestion-header">
+                <div class="device-icon">
+                    <i class="bi bi-laptop"></i>
+                </div>
+                <div class="device-info">
+                    <h5>Maintenance for: {{ suggested_device.name }}</h5>
+                    <div class="device-meta">
+                        <span><strong>ID:</strong> {{ suggested_device.device_id }}</span>
+                        <span><strong>Category:</strong> {{ suggested_device.subcategory.category.name }}</span>
+                        {% if suggested_device.brand %}
+                        <span><strong>Brand:</strong> {{ suggested_device.brand }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <p class="mb-0">This device has been pre-selected for maintenance. You can change the device selection below if needed.</p>
+        </div>
+        {% endif %}
+
+        <!-- Help Card -->
+        <div class="help-card">
+            <div class="help-header">
+                <div class="help-icon">
+                    <i class="bi bi-lightbulb"></i>
+                </div>
+                <h6 class="help-title">Maintenance Scheduling Tips</h6>
+            </div>
+            <div class="help-content">
+                <ul class="mb-0">
+                    <li>Schedule preventive maintenance during low-usage periods</li>
+                    <li>Provide detailed descriptions to help technicians prepare</li>
+                    <li>Set realistic time estimates including buffer time</li>
+                    <li>Select appropriate priority level based on device criticality</li>
+                </ul>
+            </div>
+        </div>
+
+        <form method="post" class="maintenance-form">
+            {% csrf_token %}
+
+            <!-- Device Selection -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="bi bi-laptop"></i>
+                    <h5 class="section-title">Device Selection</h5>
+                </div>
+                <div class="section-content">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.device.id_for_label }}" class="form-label required">
+                                    <i class="bi bi-cpu me-1"></i>Device
+                                </label>
+                                {{ form.device }}
+                                {% if form.device.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.device.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Select the device that requires maintenance</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.vendor.id_for_label }}" class="form-label">
+                                    <i class="bi bi-building me-1"></i>Vendor
+                                </label>
+                                {{ form.vendor }}
+                                {% if form.vendor.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.vendor.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Select vendor for external maintenance (optional)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maintenance Details -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="bi bi-wrench"></i>
+                    <h5 class="section-title">Maintenance Details</h5>
+                </div>
+                <div class="section-content">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="{{ form.title.id_for_label }}" class="form-label">
+                                    <i class="bi bi-type me-1"></i>Title
+                                </label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.title.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Brief title describing the maintenance work</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="{{ form.maintenance_type.id_for_label }}" class="form-label required">
+                                    <i class="bi bi-gear me-1"></i>Type
+                                </label>
+                                {{ form.maintenance_type }}
+                                {% if form.maintenance_type.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.maintenance_type.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">
+                            <i class="bi bi-file-text me-1"></i>Description
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.description.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Detailed description of the maintenance work to be performed</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.problem_reported.id_for_label }}" class="form-label">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Problem Reported
+                        </label>
+                        {{ form.problem_reported }}
+                        {% if form.problem_reported.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.problem_reported.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Description of any reported issues or problems</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Priority & Scheduling -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="bi bi-calendar-event"></i>
+                    <h5 class="section-title">Priority & Scheduling</h5>
+                </div>
+                <div class="section-content">
+                    <div class="form-group">
+                        <label class="form-label required">
+                            <i class="bi bi-flag me-1"></i>Priority Level
+                        </label>
+                        <div class="priority-grid">
+                            {% for value, label in form.priority.field.choices %}
+                            <div class="priority-option priority-{{ value|lower }}" data-priority="{{ value }}">
+                                <div class="priority-icon">
+                                    {% if value == 'LOW' %}
+                                        <i class="bi bi-circle" style="color: #10b981;"></i>
+                                    {% elif value == 'MEDIUM' %}
+                                        <i class="bi bi-dash-circle" style="color: #f59e0b;"></i>
+                                    {% elif value == 'HIGH' %}
+                                        <i class="bi bi-exclamation-circle" style="color: #ef4444;"></i>
+                                    {% elif value == 'CRITICAL' %}
+                                        <i class="bi bi-exclamation-triangle" style="color: #dc2626;"></i>
+                                    {% elif value == 'EMERGENCY' %}
+                                        <i class="bi bi-lightning" style="color: #991b1b;"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="priority-label">{{ label }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {{ form.priority.as_hidden }}
+                        {% if form.priority.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.priority.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.start_date.id_for_label }}" class="form-label required">
+                                    <i class="bi bi-calendar me-1"></i>Start Date
+                                </label>
+                                {{ form.start_date }}
+                                {% if form.start_date.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.start_date.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">When the maintenance should begin</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.expected_end_date.id_for_label }}" class="form-label">
+                                    <i class="bi bi-calendar-check me-1"></i>Expected End Date
+                                </label>
+                                {{ form.expected_end_date }}
+                                {% if form.expected_end_date.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.expected_end_date.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Expected completion date</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cost Estimation -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="bi bi-currency-dollar"></i>
+                    <h5 class="section-title">Cost Estimation</h5>
+                </div>
+                <div class="section-content">
+                    <div class="cost-inputs">
+                        <div class="form-group">
+                            <label for="{{ form.estimated_cost.id_for_label }}" class="form-label">
+                                <i class="bi bi-calculator me-1"></i>Estimated Total Cost
+                            </label>
+                            <div class="cost-input-group">
+                                {{ form.estimated_cost }}
+                            </div>
+                            {% if form.estimated_cost.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.estimated_cost.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Total estimated cost in BDT</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.parts_cost.id_for_label }}" class="form-label">
+                                <i class="bi bi-gear me-1"></i>Parts Cost
+                            </label>
+                            <div class="cost-input-group">
+                                {{ form.parts_cost }}
+                            </div>
+                            {% if form.parts_cost.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.parts_cost.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Estimated cost of parts/components</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.labor_cost.id_for_label }}" class="form-label">
+                                <i class="bi bi-person-workspace me-1"></i>Labor Cost
+                            </label>
+                            <div class="cost-input-group">
+                                {{ form.labor_cost }}
+                            </div>
+                            {% if form.labor_cost.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.labor_cost.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Estimated labor/service cost</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Options -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="bi bi-gear-wide-connected"></i>
+                    <h5 class="section-title">Additional Options</h5>
+                </div>
+                <div class="section-content">
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            {{ form.requires_approval }}
+                            <label for="{{ form.requires_approval.id_for_label }}">
+                                <i class="bi bi-shield-check me-1"></i>Requires Approval
+                            </label>
+                        </div>
+                        <div class="checkbox-item">
+                            {{ form.is_warranty_service }}
+                            <label for="{{ form.is_warranty_service.id_for_label }}">
+                                <i class="bi bi-award me-1"></i>Warranty Service
+                            </label>
+                        </div>
+                        <div class="checkbox-item">
+                            {{ form.follow_up_required }}
+                            <label for="{{ form.follow_up_required.id_for_label }}">
+                                <i class="bi bi-arrow-repeat me-1"></i>Follow-up Required
+                            </label>
+                        </div>
+                    </div>
+
+                    {% if form.requires_approval.errors %}
+                        <div class="invalid-feedback d-block mt-2">
+                            {{ form.requires_approval.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <div class="action-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    All required fields must be completed before scheduling
+                </div>
+                <div class="action-buttons">
+                    <a href="{% url 'maintenance:list' %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-calendar-plus me-2"></i>Schedule Maintenance
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Priority selection
+    const priorityOptions = document.querySelectorAll('.priority-option');
+    const priorityInput = document.getElementById('{{ form.priority.id_for_label }}');
+    
+    priorityOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            // Remove selected class from all options
+            priorityOptions.forEach(opt => opt.classList.remove('selected'));
+            
+            // Add selected class to clicked option
+            this.classList.add('selected');
+            
+            // Update hidden input value
+            priorityInput.value = this.dataset.priority;
+        });
+    });
+    
+    // Set initial priority selection
+    if (priorityInput.value) {
+        const selectedOption = document.querySelector(`[data-priority="${priorityInput.value}"]`);
+        if (selectedOption) {
+            selectedOption.classList.add('selected');
+        }
+    } else {
+        // Default to MEDIUM priority
+        const mediumOption = document.querySelector('[data-priority="MEDIUM"]');
+        if (mediumOption) {
+            mediumOption.classList.add('selected');
+            priorityInput.value = 'MEDIUM';
+        }
+    }
+    
+    // Auto-calculate total cost
+    const estimatedCostInput = document.getElementById('{{ form.estimated_cost.id_for_label }}');
+    const partsCostInput = document.getElementById('{{ form.parts_cost.id_for_label }}');
+    const laborCostInput = document.getElementById('{{ form.labor_cost.id_for_label }}');
+    
+    function updateTotalCost() {
+        const partsValue = parseFloat(partsCostInput.value) || 0;
+        const laborValue = parseFloat(laborCostInput.value) || 0;
+        const total = partsValue + laborValue;
+        
+        if (total > 0 && !estimatedCostInput.value) {
+            estimatedCostInput.value = total.toFixed(2);
+        }
+    }
+    
+    if (partsCostInput && laborCostInput) {
+        partsCostInput.addEventListener('input', updateTotalCost);
+        laborCostInput.addEventListener('input', updateTotalCost);
+    }
+    
+    // Auto-set end date based on start date
+    const startDateInput = document.getElementById('{{ form.start_date.id_for_label }}');
+    const endDateInput = document.getElementById('{{ form.expected_end_date.id_for_label }}');
+    
+    startDateInput.addEventListener('change', function() {
+        if (this.value && !endDateInput.value) {
+            const startDate = new Date(this.value);
+            const endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 1); // Default to next day
+            
+            endDateInput.value = endDate.toISOString().split('T')[0];
+        }
+    });
+    
+    // Form validation
+    document.querySelector('.maintenance-form').addEventListener('submit', function(e) {
+        const device = document.getElementById('{{ form.device.id_for_label }}').value;
+        const startDate = document.getElementById('{{ form.start_date.id_for_label }}').value;
+        const priority = document.getElementById('{{ form.priority.id_for_label }}').value;
+        
+        if (!device || !startDate || !priority) {
+            e.preventDefault();
+            alert('Please fill in all required fields (Device, Start Date, Priority)');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

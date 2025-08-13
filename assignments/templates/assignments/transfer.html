@@ -1,0 +1,826 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Transfer Assignment - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Transfer Assignment Page - Parliament Design System */
+.transfer-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.transfer-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.transfer-title {
+    color: #7c3aed;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.transfer-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.transfer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.assignment-info {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.info-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.info-header h4 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.info-body {
+    padding: 1.5rem;
+}
+
+.info-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.info-value {
+    color: #6b7280;
+    font-size: 0.875rem;
+    text-align: right;
+}
+
+.info-value.highlight {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.info-value.status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.info-value.status.assigned {
+    background: rgba(34, 197, 94, 0.1);
+    color: #15803d;
+}
+
+.current-assignment {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.current-title {
+    color: #92400e;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.current-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.current-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.current-label {
+    font-size: 0.75rem;
+    color: #92400e;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.current-value {
+    color: #451a03;
+    font-weight: 600;
+}
+
+.transfer-form-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.form-header {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.form-header h4 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.form-body {
+    padding: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.form-control, .form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    outline: none;
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    background: white;
+}
+
+.form-text {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.transfer-section {
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    color: #1e293b;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.transfer-options {
+    display: grid;
+    gap: 1rem;
+}
+
+.option-card {
+    background: white;
+    border: 2px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.option-card:hover {
+    border-color: #7c3aed;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.1);
+}
+
+.option-card.selected {
+    border-color: #7c3aed;
+    background: rgba(124, 58, 237, 0.05);
+}
+
+.option-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.option-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+}
+
+.option-title {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.option-description {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.device-preview {
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.device-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.device-details h6 {
+    margin: 0 0 0.25rem 0;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.device-details p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding: 1.5rem;
+    border-top: 1px solid rgba(203, 213, 225, 0.3);
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 0 0 16px 16px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.btn-outline-secondary {
+    background: rgba(255, 255, 255, 0.9);
+    color: #6b7280;
+    border: 1px solid rgba(203, 213, 225, 0.4);
+}
+
+.btn-outline-secondary:hover {
+    background: #f3f4f6;
+    color: #374151;
+    border-color: #9ca3af;
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+}
+
+.alert {
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: none;
+}
+
+.alert-info {
+    background: rgba(59, 130, 246, 0.1);
+    color: #1d4ed8;
+    border-left: 4px solid #3b82f6;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .transfer-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .info-value {
+        text-align: left;
+    }
+    
+    .current-details {
+        grid-template-columns: 1fr;
+    }
+    
+    .transfer-options {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="transfer-container">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="transfer-header">
+            <h1 class="transfer-title">
+                <i class="bi bi-arrow-left-right"></i>
+                Transfer Assignment
+            </h1>
+            <p class="transfer-subtitle">Transfer device assignment to different employee or location</p>
+        </div>
+
+        <form method="post" id="transferForm">
+            {% csrf_token %}
+            
+            <div class="transfer-grid">
+                <!-- Assignment Information -->
+                <div class="assignment-info">
+                    <div class="info-header">
+                        <i class="bi bi-info-circle"></i>
+                        <h4>Assignment Details</h4>
+                    </div>
+                    <div class="info-body">
+                        <!-- Device Preview -->
+                        <div class="device-preview">
+                            <div class="device-icon">
+                                <i class="bi bi-{{ assignment.device.subcategory.category.name|lower|default:'laptop' }}"></i>
+                            </div>
+                            <div class="device-details">
+                                <h6>{{ assignment.device.brand }} {{ assignment.device.model }}</h6>
+                                <p>{{ assignment.device.device_id }} • {{ assignment.device.subcategory.name }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Current Assignment Details -->
+                        <div class="current-assignment">
+                            <div class="current-title">
+                                <i class="bi bi-person-check"></i>
+                                Current Assignment
+                            </div>
+                            <div class="current-details">
+                                <div class="current-item">
+                                    <span class="current-label">Assigned To</span>
+                                    <span class="current-value">{{ assignment.assigned_to.get_full_name }}</span>
+                                </div>
+                                <div class="current-item">
+                                    <span class="current-label">Location</span>
+                                    <span class="current-value">{{ assignment.assigned_location.name|default:"Not specified" }}</span>
+                                </div>
+                                <div class="current-item">
+                                    <span class="current-label">Assignment Date</span>
+                                    <span class="current-value">{{ assignment.assigned_date|date:"M d, Y" }}</span>
+                                </div>
+                                <div class="current-item">
+                                    <span class="current-label">Assignment Type</span>
+                                    <span class="current-value">{{ assignment.get_assignment_type_display }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Assignment ID</span>
+                                <span class="info-value highlight">{{ assignment.assignment_id }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Purpose</span>
+                                <span class="info-value">{{ assignment.purpose }}</span>
+                            </div>
+                            {% if assignment.expected_return_date %}
+                            <div class="info-item">
+                                <span class="info-label">Expected Return</span>
+                                <span class="info-value">{{ assignment.expected_return_date|date:"M d, Y" }}</span>
+                            </div>
+                            {% endif %}
+                            <div class="info-item">
+                                <span class="info-label">Current Status</span>
+                                <span class="info-value status assigned">{{ assignment.get_status_display }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Days Assigned</span>
+                                <span class="info-value">{{ assignment.days_assigned }} days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transfer Form -->
+                <div class="transfer-form-card">
+                    <div class="form-header">
+                        <i class="bi bi-arrow-repeat"></i>
+                        <h4>Transfer Details</h4>
+                    </div>
+                    <div class="form-body">
+                        <div class="alert alert-info">
+                            <strong>Note:</strong> At least one field (employee or location) must be changed for transfer.
+                        </div>
+
+                        <!-- Transfer Options -->
+                        <div class="transfer-section">
+                            <div class="section-title">
+                                <i class="bi bi-sliders"></i>
+                                Transfer Options
+                            </div>
+                            <div class="transfer-options">
+                                <div class="option-card" data-type="employee">
+                                    <div class="option-header">
+                                        <div class="option-icon">
+                                            <i class="bi bi-person"></i>
+                                        </div>
+                                        <div class="option-title">Change Employee</div>
+                                    </div>
+                                    <p class="option-description">Transfer device to a different employee</p>
+                                </div>
+                                <div class="option-card" data-type="location">
+                                    <div class="option-header">
+                                        <div class="option-icon">
+                                            <i class="bi bi-geo-alt"></i>
+                                        </div>
+                                        <div class="option-title">Change Location</div>
+                                    </div>
+                                    <p class="option-description">Move device to different location</p>
+                                </div>
+                                <div class="option-card" data-type="both">
+                                    <div class="option-header">
+                                        <div class="option-icon">
+                                            <i class="bi bi-arrows-move"></i>
+                                        </div>
+                                        <div class="option-title">Change Both</div>
+                                    </div>
+                                    <p class="option-description">Transfer to different employee and location</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- New Employee Field -->
+                        <div class="form-group" id="employeeGroup" style="display: none;">
+                            <label for="{{ form.new_assigned_to.id_for_label }}" class="form-label">
+                                New Employee
+                            </label>
+                            {{ form.new_assigned_to }}
+                            {% if form.new_assigned_to.help_text %}
+                            <div class="form-text">{{ form.new_assigned_to.help_text }}</div>
+                            {% endif %}
+                            {% for error in form.new_assigned_to.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- New Location Field -->
+                        <div class="form-group" id="locationGroup" style="display: none;">
+                            <label for="{{ form.new_assigned_location.id_for_label }}" class="form-label">
+                                New Location
+                            </label>
+                            {{ form.new_assigned_location }}
+                            {% if form.new_assigned_location.help_text %}
+                            <div class="form-text">{{ form.new_assigned_location.help_text }}</div>
+                            {% endif %}
+                            {% for error in form.new_assigned_location.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Transfer Reason -->
+                        <div class="form-group">
+                            <label for="{{ form.transfer_reason.id_for_label }}" class="form-label">
+                                Transfer Reason *
+                            </label>
+                            {{ form.transfer_reason }}
+                            {% if form.transfer_reason.help_text %}
+                            <div class="form-text">{{ form.transfer_reason.help_text }}</div>
+                            {% endif %}
+                            {% for error in form.transfer_reason.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Effective Date -->
+                        <div class="form-group">
+                            <label for="{{ form.effective_date.id_for_label }}" class="form-label">
+                                Effective Date *
+                            </label>
+                            {{ form.effective_date }}
+                            {% if form.effective_date.help_text %}
+                            <div class="form-text">{{ form.effective_date.help_text }}</div>
+                            {% endif %}
+                            {% for error in form.effective_date.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <a href="{% url 'assignments:detail' assignment.pk %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i>
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i>
+                            Process Transfer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('transferForm');
+    const optionCards = document.querySelectorAll('.option-card');
+    const employeeGroup = document.getElementById('employeeGroup');
+    const locationGroup = document.getElementById('locationGroup');
+    const newEmployeeSelect = document.getElementById('{{ form.new_assigned_to.id_for_label }}');
+    const newLocationSelect = document.getElementById('{{ form.new_assigned_location.id_for_label }}');
+    const effectiveDateInput = document.getElementById('{{ form.effective_date.id_for_label }}');
+    const transferReasonTextarea = document.getElementById('{{ form.transfer_reason.id_for_label }}');
+    
+    let selectedTransferType = null;
+    
+    // Set default effective date to today
+    if (!effectiveDateInput.value) {
+        effectiveDateInput.value = new Date().toISOString().split('T')[0];
+    }
+    
+    // Handle transfer option selection
+    optionCards.forEach(card => {
+        card.addEventListener('click', function() {
+            // Remove selected class from all cards
+            optionCards.forEach(c => c.classList.remove('selected'));
+            
+            // Add selected class to clicked card
+            this.classList.add('selected');
+            
+            // Get transfer type
+            selectedTransferType = this.dataset.type;
+            
+            // Show/hide form groups based on selection
+            switch(selectedTransferType) {
+                case 'employee':
+                    employeeGroup.style.display = 'block';
+                    locationGroup.style.display = 'none';
+                    newEmployeeSelect.required = true;
+                    newLocationSelect.required = false;
+                    break;
+                case 'location':
+                    employeeGroup.style.display = 'none';
+                    locationGroup.style.display = 'block';
+                    newEmployeeSelect.required = false;
+                    newLocationSelect.required = true;
+                    break;
+                case 'both':
+                    employeeGroup.style.display = 'block';
+                    locationGroup.style.display = 'block';
+                    newEmployeeSelect.required = true;
+                    newLocationSelect.required = true;
+                    break;
+            }
+            
+            // Clear previous selections when switching types
+            if (selectedTransferType !== 'employee' && selectedTransferType !== 'both') {
+                newEmployeeSelect.value = '';
+            }
+            if (selectedTransferType !== 'location' && selectedTransferType !== 'both') {
+                newLocationSelect.value = '';
+            }
+        });
+    });
+    
+    // Auto-select "both" if both fields have values
+    function checkAutoSelection() {
+        if (newEmployeeSelect.value && newLocationSelect.value) {
+            if (selectedTransferType !== 'both') {
+                optionCards.forEach(c => c.classList.remove('selected'));
+                document.querySelector('[data-type="both"]').classList.add('selected');
+                selectedTransferType = 'both';
+                employeeGroup.style.display = 'block';
+                locationGroup.style.display = 'block';
+            }
+        }
+    }
+    
+    newEmployeeSelect.addEventListener('change', checkAutoSelection);
+    newLocationSelect.addEventListener('change', checkAutoSelection);
+    
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        const errors = [];
+        
+        // Check if transfer type is selected
+        if (!selectedTransferType) {
+            errors.push('Please select a transfer option.');
+            isValid = false;
+        }
+        
+        // Check required fields based on transfer type
+        if (selectedTransferType === 'employee' || selectedTransferType === 'both') {
+            if (!newEmployeeSelect.value) {
+                errors.push('New employee is required for this transfer type.');
+                isValid = false;
+            }
+        }
+        
+        if (selectedTransferType === 'location' || selectedTransferType === 'both') {
+            if (!newLocationSelect.value) {
+                errors.push('New location is required for this transfer type.');
+                isValid = false;
+            }
+        }
+        
+        // Check transfer reason
+        if (!transferReasonTextarea.value.trim()) {
+            errors.push('Transfer reason is required.');
+            isValid = false;
+        }
+        
+        // Check effective date
+        if (!effectiveDateInput.value) {
+            errors.push('Effective date is required.');
+            isValid = false;
+        } else {
+            const effectiveDate = new Date(effectiveDateInput.value);
+            const today = new Date();
+            const assignmentDate = new Date('{{ assignment.assigned_date|date:"Y-m-d" }}');
+            
+            if (effectiveDate < assignmentDate) {
+                errors.push('Effective date cannot be before original assignment date.');
+                isValid = false;
+            }
+            
+            const futureLimit = new Date();
+            futureLimit.setDate(futureLimit.getDate() + 30);
+            if (effectiveDate > futureLimit) {
+                errors.push('Effective date cannot be more than 30 days in the future.');
+                isValid = false;
+            }
+        }
+        
+        // Check if anything is actually changing
+        const currentEmployee = '{{ assignment.assigned_to.id }}';
+        const currentLocation = '{{ assignment.assigned_location.id|default:"" }}';
+        
+        if ((!newEmployeeSelect.value || newEmployeeSelect.value === currentEmployee) &&
+            (!newLocationSelect.value || newLocationSelect.value === currentLocation)) {
+            errors.push('At least one field (employee or location) must be changed for transfer.');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fix the following errors:\n\n' + errors.join('\n'));
+            return false;
+        }
+        
+        // Confirmation dialog
+        let transferDetails = 'Transfer Details:\n\n';
+        transferDetails += `Assignment ID: {{ assignment.assignment_id }}\n`;
+        transferDetails += `Device: {{ assignment.device.brand }} {{ assignment.device.model }}\n`;
+        
+        if (newEmployeeSelect.value && newEmployeeSelect.value !== currentEmployee) {
+            const newEmployeeName = newEmployeeSelect.options[newEmployeeSelect.selectedIndex].text;
+            transferDetails += `New Employee: ${newEmployeeName}\n`;
+        }
+        
+        if (newLocationSelect.value && newLocationSelect.value !== currentLocation) {
+            const newLocationName = newLocationSelect.options[newLocationSelect.selectedIndex].text;
+            transferDetails += `New Location: ${newLocationName}\n`;
+        }
+        
+        transferDetails += `Effective Date: ${effectiveDateInput.value}\n`;
+        transferDetails += `Reason: ${transferReasonTextarea.value.substring(0, 100)}${transferReasonTextarea.value.length > 100 ? '...' : ''}`;
+        
+        if (!confirm('Are you sure you want to process this transfer?\n\n' + transferDetails)) {
+            e.preventDefault();
+            return false;
+        }
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + Enter to submit
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            form.submit();
+        }
+        
+        // Escape to cancel
+        if (e.key === 'Escape') {
+            window.location.href = "{% url 'assignments:detail' assignment.pk %}";
+        }
+    });
+});
+</script>
+{% endblock %}

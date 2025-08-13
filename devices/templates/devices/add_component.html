@@ -1,0 +1,632 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Component to {{ parent_device.device_id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.gradient-bg {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.9) 100%);
+    min-height: 100vh;
+}
+
+.form-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.form-header {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-radius: 16px 16px 0 0;
+    padding: 1.5rem;
+}
+
+.parent-device-card {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(255, 255, 255, 0.9) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    position: sticky;
+    top: 20px;
+}
+
+.device-icon {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.form-control, .form-select {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    background: rgba(255, 255, 255, 1);
+    border-color: #10b981;
+    box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.1);
+}
+
+.form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-outline-secondary {
+    border: 1px solid #6b7280;
+    color: #6b7280;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-secondary:hover {
+    background: #6b7280;
+    border-color: #6b7280;
+    color: white;
+}
+
+.field-group {
+    background: rgba(249, 250, 251, 0.8);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.field-group-title {
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.help-text {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+.component-type-alert {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(255, 255, 255, 0.9) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.specs-preview {
+    background: rgba(248, 250, 252, 0.8);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.breadcrumb-item a {
+    color: #6366f1;
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .form-header {
+        padding: 1rem;
+    }
+    
+    .parent-device-card {
+        position: static;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+    }
+    
+    .field-group {
+        padding: 1rem;
+    }
+    
+    .device-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gradient-bg">
+    <div class="container py-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'dashboard' %}">
+                        <i class="bi bi-house me-1"></i>Dashboard
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'devices:list' %}">Devices</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'devices:detail' parent_device.pk %}">{{ parent_device.device_id }}</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'devices:components' parent_device.pk %}">Components</a>
+                </li>
+                <li class="breadcrumb-item active">Add Component</li>
+            </ol>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h2 class="h3 mb-1">Add Component</h2>
+                        <p class="text-muted mb-0">Add a new component to {{ parent_device.brand }} {{ parent_device.model }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Add Component Form -->
+            <div class="col-lg-8">
+                <div class="form-card">
+                    <div class="form-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-cpu me-2"></i>
+                            Component Information
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <!-- Component Type Alert -->
+                        <div class="component-type-alert">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="text-success">
+                                    <i class="bi bi-info-circle-fill fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-success fw-bold mb-2">Adding Component</h6>
+                                    <p class="mb-0 small">
+                                        This device will be created as a <strong>component</strong> and automatically linked to 
+                                        <strong>{{ parent_device.device_id }}</strong> ({{ parent_device.brand }} {{ parent_device.model }}).
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form method="post" enctype="multipart/form-data" novalidate>
+                            {% csrf_token %}
+                            
+                            <!-- Hidden Fields -->
+                            <input type="hidden" name="device_type" value="COMPONENT">
+                            <input type="hidden" name="parent_device" value="{{ parent_device.pk }}">
+                            
+                            <!-- Category & Type -->
+                            <div class="field-group">
+                                <div class="field-group-title">
+                                    <i class="bi bi-tag text-success"></i>
+                                    Component Classification
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.category.id_for_label }}" class="form-label">
+                                                Category <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.category }}
+                                            {% if form.category.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.category.errors.0 }}</div>
+                                            {% endif %}
+                                            <div class="help-text">
+                                                Select the main category for this component
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.subcategory.id_for_label }}" class="form-label">
+                                                Subcategory <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.subcategory }}
+                                            {% if form.subcategory.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.subcategory.errors.0 }}</div>
+                                            {% endif %}
+                                            <div class="help-text">
+                                                Specific type of component (e.g., RAM, CPU, Storage)
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Component Details -->
+                            <div class="field-group">
+                                <div class="field-group-title">
+                                    <i class="bi bi-info-circle text-success"></i>
+                                    Component Details
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.brand.id_for_label }}" class="form-label">
+                                                Brand <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.brand }}
+                                            {% if form.brand.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.brand.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.model.id_for_label }}" class="form-label">
+                                                Model <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.model }}
+                                            {% if form.model.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.model.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.serial_number.id_for_label }}" class="form-label">
+                                                Serial Number <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.serial_number }}
+                                            {% if form.serial_number.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.serial_number.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.asset_tag.id_for_label }}" class="form-label">
+                                                Asset Tag
+                                            </label>
+                                            {{ form.asset_tag }}
+                                            {% if form.asset_tag.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.asset_tag.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Status & Condition -->
+                            <div class="field-group">
+                                <div class="field-group-title">
+                                    <i class="bi bi-shield-check text-success"></i>
+                                    Status & Condition
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.status.id_for_label }}" class="form-label">
+                                                Status <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.status }}
+                                            {% if form.status.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.status.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.condition.id_for_label }}" class="form-label">
+                                                Condition <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.condition }}
+                                            {% if form.condition.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.condition.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.priority.id_for_label }}" class="form-label">
+                                                Priority
+                                            </label>
+                                            {{ form.priority }}
+                                            {% if form.priority.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.priority.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Financial Information -->
+                            <div class="field-group">
+                                <div class="field-group-title">
+                                    <i class="bi bi-currency-dollar text-success"></i>
+                                    Financial Information
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.purchase_date.id_for_label }}" class="form-label">
+                                                Purchase Date <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.purchase_date }}
+                                            {% if form.purchase_date.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.purchase_date.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.purchase_price.id_for_label }}" class="form-label">
+                                                Purchase Price (BDT) <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.purchase_price }}
+                                            {% if form.purchase_price.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.purchase_price.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.vendor.id_for_label }}" class="form-label">
+                                                Vendor <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.vendor }}
+                                            {% if form.vendor.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.vendor.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Specifications -->
+                            <div class="field-group">
+                                <div class="field-group-title">
+                                    <i class="bi bi-gear text-success"></i>
+                                    Component Specifications
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.specifications_json.id_for_label }}" class="form-label">
+                                        Specifications (JSON Format)
+                                    </label>
+                                    {{ form.specifications_json }}
+                                    {% if form.specifications_json.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.specifications_json.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="help-text">
+                                        Enter component specifications in JSON format. Example: {"capacity": "8GB", "speed": "3200MHz", "type": "DDR4"}
+                                    </div>
+                                </div>
+                                
+                                <!-- Specifications Preview -->
+                                <div class="specs-preview" id="specsPreview" style="display: none;">
+                                    <h6 class="text-success mb-2">
+                                        <i class="bi bi-eye me-1"></i>Preview
+                                    </h6>
+                                    <div id="specsContent"></div>
+                                </div>
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="d-flex gap-2 justify-content-end">
+                                <a href="{% url 'devices:components' parent_device.pk %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle me-1"></i>
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-plus-circle me-1"></i>
+                                    Add Component
+                                </button>
+                            </div>
+                            
+                            <!-- Form Summary -->
+                            <div class="mt-3 pt-3 border-top">
+                                <small class="text-muted">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Required fields are marked with <span class="text-danger">*</span>
+                                </small>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parent Device Info -->
+            <div class="col-lg-4">
+                <div class="parent-device-card">
+                    <div class="text-center">
+                        <div class="device-icon mx-auto">
+                            <i class="{{ parent_device.subcategory.category.icon_class|default:'bi-laptop' }}"></i>
+                        </div>
+                        <h6 class="mb-2">Parent Device</h6>
+                        <h5 class="text-primary mb-2">{{ parent_device.brand }} {{ parent_device.model }}</h5>
+                        <div class="mb-3">
+                            <span class="badge bg-primary">{{ parent_device.device_id }}</span>
+                        </div>
+                        
+                        <!-- Device Details -->
+                        <div class="row g-2 text-center">
+                            <div class="col-6">
+                                <div class="bg-light rounded p-2">
+                                    <div class="fw-bold text-primary">{{ parent_device.subcategory.category.name }}</div>
+                                    <small class="text-muted">Category</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="bg-light rounded p-2">
+                                    <div class="fw-bold text-success">{{ parent_device.components.count }}</div>
+                                    <small class="text-muted">Components</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Device Info -->
+                        <div class="mt-3 pt-3 border-top text-start">
+                            <div class="small text-muted">
+                                {% if parent_device.serial_number %}
+                                    <div><i class="bi bi-upc me-1"></i>S/N: {{ parent_device.serial_number }}</div>
+                                {% endif %}
+                                {% if parent_device.current_location %}
+                                    <div><i class="bi bi-geo-alt me-1"></i>{{ parent_device.current_location.name }}</div>
+                                {% endif %}
+                                <div><i class="bi bi-calendar me-1"></i>{{ parent_device.purchase_date|date:"M Y" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="mt-4">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'devices:detail' parent_device.pk %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye me-1"></i>
+                            View Parent Device
+                        </a>
+                        <a href="{% url 'devices:components' parent_device.pk %}" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-cpu me-1"></i>
+                            View All Components
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // JSON validation and preview for specifications
+    const specsField = document.getElementById('{{ form.specifications_json.id_for_label }}');
+    const specsPreview = document.getElementById('specsPreview');
+    const specsContent = document.getElementById('specsContent');
+    
+    function updateSpecsPreview() {
+        const value = specsField.value.trim();
+        if (value && value !== '') {
+            try {
+                const specs = JSON.parse(value);
+                specsContent.innerHTML = '';
+                
+                for (const [key, val] of Object.entries(specs)) {
+                    const specItem = document.createElement('div');
+                    specItem.className = 'spec-item d-flex justify-content-between mb-1';
+                    specItem.innerHTML = `
+                        <span class="fw-semibold">${key.charAt(0).toUpperCase() + key.slice(1)}:</span>
+                        <span class="text-muted">${val}</span>
+                    `;
+                    specsContent.appendChild(specItem);
+                }
+                
+                specsPreview.style.display = 'block';
+                specsField.classList.remove('is-invalid');
+            } catch (e) {
+                specsPreview.style.display = 'none';
+                specsField.classList.add('is-invalid');
+            }
+        } else {
+            specsPreview.style.display = 'none';
+            specsField.classList.remove('is-invalid');
+        }
+    }
+    
+    if (specsField) {
+        specsField.addEventListener('input', updateSpecsPreview);
+        specsField.addEventListener('blur', updateSpecsPreview);
+        
+        // Initial check
+        updateSpecsPreview();
+        
+        // Add example specs on focus if empty
+        specsField.addEventListener('focus', function() {
+            if (!this.value.trim()) {
+                this.placeholder = '{"capacity": "8GB", "speed": "3200MHz", "type": "DDR4"}';
+            }
+        });
+    }
+    
+    // Form validation feedback
+    const form = document.querySelector('form');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    
+    form?.addEventListener('submit', function() {
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Adding Component...';
+        submitBtn.disabled = true;
+    });
+    
+    // Auto-focus first field
+    const firstField = document.querySelector('select, input');
+    if (firstField) {
+        firstField.focus();
+    }
+    
+    // Category/Subcategory dependency
+    const categoryField = document.getElementById('{{ form.category.id_for_label }}');
+    const subcategoryField = document.getElementById('{{ form.subcategory.id_for_label }}');
+    
+    if (categoryField && subcategoryField) {
+        categoryField.addEventListener('change', function() {
+            const categoryId = this.value;
+            if (categoryId) {
+                // Filter subcategories based on selected category
+                // This would typically use AJAX to fetch subcategories
+                console.log('Category changed to:', categoryId);
+            }
+        });
+    }
+    
+    // Purchase date default to today
+    const purchaseDateField = document.getElementById('{{ form.purchase_date.id_for_label }}');
+    if (purchaseDateField && !purchaseDateField.value) {
+        const today = new Date().toISOString().split('T')[0];
+        purchaseDateField.value = today;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,768 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Assignment Reports & Analytics - PIMS{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+/* Assignment Reports Dashboard - Parliament Design System */
+.reports-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.reports-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.reports-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 2rem;
+}
+
+.reports-subtitle {
+    color: #64748b;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.location-badge {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+/* Statistics Grid */
+.stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.stat-icon.total { background: linear-gradient(135deg, #6b7280, #4b5563); }
+.stat-icon.active { background: linear-gradient(135deg, #10b981, #059669); }
+.stat-icon.overdue { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.stat-icon.returned { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.stat-icon.monthly { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    color: #6b7280;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Report Sections */
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.report-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.section-header {
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.section-header.summary {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+}
+
+.section-header.devices {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.section-header.employees {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    color: white;
+}
+
+.section-header.trends {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.section-title {
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.125rem;
+}
+
+.section-content {
+    padding: 1.5rem;
+}
+
+/* Summary Charts */
+.chart-container {
+    height: 300px;
+    position: relative;
+    margin-bottom: 1rem;
+    background: rgba(248, 250, 252, 0.8);
+    border: 2px dashed rgba(203, 213, 225, 0.6);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-style: italic;
+}
+
+/* Top Lists */
+.top-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.top-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: rgba(248, 250, 252, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.top-item:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(59, 130, 246, 0.3);
+    transform: translateX(4px);
+}
+
+.top-name {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.top-count {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Trends Section */
+.trends-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.trend-card {
+    background: rgba(248, 250, 252, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.trend-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.trend-label {
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+/* Quick Actions */
+.quick-actions {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.actions-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.actions-title {
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.action-btn {
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+}
+
+.action-icon {
+    font-size: 1.5rem;
+    color: #3b82f6;
+    margin-bottom: 0.25rem;
+}
+
+.action-label {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #64748b;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Export Section */
+.export-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.export-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.export-title {
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+}
+
+.export-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.export-btn {
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+    padding: 0.75rem;
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.export-btn:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: inherit;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.export-btn i {
+    color: #10b981;
+    margin-right: 0.25rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .reports-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .reports-container {
+        padding: 1rem 0;
+    }
+    
+    .reports-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .reports-title {
+        font-size: 1.5rem;
+    }
+    
+    .stats-overview {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .trends-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .actions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .export-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Animation */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stat-card,
+.report-section,
+.quick-actions,
+.export-section {
+    animation: slideIn 0.5s ease-out;
+}
+
+.stat-card:nth-child(1) { animation-delay: 0.1s; }
+.stat-card:nth-child(2) { animation-delay: 0.2s; }
+.stat-card:nth-child(3) { animation-delay: 0.3s; }
+.stat-card:nth-child(4) { animation-delay: 0.4s; }
+.stat-card:nth-child(5) { animation-delay: 0.5s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reports-container">
+    <div class="container-fluid">
+        <!-- Breadcrumb Navigation -->
+        <nav class="breadcrumb-nav">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'assignments:list' %}">Assignments</a></li>
+                <li class="breadcrumb-item active">Reports & Analytics</li>
+            </ol>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="reports-header">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h1 class="reports-title">
+                        <i class="bi bi-graph-up-arrow"></i>
+                        Assignment Reports & Analytics
+                    </h1>
+                    <p class="reports-subtitle">
+                        Comprehensive assignment tracking and analysis for Bangladesh Parliament Secretariat
+                    </p>
+                </div>
+                <div class="text-end">
+                    <div class="location-badge">
+                        <i class="bi bi-geo-alt me-1"></i>
+                        Dhaka, Bangladesh
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Overview -->
+        <div class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-icon total">
+                    <i class="bi bi-clipboard-data"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_assignments|default:0 }}</div>
+                    <div class="stat-label">Total Assignments</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon active">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ active_assignments|default:0 }}</div>
+                    <div class="stat-label">Active Assignments</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon overdue">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ overdue_assignments|default:0 }}</div>
+                    <div class="stat-label">Overdue Assignments</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon returned">
+                    <i class="bi bi-arrow-return-left"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ returned_assignments|default:0 }}</div>
+                    <div class="stat-label">Returned Assignments</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon monthly">
+                    <i class="bi bi-calendar-month"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ assignments_this_month|default:0 }}</div>
+                    <div class="stat-label">This Month</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Reports Grid -->
+        <div class="reports-grid">
+            <!-- Assignment Summary -->
+            <div class="report-section">
+                <div class="section-header summary">
+                    <h3 class="section-title">
+                        <i class="bi bi-pie-chart"></i>
+                        Assignment Summary
+                    </h3>
+                    <a href="{% url 'assignments:export_pdf' %}" class="btn btn-light btn-sm">
+                        <i class="bi bi-download"></i>
+                    </a>
+                </div>
+                <div class="section-content">
+                    <div class="chart-container">
+                        <div class="chart-placeholder">
+                            <div>
+                                <i class="bi bi-bar-chart-fill" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                                <div>Assignment Status Distribution Chart</div>
+                                <small>Total: {{ total_assignments|default:0 }} assignments</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="trends-grid">
+                        <div class="trend-card">
+                            <div class="trend-value">{{ active_assignments|default:0 }}%</div>
+                            <div class="trend-label">Active Rate</div>
+                        </div>
+                        <div class="trend-card">
+                            <div class="trend-value">{{ overdue_assignments|default:0 }}</div>
+                            <div class="trend-label">Overdue</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Devices -->
+            <div class="report-section">
+                <div class="section-header devices">
+                    <h3 class="section-title">
+                        <i class="bi bi-laptop"></i>
+                        Most Assigned Devices
+                    </h3>
+                    <a href="{% url 'assignments:export_excel' %}" class="btn btn-light btn-sm">
+                        <i class="bi bi-table"></i>
+                    </a>
+                </div>
+                <div class="section-content">
+                    {% if top_devices %}
+                        <div class="top-list">
+                            {% for device in top_devices %}
+                            <div class="top-item">
+                                <div class="top-name">
+                                    <i class="bi bi-device-hdd"></i>
+                                    {{ device.device__name|default:device.device__device_id }}
+                                </div>
+                                <div class="top-count">{{ device.assignment_count }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="bi bi-laptop"></i>
+                            </div>
+                            <p>No device assignment data available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Top Employees -->
+            <div class="report-section">
+                <div class="section-header employees">
+                    <h3 class="section-title">
+                        <i class="bi bi-people"></i>
+                        Most Active Employees
+                    </h3>
+                    <a href="{% url 'assignments:filter' %}" class="btn btn-light btn-sm">
+                        <i class="bi bi-funnel"></i>
+                    </a>
+                </div>
+                <div class="section-content">
+                    {% if top_employees %}
+                        <div class="top-list">
+                            {% for employee in top_employees %}
+                            <div class="top-item">
+                                <div class="top-name">
+                                    <i class="bi bi-person"></i>
+                                    {{ employee.assigned_to__first_name }} {{ employee.assigned_to__last_name }}
+                                </div>
+                                <div class="top-count">{{ employee.assignment_count }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="bi bi-people"></i>
+                            </div>
+                            <p>No employee assignment data available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Monthly Trends -->
+            <div class="report-section">
+                <div class="section-header trends">
+                    <h3 class="section-title">
+                        <i class="bi bi-graph-up"></i>
+                        Assignment Trends
+                    </h3>
+                    <a href="{% url 'assignments:list' %}?status=ACTIVE" class="btn btn-light btn-sm">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                </div>
+                <div class="section-content">
+                    <div class="chart-container">
+                        <div class="chart-placeholder">
+                            <div>
+                                <i class="bi bi-graph-up" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                                <div>Monthly Assignment Trends Chart</div>
+                                <small>Track assignment patterns over time</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="trends-grid">
+                        <div class="trend-card">
+                            <div class="trend-value">{{ assignments_this_month|default:0 }}</div>
+                            <div class="trend-label">This Month</div>
+                        </div>
+                        <div class="trend-card">
+                            <div class="trend-value">+12%</div>
+                            <div class="trend-label">vs Last Month</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <div class="actions-header">
+                <i class="bi bi-lightning-charge"></i>
+                <h3 class="actions-title">Quick Actions</h3>
+            </div>
+            <div class="actions-grid">
+                <a href="{% url 'assignments:create' %}" class="action-btn">
+                    <i class="action-icon bi bi-plus-circle"></i>
+                    <span class="action-label">New Assignment</span>
+                </a>
+                <a href="{% url 'assignments:quick' %}" class="action-btn">
+                    <i class="action-icon bi bi-lightning"></i>
+                    <span class="action-label">Quick Assign</span>
+                </a>
+                <a href="{% url 'assignments:active' %}" class="action-btn">
+                    <i class="action-icon bi bi-check-circle"></i>
+                    <span class="action-label">Active Assignments</span>
+                </a>
+                <a href="{% url 'assignments:overdue' %}" class="action-btn">
+                    <i class="action-icon bi bi-exclamation-triangle"></i>
+                    <span class="action-label">Overdue Items</span>
+                </a>
+                <a href="{% url 'assignments:filter' %}" class="action-btn">
+                    <i class="action-icon bi bi-funnel"></i>
+                    <span class="action-label">Advanced Filter</span>
+                </a>
+                <a href="{% url 'assignments:bulk_update' %}" class="action-btn">
+                    <i class="action-icon bi bi-arrow-repeat"></i>
+                    <span class="action-label">Bulk Operations</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Export Options -->
+        <div class="export-section">
+            <div class="export-header">
+                <i class="bi bi-download"></i>
+                <h3 class="export-title">Export Reports</h3>
+            </div>
+            <div class="export-grid">
+                <a href="{% url 'assignments:export_csv' %}" class="export-btn">
+                    <i class="bi bi-file-earmark-spreadsheet"></i>
+                    CSV Data
+                </a>
+                <a href="{% url 'assignments:export_excel' %}" class="export-btn">
+                    <i class="bi bi-file-earmark-excel"></i>
+                    Excel Report
+                </a>
+                <a href="{% url 'assignments:export_pdf' %}" class="export-btn">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    PDF Summary
+                </a>
+                <a href="{% url 'assignments:export_json' %}" class="export-btn">
+                    <i class="bi bi-file-earmark-code"></i>
+                    JSON Data
+                </a>
+                <a href="{% url 'assignments:qr_bulk' %}" class="export-btn">
+                    <i class="bi bi-qr-code"></i>
+                    QR Codes
+                </a>
+                <a href="{% url 'assignments:export' %}" class="export-btn">
+                    <i class="bi bi-gear"></i>
+                    Custom Export
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add hover effects and animations
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+    });
+    
+    // Add click tracking for analytics
+    const actionBtns = document.querySelectorAll('.action-btn, .export-btn');
+    actionBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            console.log('Action clicked:', this.querySelector('.action-label')?.textContent || this.textContent.trim());
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,604 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ user_obj.get_display_name }} - Permissions - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'users:list' %}">Users</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'users:detail' user_obj.pk %}">{{ user_obj.get_display_name }}</a></li>
+    <li class="breadcrumb-item active">Permissions</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="bi bi-shield-check me-2 text-primary"></i>
+                User Permissions
+            </h1>
+            <p class="text-muted mb-0">View permissions for {{ user_obj.get_display_name }}</p>
+        </div>
+        <div class="btn-group">
+            {% if user.has_perm:'auth.change_user' %}
+                <a href="{% url 'users:roles' user_obj.pk %}" class="btn btn-parliament-primary">
+                    <i class="bi bi-pencil me-2"></i>
+                    Manage Roles
+                </a>
+            {% endif %}
+            <a href="{% url 'users:detail' user_obj.pk %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Back to User
+            </a>
+        </div>
+    </div>
+
+    <!-- User Info Card -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex align-items-center">
+                {% if user_obj.profile_image %}
+                    <img src="{{ user_obj.profile_image.url }}" alt="{{ user_obj.get_full_name }}" class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                {% else %}
+                    <div class="bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center text-white" style="width: 60px; height: 60px;">
+                        <i class="bi bi-person fs-4"></i>
+                    </div>
+                {% endif %}
+                <div class="flex-grow-1">
+                    <h5 class="mb-1">{{ user_obj.get_full_name }}</h5>
+                    <p class="text-muted mb-0">{{ user_obj.username }} • {{ user_obj.email|default:"No email" }}</p>
+                </div>
+                <div class="text-end">
+                    {% if user_obj.is_active and user_obj.is_active_employee %}
+                        <span class="badge bg-success">Active</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                    {% endif %}
+                    {% if user_obj.is_superuser %}
+                        <span class="badge bg-danger ms-1">Super Admin</span>
+                    {% elif user_obj.is_staff %}
+                        <span class="badge bg-warning ms-1">Staff</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Permission Summary -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Permission Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="permission-stat">
+                        <div class="stat-number text-primary">{{ all_permissions|length }}</div>
+                        <div class="stat-label">Total Permissions</div>
+                    </div>
+                    
+                    <hr class="my-3">
+                    
+                    <div class="permission-breakdown">
+                        <div class="breakdown-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>
+                                    <i class="bi bi-people text-info me-2"></i>
+                                    Group Permissions
+                                </span>
+                                <span class="badge bg-info">{{ group_permissions|length }}</span>
+                            </div>
+                        </div>
+                        <div class="breakdown-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>
+                                    <i class="bi bi-person-gear text-success me-2"></i>
+                                    Direct Permissions
+                                </span>
+                                <span class="badge bg-success">{{ direct_permissions|length }}</span>
+                            </div>
+                        </div>
+                        {% if user_obj.is_superuser %}
+                            <div class="breakdown-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>
+                                        <i class="bi bi-shield-fill text-danger me-2"></i>
+                                        Superuser Access
+                                    </span>
+                                    <span class="badge bg-danger">All</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Groups -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-people me-2"></i>
+                        User Groups
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if user_obj.groups.exists %}
+                        <div class="group-list">
+                            {% for group in user_obj.groups.all %}
+                                <div class="group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ group.name }}</h6>
+                                            <small class="text-muted">{{ group.permissions.count }} permission{{ group.permissions.count|pluralize }}</small>
+                                        </div>
+                                        <span class="badge bg-primary">Group</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="bi bi-people text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2 mb-0">No groups assigned</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Permissions Detail -->
+        <div class="col-lg-8">
+            {% if user_obj.is_superuser %}
+                <!-- Superuser Alert -->
+                <div class="alert alert-warning mb-4">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-shield-fill me-3 fs-4"></i>
+                        <div>
+                            <h6 class="alert-heading mb-1">Superuser Access</h6>
+                            <p class="mb-0">
+                                This user has superuser privileges and automatically has ALL permissions in the system.
+                                Individual permissions are not applicable.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- All Permissions -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-key me-2"></i>
+                            All Permissions
+                        </h5>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary" type="button" data-filter="all">
+                                All ({{ all_permissions|length }})
+                            </button>
+                            <button class="btn btn-outline-info" type="button" data-filter="group">
+                                Groups ({{ group_permissions|length }})
+                            </button>
+                            <button class="btn btn-outline-success" type="button" data-filter="direct">
+                                Direct ({{ direct_permissions|length }})
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if all_permissions %}
+                        <div class="permissions-grid">
+                            {% regroup all_permissions by content_type.app_label as permission_apps %}
+                            {% for app in permission_apps %}
+                                <div class="permission-app mb-4">
+                                    <h6 class="app-title">
+                                        <i class="bi bi-folder me-2"></i>
+                                        {{ app.grouper|title }}
+                                    </h6>
+                                    
+                                    {% regroup app.list by content_type.model as permission_models %}
+                                    {% for model in permission_models %}
+                                        <div class="permission-model mb-3">
+                                            <h6 class="model-title">
+                                                <i class="bi bi-file-earmark me-2"></i>
+                                                {{ model.grouper|title }}
+                                            </h6>
+                                            
+                                            <div class="permission-items">
+                                                {% for permission in model.list %}
+                                                    <div class="permission-item" 
+                                                         data-source="{% if permission in direct_permissions %}direct{% else %}group{% endif %}">
+                                                        <div class="permission-content">
+                                                            <div class="permission-info">
+                                                                <div class="permission-name">
+                                                                    {{ permission.name }}
+                                                                </div>
+                                                                <div class="permission-codename">
+                                                                    <code>{{ permission.codename }}</code>
+                                                                </div>
+                                                            </div>
+                                                            <div class="permission-source">
+                                                                {% if permission in direct_permissions %}
+                                                                    <span class="badge bg-success">
+                                                                        <i class="bi bi-person-gear me-1"></i>
+                                                                        Direct
+                                                                    </span>
+                                                                {% else %}
+                                                                    <span class="badge bg-info">
+                                                                        <i class="bi bi-people me-1"></i>
+                                                                        Group
+                                                                    </span>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-key text-muted" style="font-size: 3rem;"></i>
+                            <h6 class="mt-3">No Permissions</h6>
+                            <p class="text-muted">This user has no permissions assigned.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Permission filtering
+        const filterButtons = document.querySelectorAll('[data-filter]');
+        const permissionItems = document.querySelectorAll('.permission-item');
+        
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const filter = this.getAttribute('data-filter');
+                
+                // Update active button
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Filter permissions
+                permissionItems.forEach(item => {
+                    const source = item.getAttribute('data-source');
+                    
+                    if (filter === 'all' || filter === source) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                
+                // Update section visibility
+                updateSectionVisibility();
+            });
+        });
+        
+        function updateSectionVisibility() {
+            const apps = document.querySelectorAll('.permission-app');
+            
+            apps.forEach(app => {
+                const models = app.querySelectorAll('.permission-model');
+                let hasVisibleModels = false;
+                
+                models.forEach(model => {
+                    const items = model.querySelectorAll('.permission-item');
+                    const visibleItems = Array.from(items).filter(item => 
+                        item.style.display !== 'none'
+                    );
+                    
+                    if (visibleItems.length > 0) {
+                        model.style.display = 'block';
+                        hasVisibleModels = true;
+                    } else {
+                        model.style.display = 'none';
+                    }
+                });
+                
+                app.style.display = hasVisibleModels ? 'block' : 'none';
+            });
+        }
+        
+        // Search functionality
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.className = 'form-control mb-3';
+        searchInput.placeholder = 'Search permissions...';
+        
+        const cardBody = document.querySelector('.permissions-grid').parentElement;
+        cardBody.insertBefore(searchInput, cardBody.firstChild);
+        
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            permissionItems.forEach(item => {
+                const permissionName = item.querySelector('.permission-name').textContent.toLowerCase();
+                const permissionCodename = item.querySelector('.permission-codename').textContent.toLowerCase();
+                
+                if (permissionName.includes(searchTerm) || permissionCodename.includes(searchTerm)) {
+                    item.classList.remove('search-hidden');
+                } else {
+                    item.classList.add('search-hidden');
+                }
+            });
+            
+            updateSearchVisibility();
+        });
+        
+        function updateSearchVisibility() {
+            const apps = document.querySelectorAll('.permission-app');
+            
+            apps.forEach(app => {
+                const models = app.querySelectorAll('.permission-model');
+                let hasVisibleModels = false;
+                
+                models.forEach(model => {
+                    const items = model.querySelectorAll('.permission-item');
+                    const visibleItems = Array.from(items).filter(item => 
+                        !item.classList.contains('search-hidden') && item.style.display !== 'none'
+                    );
+                    
+                    if (visibleItems.length > 0) {
+                        model.style.display = 'block';
+                        hasVisibleModels = true;
+                    } else {
+                        model.style.display = 'none';
+                    }
+                });
+                
+                app.style.display = hasVisibleModels ? 'block' : 'none';
+            });
+        }
+        
+        // Highlight search terms
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            permissionItems.forEach(item => {
+                const nameElement = item.querySelector('.permission-name');
+                const codenameElement = item.querySelector('.permission-codename code');
+                
+                // Remove existing highlights
+                nameElement.innerHTML = nameElement.textContent;
+                codenameElement.innerHTML = codenameElement.textContent;
+                
+                if (searchTerm && searchTerm.length > 1) {
+                    // Highlight in permission name
+                    const nameText = nameElement.textContent;
+                    const nameRegex = new RegExp(`(${searchTerm})`, 'gi');
+                    nameElement.innerHTML = nameText.replace(nameRegex, '<mark>$1</mark>');
+                    
+                    // Highlight in codename
+                    const codenameText = codenameElement.textContent;
+                    const codenameRegex = new RegExp(`(${searchTerm})`, 'gi');
+                    codenameElement.innerHTML = codenameText.replace(codenameRegex, '<mark>$1</mark>');
+                }
+            });
+        });
+        
+        // Copy permission codename to clipboard
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('.permission-codename code')) {
+                const codename = e.target.textContent;
+                navigator.clipboard.writeText(codename).then(() => {
+                    const originalText = e.target.textContent;
+                    e.target.textContent = 'Copied!';
+                    e.target.classList.add('text-success');
+                    
+                    setTimeout(() => {
+                        e.target.textContent = originalText;
+                        e.target.classList.remove('text-success');
+                    }, 2000);
+                });
+            }
+        });
+        
+        // Initialize with 'all' filter active
+        const allButton = document.querySelector('[data-filter="all"]');
+        if (allButton) {
+            allButton.classList.add('active');
+        }
+    });
+</script>
+
+<style>
+    .permission-stat {
+        text-align: center;
+        padding: var(--spacing-lg) 0;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        display: block;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .stat-label {
+        color: var(--parliament-neutral);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .permission-breakdown {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+    
+    .breakdown-item {
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .breakdown-item:last-child {
+        border-bottom: none;
+    }
+    
+    .group-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+    
+    .group-item {
+        padding: var(--spacing-md);
+        background-color: #f8f9fa;
+        border-radius: var(--border-radius);
+        border-left: 4px solid var(--parliament-primary);
+    }
+    
+    .permission-app {
+        border-left: 4px solid var(--parliament-primary);
+        padding-left: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .app-title {
+        color: var(--parliament-primary);
+        font-weight: 600;
+        margin-bottom: var(--spacing-md);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .permission-model {
+        margin-left: var(--spacing-md);
+        border-left: 2px solid #e5e7eb;
+        padding-left: var(--spacing-md);
+    }
+    
+    .model-title {
+        color: var(--parliament-neutral);
+        font-weight: 600;
+        margin-bottom: var(--spacing-md);
+        font-size: 1rem;
+    }
+    
+    .permission-items {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: var(--spacing-md);
+    }
+    
+    .permission-item {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
+        transition: var(--transition);
+    }
+    
+    .permission-item:hover {
+        border-color: var(--parliament-primary);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .permission-item.search-hidden {
+        display: none !important;
+    }
+    
+    .permission-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        gap: var(--spacing-md);
+    }
+    
+    .permission-info {
+        flex: 1;
+    }
+    
+    .permission-name {
+        font-weight: 500;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-xs);
+        line-height: 1.4;
+    }
+    
+    .permission-codename {
+        font-size: 0.875rem;
+    }
+    
+    .permission-codename code {
+        background-color: rgba(var(--parliament-primary-rgb), 0.1);
+        color: var(--parliament-primary);
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--border-radius);
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: var(--transition-fast);
+    }
+    
+    .permission-codename code:hover {
+        background-color: rgba(var(--parliament-primary-rgb), 0.2);
+    }
+    
+    .permission-source {
+        flex-shrink: 0;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .btn-group-sm .btn {
+        font-size: 0.875rem;
+        padding: 0.375rem 0.75rem;
+    }
+    
+    .btn-group .btn.active {
+        background-color: var(--parliament-primary);
+        border-color: var(--parliament-primary);
+        color: white;
+    }
+    
+    mark {
+        background-color: #fff3cd;
+        padding: 0.1em 0.2em;
+        border-radius: 0.2em;
+    }
+    
+    @media (max-width: 991.98px) {
+        .permission-items {
+            grid-template-columns: 1fr;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+        
+        .btn-group .btn {
+            width: 100%;
+        }
+    }
+    
+    @media (max-width: 767.98px) {
+        .permission-content {
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+        
+        .permission-source {
+            align-self: flex-start;
+        }
+    }
+</style>
+{% endblock %}

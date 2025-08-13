@@ -1,0 +1,579 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'locations:dashboard' %}">Locations</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:block_list' %}">Blocks</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:block_detail' object.pk %}">{{ object.name }}</a></li>
+    <li class="breadcrumb-item active">Edit</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <div class="d-flex align-items-center mb-2">
+                <div class="bg-warning text-white rounded d-flex align-items-center justify-content-center me-3" 
+                     style="width: 50px; height: 50px; font-size: 16px; font-weight: bold;">
+                    {{ object.code }}
+                </div>
+                <div>
+                    <h1 class="h3 mb-1">
+                        <i class="bi bi-pencil me-2 text-warning"></i>
+                        {{ page_title }}
+                    </h1>
+                    <p class="text-muted mb-0">Modify block information and settings</p>
+                </div>
+            </div>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'locations:block_detail' object.pk %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Back to Block Details
+            </a>
+            <div class="btn-group">
+                <button class="btn btn-outline-info dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Help
+                </button>
+                <ul class="dropdown-menu">
+                    <li><h6 class="dropdown-header">Quick Actions</h6></li>
+                    <li><a class="dropdown-item" href="{% url 'locations:block_list' %}">
+                        <i class="bi bi-list me-2"></i>View All Blocks
+                    </a></li>
+                    <li><a class="dropdown-item" href="{% url 'locations:block_create' %}">
+                        <i class="bi bi-plus-circle me-2"></i>Add New Block
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="{% url 'locations:block_delete' object.pk %}">
+                        <i class="bi bi-trash me-2"></i>Delete This Block
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Form Card -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-grid me-2"></i>
+                        Edit Block Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="blockEditForm" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Block Name and Code Fields -->
+                        <div class="row mb-3">
+                            <div class="col-md-7">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    <i class="bi bi-tag me-1"></i>
+                                    Block Name <span class="text-danger">*</span>
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.name.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Update the descriptive name for this block
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <label for="{{ form.code.id_for_label }}" class="form-label">
+                                    <i class="bi bi-hash me-1"></i>
+                                    Block Code <span class="text-danger">*</span>
+                                </label>
+                                {{ form.code }}
+                                {% if form.code.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.code.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Current: {{ object.code }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Current Block Info Alert -->
+                        <div class="alert alert-info border-0 mb-4">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-info-circle me-3 fs-4"></i>
+                                <div>
+                                    <h6 class="alert-heading mb-1">Current Block Information</h6>
+                                    <div class="small">
+                                        <strong>Name:</strong> {{ object.name }} | 
+                                        <strong>Code:</strong> {{ object.code }} | 
+                                        <strong>Status:</strong> 
+                                        {% if object.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description Field -->
+                        <div class="mb-4">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                <i class="bi bi-card-text me-1"></i>
+                                Description
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Optional: Update the description of this block's purpose
+                            </div>
+                        </div>
+
+                        <!-- Status Field -->
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    <i class="bi bi-toggle-on me-1"></i>
+                                    Active Block
+                                </label>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Only active blocks are available for location assignments
+                                </div>
+                            </div>
+                            {% if form.is_active.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.is_active.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <div class="text-muted">
+                                <small>
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Fields marked with <span class="text-danger">*</span> are required
+                                </small>
+                            </div>
+                            <div class="btn-group">
+                                <a href="{% url 'locations:block_detail' object.pk %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle me-2"></i>
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-warning" id="submitBtn">
+                                    <i class="bi bi-save me-2"></i>
+                                    {{ form_action }} Block
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Information Panel -->
+        <div class="col-lg-4">
+            <!-- Current Status Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-clipboard-data me-2"></i>
+                        Current Block Status
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="bg-info bg-opacity-10 rounded p-3">
+                                <div class="fs-4 fw-bold text-info">{{ object.code }}</div>
+                                <small class="text-muted">Block Code</small>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="{% if object.is_active %}bg-success{% else %}bg-danger{% endif %} bg-opacity-10 rounded p-3">
+                                <div class="fs-4 fw-bold {% if object.is_active %}text-success{% else %}text-danger{% endif %}">
+                                    {% if object.is_active %}ON{% else %}OFF{% endif %}
+                                </div>
+                                <small class="text-muted">Status</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="small">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Created:</span>
+                            <span>{{ object.created_at|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Last Updated:</span>
+                            <span>{{ object.updated_at|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Related Locations:</span>
+                            <span class="badge bg-info">{{ object.location_set.count }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Locations Warning -->
+            {% if object.location_set.count > 0 %}
+            <div class="alert alert-warning">
+                <h6 class="alert-heading">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Related Locations
+                </h6>
+                <p class="mb-2 small">
+                    This block has <strong>{{ object.location_set.count }}</strong> 
+                    related location{{ object.location_set.count|pluralize }}.
+                </p>
+                <div class="d-grid">
+                    <a href="{% url 'locations:list' %}?block={{ object.pk }}" 
+                       class="btn btn-outline-warning btn-sm">
+                        <i class="bi bi-eye me-2"></i>
+                        View Related Locations
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Tips Card -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        Editing Tips
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled small mb-0">
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            Changes will affect all related locations
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            Block code changes won't break existing relationships
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            Deactivating will hide block from new assignments
+                        </li>
+                        <li class="mb-0">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            You can revert changes by clicking Cancel
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-control:focus {
+    border-color: #ffc107;
+    box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: #ffc107;
+    border-color: #ffc107;
+}
+
+.alert-info {
+    background-color: rgba(13, 202, 240, 0.1);
+    border-color: rgba(13, 202, 240, 0.2);
+}
+
+.alert-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-color: rgba(255, 193, 7, 0.2);
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+.card {
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    border: none;
+    color: #000;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #e0a800 0%, #d39e00 100%);
+    transform: translateY(-1px);
+    color: #000;
+}
+
+.form-text {
+    font-size: 0.875rem;
+}
+
+.invalid-feedback {
+    font-size: 0.875rem;
+}
+
+#submitBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.bg-opacity-10 {
+    background-color: rgba(var(--bs-info-rgb), 0.1) !important;
+}
+
+.alert-heading {
+    color: inherit;
+    font-weight: 600;
+}
+
+.border-top {
+    border-top: 1px solid #dee2e6 !important;
+}
+
+.fw-bold {
+    font-weight: 600;
+}
+
+#{{ form.code.id_for_label }} {
+    text-transform: uppercase;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.getElementById('blockEditForm');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Store original values for comparison
+    const originalValues = {
+        name: '{{ object.name|escapejs }}',
+        code: '{{ object.code|escapejs }}',
+        description: '{{ object.description|escapejs }}',
+        is_active: {{ object.is_active|yesno:"true,false" }}
+    };
+    
+    // Real-time validation feedback
+    const nameField = document.getElementById('{{ form.name.id_for_label }}');
+    const codeField = document.getElementById('{{ form.code.id_for_label }}');
+    const isActiveField = document.getElementById('{{ form.is_active.id_for_label }}');
+    
+    // Add validation styling
+    function validateField(field, isValid) {
+        if (isValid) {
+            field.classList.remove('is-invalid');
+            field.classList.add('is-valid');
+        } else {
+            field.classList.remove('is-valid');
+            field.classList.add('is-invalid');
+        }
+    }
+    
+    // Name validation
+    nameField.addEventListener('input', function() {
+        const isValid = this.value.trim().length > 0;
+        validateField(this, isValid);
+        checkForChanges();
+    });
+    
+    // Code validation and auto-uppercase
+    codeField.addEventListener('input', function() {
+        // Auto-uppercase
+        const cursorPosition = this.selectionStart;
+        const uppercaseValue = this.value.toUpperCase();
+        this.value = uppercaseValue;
+        this.setSelectionRange(cursorPosition, cursorPosition);
+        
+        // Validation
+        const isValid = this.value.trim().length > 0 && this.value.length <= 10;
+        validateField(this, isValid);
+        checkForChanges();
+    });
+    
+    // Track changes
+    function checkForChanges() {
+        const hasChanges = 
+            nameField.value.trim() !== originalValues.name ||
+            codeField.value.trim() !== originalValues.code ||
+            document.getElementById('{{ form.description.id_for_label }}').value.trim() !== originalValues.description ||
+            isActiveField.checked !== originalValues.is_active;
+        
+        if (hasChanges) {
+            submitBtn.classList.remove('btn-outline-warning');
+            submitBtn.classList.add('btn-warning');
+            submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>Save Changes';
+        } else {
+            submitBtn.classList.remove('btn-warning');
+            submitBtn.classList.add('btn-outline-warning');
+            submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>No Changes';
+        }
+    }
+    
+    // Add change listeners to all form fields
+    const allFields = form.querySelectorAll('input, textarea, select');
+    allFields.forEach(field => {
+        field.addEventListener('input', checkForChanges);
+        field.addEventListener('change', checkForChanges);
+    });
+    
+    // Form submission with loading state
+    form.addEventListener('submit', function(e) {
+        // Check for actual changes before submitting
+        const hasChanges = 
+            nameField.value.trim() !== originalValues.name ||
+            codeField.value.trim() !== originalValues.code ||
+            document.getElementById('{{ form.description.id_for_label }}').value.trim() !== originalValues.description ||
+            isActiveField.checked !== originalValues.is_active;
+        
+        if (!hasChanges) {
+            e.preventDefault();
+            alert('No changes detected. Please modify some fields before saving.');
+            return;
+        }
+        
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Updating Block...';
+        submitBtn.disabled = true;
+        
+        // Re-enable if form validation fails
+        setTimeout(function() {
+            if (!form.checkValidity()) {
+                submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>{{ form_action }} Block';
+                submitBtn.disabled = false;
+            }
+        }, 100);
+    });
+    
+    // Auto-focus first field
+    nameField.focus();
+    nameField.select();
+    
+    // Warn about unsaved changes
+    let hasUnsavedChanges = false;
+    
+    allFields.forEach(field => {
+        field.addEventListener('input', function() {
+            hasUnsavedChanges = true;
+        });
+    });
+    
+    window.addEventListener('beforeunload', function(e) {
+        if (hasUnsavedChanges) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+    
+    // Reset unsaved changes flag on form submission
+    form.addEventListener('submit', function() {
+        hasUnsavedChanges = false;
+    });
+    
+    // Also reset on cancel
+    document.querySelector('a[href*="block_detail"]').addEventListener('click', function(e) {
+        if (hasUnsavedChanges) {
+            if (!confirm('You have unsaved changes. Are you sure you want to leave?')) {
+                e.preventDefault();
+            }
+        }
+    });
+    
+    // Code validation with uniqueness checking (placeholder)
+    let codeCheckTimeout;
+    codeField.addEventListener('input', function() {
+        const code = this.value.trim();
+        
+        if (code.length >= 2 && code !== originalValues.code) {
+            clearTimeout(codeCheckTimeout);
+            codeCheckTimeout = setTimeout(() => {
+                // This could check code uniqueness via AJAX
+                console.log('Checking code availability:', code);
+            }, 500);
+        }
+    });
+    
+    // Auto-generate code from name if code is empty
+    nameField.addEventListener('input', function() {
+        const name = this.value.trim();
+        
+        if (!codeField.value || codeField.value === originalValues.code) {
+            if (name && name !== originalValues.name) {
+                let autoCode = '';
+                const words = name.toUpperCase().split(' ');
+                
+                if (words.length === 1) {
+                    autoCode = words[0].substring(0, 3);
+                } else if (words.length === 2) {
+                    autoCode = words[0].charAt(0) + words[1].charAt(0);
+                } else {
+                    autoCode = words.slice(0, 3).map(word => word.charAt(0)).join('');
+                }
+                
+                // Only suggest if different from original
+                if (autoCode && autoCode !== originalValues.code) {
+                    codeField.style.borderColor = '#28a745';
+                    codeField.title = `Suggested code: ${autoCode}`;
+                }
+            }
+        }
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + S to save
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            form.submit();
+        }
+        
+        // Escape to cancel
+        if (e.key === 'Escape') {
+            if (hasUnsavedChanges) {
+                if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
+                    window.location.href = '{% url "locations:block_detail" object.pk %}';
+                }
+            } else {
+                window.location.href = '{% url "locations:block_detail" object.pk %}';
+            }
+        }
+    });
+    
+    // Initialize change detection
+    checkForChanges();
+});
+</script>
+{% endblock %}

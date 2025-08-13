@@ -1,0 +1,1082 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} | PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item">
+    <a href="{% url 'locations:list' %}">Locations</a>
+</li>
+<li class="breadcrumb-item">
+    <a href="{% url 'locations:detail' object.pk %}">{{ object.location_code }}</a>
+</li>
+<li class="breadcrumb-item active">Edit</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --parliament-primary: #1e3a8a;
+        --parliament-primary-rgb: 30, 58, 138;
+        --parliament-secondary: #dc2626;
+        --parliament-dark: #1f2937;
+        --parliament-success: #059669;
+        --parliament-warning: #d97706;
+        --parliament-info: #0891b2;
+        --parliament-neutral: #6b7280;
+        --parliament-light: #f8fafc;
+        --spacing-xs: 0.25rem;
+        --spacing-sm: 0.5rem;
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        --spacing-xl: 2rem;
+        --border-radius: 0.375rem;
+        --border-radius-lg: 0.5rem;
+        --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --transition-fast: all 0.15s ease-in-out;
+    }
+
+    .form-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .form-header {
+        background: linear-gradient(135deg, var(--parliament-primary), #3b82f6);
+        color: white;
+        padding: var(--spacing-xl);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: var(--spacing-lg);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .form-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+    }
+
+    .form-header-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .form-title {
+        font-size: 1.875rem;
+        font-weight: 700;
+        margin: 0 0 var(--spacing-sm) 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .form-subtitle {
+        font-size: 1.125rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .current-values {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+        border-left: 4px solid var(--parliament-info);
+    }
+
+    .current-values-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin: 0 0 var(--spacing-md) 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .current-values-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--spacing-md);
+    }
+
+    .current-value-item {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .current-value-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--parliament-neutral);
+    }
+
+    .current-value-content {
+        font-size: 0.875rem;
+        color: var(--parliament-dark);
+        font-weight: 500;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .form-section {
+        border-bottom: 1px solid #e5e7eb;
+        padding: var(--spacing-xl);
+    }
+
+    .form-section:last-child {
+        border-bottom: none;
+    }
+
+    .form-section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin: 0 0 var(--spacing-lg) 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 2px solid var(--parliament-primary);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .form-row.single {
+        grid-template-columns: 1fr;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-sm);
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .form-label.required::after {
+        content: '*';
+        color: var(--parliament-secondary);
+        margin-left: var(--spacing-xs);
+    }
+
+    .form-control,
+    .form-select {
+        padding: var(--spacing-sm) var(--spacing-md);
+        border: 1px solid #d1d5db;
+        border-radius: var(--border-radius);
+        font-size: 0.875rem;
+        transition: var(--transition-fast);
+        background: white;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        outline: none;
+        border-color: var(--parliament-primary);
+        box-shadow: 0 0 0 3px rgba(var(--parliament-primary-rgb), 0.1);
+    }
+
+    .form-control.is-invalid,
+    .form-select.is-invalid {
+        border-color: var(--parliament-secondary);
+    }
+
+    .form-control.is-valid,
+    .form-select.is-valid {
+        border-color: var(--parliament-success);
+    }
+
+    .form-text {
+        font-size: 0.75rem;
+        color: var(--parliament-neutral);
+        margin-top: var(--spacing-xs);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .invalid-feedback {
+        color: var(--parliament-secondary);
+        font-size: 0.75rem;
+        margin-top: var(--spacing-xs);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .valid-feedback {
+        color: var(--parliament-success);
+        font-size: 0.75rem;
+        margin-top: var(--spacing-xs);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md);
+        background: #f9fafb;
+        border-radius: var(--border-radius);
+        border: 1px solid #e5e7eb;
+    }
+
+    .form-check-input {
+        width: 18px;
+        height: 18px;
+        margin: 0;
+    }
+
+    .form-check-label {
+        font-weight: 500;
+        color: var(--parliament-dark);
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .coordinate-help {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
+        margin-top: var(--spacing-md);
+    }
+
+    .coordinate-help-title {
+        font-weight: 600;
+        color: var(--parliament-primary);
+        margin: 0 0 var(--spacing-sm) 0;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .coordinate-help-text {
+        font-size: 0.75rem;
+        color: var(--parliament-primary);
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    .form-footer {
+        background: #f9fafb;
+        padding: var(--spacing-lg) var(--spacing-xl);
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-sm) var(--spacing-lg);
+        border-radius: var(--border-radius);
+        font-weight: 500;
+        text-decoration: none;
+        transition: var(--transition-fast);
+        border: 1px solid transparent;
+        cursor: pointer;
+        font-size: 0.875rem;
+    }
+
+    .btn-primary {
+        background: var(--parliament-primary);
+        color: white;
+        border-color: var(--parliament-primary);
+    }
+
+    .btn-primary:hover {
+        background: #1e40af;
+        border-color: #1e40af;
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+        border-color: #6b7280;
+    }
+
+    .btn-secondary:hover {
+        background: #4b5563;
+        border-color: #4b5563;
+        color: white;
+    }
+
+    .btn-outline-secondary {
+        background: transparent;
+        color: var(--parliament-neutral);
+        border-color: #d1d5db;
+    }
+
+    .btn-outline-secondary:hover {
+        background: #f9fafb;
+        color: var(--parliament-dark);
+    }
+
+    .btn-group {
+        display: flex;
+        gap: var(--spacing-sm);
+    }
+
+    .component-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        background: var(--parliament-primary);
+        color: white;
+        border-radius: var(--border-radius);
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border-radius: var(--border-radius);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .bg-success {
+        background-color: var(--parliament-success) !important;
+        color: white;
+    }
+
+    .bg-secondary {
+        background-color: var(--parliament-neutral) !important;
+        color: white;
+    }
+
+    @media (max-width: 767.98px) {
+        .form-header {
+            padding: var(--spacing-lg);
+            text-align: center;
+        }
+
+        .form-title {
+            font-size: 1.5rem;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+        }
+
+        .form-footer {
+            flex-direction: column;
+            gap: var(--spacing-md);
+            text-align: center;
+        }
+
+        .btn-group {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .btn-group .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .current-values-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <!-- Form Header -->
+    <div class="form-header">
+        <div class="form-header-content">
+            <h1 class="form-title">
+                <i class="bi bi-pencil-square"></i>
+                {{ page_title }}
+            </h1>
+            <p class="form-subtitle">
+                Update location information and settings
+            </p>
+        </div>
+    </div>
+
+    <!-- Current Values Display -->
+    <div class="current-values">
+        <h3 class="current-values-title">
+            <i class="bi bi-info-circle"></i>
+            Current Information
+        </h3>
+        <div class="current-values-grid">
+            <div class="current-value-item">
+                <span class="current-value-label">Location Code:</span>
+                <span class="current-value-content">{{ object.location_code }}</span>
+            </div>
+            <div class="current-value-item">
+                <span class="current-value-label">Location Name:</span>
+                <span class="current-value-content">{{ object.name }}</span>
+            </div>
+            <div class="current-value-item">
+                <span class="current-value-label">Components:</span>
+                <span class="current-value-content">
+                    {% if object.building %}
+                        <span class="component-tag">
+                            <i class="bi bi-building"></i>
+                            {{ object.building.name }}
+                        </span>
+                    {% endif %}
+                    {% if object.floor %}
+                        <span class="component-tag">
+                            <i class="bi bi-layers"></i>
+                            {{ object.floor.name }}
+                        </span>
+                    {% endif %}
+                    {% if object.block %}
+                        <span class="component-tag">
+                            <i class="bi bi-grid-3x3-gap"></i>
+                            {{ object.block.name }}
+                        </span>
+                    {% endif %}
+                    {% if object.room %}
+                        <span class="component-tag">
+                            <i class="bi bi-door-open"></i>
+                            {{ object.room.name }}
+                        </span>
+                    {% endif %}
+                    {% if object.office %}
+                        <span class="component-tag">
+                            <i class="bi bi-briefcase"></i>
+                            {{ object.office.name }}
+                        </span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="current-value-item">
+                <span class="current-value-label">GPS Coordinates:</span>
+                <span class="current-value-content">
+                    {% if object.has_coordinates %}
+                        {{ object.coordinate_string }}
+                    {% else %}
+                        <span class="text-muted">Not set</span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="current-value-item">
+                <span class="current-value-label">Status:</span>
+                <span class="current-value-content">
+                    {% if object.is_active %}
+                        <span class="status-badge bg-success">
+                            <i class="bi bi-check-circle"></i>Active
+                        </span>
+                    {% else %}
+                        <span class="status-badge bg-secondary">
+                            <i class="bi bi-pause-circle"></i>Inactive
+                        </span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="current-value-item">
+                <span class="current-value-label">Last Updated:</span>
+                <span class="current-value-content">{{ object.updated_at|date:"M d, Y \a\t g:i A" }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="form-card">
+        <form method="post" class="needs-validation" novalidate>
+            {% csrf_token %}
+
+            <!-- Basic Information Section -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-info-circle"></i>
+                    Basic Information
+                </h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.name.id_for_label }}" class="form-label required">
+                            <i class="bi bi-tag"></i>
+                            Location Name
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="invalid-feedback">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                {% for error in form.name.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Human-readable location name (e.g., "Main Conference Room")
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.location_code.id_for_label }}" class="form-label required">
+                            <i class="bi bi-hash"></i>
+                            Location Code
+                        </label>
+                        {{ form.location_code }}
+                        {% if form.location_code.errors %}
+                            <div class="invalid-feedback">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                {% for error in form.location_code.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Unique identifier code (e.g., "LOC-001")
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row single">
+                    <div class="form-group">
+                        <label for="{{ form.address.id_for_label }}" class="form-label">
+                            <i class="bi bi-geo"></i>
+                            Address
+                        </label>
+                        {{ form.address }}
+                        {% if form.address.errors %}
+                            <div class="invalid-feedback">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                {% for error in form.address.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Full address or detailed location description
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Components Section -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-puzzle"></i>
+                    Location Components
+                </h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.building.id_for_label }}" class="form-label">
+                            <i class="bi bi-building"></i>
+                            Building
+                        </label>
+                        {{ form.building }}
+                        {% if form.building.errors %}
+                            <div class="invalid-feedback">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                {% for error in form.building.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.floor.id_for_label }}" class="form-label">
+                            <i class="bi bi-layers"></i>
+                            Floor
+                        </label>
+                        {{ form.floor }}
+                        {% if form.floor.errors %}
+                            <div class="invalid-feedback">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                {% for error in form.floor.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.block.id_for_label }}" class="form-label">
+                            <i class="bi bi-grid-3x3-gap"></i>
+                            Block/Section
+                        </label>
+                        {{ form.block }}
+                        {% if form.block.errors %}
+                            <div class="invalid-feedback">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                {% for error in form.block.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.room.id_for_label }}" class="form-label">
+                            <i class="bi bi-door-open"></i>
+                            Room
+                        </label>
+                        {{ form.room }}
+                        {% if form.room.errors %}
+                            <div class="invalid-feedback">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                {% for error in form.room.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row single">
+                    <div class="form-group">
+                        <label for="{{ form.office.id_for_label }}" class="form-label">
+                            <i class="bi bi-briefcase"></i>
+                            Office
+                        </label>
+                        {{ form.office }}
+                        {% if form.office.errors %}
+                            <div class="invalid-feedback">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                {% for error in form.office.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if form.non_field_errors %}
+                    <div class="invalid-feedback" style="display: block; margin-top: var(--spacing-md);">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="form-text" style="margin-top: var(--spacing-md);">
+                    <i class="bi bi-info-circle"></i>
+                    At least one location component must be selected. Components are independent of each other.
+                </div>
+            </div>
+
+            <!-- GPS Coordinates Section -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-geo-alt"></i>
+                    GPS Coordinates
+                </h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.latitude.id_for_label }}" class="form-label">
+                            <i class="bi bi-geo"></i>
+                            Latitude
+                        </label>
+                        {{ form.latitude }}
+                        {% if form.latitude.errors %}
+                            <div class="invalid-feedback">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                {% for error in form.latitude.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Latitude in decimal degrees (-90 to 90)
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.longitude.id_for_label }}" class="form-label">
+                            <i class="bi bi-geo"></i>
+                            Longitude
+                        </label>
+                        {{ form.longitude }}
+                        {% if form.longitude.errors %}
+                            <div class="invalid-feedback">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                {% for error in form.longitude.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Longitude in decimal degrees (-180 to 180)
+                        </div>
+                    </div>
+                </div>
+
+                <div class="coordinate-help">
+                    <div class="coordinate-help-title">
+                        <i class="bi bi-lightbulb"></i>
+                        GPS Coordinate Guidelines
+                    </div>
+                    <div class="coordinate-help-text">
+                        • Both latitude and longitude must be provided together, or both left empty<br>
+                        • Use decimal degrees format (e.g., 23.8103, 90.4125 for Dhaka)<br>
+                        • You can get coordinates from Google Maps by right-clicking on a location<br>
+                        • Coordinates are optional but helpful for mapping and navigation
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Information Section -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-journal-text"></i>
+                    Additional Information
+                </h3>
+                
+                <div class="form-row single">
+                    <div class="form-group">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label">
+                            <i class="bi bi-sticky"></i>
+                            Notes
+                        </label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                            <div class="invalid-feedback">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                {% for error in form.notes.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Additional notes or special instructions about this location
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row single">
+                    <div class="form-group">
+                        <div class="form-check">
+                            {{ form.is_active }}
+                            <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
+                                <i class="bi bi-toggle-on"></i>
+                                Location is Active
+                            </label>
+                        </div>
+                        {% if form.is_active.errors %}
+                            <div class="invalid-feedback">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                {% for error in form.is_active.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Inactive locations are hidden from most lists and searches
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Form Footer -->
+    <div class="form-footer">
+        <div class="form-text">
+            <i class="bi bi-clock"></i>
+            Last updated: {{ object.updated_at|date:"M d, Y \a\t g:i A" }}
+        </div>
+        
+        <div class="btn-group">
+            <a href="{% url 'locations:detail' object.pk %}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle"></i>
+                Cancel
+            </a>
+            <button type="submit" form="location-form" class="btn btn-primary">
+                <i class="bi bi-check-circle"></i>
+                {{ form_action }} Location
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.querySelector('.needs-validation');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    
+    // Add form ID for footer button
+    if (form) {
+        form.id = 'location-form';
+    }
+    
+    // Real-time validation
+    const inputs = form.querySelectorAll('.form-control, .form-select');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            validateField(this);
+        });
+        
+        input.addEventListener('input', function() {
+            if (this.classList.contains('is-invalid')) {
+                validateField(this);
+            }
+        });
+    });
+    
+    function validateField(field) {
+        const value = field.value.trim();
+        const isRequired = field.hasAttribute('required') || field.closest('.form-group').querySelector('.required');
+        
+        // Remove existing validation classes
+        field.classList.remove('is-valid', 'is-invalid');
+        
+        if (isRequired && !value) {
+            field.classList.add('is-invalid');
+        } else if (value) {
+            field.classList.add('is-valid');
+        }
+    }
+    
+    // Location code formatting
+    const locationCodeField = document.getElementById('{{ form.location_code.id_for_label }}');
+    if (locationCodeField) {
+        locationCodeField.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+    
+    // Coordinate validation
+    const latField = document.getElementById('{{ form.latitude.id_for_label }}');
+    const lngField = document.getElementById('{{ form.longitude.id_for_label }}');
+    
+    function validateCoordinates() {
+        const latValue = latField.value.trim();
+        const lngValue = lngField.value.trim();
+        
+        // Both must be provided together or both empty
+        if ((latValue && !lngValue) || (!latValue && lngValue)) {
+            latField.classList.add('is-invalid');
+            lngField.classList.add('is-invalid');
+            
+            // Show custom error message
+            let errorDiv = document.querySelector('.coordinate-error');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback coordinate-error';
+                errorDiv.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Both latitude and longitude must be provided together.';
+                lngField.parentNode.appendChild(errorDiv);
+            }
+            errorDiv.style.display = 'flex';
+        } else {
+            latField.classList.remove('is-invalid');
+            lngField.classList.remove('is-invalid');
+            
+            const errorDiv = document.querySelector('.coordinate-error');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+            
+            // Validate individual ranges
+            if (latValue) {
+                const lat = parseFloat(latValue);
+                if (lat < -90 || lat > 90) {
+                    latField.classList.add('is-invalid');
+                } else {
+                    latField.classList.add('is-valid');
+                }
+            }
+            
+            if (lngValue) {
+                const lng = parseFloat(lngValue);
+                if (lng < -180 || lng > 180) {
+                    lngField.classList.add('is-invalid');
+                } else {
+                    lngField.classList.add('is-valid');
+                }
+            }
+        }
+    }
+    
+    if (latField && lngField) {
+        latField.addEventListener('blur', validateCoordinates);
+        lngField.addEventListener('blur', validateCoordinates);
+        latField.addEventListener('input', validateCoordinates);
+        lngField.addEventListener('input', validateCoordinates);
+    }
+    
+    // Form submission validation
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate all fields
+        let isValid = true;
+        inputs.forEach(input => {
+            validateField(input);
+            if (input.classList.contains('is-invalid')) {
+                isValid = false;
+            }
+        });
+        
+        // Validate coordinates
+        validateCoordinates();
+        if (latField.classList.contains('is-invalid') || lngField.classList.contains('is-invalid')) {
+            isValid = false;
+        }
+        
+        // Check at least one component is selected
+        const components = ['building', 'floor', 'block', 'room', 'office'];
+        const hasComponent = components.some(comp => {
+            const field = document.getElementById(`id_${comp}`);
+            return field && field.value;
+        });
+        
+        if (!hasComponent) {
+            isValid = false;
+            // Show component error if not already shown
+            let componentError = document.querySelector('.component-error');
+            if (!componentError) {
+                componentError = document.createElement('div');
+                componentError.className = 'invalid-feedback component-error';
+                componentError.innerHTML = '<i class="bi bi-exclamation-triangle"></i> At least one location component must be selected.';
+                componentError.style.display = 'flex';
+                componentError.style.marginTop = 'var(--spacing-md)';
+                
+                const componentSection = document.querySelector('.form-section:nth-child(2)');
+                componentSection.appendChild(componentError);
+            }
+        } else {
+            const componentError = document.querySelector('.component-error');
+            if (componentError) {
+                componentError.remove();
+            }
+        }
+        
+        if (isValid) {
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Updating...';
+            
+            // Submit form
+            this.submit();
+        } else {
+            // Scroll to first error
+            const firstError = form.querySelector('.is-invalid');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstError.focus();
+            }
+        }
+    });
+    
+    // Auto-save draft functionality (optional)
+    let draftTimeout;
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            clearTimeout(draftTimeout);
+            draftTimeout = setTimeout(() => {
+                saveDraft();
+            }, 2000);
+        });
+    });
+    
+    function saveDraft() {
+        const formData = new FormData(form);
+        const draftData = {};
+        for (let [key, value] of formData.entries()) {
+            draftData[key] = value;
+        }
+        localStorage.setItem('location_edit_draft_{{ object.pk }}', JSON.stringify(draftData));
+    }
+    
+    // Load draft on page load
+    function loadDraft() {
+        const draft = localStorage.getItem('location_edit_draft_{{ object.pk }}');
+        if (draft) {
+            try {
+                const draftData = JSON.parse(draft);
+                Object.keys(draftData).forEach(key => {
+                    const field = form.querySelector(`[name="${key}"]`);
+                    if (field && field.type !== 'hidden') {
+                        if (field.type === 'checkbox') {
+                            field.checked = draftData[key] === 'on';
+                        } else {
+                            field.value = draftData[key];
+                        }
+                    }
+                });
+            } catch (e) {
+                console.log('Could not load draft');
+            }
+        }
+    }
+    
+    // Clear draft on successful submission
+    form.addEventListener('submit', function() {
+        localStorage.removeItem('location_edit_draft_{{ object.pk }}');
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+S to save
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            form.dispatchEvent(new Event('submit'));
+        }
+        
+        // Escape to cancel
+        if (e.key === 'Escape') {
+            const cancelBtn = document.querySelector('.btn-outline-secondary');
+            if (cancelBtn) {
+                window.location.href = cancelBtn.href;
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

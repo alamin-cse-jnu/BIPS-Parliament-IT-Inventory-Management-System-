@@ -1,0 +1,438 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Location Hierarchy - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hierarchy-container {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .hierarchy-header {
+        background: linear-gradient(135deg, var(--parliament-primary), #1e40af);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .building-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .building-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
+    }
+    
+    .building-header {
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        border-bottom: 2px solid var(--parliament-primary);
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .building-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--parliament-primary);
+        margin: 0;
+    }
+    
+    .component-section {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .component-section:last-child {
+        border-bottom: none;
+    }
+    
+    .component-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+    
+    .component-icon {
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--parliament-primary);
+        color: white;
+        border-radius: 4px;
+        margin-right: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .component-title {
+        font-weight: 600;
+        color: #374151;
+        margin: 0;
+    }
+    
+    .component-count {
+        background: #e5e7eb;
+        color: #4b5563;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-left: auto;
+    }
+    
+    .location-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+    }
+    
+    .location-item {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 0.75rem;
+        transition: all 0.2s ease;
+    }
+    
+    .location-item:hover {
+        background: #f3f4f6;
+        border-color: var(--parliament-primary);
+    }
+    
+    .location-name {
+        font-weight: 500;
+        color: #111827;
+        margin-bottom: 0.25rem;
+    }
+    
+    .location-code {
+        font-size: 0.75rem;
+        color: #6b7280;
+        font-family: 'Courier New', monospace;
+    }
+    
+    .location-components {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+    
+    .stats-overview {
+        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 6px;
+        padding: 1rem;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .stat-number {
+        font-size: 1.875rem;
+        font-weight: 700;
+        color: var(--parliament-primary);
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #6b7280;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Location Hierarchy</h1>
+            <p class="text-muted mb-0">Complete organizational structure of locations</p>
+        </div>
+        <div class="btn-group" role="group">
+            <a href="{% url 'locations:list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-list-ul me-2"></i>
+                List View
+            </a>
+            <a href="{% url 'locations:map' %}" class="btn btn-outline-info">
+                <i class="bi bi-map me-2"></i>
+                Map View
+            </a>
+            <a href="{% url 'locations:analytics' %}" class="btn btn-outline-success">
+                <i class="bi bi-graph-up me-2"></i>
+                Analytics
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="stats-overview">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-number">{{ total_buildings }}</span>
+                <div class="stat-label">Buildings</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">{{ total_locations }}</span>
+                <div class="stat-label">Total Locations</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">{{ hierarchy|length }}</span>
+                <div class="stat-label">Active Buildings</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">
+                    {% for building_data in hierarchy %}
+                        {% for floor_id, floor_data in building_data.floors.items %}
+                            {{ floor_data.locations|length|add:0 }}
+                        {% empty %}
+                            0
+                        {% endfor %}
+                    {% empty %}
+                        0
+                    {% endfor %}
+                </span>
+                <div class="stat-label">Floor Locations</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hierarchy Display -->
+    {% if hierarchy %}
+        {% for building_data in hierarchy %}
+            <div class="building-card">
+                <div class="building-header">
+                    <div>
+                        <h3 class="building-title">
+                            <i class="bi bi-building me-2"></i>
+                            {{ building_data.building.name }}
+                        </h3>
+                        <small class="text-muted">Code: {{ building_data.building.building_code }}</small>
+                    </div>
+                    <div>
+                        <span class="badge bg-primary">{{ building_data.locations|length }} Locations</span>
+                    </div>
+                </div>
+
+                <!-- Floors Section -->
+                {% if building_data.floors %}
+                    <div class="component-section">
+                        <div class="component-header">
+                            <div class="component-icon">
+                                <i class="bi bi-layers"></i>
+                            </div>
+                            <h4 class="component-title">Floors</h4>
+                            <span class="component-count">{{ building_data.floors|length }}</span>
+                        </div>
+                        <div class="location-grid">
+                            {% for floor_id, floor_data in building_data.floors.items %}
+                                <div class="location-item">
+                                    <div class="location-name">{{ floor_data.floor.name }}</div>
+                                    <div class="location-code">{{ floor_data.floor.floor_code }}</div>
+                                    <div class="location-components">
+                                        <i class="bi bi-geo-alt me-1"></i>
+                                        {{ floor_data.locations|length }} location{{ floor_data.locations|length|pluralize }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Blocks Section -->
+                {% if building_data.blocks %}
+                    <div class="component-section">
+                        <div class="component-header">
+                            <div class="component-icon">
+                                <i class="bi bi-grid-3x3"></i>
+                            </div>
+                            <h4 class="component-title">Blocks</h4>
+                            <span class="component-count">{{ building_data.blocks|length }}</span>
+                        </div>
+                        <div class="location-grid">
+                            {% for block_id, block_data in building_data.blocks.items %}
+                                <div class="location-item">
+                                    <div class="location-name">{{ block_data.block.name }}</div>
+                                    <div class="location-code">{{ block_data.block.block_code }}</div>
+                                    <div class="location-components">
+                                        <i class="bi bi-geo-alt me-1"></i>
+                                        {{ block_data.locations|length }} location{{ block_data.locations|length|pluralize }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Rooms Section -->
+                {% if building_data.rooms %}
+                    <div class="component-section">
+                        <div class="component-header">
+                            <div class="component-icon">
+                                <i class="bi bi-door-open"></i>
+                            </div>
+                            <h4 class="component-title">Rooms</h4>
+                            <span class="component-count">{{ building_data.rooms|length }}</span>
+                        </div>
+                        <div class="location-grid">
+                            {% for room_id, room_data in building_data.rooms.items %}
+                                <div class="location-item">
+                                    <div class="location-name">{{ room_data.room.name }}</div>
+                                    <div class="location-code">{{ room_data.room.room_code }}</div>
+                                    <div class="location-components">
+                                        <i class="bi bi-door-closed me-1"></i>
+                                        {{ room_data.room.get_room_type_display }}
+                                        {% if room_data.room.capacity %}
+                                            <br><i class="bi bi-people me-1"></i>{{ room_data.room.capacity }} capacity
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Offices Section -->
+                {% if building_data.offices %}
+                    <div class="component-section">
+                        <div class="component-header">
+                            <div class="component-icon">
+                                <i class="bi bi-briefcase"></i>
+                            </div>
+                            <h4 class="component-title">Offices</h4>
+                            <span class="component-count">{{ building_data.offices|length }}</span>
+                        </div>
+                        <div class="location-grid">
+                            {% for office_id, office_data in building_data.offices.items %}
+                                <div class="location-item">
+                                    <div class="location-name">{{ office_data.office.name }}</div>
+                                    <div class="location-code">{{ office_data.office.office_code }}</div>
+                                    <div class="location-components">
+                                        <i class="bi bi-building me-1"></i>
+                                        {{ office_data.office.get_office_type_display }}
+                                        {% if office_data.office.head_of_office %}
+                                            <br><i class="bi bi-person me-1"></i>{{ office_data.office.head_of_office }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Direct Locations (without specific components) -->
+                {% with direct_locations=building_data.locations %}
+                    {% if direct_locations %}
+                        <div class="component-section">
+                            <div class="component-header">
+                                <div class="component-icon">
+                                    <i class="bi bi-geo-alt"></i>
+                                </div>
+                                <h4 class="component-title">All Locations</h4>
+                                <span class="component-count">{{ direct_locations|length }}</span>
+                            </div>
+                            <div class="location-grid">
+                                {% for location in direct_locations %}
+                                    <div class="location-item">
+                                        <div class="location-name">
+                                            <a href="{% url 'locations:detail' location.pk %}" class="text-decoration-none">
+                                                {{ location.name }}
+                                            </a>
+                                        </div>
+                                        <div class="location-code">{{ location.location_code }}</div>
+                                        <div class="location-components">
+                                            {% if location.has_coordinates %}
+                                                <i class="bi bi-geo-alt-fill text-success me-1"></i>GPS Available
+                                            {% else %}
+                                                <i class="bi bi-geo-alt text-muted me-1"></i>No GPS
+                                            {% endif %}
+                                            {% if location.floor or location.block or location.room or location.office %}
+                                                <br>
+                                                {% if location.floor %}<span class="badge bg-light text-dark me-1">F:{{ location.floor.floor_number }}</span>{% endif %}
+                                                {% if location.block %}<span class="badge bg-light text-dark me-1">B:{{ location.block.block_code }}</span>{% endif %}
+                                                {% if location.room %}<span class="badge bg-light text-dark me-1">R:{{ location.room.room_number }}</span>{% endif %}
+                                                {% if location.office %}<span class="badge bg-light text-dark me-1">O:{{ location.office.office_code }}</span>{% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <i class="bi bi-building"></i>
+            <h4>No Buildings Found</h4>
+            <p>No building data is available to display the location hierarchy.</p>
+            <a href="{% url 'locations:create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>
+                Add Location
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add interactivity for better user experience
+    document.addEventListener('DOMContentLoaded', function() {
+        // Highlight related locations on hover
+        const locationItems = document.querySelectorAll('.location-item');
+        locationItems.forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.02)';
+            });
+            
+            item.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+        
+        // Add smooth scrolling for better navigation
+        const buildingCards = document.querySelectorAll('.building-card');
+        buildingCards.forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+        });
+    });
+</script>
+{% endblock %}

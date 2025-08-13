@@ -1,0 +1,1114 @@
+{% load static %}
+
+<!-- QR Code Preview Partial Component -->
+<!-- Usage: {% include 'devices/partials/_qr_code_preview.html' with device=device preview_type="card" %} -->
+
+{% if device.qr_codes.exists %}
+    {% with qr_code=device.qr_codes.first %}
+        
+        <!-- Card Preview Type -->
+        {% if preview_type == "card" or not preview_type %}
+            <div class="qr-preview-card">
+                <div class="qr-preview-header">
+                    <div class="qr-status-icon">
+                        <i class="bi bi-qr-code"></i>
+                    </div>
+                    <div class="qr-info">
+                        <div class="qr-title">QR Code Available</div>
+                        <div class="qr-details">
+                            <div class="qr-meta">
+                                <i class="bi bi-calendar3 me-1"></i>
+                                Generated {{ qr_code.created_at|date:"M d, Y" }}
+                            </div>
+                            {% if qr_code.qr_data %}
+                                <div class="qr-data">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    {{ qr_code.qr_data|truncatechars:30 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="qr-preview-image">
+                    {% if qr_code.image %}
+                        <img src="{{ qr_code.image.url }}" 
+                             alt="QR Code for {{ device.device_id }}" 
+                             class="qr-image"
+                             data-bs-toggle="modal" 
+                             data-bs-target="#qrModal{{ device.id }}"
+                             style="cursor: pointer;">
+                    {% else %}
+                        <div class="qr-placeholder">
+                            <i class="bi bi-qr-code"></i>
+                            <div class="placeholder-text">QR Code Missing</div>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="qr-preview-actions">
+                    <div class="action-buttons">
+                        {% if qr_code.image %}
+                            <a href="{% url 'devices:qr_view' qr_code.pk %}" 
+                               class="btn-qr btn-view" 
+                               data-bs-toggle="tooltip" 
+                               title="View QR Code">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'devices:qr_download' qr_code.pk %}" 
+                               class="btn-qr btn-download" 
+                               data-bs-toggle="tooltip" 
+                               title="Download QR Code">
+                                <i class="bi bi-download"></i>
+                            </a>
+                            <button type="button" 
+                                    class="btn-qr btn-share" 
+                                    onclick="copyQRLink('{{ qr_code.qr_data }}')"
+                                    data-bs-toggle="tooltip" 
+                                    title="Copy QR Data">
+                                <i class="bi bi-share"></i>
+                            </button>
+                        {% endif %}
+                        <a href="{% url 'devices:qr_generate' device.pk %}" 
+                           class="btn-qr btn-regenerate" 
+                           data-bs-toggle="tooltip" 
+                           title="Regenerate QR Code">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        
+        <!-- Inline Preview Type -->
+        {% elif preview_type == "inline" %}
+            <div class="qr-preview-inline">
+                {% if qr_code.image %}
+                    <div class="qr-thumbnail" 
+                         data-bs-toggle="modal" 
+                         data-bs-target="#qrModal{{ device.id }}">
+                        <img src="{{ qr_code.image.url }}" 
+                             alt="QR Code" 
+                             class="qr-thumb-image">
+                        <div class="qr-overlay">
+                            <i class="bi bi-zoom-in"></i>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="qr-thumbnail missing">
+                        <i class="bi bi-qr-code"></i>
+                    </div>
+                {% endif %}
+                
+                <div class="qr-inline-info">
+                    <div class="qr-status">
+                        {% if qr_code.image %}
+                            <span class="status-indicator available">
+                                <i class="bi bi-check-circle me-1"></i>
+                                QR Available
+                            </span>
+                        {% else %}
+                            <span class="status-indicator missing">
+                                <i class="bi bi-x-circle me-1"></i>
+                                Image Missing
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="qr-actions-inline">
+                        {% if qr_code.image %}
+                            <a href="{% url 'devices:qr_download' qr_code.pk %}" 
+                               class="action-link">
+                                <i class="bi bi-download"></i>
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'devices:qr_generate' device.pk %}" 
+                           class="action-link">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        
+        <!-- Badge Preview Type -->
+        {% elif preview_type == "badge" %}
+            <div class="qr-preview-badge">
+                {% if qr_code.image %}
+                    <span class="qr-badge qr-available" 
+                          data-bs-toggle="modal" 
+                          data-bs-target="#qrModal{{ device.id }}">
+                        <i class="bi bi-qr-code me-1"></i>
+                        QR Available
+                    </span>
+                {% else %}
+                    <span class="qr-badge qr-missing">
+                        <i class="bi bi-qr-code-scan me-1"></i>
+                        QR Missing
+                    </span>
+                {% endif %}
+            </div>
+        
+        <!-- List Item Preview Type -->
+        {% elif preview_type == "list" %}
+            <div class="qr-preview-list-item">
+                <div class="qr-list-thumbnail">
+                    {% if qr_code.image %}
+                        <img src="{{ qr_code.image.url }}" 
+                             alt="QR Code" 
+                             class="qr-list-image"
+                             data-bs-toggle="modal" 
+                             data-bs-target="#qrModal{{ device.id }}">
+                    {% else %}
+                        <div class="qr-list-placeholder">
+                            <i class="bi bi-qr-code"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="qr-list-content">
+                    <div class="qr-list-title">
+                        Device QR Code
+                        {% if qr_code.image %}
+                            <span class="badge bg-success ms-2">Available</span>
+                        {% else %}
+                            <span class="badge bg-warning ms-2">Missing Image</span>
+                        {% endif %}
+                    </div>
+                    <div class="qr-list-meta">
+                        <span class="meta-item">
+                            <i class="bi bi-calendar3 me-1"></i>
+                            {{ qr_code.created_at|date:"M d, Y" }}
+                        </span>
+                        {% if qr_code.updated_at != qr_code.created_at %}
+                            <span class="meta-item">
+                                <i class="bi bi-arrow-repeat me-1"></i>
+                                Updated {{ qr_code.updated_at|date:"M d, Y" }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="qr-list-actions">
+                    {% if qr_code.image %}
+                        <a href="{% url 'devices:qr_view' qr_code.pk %}" 
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="{% url 'devices:qr_download' qr_code.pk %}" 
+                           class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-download"></i>
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'devices:qr_generate' device.pk %}" 
+                       class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- QR Code Modal -->
+        <div class="modal fade" id="qrModal{{ device.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content qr-modal-content">
+                    <div class="modal-header qr-modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-qr-code me-2"></i>
+                            QR Code - {{ device.device_id }}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body qr-modal-body">
+                        {% if qr_code.image %}
+                            <div class="qr-modal-image">
+                                <img src="{{ qr_code.image.url }}" 
+                                     alt="QR Code for {{ device.device_id }}" 
+                                     class="qr-modal-img">
+                            </div>
+                            <div class="qr-modal-info">
+                                <div class="info-item">
+                                    <span class="info-label">Device:</span>
+                                    <span class="info-value">{{ device.name }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Device ID:</span>
+                                    <span class="info-value">{{ device.device_id }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">QR Data:</span>
+                                    <span class="info-value">{{ qr_code.qr_data }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Generated:</span>
+                                    <span class="info-value">{{ qr_code.created_at|date:"M d, Y H:i" }}</span>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="qr-modal-placeholder">
+                                <i class="bi bi-qr-code"></i>
+                                <h5>QR Code Image Missing</h5>
+                                <p class="text-muted">The QR code exists but the image file is not available.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer qr-modal-footer">
+                        {% if qr_code.image %}
+                            <a href="{% url 'devices:qr_download' qr_code.pk %}" 
+                               class="btn btn-success">
+                                <i class="bi bi-download me-1"></i>
+                                Download
+                            </a>
+                            <button type="button" 
+                                    class="btn btn-primary" 
+                                    onclick="copyQRLink('{{ qr_code.qr_data }}')">
+                                <i class="bi bi-clipboard me-1"></i>
+                                Copy Data
+                            </button>
+                        {% endif %}
+                        <a href="{% url 'devices:qr_generate' device.pk %}" 
+                           class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-repeat me-1"></i>
+                            Regenerate
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    {% endwith %}
+{% else %}
+    <!-- No QR Code Available -->
+    {% if preview_type == "card" or not preview_type %}
+        <div class="qr-preview-card no-qr">
+            <div class="qr-preview-header">
+                <div class="qr-status-icon">
+                    <i class="bi bi-qr-code-scan"></i>
+                </div>
+                <div class="qr-info">
+                    <div class="qr-title">No QR Code</div>
+                    <div class="qr-details">
+                        <div class="qr-meta">
+                            <i class="bi bi-info-circle me-1"></i>
+                            QR code not generated yet
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="qr-preview-placeholder">
+                <div class="qr-placeholder-content">
+                    <i class="bi bi-qr-code-scan"></i>
+                    <div class="placeholder-text">Generate QR Code</div>
+                    <div class="placeholder-desc">Create a QR code for easy device identification</div>
+                </div>
+            </div>
+            
+            <div class="qr-preview-actions">
+                <div class="action-buttons">
+                    <a href="{% url 'devices:qr_generate' device.pk %}" 
+                       class="btn-qr btn-generate">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        Generate QR Code
+                    </a>
+                </div>
+            </div>
+        </div>
+    
+    {% elif preview_type == "inline" %}
+        <div class="qr-preview-inline no-qr">
+            <div class="qr-thumbnail missing">
+                <i class="bi bi-qr-code-scan"></i>
+            </div>
+            <div class="qr-inline-info">
+                <div class="qr-status">
+                    <span class="status-indicator none">
+                        <i class="bi bi-exclamation-circle me-1"></i>
+                        No QR Code
+                    </span>
+                </div>
+                <div class="qr-actions-inline">
+                    <a href="{% url 'devices:qr_generate' device.pk %}" 
+                       class="action-link">
+                        <i class="bi bi-plus-circle"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    
+    {% elif preview_type == "badge" %}
+        <div class="qr-preview-badge">
+            <span class="qr-badge qr-none" 
+                  onclick="window.location.href='{% url 'devices:qr_generate' device.pk %}'">
+                <i class="bi bi-qr-code-scan me-1"></i>
+                Generate QR
+            </span>
+        </div>
+    
+    {% elif preview_type == "list" %}
+        <div class="qr-preview-list-item no-qr">
+            <div class="qr-list-thumbnail">
+                <div class="qr-list-placeholder">
+                    <i class="bi bi-qr-code-scan"></i>
+                </div>
+            </div>
+            
+            <div class="qr-list-content">
+                <div class="qr-list-title">
+                    No QR Code
+                    <span class="badge bg-secondary ms-2">Not Generated</span>
+                </div>
+                <div class="qr-list-meta">
+                    <span class="meta-item">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Click generate to create QR code
+                    </span>
+                </div>
+            </div>
+            
+            <div class="qr-list-actions">
+                <a href="{% url 'devices:qr_generate' device.pk %}" 
+                   class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i>
+                    Generate
+                </a>
+            </div>
+        </div>
+    {% endif %}
+{% endif %}
+
+<style>
+/* QR Code Preview Component Styles - Parliament Design System */
+
+/* Card Preview Styles */
+.qr-preview-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.qr-preview-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(30, 58, 138, 0.15);
+}
+
+.qr-preview-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(248, 250, 252, 0.8);
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.qr-status-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+}
+
+.qr-preview-card.no-qr .qr-status-icon {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+}
+
+.qr-info {
+    flex: 1;
+}
+
+.qr-title {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.qr-details {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.qr-meta, .qr-data {
+    margin-bottom: 0.25rem;
+}
+
+.qr-preview-image {
+    padding: 1.5rem;
+    text-align: center;
+    background: rgba(248, 250, 252, 0.5);
+}
+
+.qr-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 8px;
+    border: 2px solid rgba(203, 213, 225, 0.3);
+    transition: all 0.3s ease;
+}
+
+.qr-image:hover {
+    border-color: #3b82f6;
+    transform: scale(1.05);
+}
+
+.qr-placeholder, .qr-preview-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 2rem 1rem;
+    color: #9ca3af;
+}
+
+.qr-placeholder-content {
+    text-align: center;
+}
+
+.qr-placeholder i, .qr-placeholder-content i {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.5;
+}
+
+.placeholder-text {
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+}
+
+.placeholder-desc {
+    font-size: 0.875rem;
+    color: #9ca3af;
+}
+
+.qr-preview-actions {
+    padding: 1rem;
+    background: rgba(248, 250, 252, 0.8);
+    border-top: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.btn-qr {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 0.875rem;
+}
+
+.btn-view {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.btn-view:hover {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-download {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+.btn-download:hover {
+    background: #10b981;
+    color: white;
+}
+
+.btn-share {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+.btn-share:hover {
+    background: #f59e0b;
+    color: white;
+}
+
+.btn-regenerate {
+    background: rgba(107, 114, 128, 0.1);
+    color: #374151;
+    border-color: rgba(107, 114, 128, 0.2);
+}
+
+.btn-regenerate:hover {
+    background: #6b7280;
+    color: white;
+}
+
+.btn-generate {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border-color: #10b981;
+    padding: 0.5rem 1rem;
+    width: auto;
+    border-radius: 8px;
+}
+
+.btn-generate:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    color: white;
+    text-decoration: none;
+}
+
+/* Inline Preview Styles */
+.qr-preview-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+}
+
+.qr-thumbnail {
+    width: 50px;
+    height: 50px;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+}
+
+.qr-thumbnail.missing {
+    background: rgba(107, 114, 128, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    font-size: 1.25rem;
+}
+
+.qr-thumb-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.qr-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.qr-thumbnail:hover .qr-overlay {
+    opacity: 1;
+}
+
+.qr-inline-info {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-indicator {
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+.status-indicator.available { color: #059669; }
+.status-indicator.missing { color: #d97706; }
+.status-indicator.none { color: #6b7280; }
+
+.qr-actions-inline {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-link {
+    color: #64748b;
+    text-decoration: none;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.action-link:hover {
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+/* Badge Preview Styles */
+.qr-badge {
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.5rem 0.75rem;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.qr-available {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-color: #10b981;
+}
+
+.qr-missing {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    border-color: #f59e0b;
+}
+
+.qr-none {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+    border-color: #6b7280;
+}
+
+/* List Item Preview Styles */
+.qr-preview-list-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.qr-preview-list-item:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.qr-list-thumbnail {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.qr-list-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    cursor: pointer;
+}
+
+.qr-list-placeholder {
+    width: 100%;
+    height: 100%;
+    background: rgba(107, 114, 128, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    font-size: 1.5rem;
+}
+
+.qr-list-content {
+    flex: 1;
+}
+
+.qr-list-title {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+}
+
+.qr-list-meta {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.meta-item {
+    margin-right: 1rem;
+}
+
+.qr-list-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+/* Modal Styles */
+.qr-modal-content {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.qr-modal-header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    color: white;
+    border-bottom: none;
+}
+
+.qr-modal-body {
+    padding: 2rem;
+    text-align: center;
+}
+
+.qr-modal-image {
+    margin-bottom: 1.5rem;
+}
+
+.qr-modal-img {
+    max-width: 300px;
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    border: 2px solid rgba(203, 213, 225, 0.3);
+}
+
+.qr-modal-info {
+    text-align: left;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.2);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #64748b;
+}
+
+.info-value {
+    color: #1e293b;
+    font-weight: 500;
+}
+
+.qr-modal-placeholder {
+    color: #9ca3af;
+    padding: 2rem;
+}
+
+.qr-modal-placeholder i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.qr-modal-footer {
+    background: rgba(248, 250, 252, 0.8);
+    border-top: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .qr-preview-card {
+        margin-bottom: 1rem;
+    }
+    
+    .qr-preview-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+    }
+    
+    .qr-preview-list-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+    }
+    
+    .qr-list-title {
+        justify-content: center;
+    }
+    
+    .action-buttons {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .qr-modal-img {
+        max-width: 250px;
+    }
+}
+</style>
+
+<script>
+// QR Code Preview JavaScript Functions
+function copyQRLink(qrData) {
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(qrData).then(() => {
+            showToast('QR data copied to clipboard!', 'success');
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            fallbackCopyTextToClipboard(qrData);
+        });
+    } else {
+        fallbackCopyTextToClipboard(qrData);
+    }
+}
+
+function fallbackCopyTextToClipboard(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            showToast('QR data copied to clipboard!', 'success');
+        } else {
+            showToast('Failed to copy QR data', 'error');
+        }
+    } catch (err) {
+        console.error('Fallback: Failed to copy', err);
+        showToast('Failed to copy QR data', 'error');
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+function showToast(message, type = 'info') {
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast-notification toast-${type}`;
+    toast.innerHTML = `
+        <div class="toast-content">
+            <div class="toast-icon">
+                ${type === 'success' ? '<i class="bi bi-check-circle"></i>' : 
+                  type === 'error' ? '<i class="bi bi-x-circle"></i>' : 
+                  '<i class="bi bi-info-circle"></i>'}
+            </div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="closeToast(this.parentElement)">
+            <i class="bi bi-x"></i>
+        </button>
+    `;
+    
+    // Add toast styles if not already present
+    if (!document.querySelector('#toast-styles')) {
+        const style = document.createElement('style');
+        style.id = 'toast-styles';
+        style.textContent = `
+            .toast-notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                min-width: 300px;
+                max-width: 400px;
+                padding: 1rem;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(203, 213, 225, 0.3);
+                border-radius: 8px;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+                z-index: 9999;
+                animation: slideInRight 0.3s ease-out;
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+            }
+            
+            .toast-success {
+                border-left: 4px solid #10b981;
+            }
+            
+            .toast-error {
+                border-left: 4px solid #ef4444;
+            }
+            
+            .toast-info {
+                border-left: 4px solid #3b82f6;
+            }
+            
+            .toast-content {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                flex: 1;
+            }
+            
+            .toast-icon {
+                font-size: 1.25rem;
+            }
+            
+            .toast-success .toast-icon {
+                color: #10b981;
+            }
+            
+            .toast-error .toast-icon {
+                color: #ef4444;
+            }
+            
+            .toast-info .toast-icon {
+                color: #3b82f6;
+            }
+            
+            .toast-message {
+                font-weight: 500;
+                color: #1e293b;
+            }
+            
+            .toast-close {
+                background: none;
+                border: none;
+                color: #6b7280;
+                cursor: pointer;
+                padding: 0.25rem;
+                border-radius: 4px;
+                transition: all 0.3s ease;
+            }
+            
+            .toast-close:hover {
+                background: rgba(107, 114, 128, 0.1);
+                color: #374151;
+            }
+            
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Add to page
+    document.body.appendChild(toast);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (toast.parentNode) {
+            closeToast(toast);
+        }
+    }, 5000);
+}
+
+function closeToast(toast) {
+    toast.style.animation = 'slideOutRight 0.3s ease-in';
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 300);
+}
+
+// Initialize QR preview functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips for QR preview elements
+    var qrTooltipTriggerList = [].slice.call(document.querySelectorAll('.qr-preview-card [data-bs-toggle="tooltip"], .qr-preview-inline [data-bs-toggle="tooltip"], .qr-preview-list-item [data-bs-toggle="tooltip"]'));
+    var qrTooltipList = qrTooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Add click handlers for QR badge navigation
+    document.querySelectorAll('.qr-badge.qr-none').forEach(badge => {
+        badge.style.cursor = 'pointer';
+        badge.addEventListener('click', function(e) {
+            e.preventDefault();
+            const href = this.getAttribute('onclick');
+            if (href) {
+                eval(href);
+            }
+        });
+    });
+    
+    // Add hover effects for QR thumbnails
+    document.querySelectorAll('.qr-thumbnail').forEach(thumbnail => {
+        thumbnail.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.05)';
+        });
+        
+        thumbnail.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+    
+    // Handle QR modal image loading
+    document.querySelectorAll('.qr-modal-img').forEach(img => {
+        img.addEventListener('load', function() {
+            this.style.opacity = '1';
+        });
+        
+        img.addEventListener('error', function() {
+            this.style.display = 'none';
+            const placeholder = document.createElement('div');
+            placeholder.className = 'qr-modal-placeholder';
+            placeholder.innerHTML = `
+                <i class="bi bi-exclamation-triangle"></i>
+                <h5>Image Load Error</h5>
+                <p class="text-muted">Could not load QR code image.</p>
+            `;
+            this.parentNode.appendChild(placeholder);
+        });
+    });
+});
+
+// Keyboard navigation for QR modals
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const openModals = document.querySelectorAll('.modal.show[id*="qrModal"]');
+        openModals.forEach(modal => {
+            const bsModal = bootstrap.Modal.getInstance(modal);
+            if (bsModal) {
+                bsModal.hide();
+            }
+        });
+    }
+});

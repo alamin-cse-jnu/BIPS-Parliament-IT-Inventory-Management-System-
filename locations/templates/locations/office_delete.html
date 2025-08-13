@@ -1,0 +1,485 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Office - {{ object.name }} - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'locations:list' %}">Locations</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:office_list' %}">Offices</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:office_detail' object.pk %}">{{ object.name }}</a></li>
+    <li class="breadcrumb-item active">Delete Office</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .delete-header {
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+        color: white;
+        padding: var(--spacing-xl);
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        text-align: center;
+        position: relative;
+    }
+    
+    .delete-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+    }
+    
+    .delete-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-md);
+    }
+    
+    .delete-subtitle {
+        opacity: 0.9;
+        font-size: 1.125rem;
+        margin: 0;
+    }
+    
+    .office-info-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .office-info-body {
+        padding: var(--spacing-xl);
+    }
+    
+    .office-display {
+        text-align: center;
+        padding: var(--spacing-lg);
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        border-radius: var(--border-radius);
+        margin-bottom: var(--spacing-lg);
+        border-left: 4px solid var(--parliament-primary);
+    }
+    
+    .office-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .office-code {
+        font-family: 'Monaco', 'Consolas', monospace;
+        background: linear-gradient(135deg, var(--parliament-primary), #1e40af);
+        color: white;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--border-radius);
+        font-size: 1.125rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        display: inline-block;
+        box-shadow: var(--shadow);
+    }
+    
+    .office-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-lg);
+        margin-top: var(--spacing-lg);
+    }
+    
+    .detail-item {
+        text-align: center;
+    }
+    
+    .detail-label {
+        font-size: 0.875rem;
+        color: var(--parliament-neutral);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: var(--spacing-xs);
+        font-weight: 500;
+    }
+    
+    .detail-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+    }
+    
+    .impact-analysis {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .impact-header {
+        background-color: #fef3c7;
+        padding: var(--spacing-lg);
+        border-left: 4px solid #f59e0b;
+    }
+    
+    .impact-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #92400e;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .impact-body {
+        padding: var(--spacing-xl);
+    }
+    
+    .impact-item {
+        padding: var(--spacing-md);
+        border-left: 3px solid #e5e7eb;
+        margin-bottom: var(--spacing-md);
+        background-color: #f9fafb;
+        border-radius: 0 var(--border-radius) var(--border-radius) 0;
+    }
+    
+    .impact-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .impact-item.warning {
+        border-left-color: #f59e0b;
+        background-color: #fffbeb;
+    }
+    
+    .impact-item.danger {
+        border-left-color: #ef4444;
+        background-color: #fef2f2;
+    }
+    
+    .impact-item-title {
+        font-weight: 600;
+        margin-bottom: var(--spacing-xs);
+        color: var(--parliament-dark);
+    }
+    
+    .impact-item-description {
+        color: var(--parliament-neutral);
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    .alternatives-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .alternatives-header {
+        background-color: #ecfdf5;
+        padding: var(--spacing-lg);
+        border-left: 4px solid #10b981;
+    }
+    
+    .alternatives-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #047857;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .alternatives-body {
+        padding: var(--spacing-xl);
+    }
+    
+    .confirmation-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        border: 2px solid #dc2626;
+        overflow: hidden;
+    }
+    
+    .confirmation-header {
+        background-color: #fef2f2;
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid #fecaca;
+    }
+    
+    .confirmation-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #dc2626;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .confirmation-body {
+        padding: var(--spacing-xl);
+    }
+    
+    .form-label.required::after {
+        content: ' *';
+        color: #dc2626;
+    }
+    
+    .form-control:focus {
+        border-color: var(--parliament-primary);
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .btn-danger:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .status-badge {
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--border-radius);
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .status-active {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-inactive {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <!-- Delete Header -->
+    <div class="delete-header">
+        <h1 class="delete-title">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            Delete Office
+        </h1>
+        <p class="delete-subtitle">This action cannot be undone</p>
+    </div>
+
+    <!-- Office Information -->
+    <div class="office-info-card">
+        <div class="office-info-body">
+            <div class="office-display">
+                <h2 class="office-name">{{ object.name }}</h2>
+                <div class="office-code">{{ object.office_code }}</div>
+            </div>
+            
+            <div class="office-details">
+                <div class="detail-item">
+                    <div class="detail-label">Office Type</div>
+                    <div class="detail-value">{{ object.get_office_type_display }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Status</div>
+                    <div class="detail-value">
+                        <span class="status-badge {% if object.is_active %}status-active{% else %}status-inactive{% endif %}">
+                            {% if object.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Related Locations</div>
+                    <div class="detail-value">{{ related_locations_count }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Impact Analysis -->
+    <div class="impact-analysis">
+        <div class="impact-header">
+            <h3 class="impact-title">
+                <i class="bi bi-exclamation-triangle"></i>
+                Impact Analysis
+            </h3>
+        </div>
+        <div class="impact-body">
+            <div class="impact-item danger">
+                <div class="impact-item-title">Permanent Data Loss</div>
+                <div class="impact-item-description">
+                    Office "{{ object.name }}" ({{ object.office_code }}) will be permanently removed from the system and cannot be recovered.
+                </div>
+            </div>
+            
+            {% if related_locations_count > 0 %}
+                <div class="impact-item warning">
+                    <div class="impact-item-title">Related Locations Affected</div>
+                    <div class="impact-item-description">
+                        {{ related_locations_count }} location{{ related_locations_count|pluralize }} will lose their office reference and may need reassignment.
+                    </div>
+                </div>
+            {% endif %}
+            
+            <div class="impact-item warning">
+                <div class="impact-item-title">Historical Records</div>
+                <div class="impact-item-description">
+                    All historical data, assignments, and reports related to this office will be affected.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alternative Actions -->
+    <div class="alternatives-card">
+        <div class="alternatives-header">
+            <h3 class="alternatives-title">
+                <i class="bi bi-lightbulb"></i>
+                Consider These Alternatives
+            </h3>
+        </div>
+        <div class="alternatives-body">
+            <div class="d-grid gap-3">
+                {% if object.is_active %}
+                    <a href="{% url 'locations:office_toggle_status' object.pk %}" class="btn btn-outline-warning w-100" onclick="return confirm('Are you sure you want to deactivate this office?')">
+                        <i class="bi bi-pause-circle me-2"></i>
+                        Deactivate Office Instead
+                    </a>
+                {% endif %}
+                
+                <a href="{% url 'locations:office_edit' object.pk %}" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-pencil me-2"></i>
+                    Edit Office Instead
+                </a>
+                
+                {% if related_locations_count > 0 %}
+                    <a href="{% url 'locations:list' %}?office={{ object.pk }}" class="btn btn-outline-info w-100">
+                        <i class="bi bi-list me-2"></i>
+                        Review Related Locations First
+                    </a>
+                {% endif %}
+            </div>
+            
+            <hr class="my-4">
+            
+            <div class="text-center">
+                <h6 class="text-danger">Still want to delete?</h6>
+                <p class="text-muted small">
+                    Type <strong>{{ object.office_code }}</strong> below to confirm deletion
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Form -->
+    <div class="confirmation-card">
+        <div class="confirmation-header">
+            <h3 class="confirmation-title">
+                <i class="bi bi-trash-fill"></i>
+                Confirm Deletion
+            </h3>
+        </div>
+        
+        <div class="confirmation-body">
+            <form method="post" id="deleteForm">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="confirmCode" class="form-label required">
+                        Type office code to confirm
+                    </label>
+                    <input type="text" class="form-control" id="confirmCode" 
+                           placeholder="Enter {{ object.office_code }}" required>
+                    <div class="form-text">
+                        Expected: <strong>{{ object.office_code }}</strong>
+                    </div>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="confirmUnderstand" required>
+                    <label class="form-check-label" for="confirmUnderstand">
+                        I understand that this action is permanent and cannot be undone
+                    </label>
+                </div>
+                
+                {% if related_locations_count > 0 %}
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="confirmImpact" required>
+                        <label class="form-check-label" for="confirmImpact">
+                            I acknowledge that {{ related_locations_count }} location{{ related_locations_count|pluralize }} will lose their office reference
+                        </label>
+                    </div>
+                {% endif %}
+                
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-danger" id="deleteButton" disabled>
+                        <i class="bi bi-trash me-2"></i>
+                        Delete Office Permanently
+                    </button>
+                    <a href="{% url 'locations:office_detail' object.pk %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-2"></i>
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteForm = document.getElementById('deleteForm');
+        const confirmCode = document.getElementById('confirmCode');
+        const confirmUnderstand = document.getElementById('confirmUnderstand');
+        const confirmImpact = document.getElementById('confirmImpact');
+        const deleteButton = document.getElementById('deleteButton');
+        const expectedCode = '{{ object.office_code|escapejs }}';
+        
+        function validateForm() {
+            const codeValid = confirmCode.value.trim().toUpperCase() === expectedCode.toUpperCase();
+            const understandChecked = confirmUnderstand.checked;
+            const impactChecked = confirmImpact ? confirmImpact.checked : true;
+            
+            deleteButton.disabled = !(codeValid && understandChecked && impactChecked);
+        }
+        
+        confirmCode.addEventListener('input', validateForm);
+        confirmUnderstand.addEventListener('change', validateForm);
+        if (confirmImpact) {
+            confirmImpact.addEventListener('change', validateForm);
+        }
+        
+        // Form submission with final confirmation
+        deleteForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const officeName = '{{ object.name|escapejs }}';
+            const confirmMessage = `Are you absolutely sure you want to delete office "${officeName}"?\n\nThis action cannot be undone!`;
+            
+            if (confirm(confirmMessage)) {
+                this.submit();
+            }
+        });
+        
+        // Auto-focus on code input
+        confirmCode.focus();
+    });
+</script>
+{% endblock %}

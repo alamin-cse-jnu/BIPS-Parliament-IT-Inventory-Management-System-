@@ -1,0 +1,656 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'locations:index' %}">Locations</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:room_list' %}">Rooms</a></li>
+    <li class="breadcrumb-item active">{{ form_action }}</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        background: linear-gradient(135deg, var(--parliament-primary) 0%, var(--parliament-secondary) 100%);
+        color: white;
+        padding: var(--spacing-xl) 0;
+        margin-bottom: var(--spacing-xl);
+        border-radius: var(--border-radius-lg);
+    }
+    
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+    }
+    
+    .header-icon {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+    }
+    
+    .header-text h1 {
+        margin: 0 0 var(--spacing-xs) 0;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+    
+    .header-text p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 1.1rem;
+    }
+    
+    .form-container {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .form-header {
+        background: #f8f9fa;
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .form-title {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--parliament-text);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .form-body {
+        padding: var(--spacing-xl);
+    }
+    
+    .form-section {
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .form-section:last-child {
+        margin-bottom: 0;
+    }
+    
+    .form-section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--parliament-text);
+        margin-bottom: var(--spacing-lg);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 2px solid var(--parliament-primary);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--parliament-text);
+        margin-bottom: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+    
+    .form-label.required::after {
+        content: ' *';
+        color: var(--parliament-danger);
+    }
+    
+    .form-control,
+    .form-select,
+    .form-control:focus,
+    .form-select:focus {
+        border: 2px solid #e5e7eb;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
+        transition: var(--transition);
+        font-size: 0.95rem;
+    }
+    
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--parliament-primary);
+        box-shadow: 0 0 0 0.2rem rgba(var(--parliament-primary-rgb), 0.25);
+    }
+    
+    .form-text {
+        margin-top: var(--spacing-xs);
+        font-size: 0.875rem;
+        color: var(--parliament-neutral);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+    
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        margin-top: var(--spacing-md);
+    }
+    
+    .form-check-input {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #e5e7eb;
+        border-radius: var(--border-radius);
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--parliament-primary);
+        border-color: var(--parliament-primary);
+    }
+    
+    .form-check-label {
+        font-weight: 500;
+        color: var(--parliament-text);
+    }
+    
+    .form-footer {
+        margin-top: var(--spacing-xl);
+        padding-top: var(--spacing-lg);
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: var(--spacing-md);
+    }
+    
+    .invalid-feedback {
+        display: block;
+        margin-top: var(--spacing-xs);
+        font-size: 0.875rem;
+        color: var(--parliament-danger);
+    }
+    
+    .room-type-preview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: var(--spacing-sm);
+        margin-top: var(--spacing-md);
+        padding: var(--spacing-md);
+        background: #f8f9fa;
+        border-radius: var(--border-radius);
+    }
+    
+    .room-type-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: var(--spacing-sm);
+        border-radius: var(--border-radius);
+        transition: var(--transition);
+        cursor: pointer;
+        border: 2px solid transparent;
+    }
+    
+    .room-type-item:hover {
+        background: white;
+        border-color: var(--parliament-primary);
+    }
+    
+    .room-type-item.selected {
+        background: white;
+        border-color: var(--parliament-primary);
+        box-shadow: var(--shadow);
+    }
+    
+    .room-type-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--border-radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: white;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .room-type-icon.office { background-color: var(--parliament-primary); }
+    .room-type-icon.meeting { background-color: var(--parliament-info); }
+    .room-type-icon.storage { background-color: var(--parliament-warning); }
+    .room-type-icon.server { background-color: var(--parliament-danger); }
+    .room-type-icon.conference { background-color: var(--parliament-success); }
+    .room-type-icon.other { background-color: var(--parliament-neutral); }
+    
+    .room-type-label {
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-align: center;
+        color: var(--parliament-text);
+    }
+    
+    @media (max-width: 767.98px) {
+        .header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-footer {
+            flex-direction: column;
+            gap: var(--spacing-md);
+            text-align: center;
+        }
+        
+        .btn-group {
+            width: 100%;
+            flex-direction: column;
+        }
+        
+        .room-type-preview {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="header-icon">
+                    <i class="bi bi-plus-square"></i>
+                </div>
+                <div class="header-text">
+                    <h1>{{ page_title }}</h1>
+                    <p>Add a new room to the Parliament Secretariat location system</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="form-container">
+        <div class="form-header">
+            <h2 class="form-title">
+                <i class="bi bi-door-open"></i>
+                Room Information
+            </h2>
+        </div>
+
+        <div class="form-body">
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+
+                <!-- Basic Information Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">
+                        <i class="bi bi-info-circle"></i>
+                        Basic Information
+                    </h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.name.id_for_label }}" class="form-label required">
+                                <i class="bi bi-door-open me-2"></i>Room Name
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.name.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Enter a descriptive name for the room
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.room_number.id_for_label }}" class="form-label required">
+                                <i class="bi bi-hash me-2"></i>Room Number
+                            </label>
+                            {{ form.room_number }}
+                            {% if form.room_number.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.room_number.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Official room number or identifier
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Room Type Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">
+                        <i class="bi bi-collection"></i>
+                        Room Type & Category
+                    </h3>
+                    <div class="form-row">
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="{{ form.room_type.id_for_label }}" class="form-label required">
+                                <i class="bi bi-tags me-2"></i>Room Type
+                            </label>
+                            {{ form.room_type }}
+                            {% if form.room_type.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.room_type.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Select the primary function of this room
+                            </div>
+                            
+                            <!-- Room Type Visual Preview -->
+                            <div class="room-type-preview" id="roomTypePreview" style="display: none;">
+                                <div class="room-type-item" data-type="office">
+                                    <div class="room-type-icon office">
+                                        <i class="bi bi-building"></i>
+                                    </div>
+                                    <div class="room-type-label">Office</div>
+                                </div>
+                                <div class="room-type-item" data-type="meeting">
+                                    <div class="room-type-icon meeting">
+                                        <i class="bi bi-people"></i>
+                                    </div>
+                                    <div class="room-type-label">Meeting</div>
+                                </div>
+                                <div class="room-type-item" data-type="storage">
+                                    <div class="room-type-icon storage">
+                                        <i class="bi bi-box"></i>
+                                    </div>
+                                    <div class="room-type-label">Storage</div>
+                                </div>
+                                <div class="room-type-item" data-type="server">
+                                    <div class="room-type-icon server">
+                                        <i class="bi bi-hdd-rack"></i>
+                                    </div>
+                                    <div class="room-type-label">Server</div>
+                                </div>
+                                <div class="room-type-item" data-type="conference">
+                                    <div class="room-type-icon conference">
+                                        <i class="bi bi-camera-video"></i>
+                                    </div>
+                                    <div class="room-type-label">Conference</div>
+                                </div>
+                                <div class="room-type-item" data-type="hall">
+                                    <div class="room-type-icon other">
+                                        <i class="bi bi-door-open"></i>
+                                    </div>
+                                    <div class="room-type-label">Hall</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Physical Details Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">
+                        <i class="bi bi-rulers"></i>
+                        Physical Details
+                    </h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.capacity.id_for_label }}" class="form-label">
+                                <i class="bi bi-people me-2"></i>Capacity
+                            </label>
+                            {{ form.capacity }}
+                            {% if form.capacity.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.capacity.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Maximum number of people or equipment
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.area_sqft.id_for_label }}" class="form-label">
+                                <i class="bi bi-aspect-ratio me-2"></i>Area (sq ft)
+                            </label>
+                            {{ form.area_sqft }}
+                            {% if form.area_sqft.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.area_sqft.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Total floor area in square feet
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">
+                        <i class="bi bi-card-text"></i>
+                        Additional Information
+                    </h3>
+                    <div class="form-row">
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                <i class="bi bi-text-paragraph me-2"></i>Description
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.description.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Detailed description of the room and its current use
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">
+                        <i class="bi bi-toggle-on"></i>
+                        Status
+                    </h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
+                                    <i class="bi bi-check-circle me-2"></i>Room is Active
+                                </label>
+                            </div>
+                            {% if form.is_active.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.is_active.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Check if this room is currently available for use
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-footer">
+                    <div class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        <small>Fields marked with * are required</small>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-parliament-primary">
+                            <i class="bi bi-plus-lg me-2"></i>
+                            {{ form_action }} Room
+                        </button>
+                        <a href="{% url 'locations:room_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>
+                            Cancel
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form validation
+        const form = document.querySelector('.needs-validation');
+        const roomTypeSelect = document.getElementById('{{ form.room_type.id_for_label }}');
+        const roomTypePreview = document.getElementById('roomTypePreview');
+        
+        // Show room type preview when form loads
+        if (roomTypeSelect && roomTypePreview) {
+            roomTypePreview.style.display = 'grid';
+            updateRoomTypePreview();
+            
+            roomTypeSelect.addEventListener('change', updateRoomTypePreview);
+        }
+        
+        function updateRoomTypePreview() {
+            const selectedValue = roomTypeSelect.value;
+            const items = roomTypePreview.querySelectorAll('.room-type-item');
+            
+            items.forEach(item => {
+                item.classList.remove('selected');
+                if (item.dataset.type === selectedValue) {
+                    item.classList.add('selected');
+                }
+            });
+        }
+        
+        // Room type preview click handlers
+        const roomTypeItems = document.querySelectorAll('.room-type-item');
+        roomTypeItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const type = this.dataset.type;
+                roomTypeSelect.value = type;
+                roomTypeSelect.dispatchEvent(new Event('change'));
+                updateRoomTypePreview();
+            });
+        });
+        
+        // Auto-generate room number from name
+        const nameInput = document.getElementById('{{ form.name.id_for_label }}');
+        const roomNumberInput = document.getElementById('{{ form.room_number.id_for_label }}');
+        
+        if (nameInput && roomNumberInput) {
+            nameInput.addEventListener('blur', function() {
+                if (this.value && !roomNumberInput.value) {
+                    // Simple room number generation logic
+                    const name = this.value.trim();
+                    const roomType = roomTypeSelect.value || 'R';
+                    const roomNumber = roomType.charAt(0).toUpperCase() + '-' + 
+                                     Math.floor(Math.random() * 1000 + 100);
+                    roomNumberInput.value = roomNumber;
+                }
+            });
+        }
+        
+        // Capacity and area validation
+        const capacityInput = document.getElementById('{{ form.capacity.id_for_label }}');
+        const areaInput = document.getElementById('{{ form.area_sqft.id_for_label }}');
+        
+        if (capacityInput) {
+            capacityInput.addEventListener('input', function() {
+                if (this.value < 0) {
+                    this.value = 0;
+                }
+            });
+        }
+        
+        if (areaInput) {
+            areaInput.addEventListener('input', function() {
+                if (this.value < 0) {
+                    this.value = 0;
+                }
+            });
+        }
+        
+        // Form submission validation
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        }
+        
+        // Real-time validation feedback
+        const inputs = form.querySelectorAll('.form-control, .form-select');
+        inputs.forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.checkValidity()) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                }
+            });
+        });
+        
+        // Auto-focus first input
+        const firstInput = form.querySelector('input[type="text"]');
+        if (firstInput) {
+            firstInput.focus();
+        }
+    });
+</script>
+{% endblock %}

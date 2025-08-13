@@ -1,0 +1,809 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Quick Schedule Maintenance - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Quick Schedule Styling - Parliament Design System */
+.quick-schedule-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.page-header {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.page-title {
+    color: #1e40af;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.page-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.quick-schedule-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.form-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.form-header {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.form-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.form-body {
+    padding: 2rem;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    color: #1e293b;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(59, 130, 246, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.form-label.required::after {
+    content: '*';
+    color: #ef4444;
+    margin-left: 0.25rem;
+}
+
+.form-control, .form-select {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(203, 213, 225, 0.5);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.form-control:focus, .form-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background: rgba(255, 255, 255, 1);
+}
+
+.form-text {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.device-selector {
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.device-search {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.device-search input {
+    padding-left: 2.5rem;
+}
+
+.device-search .search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+    z-index: 2;
+}
+
+.device-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.device-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.device-item:hover {
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.device-item:last-child {
+    border-bottom: none;
+}
+
+.device-item.selected {
+    background: rgba(59, 130, 246, 0.1);
+    border-left: 3px solid #3b82f6;
+}
+
+.device-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+}
+
+.device-info {
+    flex: 1;
+}
+
+.device-id {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.device-details {
+    color: #64748b;
+    font-size: 0.75rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.priority-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.priority-option {
+    padding: 1rem;
+    border: 2px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.priority-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.priority-option.selected {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.priority-option.high {
+    border-color: #ef4444;
+    color: #dc2626;
+}
+
+.priority-option.high.selected {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+}
+
+.priority-option.medium {
+    border-color: #f59e0b;
+    color: #d97706;
+}
+
+.priority-option.medium.selected {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: #f59e0b;
+}
+
+.priority-option.low {
+    border-color: #10b981;
+    color: #059669;
+}
+
+.priority-option.low.selected {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: #10b981;
+}
+
+.priority-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.priority-label {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.date-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.sidebar {
+    display: grid;
+    gap: 2rem;
+}
+
+.info-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.info-header {
+    color: #1e40af;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.quick-tip {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.tip-header {
+    color: #059669;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tip-content {
+    color: #064e3b;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.quick-actions {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.quick-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    background: rgba(255, 255, 255, 0.8);
+    color: #374151;
+}
+
+.quick-action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(203, 213, 225, 0.3);
+    margin-top: 2rem;
+}
+
+.btn-schedule {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-schedule:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+}
+
+.btn-cancel {
+    background: rgba(107, 114, 128, 0.1);
+    color: #4b5563;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-cancel:hover {
+    background: rgba(107, 114, 128, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .quick-schedule-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .priority-selector {
+        grid-template-columns: 1fr;
+    }
+    
+    .date-inputs {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="quick-schedule-container">
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-lightning-charge"></i>
+                Quick Schedule Maintenance
+            </h1>
+            <p class="page-subtitle">Fast track maintenance scheduling for devices in Parliament House Complex, Dhaka</p>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="quick-schedule-grid">
+            <!-- Quick Schedule Form -->
+            <div class="form-card">
+                <div class="form-header">
+                    <i class="bi bi-calendar-plus"></i>
+                    <h3 class="form-title">Schedule Maintenance</h3>
+                </div>
+                <div class="form-body">
+                    <form method="post" id="quickScheduleForm">
+                        {% csrf_token %}
+                        
+                        <!-- Device Selection -->
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="bi bi-cpu"></i>
+                                Select Device
+                            </h4>
+                            
+                            <div class="device-selector">
+                                <div class="device-search">
+                                    <i class="bi bi-search search-icon"></i>
+                                    <input type="text" class="form-control" id="deviceSearch" placeholder="Search devices by ID, category, or location...">
+                                </div>
+                                <div class="device-list" id="deviceList">
+                                    <!-- Device items will be populated here -->
+                                </div>
+                            </div>
+                            
+                            <input type="hidden" name="device" id="selectedDevice" required>
+                            <div id="deviceError" class="text-danger" style="display: none;">Please select a device.</div>
+                        </div>
+
+                        <!-- Maintenance Details -->
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="bi bi-gear"></i>
+                                Maintenance Details
+                            </h4>
+                            
+                            <div class="form-group">
+                                <label class="form-label required">
+                                    <i class="bi bi-flag"></i>
+                                    Priority Level
+                                </label>
+                                <div class="priority-selector">
+                                    <div class="priority-option high" data-priority="HIGH">
+                                        <div class="priority-icon">
+                                            <i class="bi bi-exclamation-triangle-fill"></i>
+                                        </div>
+                                        <div class="priority-label">High</div>
+                                    </div>
+                                    <div class="priority-option medium" data-priority="MEDIUM">
+                                        <div class="priority-icon">
+                                            <i class="bi bi-exclamation-circle-fill"></i>
+                                        </div>
+                                        <div class="priority-label">Medium</div>
+                                    </div>
+                                    <div class="priority-option low" data-priority="LOW">
+                                        <div class="priority-icon">
+                                            <i class="bi bi-info-circle-fill"></i>
+                                        </div>
+                                        <div class="priority-label">Low</div>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="priority" id="selectedPriority" required>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label required">
+                                        <i class="bi bi-list-ul"></i>
+                                        Maintenance Type
+                                    </label>
+                                    <select name="maintenance_type" class="form-select" required>
+                                        <option value="">Select Type</option>
+                                        <option value="PREVENTIVE">Preventive</option>
+                                        <option value="CORRECTIVE">Corrective</option>
+                                        <option value="EMERGENCY">Emergency</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="bi bi-building"></i>
+                                        Vendor
+                                    </label>
+                                    <select name="vendor" class="form-select">
+                                        <option value="">Select Vendor</option>
+                                        {% for vendor in vendors %}
+                                        <option value="{{ vendor.id }}">{{ vendor.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label required">
+                                    <i class="bi bi-file-text"></i>
+                                    Description
+                                </label>
+                                <textarea name="description" class="form-control" rows="3" placeholder="Describe the maintenance work to be performed..." required></textarea>
+                                <div class="form-text">Provide detailed description of the maintenance activities</div>
+                            </div>
+                        </div>
+
+                        <!-- Scheduling -->
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="bi bi-calendar-event"></i>
+                                Schedule
+                            </h4>
+                            
+                            <div class="date-inputs">
+                                <div class="form-group">
+                                    <label class="form-label required">
+                                        <i class="bi bi-calendar-plus"></i>
+                                        Start Date
+                                    </label>
+                                    <input type="date" name="start_date" class="form-control" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="bi bi-calendar-check"></i>
+                                        Expected Completion
+                                    </label>
+                                    <input type="date" name="end_date" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="bi bi-currency-dollar"></i>
+                                        Estimated Cost (BDT)
+                                    </label>
+                                    <input type="number" name="estimated_cost" class="form-control" step="0.01" min="0" placeholder="0.00">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="bi bi-clock"></i>
+                                        Duration (Days)
+                                    </label>
+                                    <input type="number" name="planned_duration" class="form-control" min="1" placeholder="1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions">
+                            <a href="{% url 'maintenance:list' %}" class="btn btn-cancel">
+                                <i class="bi bi-x-lg"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-schedule">
+                                <i class="bi bi-calendar-plus"></i> Schedule Maintenance
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Quick Tips -->
+                <div class="info-card">
+                    <div class="info-header">
+                        <i class="bi bi-lightbulb"></i>
+                        Quick Tips
+                    </div>
+                    
+                    <div class="quick-tip">
+                        <div class="tip-header">
+                            <i class="bi bi-clock-history"></i>
+                            Fast Scheduling
+                        </div>
+                        <div class="tip-content">
+                            Use this form for quick maintenance scheduling. For complex recurring schedules, use the advanced scheduler.
+                        </div>
+                    </div>
+                    
+                    <div class="quick-tip">
+                        <div class="tip-header">
+                            <i class="bi bi-shield-check"></i>
+                            Priority Guidelines
+                        </div>
+                        <div class="tip-content">
+                            High: Critical systems, security issues<br>
+                            Medium: Standard maintenance, minor repairs<br>
+                            Low: Cosmetic fixes, non-urgent updates
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="info-card">
+                    <div class="info-header">
+                        <i class="bi bi-lightning"></i>
+                        Quick Actions
+                    </div>
+                    
+                    <div class="quick-actions">
+                        <a href="{% url 'maintenance:create' %}" class="quick-action-btn">
+                            <i class="bi bi-plus-circle"></i>
+                            Advanced Schedule
+                        </a>
+                        <a href="{% url 'maintenance:scheduled' %}" class="quick-action-btn">
+                            <i class="bi bi-calendar-week"></i>
+                            View Scheduled
+                        </a>
+                        <a href="{% url 'maintenance:recurring' %}" class="quick-action-btn">
+                            <i class="bi bi-arrow-repeat"></i>
+                            Recurring Tasks
+                        </a>
+                        <a href="{% url 'devices:list' %}" class="quick-action-btn">
+                            <i class="bi bi-cpu"></i>
+                            Browse Devices
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="info-card">
+                    <div class="info-header">
+                        <i class="bi bi-clock-history"></i>
+                        Recent Schedules
+                    </div>
+                    
+                    {% if recent_maintenance %}
+                        {% for maintenance in recent_maintenance|slice:":3" %}
+                        <div class="maintenance-item">
+                            <div class="maintenance-row">
+                                <div class="maintenance-icon scheduled">
+                                    <i class="bi bi-calendar-event"></i>
+                                </div>
+                                <div class="maintenance-details">
+                                    <div class="maintenance-title">{{ maintenance.device.device_id }}</div>
+                                    <div class="maintenance-dates">{{ maintenance.start_date|date:"M d" }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No recent schedules</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deviceSearch = document.getElementById('deviceSearch');
+    const deviceList = document.getElementById('deviceList');
+    const selectedDeviceInput = document.getElementById('selectedDevice');
+    const selectedPriorityInput = document.getElementById('selectedPriority');
+    const priorityOptions = document.querySelectorAll('.priority-option');
+    const form = document.getElementById('quickScheduleForm');
+    
+    // Sample device data (replace with AJAX call to your API)
+    const devices = [
+        { id: 1, device_id: 'HP-001', category: 'Desktop Computer', subcategory: 'HP ProDesk', location: 'Admin Block-101' },
+        { id: 2, device_id: 'DL-001', 'category': 'Laptop', subcategory: 'Dell Latitude', location: 'Conference Room-A' },
+        { id: 3, device_id: 'PR-001', category: 'Printer', subcategory: 'HP LaserJet', location: 'Secretary Office' },
+        { id: 4, device_id: 'SW-001', category: 'Network Switch', subcategory: 'Cisco Catalyst', location: 'IT Room' },
+        { id: 5, device_id: 'SR-001', category: 'Server', subcategory: 'Dell PowerEdge', location: 'Data Center' }
+    ];
+    
+    // Load devices
+    function loadDevices(searchTerm = '') {
+        const filteredDevices = devices.filter(device => 
+            device.device_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            device.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            device.subcategory.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            device.location.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        
+        deviceList.innerHTML = '';
+        
+        if (filteredDevices.length === 0) {
+            deviceList.innerHTML = '<div class="text-center text-muted p-3">No devices found</div>';
+            return;
+        }
+        
+        filteredDevices.forEach(device => {
+            const deviceItem = document.createElement('div');
+            deviceItem.className = 'device-item';
+            deviceItem.setAttribute('data-device-id', device.id);
+            deviceItem.innerHTML = `
+                <div class="device-icon">
+                    <i class="bi bi-cpu"></i>
+                </div>
+                <div class="device-info">
+                    <div class="device-id">${device.device_id}</div>
+                    <div class="device-details">
+                        <span>${device.subcategory}</span>
+                        <span>•</span>
+                        <span>${device.location}</span>
+                    </div>
+                </div>
+            `;
+            
+            deviceItem.addEventListener('click', function() {
+                // Remove previous selection
+                document.querySelectorAll('.device-item').forEach(item => {
+                    item.classList.remove('selected');
+                });
+                
+                // Select this device
+                this.classList.add('selected');
+                selectedDeviceInput.value = device.id;
+                document.getElementById('deviceError').style.display = 'none';
+            });
+            
+            deviceList.appendChild(deviceItem);
+        });
+    }
+    
+    // Search functionality
+    deviceSearch.addEventListener('input', function() {
+        loadDevices(this.value);
+    });
+    
+    // Priority selection
+    priorityOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            priorityOptions.forEach(opt => opt.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedPriorityInput.value = this.getAttribute('data-priority');
+        });
+    });
+    
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Check device selection
+        if (!selectedDeviceInput.value) {
+            document.getElementById('deviceError').style.display = 'block';
+            isValid = false;
+        }
+        
+        // Check priority selection
+        if (!selectedPriorityInput.value) {
+            alert('Please select a priority level.');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
+    
+    // Set default start date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    document.querySelector('input[name="start_date"]').value = tomorrowStr;
+    
+    // Load initial devices
+    loadDevices();
+});
+</script>
+{% endblock %}

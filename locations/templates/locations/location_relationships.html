@@ -1,0 +1,661 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Location Relationships - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .relationships-container {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .relationships-header {
+        background: linear-gradient(135deg, var(--parliament-primary), #1e40af);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .component-section {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+    
+    .component-header {
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        border-bottom: 2px solid var(--parliament-primary);
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .component-icon {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--parliament-primary);
+        color: white;
+        border-radius: 6px;
+        margin-right: 0.75rem;
+        font-size: 1rem;
+    }
+    
+    .component-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--parliament-primary);
+        margin: 0;
+    }
+    
+    .usage-stats {
+        padding: 1.5rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stat-card {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 1rem;
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--parliament-primary);
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+    
+    .usage-bar {
+        background: #e5e7eb;
+        border-radius: 4px;
+        height: 6px;
+        margin-top: 0.5rem;
+        overflow: hidden;
+    }
+    
+    .usage-fill {
+        background: linear-gradient(90deg, var(--parliament-primary), var(--parliament-secondary));
+        height: 100%;
+        transition: width 0.3s ease;
+    }
+    
+    .combinations-section {
+        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .combination-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .combination-card {
+        background: white;
+        border-radius: 6px;
+        padding: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .combination-title {
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+    
+    .combination-count {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--parliament-primary);
+    }
+    
+    .dependency-matrix {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .matrix-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .matrix-table th,
+    .matrix-table td {
+        padding: 0.75rem;
+        text-align: center;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .matrix-table th {
+        background: var(--parliament-primary);
+        color: white;
+        font-weight: 600;
+    }
+    
+    .matrix-cell {
+        background: #f9fafb;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .matrix-cell:hover {
+        background: #f3f4f6;
+    }
+    
+    .matrix-cell.has-relationship {
+        background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+        color: #15803d;
+        font-weight: 600;
+    }
+    
+    .matrix-cell.no-relationship {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+    
+    .relationship-legend {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f8fafc;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+    }
+    
+    .overview-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .overview-card {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    
+    .overview-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--parliament-primary);
+        color: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem;
+    }
+    
+    .overview-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--parliament-primary);
+        display: block;
+    }
+    
+    .overview-label {
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Location Relationships</h1>
+            <p class="text-muted mb-0">Component usage and dependency analysis</p>
+        </div>
+        <div class="btn-group" role="group">
+            <a href="{% url 'locations:hierarchy' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-diagram-3 me-2"></i>
+                Hierarchy
+            </a>
+            <a href="{% url 'locations:analytics' %}" class="btn btn-outline-info">
+                <i class="bi bi-graph-up me-2"></i>
+                Analytics
+            </a>
+            <a href="{% url 'locations:list' %}" class="btn btn-outline-success">
+                <i class="bi bi-list-ul me-2"></i>
+                List View
+            </a>
+        </div>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="overview-cards">
+        <div class="overview-card">
+            <div class="overview-icon">
+                <i class="bi bi-building"></i>
+            </div>
+            <span class="overview-number">{{ stats.buildings.total }}</span>
+            <div class="overview-label">Total Buildings</div>
+        </div>
+        <div class="overview-card">
+            <div class="overview-icon">
+                <i class="bi bi-layers"></i>
+            </div>
+            <span class="overview-number">{{ stats.floors.total }}</span>
+            <div class="overview-label">Total Floors</div>
+        </div>
+        <div class="overview-card">
+            <div class="overview-icon">
+                <i class="bi bi-grid-3x3"></i>
+            </div>
+            <span class="overview-number">{{ stats.blocks.total }}</span>
+            <div class="overview-label">Total Blocks</div>
+        </div>
+        <div class="overview-card">
+            <div class="overview-icon">
+                <i class="bi bi-door-open"></i>
+            </div>
+            <span class="overview-number">{{ stats.rooms.total }}</span>
+            <div class="overview-label">Total Rooms</div>
+        </div>
+        <div class="overview-card">
+            <div class="overview-icon">
+                <i class="bi bi-briefcase"></i>
+            </div>
+            <span class="overview-number">{{ stats.offices.total }}</span>
+            <div class="overview-label">Total Offices</div>
+        </div>
+    </div>
+
+    <!-- Component Usage Analysis -->
+    <div class="component-section">
+        <div class="component-header">
+            <div class="component-icon">
+                <i class="bi bi-pie-chart"></i>
+            </div>
+            <h2 class="component-title">Component Usage Analysis</h2>
+        </div>
+        <div class="usage-stats">
+            <div class="row">
+                <!-- Buildings -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="stat-card h-100">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <i class="bi bi-building text-primary" style="font-size: 1.5rem;"></i>
+                            <span class="stat-number">{{ stats.buildings.used }}/{{ stats.buildings.total }}</span>
+                        </div>
+                        <div class="stat-label">Buildings Used</div>
+                        <div class="usage-bar">
+                            <div class="usage-fill" style="width: {% if stats.buildings.total > 0 %}{{ stats.buildings.used|floatformat:0|mul:100|div:stats.buildings.total }}%{% else %}0%{% endif %}"></div>
+                        </div>
+                        <small class="text-muted">{{ stats.buildings.unused }} unused</small>
+                    </div>
+                </div>
+
+                <!-- Floors -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="stat-card h-100">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <i class="bi bi-layers text-info" style="font-size: 1.5rem;"></i>
+                            <span class="stat-number">{{ stats.floors.used }}/{{ stats.floors.total }}</span>
+                        </div>
+                        <div class="stat-label">Floors Used</div>
+                        <div class="usage-bar">
+                            <div class="usage-fill" style="width: {% if stats.floors.total > 0 %}{{ stats.floors.used|floatformat:0|mul:100|div:stats.floors.total }}%{% else %}0%{% endif %}"></div>
+                        </div>
+                        <small class="text-muted">{{ stats.floors.unused }} unused</small>
+                    </div>
+                </div>
+
+                <!-- Blocks -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="stat-card h-100">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <i class="bi bi-grid-3x3 text-success" style="font-size: 1.5rem;"></i>
+                            <span class="stat-number">{{ stats.blocks.used }}/{{ stats.blocks.total }}</span>
+                        </div>
+                        <div class="stat-label">Blocks Used</div>
+                        <div class="usage-bar">
+                            <div class="usage-fill" style="width: {% if stats.blocks.total > 0 %}{{ stats.blocks.used|floatformat:0|mul:100|div:stats.blocks.total }}%{% else %}0%{% endif %}"></div>
+                        </div>
+                        <small class="text-muted">{{ stats.blocks.unused }} unused</small>
+                    </div>
+                </div>
+
+                <!-- Rooms -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="stat-card h-100">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <i class="bi bi-door-open text-warning" style="font-size: 1.5rem;"></i>
+                            <span class="stat-number">{{ stats.rooms.used }}/{{ stats.rooms.total }}</span>
+                        </div>
+                        <div class="stat-label">Rooms Used</div>
+                        <div class="usage-bar">
+                            <div class="usage-fill" style="width: {% if stats.rooms.total > 0 %}{{ stats.rooms.used|floatformat:0|mul:100|div:stats.rooms.total }}%{% else %}0%{% endif %}"></div>
+                        </div>
+                        <small class="text-muted">{{ stats.rooms.unused }} unused</small>
+                    </div>
+                </div>
+
+                <!-- Offices -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="stat-card h-100">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <i class="bi bi-briefcase text-danger" style="font-size: 1.5rem;"></i>
+                            <span class="stat-number">{{ stats.offices.used }}/{{ stats.offices.total }}</span>
+                        </div>
+                        <div class="stat-label">Offices Used</div>
+                        <div class="usage-bar">
+                            <div class="usage-fill" style="width: {% if stats.offices.total > 0 %}{{ stats.offices.used|floatformat:0|mul:100|div:stats.offices.total }}%{% else %}0%{% endif %}"></div>
+                        </div>
+                        <small class="text-muted">{{ stats.offices.unused }} unused</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location Combinations -->
+    <div class="combinations-section">
+        <h3 class="mb-3">
+            <i class="bi bi-diagram-2 me-2"></i>
+            Location Component Combinations
+        </h3>
+        <p class="text-muted mb-3">Analysis of how location components are combined in actual locations</p>
+        
+        <div class="combination-grid">
+            <div class="combination-card">
+                <div class="combination-title">Building Only</div>
+                <div class="combination-count">{{ combinations.only_building|default:0 }}</div>
+                <small class="text-muted">Locations with only building reference</small>
+            </div>
+            
+            <div class="combination-card">
+                <div class="combination-title">Building + Floor</div>
+                <div class="combination-count">{{ combinations.building_floor|default:0 }}</div>
+                <small class="text-muted">Building and floor combination</small>
+            </div>
+            
+            <div class="combination-card">
+                <div class="combination-title">Building + Room</div>
+                <div class="combination-count">{{ combinations.building_room|default:0 }}</div>
+                <small class="text-muted">Building and room combination</small>
+            </div>
+            
+            <div class="combination-card">
+                <div class="combination-title">Building + Office</div>
+                <div class="combination-count">{{ combinations.building_office|default:0 }}</div>
+                <small class="text-muted">Building and office combination</small>
+            </div>
+            
+            <div class="combination-card">
+                <div class="combination-title">Floor + Room</div>
+                <div class="combination-count">{{ combinations.floor_room|default:0 }}</div>
+                <small class="text-muted">Floor and room combination</small>
+            </div>
+            
+            <div class="combination-card">
+                <div class="combination-title">Complete Hierarchy</div>
+                <div class="combination-count">{{ combinations.complete_hierarchy|default:0 }}</div>
+                <small class="text-muted">All components present</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dependency Matrix -->
+    <div class="dependency-matrix">
+        <div class="component-header">
+            <div class="component-icon">
+                <i class="bi bi-grid"></i>
+            </div>
+            <h3 class="component-title">Component Relationship Matrix</h3>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="matrix-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Building</th>
+                        <th>Floor</th>
+                        <th>Block</th>
+                        <th>Room</th>
+                        <th>Office</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th>Building</th>
+                        <td class="matrix-cell">-</td>
+                        <td class="matrix-cell has-relationship" title="Buildings can contain floors">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                        <td class="matrix-cell has-relationship" title="Buildings can contain blocks">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                        <td class="matrix-cell has-relationship" title="Buildings can contain rooms">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                        <td class="matrix-cell has-relationship" title="Buildings can contain offices">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Floor</th>
+                        <td class="matrix-cell has-relationship" title="Floors belong to buildings">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                        <td class="matrix-cell">-</td>
+                        <td class="matrix-cell has-relationship" title="Floors can have blocks">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                        <td class="matrix-cell has-relationship" title="Floors can have rooms">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                        <td class="matrix-cell has-relationship" title="Floors can have offices">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Block</th>
+                        <td class="matrix-cell has-relationship" title="Blocks can be in buildings">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                        <td class="matrix-cell has-relationship" title="Blocks can be on floors">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                        <td class="matrix-cell">-</td>
+                        <td class="matrix-cell has-relationship" title="Blocks can contain rooms">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                        <td class="matrix-cell has-relationship" title="Blocks can contain offices">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Room</th>
+                        <td class="matrix-cell has-relationship" title="Rooms can be in buildings">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                        <td class="matrix-cell has-relationship" title="Rooms can be on floors">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                        <td class="matrix-cell has-relationship" title="Rooms can be in blocks">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                        <td class="matrix-cell">-</td>
+                        <td class="matrix-cell has-relationship" title="Rooms can house offices">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Office</th>
+                        <td class="matrix-cell has-relationship" title="Offices can be in buildings">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                        <td class="matrix-cell has-relationship" title="Offices can be on floors">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                        <td class="matrix-cell has-relationship" title="Offices can be in blocks">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                        <td class="matrix-cell has-relationship" title="Offices can be in rooms">
+                            <i class="bi bi-check-circle"></i>
+                        </td>
+                        <td class="matrix-cell">-</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="relationship-legend">
+            <div class="legend-item">
+                <div class="legend-color has-relationship"></div>
+                <span>Relationship Exists</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #f9fafb; border: 1px solid #e5e7eb;"></div>
+                <span>Same Component</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-tools me-2"></i>
+                        Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'locations:create' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Add New Location
+                        </a>
+                        <a href="{% url 'locations:import' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-upload me-2"></i>
+                            Import Locations
+                        </a>
+                        <a href="{% url 'locations:export_all' %}" class="btn btn-outline-success">
+                            <i class="bi bi-download me-2"></i>
+                            Export All Data
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        System Health
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="border-end">
+                                <h4 class="text-success">{{ stats.buildings.used|percentage:stats.buildings.total }}%</h4>
+                                <small class="text-muted">Buildings Utilized</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-info">{{ stats.offices.used|percentage:stats.offices.total }}%</h4>
+                            <small class="text-muted">Offices Active</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add tooltip functionality for matrix cells
+        const matrixCells = document.querySelectorAll('.matrix-cell[title]');
+        matrixCells.forEach(cell => {
+            cell.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.05)';
+            });
+            
+            cell.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+        
+        // Animate usage bars on page load
+        const usageBars = document.querySelectorAll('.usage-fill');
+        setTimeout(() => {
+            usageBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 100);
+            });
+        }, 300);
+        
+        // Add hover effects to combination cards
+        const combinationCards = document.querySelectorAll('.combination-card');
+        combinationCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-4px)';
+                this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            });
+        });
+    });
+</script>
+{% endblock %}

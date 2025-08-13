@@ -1,0 +1,692 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --parliament-primary: #1e3a8a;
+        --parliament-secondary: #0f172a;
+        --parliament-success: #059669;
+        --parliament-danger: #dc2626;
+        --parliament-warning: #d97706;
+        --parliament-info: #0284c7;
+        --parliament-light: #f8fafc;
+        --parliament-dark: #1f2937;
+        --parliament-neutral: #6b7280;
+        --spacing-xs: 0.25rem;
+        --spacing-sm: 0.5rem;
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        --spacing-xl: 2rem;
+        --border-radius: 0.5rem;
+        --transition: all 0.3s ease;
+    }
+
+    .form-container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .form-header {
+        background: linear-gradient(135deg, var(--parliament-primary) 0%, var(--parliament-secondary) 100%);
+        color: white;
+        padding: var(--spacing-xl);
+        text-align: center;
+    }
+
+    .form-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-md);
+    }
+
+    .form-subtitle {
+        opacity: 0.9;
+        font-size: 1rem;
+        margin: 0;
+    }
+
+    .form-body {
+        padding: var(--spacing-xl);
+    }
+
+    .form-section {
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .form-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .form-section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-lg);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 2px solid var(--parliament-light);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-label {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .form-label.required::after {
+        content: ' *';
+        color: var(--parliament-danger);
+        font-weight: 700;
+    }
+
+    .form-control, .form-select {
+        transition: var(--transition);
+        border: 2px solid #e5e7eb;
+        padding: var(--spacing-md);
+        font-size: 0.95rem;
+        border-radius: var(--border-radius);
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--parliament-primary);
+        box-shadow: 0 0 0 0.2rem rgba(30, 58, 138, 0.25);
+        outline: none;
+    }
+
+    .form-control.is-valid {
+        border-color: var(--parliament-success);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23059669' d='m2.3 6.73.5.5c.2.2.5.2.7 0l2.5-2.5c.2-.2.2-.5 0-.7l-.5-.5c-.2-.2-.5-.2-.7 0l-1.5 1.5-.5-.5c-.2-.2-.5-.2-.7 0l-.5.5c-.2.2-.2.5 0 .7z'/%3e%3c/svg%3e");
+    }
+
+    .form-control.is-invalid {
+        border-color: var(--parliament-danger);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc2626'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc2626' stroke='none'/%3e%3c/svg%3e");
+    }
+
+    .form-text {
+        font-size: 0.875rem;
+        color: var(--parliament-neutral);
+        margin-top: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .invalid-feedback {
+        display: block;
+        color: var(--parliament-danger);
+        font-size: 0.875rem;
+        margin-top: var(--spacing-sm);
+    }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        margin-top: var(--spacing-md);
+    }
+
+    .form-check-input {
+        width: 1.25rem;
+        height: 1.25rem;
+        margin: 0;
+    }
+
+    .form-check-label {
+        font-weight: 500;
+        color: var(--parliament-dark);
+        cursor: pointer;
+        margin: 0;
+    }
+
+    .office-type-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-md);
+        margin-top: var(--spacing-md);
+    }
+
+    .office-type-item {
+        border: 2px solid #e5e7eb;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
+        text-align: center;
+        cursor: pointer;
+        transition: var(--transition);
+        position: relative;
+    }
+
+    .office-type-item:hover {
+        border-color: var(--parliament-primary);
+        background-color: #f8fafc;
+    }
+
+    .office-type-item.selected {
+        border-color: var(--parliament-primary);
+        background-color: #dbeafe;
+    }
+
+    .office-type-item.selected::after {
+        content: '✓';
+        position: absolute;
+        top: var(--spacing-sm);
+        right: var(--spacing-sm);
+        background: var(--parliament-primary);
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+
+    .office-type-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto var(--spacing-sm);
+        font-size: 1.25rem;
+        color: white;
+    }
+
+    .office-type-icon.wing { background: #3b82f6; }
+    .office-type-icon.branch { background: #8b5cf6; }
+    .office-type-icon.section { background: #06b6d4; }
+    .office-type-icon.secretary { background: #10b981; }
+    .office-type-icon.speaker { background: #f59e0b; }
+    .office-type-icon.mp { background: #ec4899; }
+    .office-type-icon.other { background: #6b7280; }
+
+    .office-type-label {
+        font-weight: 600;
+        color: var(--parliament-dark);
+        font-size: 0.875rem;
+    }
+
+    .code-preview {
+        font-family: 'Monaco', 'Consolas', monospace;
+        background-color: #f3f4f6;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--border-radius);
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--parliament-primary);
+        margin-top: var(--spacing-sm);
+        border: 1px solid #d1d5db;
+    }
+
+    .preview-label {
+        font-size: 0.75rem;
+        color: var(--parliament-neutral);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .form-actions {
+        background-color: #f9fafb;
+        padding: var(--spacing-lg) var(--spacing-xl);
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .btn-group {
+        display: flex;
+        gap: var(--spacing-md);
+    }
+
+    @media (max-width: 768px) {
+        .form-container {
+            margin: 0 var(--spacing-md);
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+        }
+
+        .form-actions {
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .btn-group {
+            width: 100%;
+            flex-direction: column;
+        }
+
+        .btn-group .btn {
+            width: 100%;
+        }
+
+        .office-type-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="bi bi-plus-circle me-2 text-primary"></i>
+                {{ page_title }}
+            </h1>
+            <p class="text-muted mb-0">Add a new office to the Bangladesh Parliament Secretariat system</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'locations:office_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Back to Offices
+            </a>
+        </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="form-container">
+        <div class="form-header">
+            <h2 class="form-title">
+                <i class="bi bi-building"></i>
+                Office Information
+            </h2>
+            <p class="form-subtitle">Enter the details for the new office</p>
+        </div>
+
+        <div class="form-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <!-- Basic Information Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">
+                        <i class="bi bi-info-circle"></i>
+                        Basic Information
+                    </h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.name.id_for_label }}" class="form-label required">
+                                <i class="bi bi-building me-1"></i>
+                                Office Name
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.name.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Enter the official name of the office
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.office_code.id_for_label }}" class="form-label required">
+                                <i class="bi bi-hash me-1"></i>
+                                Office Code
+                            </label>
+                            {{ form.office_code }}
+                            {% if form.office_code.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.office_code.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Unique identifier for the office (e.g., IT-001, SEC-001)
+                            </div>
+                            <div class="code-preview" id="codePreview" style="display: none;">
+                                <div class="preview-label">Preview:</div>
+                                <span id="codePreviewText"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Office Type Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">
+                        <i class="bi bi-diagram-3"></i>
+                        Office Type
+                    </h3>
+                    <div class="form-group">
+                        <label for="{{ form.office_type.id_for_label }}" class="form-label required">
+                            <i class="bi bi-tag me-1"></i>
+                            Select Office Type
+                        </label>
+                        {{ form.office_type }}
+                        {% if form.office_type.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.office_type.errors %}
+                                    <small class="text-danger">{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Choose the type that best describes this office
+                        </div>
+
+                        <!-- Visual Office Type Selection -->
+                        <div class="office-type-grid">
+                            <div class="office-type-item" data-type="wing">
+                                <div class="office-type-icon wing">
+                                    <i class="bi bi-diagram-2"></i>
+                                </div>
+                                <div class="office-type-label">Wing Office</div>
+                            </div>
+                            <div class="office-type-item" data-type="branch">
+                                <div class="office-type-icon branch">
+                                    <i class="bi bi-diagram-3"></i>
+                                </div>
+                                <div class="office-type-label">Branch Office</div>
+                            </div>
+                            <div class="office-type-item" data-type="section">
+                                <div class="office-type-icon section">
+                                    <i class="bi bi-collection"></i>
+                                </div>
+                                <div class="office-type-label">Section Office</div>
+                            </div>
+                            <div class="office-type-item" data-type="secretary">
+                                <div class="office-type-icon secretary">
+                                    <i class="bi bi-person-badge"></i>
+                                </div>
+                                <div class="office-type-label">Secretary Office</div>
+                            </div>
+                            <div class="office-type-item" data-type="speaker">
+                                <div class="office-type-icon speaker">
+                                    <i class="bi bi-megaphone"></i>
+                                </div>
+                                <div class="office-type-label">Speaker Office</div>
+                            </div>
+                            <div class="office-type-item" data-type="mp">
+                                <div class="office-type-icon mp">
+                                    <i class="bi bi-people"></i>
+                                </div>
+                                <div class="office-type-label">MP Office</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Administrative Details Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">
+                        <i class="bi bi-person-gear"></i>
+                        Administrative Details
+                    </h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.head_of_office.id_for_label }}" class="form-label">
+                                <i class="bi bi-person me-1"></i>
+                                Head of Office
+                            </label>
+                            {{ form.head_of_office }}
+                            {% if form.head_of_office.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.head_of_office.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Name of the officer in charge of this office
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.contact_number.id_for_label }}" class="form-label">
+                                <i class="bi bi-telephone me-1"></i>
+                                Contact Number
+                            </label>
+                            {{ form.contact_number }}
+                            {% if form.contact_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.contact_number.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Official contact number for this office
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">
+                                <i class="bi bi-envelope me-1"></i>
+                                Email Address
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.email.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Official email address for communication
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                <i class="bi bi-card-text me-1"></i>
+                                Description
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Brief description of office functions and responsibilities
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">
+                        <i class="bi bi-toggle-on"></i>
+                        Status
+                    </h3>
+                    <div class="form-check">
+                        {{ form.is_active }}
+                        <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Office is currently active and operational
+                        </label>
+                    </div>
+                    {% if form.is_active.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.is_active.errors %}
+                                <small class="text-danger">{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <div class="form-actions">
+            <div>
+                <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Required fields are marked with an asterisk (*)
+                </small>
+            </div>
+            <div class="btn-group">
+                <a href="{% url 'locations:office_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-2"></i>
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-primary" onclick="document.querySelector('form').submit();">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    {{ form_action }} Office
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const officeCodeInput = document.getElementById('{{ form.office_code.id_for_label }}');
+        const officeTypeSelect = document.getElementById('{{ form.office_type.id_for_label }}');
+        const codePreview = document.getElementById('codePreview');
+        const codePreviewText = document.getElementById('codePreviewText');
+        const officeTypeItems = document.querySelectorAll('.office-type-item');
+
+        // Office code preview
+        function updateCodePreview() {
+            const code = officeCodeInput.value.trim().toUpperCase();
+            if (code) {
+                codePreviewText.textContent = code;
+                codePreview.style.display = 'block';
+            } else {
+                codePreview.style.display = 'none';
+            }
+        }
+
+        officeCodeInput.addEventListener('input', updateCodePreview);
+        officeCodeInput.addEventListener('keyup', function() {
+            this.value = this.value.toUpperCase();
+            updateCodePreview();
+        });
+
+        // Visual office type selection
+        function updateOfficeTypeSelection() {
+            const selectedType = officeTypeSelect.value;
+            
+            officeTypeItems.forEach(item => {
+                item.classList.remove('selected');
+                if (item.dataset.type === selectedType) {
+                    item.classList.add('selected');
+                }
+            });
+        }
+
+        officeTypeItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const type = this.dataset.type;
+                officeTypeSelect.value = type;
+                updateOfficeTypeSelection();
+            });
+        });
+
+        officeTypeSelect.addEventListener('change', updateOfficeTypeSelection);
+
+        // Initialize on page load
+        updateCodePreview();
+        updateOfficeTypeSelection();
+
+        // Form validation
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            const requiredFields = form.querySelectorAll('[required]');
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                    field.classList.add('is-valid');
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                const firstInvalid = form.querySelector('.is-invalid');
+                if (firstInvalid) {
+                    firstInvalid.focus();
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
+
+        // Real-time validation for required fields
+        const requiredInputs = document.querySelectorAll('input[required], select[required], textarea[required]');
+        requiredInputs.forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                }
+            });
+
+            input.addEventListener('input', function() {
+                if (this.classList.contains('is-invalid') && this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

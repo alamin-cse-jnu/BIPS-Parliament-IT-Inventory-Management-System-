@@ -1,0 +1,553 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Device - PIMS Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Delete Confirmation Page Styling - Bangladesh Parliament Secretariat PIMS */
+.delete-container {
+    background: linear-gradient(135deg, rgba(239, 246, 255, 0.8) 0%, rgba(243, 244, 246, 0.8) 100%);
+    min-height: calc(100vh - 120px);
+    padding: 2rem 0;
+}
+
+.delete-card {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(239, 68, 68, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(239, 68, 68, 0.08);
+    transition: all 0.3s ease;
+}
+
+.delete-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 35px rgba(239, 68, 68, 0.15);
+}
+
+.delete-header {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border-radius: 16px 16px 0 0;
+    padding: 1.5rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.delete-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    z-index: 1;
+}
+
+.delete-header .content {
+    position: relative;
+    z-index: 2;
+}
+
+.warning-icon {
+    font-size: 3rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 1rem;
+}
+
+.device-info-card {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    backdrop-filter: blur(5px);
+}
+
+.device-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.2);
+    transition: all 0.2s ease;
+}
+
+.device-detail-row:last-child {
+    border-bottom: none;
+}
+
+.device-detail-row:hover {
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin: 0 -1rem;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.detail-value {
+    color: #64748b;
+    font-weight: 500;
+    text-align: right;
+}
+
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border: 1px solid;
+}
+
+.status-available {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.status-assigned {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.status-maintenance {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.status-retired {
+    background: rgba(107, 114, 128, 0.1);
+    color: #4b5563;
+    border-color: rgba(107, 114, 128, 0.3);
+}
+
+.status-damaged {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.warning-section {
+    background: linear-gradient(135deg, rgba(252, 165, 165, 0.1) 0%, rgba(254, 202, 202, 0.1) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.warning-title {
+    color: #dc2626;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.warning-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.warning-list li {
+    color: #7f1d1d;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(239, 68, 68, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.warning-list li:last-child {
+    border-bottom: none;
+}
+
+.warning-list .bi {
+    color: #ef4444;
+    font-size: 1.1rem;
+}
+
+.action-buttons {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    backdrop-filter: blur(5px);
+}
+
+.btn-delete-confirm {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 0.875rem 2rem;
+    font-weight: 600;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-delete-confirm:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+    color: white;
+}
+
+.btn-cancel {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.9) 100%);
+    border: 1px solid rgba(203, 213, 225, 0.5);
+    border-radius: 10px;
+    padding: 0.875rem 2rem;
+    font-weight: 600;
+    color: #475569;
+    transition: all 0.3s ease;
+}
+
+.btn-cancel:hover {
+    background: linear-gradient(135deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.9) 100%);
+    border-color: rgba(148, 163, 184, 0.5);
+    transform: translateY(-1px);
+    color: #334155;
+}
+
+.breadcrumb {
+    background: transparent;
+    padding: 0;
+}
+
+.breadcrumb-item a {
+    color: #6366f1;
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    text-decoration: underline;
+}
+
+.breadcrumb-item.active {
+    color: #64748b;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .delete-container {
+        padding: 1rem 0;
+    }
+    
+    .delete-card {
+        margin: 0 1rem;
+        border-radius: 12px;
+    }
+    
+    .device-detail-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .detail-value {
+        text-align: left;
+    }
+    
+    .action-buttons .d-flex {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .btn-delete-confirm,
+    .btn-cancel {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* Animation */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.delete-card {
+    animation: slideIn 0.5s ease-out;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <div class="container">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'dashboard:index' %}">
+                        <i class="bi bi-house-door me-1"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'devices:list' %}">
+                        <i class="bi bi-laptop me-1"></i>
+                        Devices
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'devices:detail' device.pk %}">
+                        {{ device.device_id }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    Delete Device
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Delete Confirmation Card -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-7">
+                <div class="delete-card">
+                    <!-- Header -->
+                    <div class="delete-header text-center">
+                        <div class="content">
+                            <i class="bi bi-exclamation-triangle warning-icon"></i>
+                            <h4 class="mb-2">Confirm Device Deletion</h4>
+                            <p class="mb-0 opacity-90">
+                                This action cannot be undone. Please review the device details carefully.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="card-body p-0">
+                        <!-- Device Information -->
+                        <div class="device-info-card mx-4">
+                            <h5 class="text-dark mb-3">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Device Information
+                            </h5>
+                            
+                            <div class="device-detail-row">
+                                <span class="detail-label">
+                                    <i class="bi bi-hash"></i>
+                                    Device ID
+                                </span>
+                                <span class="detail-value">{{ device.device_id }}</span>
+                            </div>
+                            
+                            <div class="device-detail-row">
+                                <span class="detail-label">
+                                    <i class="bi bi-tag"></i>
+                                    Brand & Model
+                                </span>
+                                <span class="detail-value">{{ device.brand }} {{ device.model }}</span>
+                            </div>
+                            
+                            <div class="device-detail-row">
+                                <span class="detail-label">
+                                    <i class="bi bi-grid-3x3-gap"></i>
+                                    Category
+                                </span>
+                                <span class="detail-value">{{ device.subcategory.category.name }} - {{ device.subcategory.name }}</span>
+                            </div>
+                            
+                            {% if device.serial_number %}
+                            <div class="device-detail-row">
+                                <span class="detail-label">
+                                    <i class="bi bi-upc-scan"></i>
+                                    Serial Number
+                                </span>
+                                <span class="detail-value">{{ device.serial_number }}</span>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="device-detail-row">
+                                <span class="detail-label">
+                                    <i class="bi bi-circle-fill"></i>
+                                    Current Status
+                                </span>
+                                <span class="detail-value">
+                                    <span class="status-badge status-{{ device.status|lower }}">
+                                        {% if device.status == 'AVAILABLE' %}
+                                            <i class="bi bi-check-circle me-1"></i>Available
+                                        {% elif device.status == 'ASSIGNED' %}
+                                            <i class="bi bi-person-check me-1"></i>Assigned
+                                        {% elif device.status == 'MAINTENANCE' %}
+                                            <i class="bi bi-tools me-1"></i>Maintenance
+                                        {% elif device.status == 'RETIRED' %}
+                                            <i class="bi bi-archive me-1"></i>Retired
+                                        {% elif device.status == 'DAMAGED' %}
+                                            <i class="bi bi-exclamation-triangle me-1"></i>Damaged
+                                        {% endif %}
+                                    </span>
+                                </span>
+                            </div>
+                            
+                            {% if device.purchase_date %}
+                            <div class="device-detail-row">
+                                <span class="detail-label">
+                                    <i class="bi bi-calendar-check"></i>
+                                    Purchase Date
+                                </span>
+                                <span class="detail-value">{{ device.purchase_date|date:"M d, Y" }}</span>
+                            </div>
+                            {% endif %}
+                            
+                            {% if device.current_value %}
+                            <div class="device-detail-row">
+                                <span class="detail-label">
+                                    <i class="bi bi-currency-exchange"></i>
+                                    Current Value
+                                </span>
+                                <span class="detail-value">৳{{ device.current_value|floatformat:2 }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Warning Section -->
+                        <div class="warning-section mx-4">
+                            <h6 class="warning-title">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                Important Warning
+                            </h6>
+                            <ul class="warning-list">
+                                <li>
+                                    <i class="bi bi-x-circle-fill"></i>
+                                    This device will be permanently removed from the system
+                                </li>
+                                <li>
+                                    <i class="bi bi-clock-history"></i>
+                                    All assignment and maintenance history will be deleted
+                                </li>
+                                <li>
+                                    <i class="bi bi-qr-code"></i>
+                                    Associated QR codes will be invalidated
+                                </li>
+                                <li>
+                                    <i class="bi bi-file-earmark-x"></i>
+                                    This action cannot be undone
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="action-buttons mx-4">
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <div class="d-flex gap-3 justify-content-end">
+                                    <a href="{% url 'devices:detail' device.pk %}" class="btn btn-cancel">
+                                        <i class="bi bi-arrow-left me-2"></i>
+                                        Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-delete-confirm" id="deleteButton">
+                                        <i class="bi bi-trash3 me-2"></i>
+                                        Delete Device
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Delete Device Confirmation - Bangladesh Parliament Secretariat PIMS
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteButton = document.getElementById('deleteButton');
+    const form = deleteButton.closest('form');
+    
+    // Add confirmation dialog
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Create custom confirmation modal
+        const confirmationHTML = `
+            <div class="modal fade" id="finalConfirmModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg">
+                        <div class="modal-header bg-danger text-white border-0">
+                            <h5 class="modal-title">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Final Confirmation Required
+                            </h5>
+                        </div>
+                        <div class="modal-body text-center p-4">
+                            <div class="mb-3">
+                                <i class="bi bi-trash3 text-danger" style="font-size: 3rem;"></i>
+                            </div>
+                            <h6 class="text-dark mb-3">Are you absolutely sure?</h6>
+                            <p class="text-muted mb-0">
+                                Device <strong>${{ device.device_id }}</strong> will be permanently deleted.
+                                <br>This action cannot be undone.
+                            </p>
+                        </div>
+                        <div class="modal-footer border-0 justify-content-center">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                <i class="bi bi-x-circle me-1"></i>
+                                Cancel
+                            </button>
+                            <button type="button" class="btn btn-danger" id="confirmDelete">
+                                <i class="bi bi-trash3 me-1"></i>
+                                Yes, Delete Device
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add modal to page
+        document.body.insertAdjacentHTML('beforeend', confirmationHTML);
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('finalConfirmModal'));
+        modal.show();
+        
+        // Handle final confirmation
+        document.getElementById('confirmDelete').addEventListener('click', function() {
+            // Disable button and show loading
+            this.innerHTML = '<i class="spinner-border spinner-border-sm me-2"></i>Deleting...';
+            this.disabled = true;
+            
+            // Submit form after brief delay
+            setTimeout(() => {
+                form.submit();
+            }, 500);
+        });
+        
+        // Clean up modal when hidden
+        document.getElementById('finalConfirmModal').addEventListener('hidden.bs.modal', function() {
+            this.remove();
+        });
+    });
+    
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

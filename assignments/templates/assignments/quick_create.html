@@ -1,0 +1,728 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Quick Create Assignment - PIMS - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Quick Create Assignment Styling - Parliament Design System */
+.quick-create-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.page-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.page-title {
+    color: #1e40af;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.page-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.quick-create-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.form-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.form-header {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: between;
+}
+
+.form-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.quick-badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.form-body {
+    padding: 2rem;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+}
+
+.form-section:last-child {
+    margin-bottom: 0;
+}
+
+.section-title {
+    color: #1e293b;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(59, 130, 246, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-row.single {
+    grid-template-columns: 1fr;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.875rem;
+}
+
+.form-label.required::after {
+    content: '*';
+    color: #ef4444;
+    margin-left: 0.25rem;
+}
+
+.form-control, .form-select {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(203, 213, 225, 0.6);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.form-control:focus, .form-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background: rgba(255, 255, 255, 1);
+}
+
+.form-text {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+.quick-tips {
+    background: rgba(16, 185, 129, 0.05);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.tips-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.tips-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #10b981, #059669);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.75rem;
+}
+
+.tips-title {
+    font-weight: 600;
+    color: #059669;
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+.tips-content {
+    color: #374151;
+    font-size: 0.8rem;
+    margin: 0;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.btn-quick-create {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    border: none;
+    padding: 0.875rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex: 1;
+}
+
+.btn-quick-create:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+}
+
+.btn-advanced {
+    background: rgba(107, 114, 128, 0.1);
+    color: #4b5563;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+    padding: 0.875rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.btn-advanced:hover {
+    background: rgba(107, 114, 128, 0.2);
+    color: #374151;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.info-panel {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.info-header {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.info-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.info-content {
+    padding: 1.5rem;
+}
+
+.quick-stats {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(248, 250, 252, 0.8);
+    border-radius: 8px;
+    border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.stat-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+}
+
+.stat-icon.devices { background: linear-gradient(135deg, #10b981, #059669); }
+.stat-icon.employees { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.stat-icon.pending { background: linear-gradient(135deg, #f59e0b, #d97706); }
+
+.stat-info {
+    flex: 1;
+}
+
+.stat-number {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 1.125rem;
+}
+
+.stat-label {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin: 0;
+}
+
+.workflow-steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.workflow-steps li {
+    padding: 0.5rem 0;
+    color: #374151;
+    font-size: 0.875rem;
+    position: relative;
+    padding-left: 1.5rem;
+    border-left: 2px solid rgba(16, 185, 129, 0.2);
+    margin-left: 0.5rem;
+}
+
+.workflow-steps li::before {
+    content: counter(step-counter);
+    counter-increment: step-counter;
+    position: absolute;
+    left: -0.75rem;
+    top: 0.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.workflow-steps {
+    counter-reset: step-counter;
+}
+
+.alert-info {
+    background: rgba(59, 130, 246, 0.05);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.alert-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.alert-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+.alert-text {
+    color: #1e40af;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .quick-create-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .quick-create-container {
+        padding: 1rem 0;
+    }
+    
+    .page-header {
+        padding: 1.5rem;
+    }
+    
+    .form-body {
+        padding: 1.5rem;
+    }
+    
+    .info-content {
+        padding: 1.5rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="quick-create-container">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-lightning-charge-fill"></i>
+                Quick Create Assignment
+            </h1>
+            <p class="page-subtitle">
+                Streamlined device assignment process for Bangladesh Parliament Secretariat
+            </p>
+        </div>
+
+        <!-- Quick Create Grid -->
+        <div class="quick-create-grid">
+            <!-- Assignment Form -->
+            <div class="form-card">
+                <div class="form-header">
+                    <div>
+                        <h2 class="form-title">
+                            <i class="bi bi-plus-circle"></i>
+                            New Assignment
+                        </h2>
+                    </div>
+                    <div class="quick-badge">
+                        Quick Mode
+                    </div>
+                </div>
+                <div class="form-body">
+                    <!-- Quick Tips -->
+                    <div class="quick-tips">
+                        <div class="tips-header">
+                            <div class="tips-icon">
+                                <i class="bi bi-lightbulb"></i>
+                            </div>
+                            <h4 class="tips-title">Quick Assignment Mode</h4>
+                        </div>
+                        <p class="tips-content">
+                            This simplified form creates assignments with standard defaults. Device condition is set to 'Good', and QR codes are automatically generated.
+                        </p>
+                    </div>
+
+                    <!-- Alert Info -->
+                    <div class="alert-info">
+                        <div class="alert-content">
+                            <div class="alert-icon">
+                                <i class="bi bi-info"></i>
+                            </div>
+                            <p class="alert-text">
+                                For advanced options like emergency contacts, deposit amounts, or custom conditions, use the 
+                                <a href="{% url 'assignments:create' %}">full assignment form</a>.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Assignment Form -->
+                    <form method="post" class="quick-assignment-form">
+                        {% csrf_token %}
+                        
+                        <!-- Essential Information -->
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <i class="bi bi-gear"></i>
+                                Essential Information
+                            </h3>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="{{ form.device.id_for_label }}" class="form-label required">
+                                        <i class="bi bi-laptop"></i>
+                                        Device
+                                    </label>
+                                    {{ form.device }}
+                                    {% if form.device.errors %}
+                                        <div class="text-danger small mt-1">{{ form.device.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-text">Select an available device from the list</div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.assigned_to.id_for_label }}" class="form-label required">
+                                        <i class="bi bi-person"></i>
+                                        Employee
+                                    </label>
+                                    {{ form.assigned_to }}
+                                    {% if form.assigned_to.errors %}
+                                        <div class="text-danger small mt-1">{{ form.assigned_to.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-text">Select the employee to assign the device to</div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="{{ form.assignment_type.id_for_label }}" class="form-label required">
+                                        <i class="bi bi-tag"></i>
+                                        Assignment Type
+                                    </label>
+                                    {{ form.assignment_type }}
+                                    {% if form.assignment_type.errors %}
+                                        <div class="text-danger small mt-1">{{ form.assignment_type.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-text">Temporary assignments require return dates</div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.expected_return_date.id_for_label }}" class="form-label">
+                                        <i class="bi bi-calendar"></i>
+                                        Expected Return Date
+                                    </label>
+                                    {{ form.expected_return_date }}
+                                    {% if form.expected_return_date.errors %}
+                                        <div class="text-danger small mt-1">{{ form.expected_return_date.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-text">Leave blank for permanent assignments</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Details -->
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <i class="bi bi-info-circle"></i>
+                                Additional Details
+                            </h3>
+                            
+                            <div class="form-row single">
+                                <div class="form-group">
+                                    <label for="{{ form.assigned_location.id_for_label }}" class="form-label">
+                                        <i class="bi bi-geo-alt"></i>
+                                        Location (Optional)
+                                    </label>
+                                    {{ form.assigned_location }}
+                                    {% if form.assigned_location.errors %}
+                                        <div class="text-danger small mt-1">{{ form.assigned_location.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-text">Specify where the device will be used</div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row single">
+                                <div class="form-group">
+                                    <label for="{{ form.purpose.id_for_label }}" class="form-label">
+                                        <i class="bi bi-chat-text"></i>
+                                        Purpose
+                                    </label>
+                                    {{ form.purpose }}
+                                    {% if form.purpose.errors %}
+                                        <div class="text-danger small mt-1">{{ form.purpose.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-text">Brief description of assignment purpose</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions">
+                            <button type="submit" class="btn-quick-create">
+                                <i class="bi bi-lightning-charge me-2"></i>
+                                Create Quick Assignment
+                            </button>
+                            <a href="{% url 'assignments:create' %}" class="btn-advanced">
+                                <i class="bi bi-gear me-2"></i>
+                                Use Advanced Form
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Information Panel -->
+            <div class="info-panel">
+                <div class="info-header">
+                    <i class="bi bi-info-circle"></i>
+                    <h3 class="info-title">Assignment Information</h3>
+                </div>
+                <div class="info-content">
+                    <!-- Quick Stats -->
+                    <div class="quick-stats">
+                        <div class="stat-item">
+                            <div class="stat-icon devices">
+                                <i class="bi bi-laptop"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-number">{{ available_devices|default:0 }}</div>
+                                <p class="stat-label">Available Devices</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-item">
+                            <div class="stat-icon employees">
+                                <i class="bi bi-people"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-number">{{ active_employees|default:0 }}</div>
+                                <p class="stat-label">Active Employees</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-item">
+                            <div class="stat-icon pending">
+                                <i class="bi bi-clock"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-number">{{ pending_returns|default:0 }}</div>
+                                <p class="stat-label">Pending Returns</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Workflow Steps -->
+                    <h4 style="color: #1e293b; font-weight: 600; margin-bottom: 1rem; font-size: 0.875rem;">
+                        <i class="bi bi-list-ol me-2"></i>
+                        Quick Assignment Workflow
+                    </h4>
+                    <ol class="workflow-steps">
+                        <li>Select available device and employee</li>
+                        <li>Choose assignment type and return date</li>
+                        <li>Add location and purpose (optional)</li>
+                        <li>System automatically generates QR code</li>
+                        <li>Device status updated to 'Assigned'</li>
+                        <li>Assignment ready for use</li>
+                    </ol>
+
+                    <!-- Action Links -->
+                    <div class="mt-4 pt-3 border-top">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'assignments:quick' %}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-arrow-left me-2"></i>
+                                Back to Dashboard
+                            </a>
+                            <a href="{% url 'assignments:list' %}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-list me-2"></i>
+                                View All Assignments
+                            </a>
+                            <a href="{% url 'devices:available' %}" class="btn btn-outline-success btn-sm">
+                                <i class="bi bi-laptop me-2"></i>
+                                Browse Devices
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const assignmentType = document.querySelector('#id_assignment_type');
+    const returnDate = document.querySelector('#id_expected_return_date');
+    const returnDateGroup = returnDate.closest('.form-group');
+    
+    function toggleReturnDate() {
+        if (assignmentType.value === 'PERMANENT') {
+            returnDate.value = '';
+            returnDate.disabled = true;
+            returnDateGroup.style.opacity = '0.5';
+        } else {
+            returnDate.disabled = false;
+            returnDateGroup.style.opacity = '1';
+            
+            // Set default return date to 7 days from now for temporary assignments
+            if (!returnDate.value && assignmentType.value === 'TEMPORARY') {
+                const defaultDate = new Date();
+                defaultDate.setDate(defaultDate.getDate() + 7);
+                returnDate.value = defaultDate.toISOString().split('T')[0];
+            }
+        }
+    }
+    
+    // Initial check
+    toggleReturnDate();
+    
+    // Listen for changes
+    assignmentType.addEventListener('change', toggleReturnDate);
+    
+    // Form validation feedback
+    const form = document.querySelector('.quick-assignment-form');
+    form.addEventListener('submit', function(e) {
+        const device = document.querySelector('#id_device');
+        const employee = document.querySelector('#id_assigned_to');
+        
+        if (!device.value || !employee.value) {
+            e.preventDefault();
+            alert('Please select both device and employee before submitting.');
+            return false;
+        }
+        
+        // Show loading state
+        const submitBtn = document.querySelector('.btn-quick-create');
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Creating Assignment...';
+        submitBtn.disabled = true;
+    });
+});
+</script>
+{% endblock %}

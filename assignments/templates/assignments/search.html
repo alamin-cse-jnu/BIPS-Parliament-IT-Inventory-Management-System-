@@ -1,0 +1,822 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Search Assignments - PIMS{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+/* Search Assignments - Parliament Design System */
+.search-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.search-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.search-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.search-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.search-form-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.search-form-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.search-form-header h4 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.search-form-body {
+    padding: 2rem;
+}
+
+.search-input-group {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.search-input {
+    width: 100%;
+    padding: 1rem 3rem 1rem 1rem;
+    border: 2px solid rgba(203, 213, 225, 0.4);
+    border-radius: 12px;
+    font-size: 1.125rem;
+    background: rgba(248, 250, 252, 0.8);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-input-icon {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+    font-size: 1.25rem;
+}
+
+.search-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.filter-select {
+    padding: 0.75rem;
+    border: 2px solid rgba(203, 213, 225, 0.4);
+    border-radius: 8px;
+    background: rgba(248, 250, 252, 0.8);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.btn-search {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border: none;
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-search:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.25);
+}
+
+.btn-clear {
+    background: rgba(156, 163, 175, 0.1);
+    border: 1px solid rgba(156, 163, 175, 0.3);
+    color: #6b7280;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-clear:hover {
+    background: rgba(156, 163, 175, 0.2);
+    border-color: rgba(156, 163, 175, 0.5);
+    color: #4b5563;
+    text-decoration: none;
+}
+
+.search-results {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.results-header {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.results-title {
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.results-count {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.results-body {
+    padding: 0;
+}
+
+.assignment-result-item {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.assignment-result-item:last-child {
+    border-bottom: none;
+}
+
+.assignment-result-item:hover {
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.assignment-result-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.assignment-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.assignment-main-info {
+    min-width: 0;
+}
+
+.assignment-id {
+    font-weight: 600;
+    color: #1e3a8a;
+    font-size: 1.125rem;
+    margin-bottom: 0.25rem;
+}
+
+.assignment-user {
+    color: #374151;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.assignment-device {
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+.assignment-status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-assigned {
+    background: rgba(16, 185, 129, 0.1);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-returned {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.status-overdue {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.status-cancelled {
+    background: rgba(156, 163, 175, 0.1);
+    color: #6b7280;
+    border: 1px solid rgba(156, 163, 175, 0.2);
+}
+
+.assignment-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    padding: 0.375rem;
+    border: none;
+    border-radius: 6px;
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-btn:hover {
+    background: rgba(59, 130, 246, 0.2);
+    color: #1d4ed8;
+    text-decoration: none;
+}
+
+.assignment-result-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 8px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+.detail-value {
+    color: #374151;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.no-results {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #64748b;
+}
+
+.no-results-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.no-results h4 {
+    margin-bottom: 1rem;
+    color: #374151;
+}
+
+.search-suggestions {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.suggestions-title {
+    color: #374151;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.suggestions-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 0.75rem;
+}
+
+.suggestions-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+.suggestions-list i {
+    color: #3b82f6;
+    flex-shrink: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .search-container {
+        padding: 1rem 0;
+    }
+    
+    .search-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .search-title {
+        font-size: 1.5rem;
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+    
+    .search-form-body {
+        padding: 1.5rem;
+    }
+    
+    .search-filters {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .search-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .assignment-result-header {
+        grid-template-columns: auto 1fr;
+        gap: 0.75rem;
+    }
+    
+    .assignment-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid rgba(203, 213, 225, 0.3);
+    }
+    
+    .assignment-result-details {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .search-input {
+        font-size: 1rem;
+        padding: 0.875rem 2.5rem 0.875rem 0.875rem;
+    }
+    
+    .assignment-result-item {
+        padding: 1rem;
+    }
+    
+    .suggestions-list {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="search-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="search-header">
+            <h1 class="search-title">
+                <i class="bi bi-search"></i>
+                Search Assignments
+            </h1>
+            <p class="search-subtitle">
+                Find assignments by ID, device, employee, or other criteria
+            </p>
+        </div>
+
+        <!-- Search Form -->
+        <div class="search-form-container">
+            <div class="search-form-header">
+                <i class="bi bi-funnel"></i>
+                <h4>Search & Filter</h4>
+            </div>
+            <div class="search-form-body">
+                <form method="get" action="{% url 'assignments:search' %}">
+                    <!-- Main Search Input -->
+                    <div class="search-input-group">
+                        <input type="text" 
+                               name="q" 
+                               value="{{ request.GET.q|default:'' }}" 
+                               class="search-input" 
+                               placeholder="Search assignments by ID, device, employee name..."
+                               autocomplete="off">
+                        <i class="bi bi-search search-input-icon"></i>
+                    </div>
+
+                    <!-- Advanced Filters -->
+                    <div class="search-filters">
+                        <div class="filter-group">
+                            <label class="filter-label">Status</label>
+                            <select name="status" class="filter-select">
+                                <option value="">All Statuses</option>
+                                <option value="ASSIGNED" {% if request.GET.status == 'ASSIGNED' %}selected{% endif %}>Assigned</option>
+                                <option value="RETURNED" {% if request.GET.status == 'RETURNED' %}selected{% endif %}>Returned</option>
+                                <option value="OVERDUE" {% if request.GET.status == 'OVERDUE' %}selected{% endif %}>Overdue</option>
+                                <option value="CANCELLED" {% if request.GET.status == 'CANCELLED' %}selected{% endif %}>Cancelled</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Assignment Type</label>
+                            <select name="assignment_type" class="filter-select">
+                                <option value="">All Types</option>
+                                <option value="PERMANENT" {% if request.GET.assignment_type == 'PERMANENT' %}selected{% endif %}>Permanent</option>
+                                <option value="TEMPORARY" {% if request.GET.assignment_type == 'TEMPORARY' %}selected{% endif %}>Temporary</option>
+                                <option value="LOAN" {% if request.GET.assignment_type == 'LOAN' %}selected{% endif %}>Loan</option>
+                                <option value="REPAIR" {% if request.GET.assignment_type == 'REPAIR' %}selected{% endif %}>Repair</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Device Category</label>
+                            <select name="category" class="filter-select">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}" 
+                                            {% if request.GET.category|add:"0" == category.id %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Location</label>
+                            <select name="location" class="filter-select">
+                                <option value="">All Locations</option>
+                                {% for location in locations %}
+                                    <option value="{{ location.id }}" 
+                                            {% if request.GET.location|add:"0" == location.id %}selected{% endif %}>
+                                        {{ location.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Date Range</label>
+                            <select name="date_filter" class="filter-select">
+                                <option value="">All Dates</option>
+                                <option value="today" {% if request.GET.date_filter == 'today' %}selected{% endif %}>Today</option>
+                                <option value="this_week" {% if request.GET.date_filter == 'this_week' %}selected{% endif %}>This Week</option>
+                                <option value="this_month" {% if request.GET.date_filter == 'this_month' %}selected{% endif %}>This Month</option>
+                                <option value="last_30_days" {% if request.GET.date_filter == 'last_30_days' %}selected{% endif %}>Last 30 Days</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Overdue Only</label>
+                            <select name="overdue_only" class="filter-select">
+                                <option value="">All Assignments</option>
+                                <option value="true" {% if request.GET.overdue_only == 'true' %}selected{% endif %}>Overdue Only</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Search Actions -->
+                    <div class="search-actions">
+                        <button type="submit" class="btn-search">
+                            <i class="bi bi-search"></i>
+                            Search Assignments
+                        </button>
+                        <a href="{% url 'assignments:search' %}" class="btn-clear">
+                            <i class="bi bi-x-circle"></i>
+                            Clear Filters
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Search Results -->
+        {% if request.GET.q or request.GET.status or request.GET.assignment_type %}
+            <div class="search-results">
+                <div class="results-header">
+                    <h4 class="results-title">
+                        <i class="bi bi-list-check"></i>
+                        Search Results
+                    </h4>
+                    <div class="results-count">
+                        {{ assignments|length }} result{{ assignments|length|pluralize }}
+                    </div>
+                </div>
+                <div class="results-body">
+                    {% if assignments %}
+                        {% for assignment in assignments %}
+                            <div class="assignment-result-item" 
+                                 onclick="window.location.href='{% url 'assignments:detail' assignment.pk %}'">
+                                <div class="assignment-result-header">
+                                    <div class="assignment-icon">
+                                        <i class="bi bi-laptop"></i>
+                                    </div>
+                                    <div class="assignment-main-info">
+                                        <div class="assignment-id">{{ assignment.assignment_id }}</div>
+                                        <div class="assignment-user">{{ assignment.assigned_to.get_full_name }}</div>
+                                        <div class="assignment-device">
+                                            {{ assignment.device.brand }} {{ assignment.device.model }} - {{ assignment.device.device_id }}
+                                        </div>
+                                    </div>
+                                    <div class="assignment-status-badge status-{{ assignment.status|lower }}">
+                                        {{ assignment.get_status_display }}
+                                    </div>
+                                    <div class="assignment-actions">
+                                        <a href="{% url 'assignments:detail' assignment.pk %}" 
+                                           class="action-btn" title="View Details" 
+                                           onclick="event.stopPropagation()">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        {% if perms.assignments.change_assignment %}
+                                            <a href="{% url 'assignments:edit' assignment.pk %}" 
+                                               class="action-btn" title="Edit Assignment" 
+                                               onclick="event.stopPropagation()">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        {% endif %}
+                                        {% if assignment.qr_codes.filter:is_active.first %}
+                                            <a href="{% url 'assignments:qr_code' assignment.pk %}" 
+                                               class="action-btn" title="View QR Code" 
+                                               onclick="event.stopPropagation()">
+                                                <i class="bi bi-qr-code"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="assignment-result-details">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Assigned Date</span>
+                                        <span class="detail-value">{{ assignment.assigned_date|date:"M d, Y" }}</span>
+                                    </div>
+                                    {% if assignment.expected_return_date %}
+                                        <div class="detail-item">
+                                            <span class="detail-label">Expected Return</span>
+                                            <span class="detail-value">{{ assignment.expected_return_date|date:"M d, Y" }}</span>
+                                        </div>
+                                    {% endif %}
+                                    <div class="detail-item">
+                                        <span class="detail-label">Assignment Type</span>
+                                        <span class="detail-value">{{ assignment.get_assignment_type_display }}</span>
+                                    </div>
+                                    {% if assignment.assigned_location %}
+                                        <div class="detail-item">
+                                            <span class="detail-label">Location</span>
+                                            <span class="detail-value">{{ assignment.assigned_location.name }}</span>
+                                        </div>
+                                    {% endif %}
+                                    {% if assignment.purpose %}
+                                        <div class="detail-item">
+                                            <span class="detail-label">Purpose</span>
+                                            <span class="detail-value">{{ assignment.purpose|truncatewords:5 }}</span>
+                                        </div>
+                                    {% endif %}
+                                    <div class="detail-item">
+                                        <span class="detail-label">Assigned By</span>
+                                        <span class="detail-value">{{ assignment.assigned_by.get_full_name }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-results">
+                            <i class="bi bi-search no-results-icon"></i>
+                            <h4>No assignments found</h4>
+                            <p>Try adjusting your search criteria or filters to find more results.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Search Suggestions -->
+        {% if not request.GET.q and not request.GET.status %}
+            <div class="search-suggestions">
+                <h5 class="suggestions-title">
+                    <i class="bi bi-lightbulb"></i>
+                    Search Tips
+                </h5>
+                <ul class="suggestions-list">
+                    <li>
+                        <i class="bi bi-search"></i>
+                        <span>Search by assignment ID (e.g., ASN-2024-001)</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-person"></i>
+                        <span>Find assignments by employee name</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-laptop"></i>
+                        <span>Search by device ID or model</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-geo-alt"></i>
+                        <span>Filter by location or department</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-calendar"></i>
+                        <span>Use date filters to find recent assignments</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span>Filter by status to find overdue items</span>
+                    </li>
+                </ul>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus search input
+    const searchInput = document.querySelector('.search-input');
+    if (searchInput && !searchInput.value) {
+        searchInput.focus();
+    }
+    
+    // Search input enhancements
+    searchInput.addEventListener('input', function() {
+        if (this.value.length > 0) {
+            this.style.borderColor = '#3b82f6';
+            this.style.backgroundColor = 'white';
+        } else {
+            this.style.borderColor = 'rgba(203, 213, 225, 0.4)';
+            this.style.backgroundColor = 'rgba(248, 250, 252, 0.8)';
+        }
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + K to focus search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+        
+        // Enter to submit form
+        if (e.key === 'Enter' && document.activeElement === searchInput) {
+            searchInput.closest('form').submit();
+        }
+    });
+    
+    // Clear individual filters
+    document.querySelectorAll('.filter-select').forEach(select => {
+        const clearBtn = document.createElement('button');
+        clearBtn.type = 'button';
+        clearBtn.className = 'filter-clear';
+        clearBtn.innerHTML = '×';
+        clearBtn.style.display = 'none';
+        
+        select.addEventListener('change', function() {
+            if (this.value) {
+                clearBtn.style.display = 'block';
+            } else {
+                clearBtn.style.display = 'none';
+            }
+        });
+        
+        clearBtn.addEventListener('click', function() {
+            select.value = '';
+            this.style.display = 'none';
+        });
+        
+        select.parentNode.style.position = 'relative';
+        select.parentNode.appendChild(clearBtn);
+    });
+    
+    // Smooth hover effects
+    document.querySelectorAll('.assignment-result-item').forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 8px 25px rgba(59, 130, 246, 0.15)';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+});
+</script>
+{% endblock %}

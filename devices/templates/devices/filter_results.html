@@ -1,0 +1,873 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Filtered Devices - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Filter Results Styling - Parliament Design System */
+.filter-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+}
+
+.filter-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+}
+
+.filter-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.filter-summary {
+    background: rgba(59, 130, 246, 0.1);
+    border-left: 4px solid #3b82f6;
+    padding: 1rem;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 1rem;
+}
+
+.filter-tag {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.25rem;
+}
+
+.filter-remove {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+
+.filter-remove:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.filter-form-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.filter-stats {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    text-align: center;
+}
+
+.stat-item {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.stat-number {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
+.device-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.device-card {
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.device-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(30, 58, 138, 0.15);
+    border-color: rgba(30, 58, 138, 0.3);
+}
+
+.device-header {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    color: white;
+    padding: 1rem;
+    position: relative;
+}
+
+.device-id {
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.device-category {
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
+.device-icon {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    opacity: 0.3;
+}
+
+.device-body {
+    padding: 1.25rem;
+}
+
+.device-name {
+    font-weight: 600;
+    color: #1e3a8a;
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.device-specs {
+    margin-bottom: 1rem;
+}
+
+.spec-item {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    margin: 0.25rem 0.25rem 0.25rem 0;
+    display: inline-block;
+}
+
+.device-meta {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 1rem;
+    margin-top: 1rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.meta-item i {
+    margin-right: 0.5rem;
+    color: #9ca3af;
+}
+
+.device-footer {
+    padding: 1rem 1.25rem;
+    background: rgba(248, 250, 252, 0.8);
+    border-top: 1px solid rgba(229, 231, 235, 0.5);
+}
+
+.status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: inline-block;
+}
+
+.status-available {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+}
+
+.status-assigned {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.status-maintenance {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.status-retired {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+}
+
+.device-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.list-view-toggle {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.view-btn {
+    background: none;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    color: #6b7280;
+    transition: all 0.3s ease;
+}
+
+.view-btn.active {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    color: white;
+}
+
+.view-btn:hover:not(.active) {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.table-view {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.table-view .table {
+    margin-bottom: 0;
+}
+
+.table-view .table th {
+    background: rgba(248, 250, 252, 0.8);
+    border-bottom: 2px solid #e5e7eb;
+    font-weight: 600;
+    color: #374151;
+}
+
+.table-view .table td {
+    border-color: rgba(229, 231, 235, 0.5);
+    vertical-align: middle;
+}
+
+.empty-results {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: #d1d5db;
+    margin-bottom: 1.5rem;
+}
+
+/* Advanced Filter Panel */
+.advanced-filters {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 1.5rem;
+}
+
+.filter-section {
+    border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+    padding: 1rem;
+}
+
+.filter-section:last-child {
+    border-bottom: none;
+}
+
+.filter-section h6 {
+    color: #374151;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.filter-option {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.filter-option:hover {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.filter-option.active {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    color: white;
+    border-color: #1e3a8a;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .device-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .device-actions {
+        flex-direction: column;
+    }
+    
+    .filter-form-card .card-body {
+        padding: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="filter-container">
+    <div class="container-fluid">
+        <!-- Filter Header -->
+        <div class="filter-header">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h1 class="filter-title">Filtered Devices</h1>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'devices:list' %}">Devices</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Filter Results</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="text-end">
+                    <a href="{% url 'devices:create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>Add Device
+                    </a>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted">
+                    <i class="bi bi-funnel me-1"></i>
+                    {{ devices.count }} device{{ devices.count|pluralize }} found
+                </span>
+                <div class="list-view-toggle">
+                    <button type="button" class="view-btn active" data-view="grid">
+                        <i class="bi bi-grid me-1"></i>Grid
+                    </button>
+                    <button type="button" class="view-btn" data-view="table">
+                        <i class="bi bi-list me-1"></i>Table
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Filters -->
+        {% if request.GET.items %}
+        <div class="filter-summary">
+            <h6 class="mb-2">
+                <i class="bi bi-funnel-fill me-2"></i>Active Filters:
+            </h6>
+            <div class="d-flex flex-wrap">
+                {% for key, value in request.GET.items %}
+                    {% if value and key != 'page' and key != 'view' %}
+                    <span class="filter-tag">
+                        <strong>{{ key|title }}:</strong> 
+                        {% if key == 'category' %}
+                            {% for cat in categories %}
+                                {% if cat.id|stringformat:"s" == value %}{{ cat.name }}{% endif %}
+                            {% endfor %}
+                        {% elif key == 'vendor' %}
+                            {% for vendor in vendors %}
+                                {% if vendor.id|stringformat:"s" == value %}{{ vendor.name }}{% endif %}
+                            {% endfor %}
+                        {% else %}
+                            {{ value }}
+                        {% endif %}
+                        <button type="button" class="filter-remove" onclick="removeFilter('{{ key }}')">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </span>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <div class="mt-2">
+                <a href="{% url 'devices:filter' %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Clear All Filters
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Filter Statistics -->
+        <div class="filter-stats">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">{{ devices.count }}</div>
+                    <div class="stat-label">Total Results</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ available_count }}</div>
+                    <div class="stat-label">Available</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ assigned_count }}</div>
+                    <div class="stat-label">Assigned</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ maintenance_count }}</div>
+                    <div class="stat-label">Maintenance</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ categories_count }}</div>
+                    <div class="stat-label">Categories</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ vendors_count }}</div>
+                    <div class="stat-label">Vendors</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Filter Form -->
+        <div class="card filter-form-card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="bi bi-sliders me-2"></i>Advanced Filters
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="get" id="filterForm">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label for="search" class="form-label">Search</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="search" name="search" 
+                                       value="{{ request.GET.search }}" placeholder="Device ID, name, serial...">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}" 
+                                            {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">All Status</option>
+                                <option value="AVAILABLE" {% if request.GET.status == "AVAILABLE" %}selected{% endif %}>Available</option>
+                                <option value="ASSIGNED" {% if request.GET.status == "ASSIGNED" %}selected{% endif %}>Assigned</option>
+                                <option value="MAINTENANCE" {% if request.GET.status == "MAINTENANCE" %}selected{% endif %}>Maintenance</option>
+                                <option value="RETIRED" {% if request.GET.status == "RETIRED" %}selected{% endif %}>Retired</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="vendor" class="form-label">Vendor</label>
+                            <select class="form-select" id="vendor" name="vendor">
+                                <option value="">All Vendors</option>
+                                {% for vendor in vendors %}
+                                    <option value="{{ vendor.id }}" 
+                                            {% if request.GET.vendor == vendor.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ vendor.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="condition" class="form-label">Condition</label>
+                            <select class="form-select" id="condition" name="condition">
+                                <option value="">All Conditions</option>
+                                <option value="NEW" {% if request.GET.condition == "NEW" %}selected{% endif %}>New</option>
+                                <option value="EXCELLENT" {% if request.GET.condition == "EXCELLENT" %}selected{% endif %}>Excellent</option>
+                                <option value="GOOD" {% if request.GET.condition == "GOOD" %}selected{% endif %}>Good</option>
+                                <option value="FAIR" {% if request.GET.condition == "FAIR" %}selected{% endif %}>Fair</option>
+                                <option value="POOR" {% if request.GET.condition == "POOR" %}selected{% endif %}>Poor</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-funnel"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Quick Filter Options -->
+        <div class="advanced-filters">
+            <div class="filter-section">
+                <h6>Quick Status Filters</h6>
+                <div class="filter-options">
+                    <a href="?status=AVAILABLE" class="filter-option {% if request.GET.status == 'AVAILABLE' %}active{% endif %}">
+                        <i class="bi bi-check-circle me-1"></i>Available Only
+                    </a>
+                    <a href="?status=ASSIGNED" class="filter-option {% if request.GET.status == 'ASSIGNED' %}active{% endif %}">
+                        <i class="bi bi-person-check me-1"></i>Assigned Only
+                    </a>
+                    <a href="?status=MAINTENANCE" class="filter-option {% if request.GET.status == 'MAINTENANCE' %}active{% endif %}">
+                        <i class="bi bi-wrench me-1"></i>Under Maintenance
+                    </a>
+                    <a href="?condition=NEW" class="filter-option {% if request.GET.condition == 'NEW' %}active{% endif %}">
+                        <i class="bi bi-star me-1"></i>New Devices
+                    </a>
+                </div>
+            </div>
+            <div class="filter-section">
+                <h6>Device Categories</h6>
+                <div class="filter-options">
+                    {% for category in categories %}
+                    <a href="?category={{ category.id }}" class="filter-option {% if request.GET.category == category.id|stringformat:'s' %}active{% endif %}">
+                        {{ category.name }} ({{ category.device_count }})
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Grid View -->
+        <div id="gridView" class="device-grid">
+            {% for device in devices %}
+                <div class="device-card">
+                    <div class="device-header">
+                        <div class="device-id">{{ device.device_id }}</div>
+                        <div class="device-category">{{ device.subcategory.category.name }}</div>
+                        <div class="device-icon">
+                            {% if device.subcategory.category.name == "Desktop" %}
+                                <i class="bi bi-pc-display"></i>
+                            {% elif device.subcategory.category.name == "Laptop" %}
+                                <i class="bi bi-laptop"></i>
+                            {% elif device.subcategory.category.name == "Printer" %}
+                                <i class="bi bi-printer"></i>
+                            {% elif device.subcategory.category.name == "Network" %}
+                                <i class="bi bi-router"></i>
+                            {% else %}
+                                <i class="bi bi-laptop"></i>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="device-body">
+                        <div class="device-name">{{ device.name }}</div>
+                        
+                        {% if device.specifications %}
+                        <div class="device-specs">
+                            {% for key, value in device.specifications.items %}
+                                {% if forloop.counter <= 3 %}
+                                    <span class="spec-item">{{ key }}: {{ value }}</span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="device-meta">
+                            {% if device.serial_number %}
+                            <div class="meta-item">
+                                <i class="bi bi-hash"></i>
+                                {{ device.serial_number }}
+                            </div>
+                            {% endif %}
+                            {% if device.vendor %}
+                            <div class="meta-item">
+                                <i class="bi bi-building"></i>
+                                {{ device.vendor.name }}
+                            </div>
+                            {% endif %}
+                            {% if device.current_location %}
+                            <div class="meta-item">
+                                <i class="bi bi-geo-alt"></i>
+                                {{ device.current_location.name }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="device-footer">
+                        {% if device.status == 'AVAILABLE' %}
+                            <span class="status-badge status-available">
+                                <i class="bi bi-check-circle me-1"></i>Available
+                            </span>
+                        {% elif device.status == 'ASSIGNED' %}
+                            <span class="status-badge status-assigned">
+                                <i class="bi bi-person-check me-1"></i>Assigned
+                            </span>
+                        {% elif device.status == 'MAINTENANCE' %}
+                            <span class="status-badge status-maintenance">
+                                <i class="bi bi-wrench me-1"></i>Maintenance
+                            </span>
+                        {% elif device.status == 'RETIRED' %}
+                            <span class="status-badge status-retired">
+                                <i class="bi bi-archive me-1"></i>Retired
+                            </span>
+                        {% endif %}
+
+                        <div class="device-actions">
+                            <a href="{% url 'devices:detail' device.id %}" class="btn btn-sm btn-outline-primary flex-fill">
+                                <i class="bi bi-eye me-1"></i>View
+                            </a>
+                            {% if device.status == 'AVAILABLE' and device.is_assignable %}
+                                <a href="{% url 'assignments:create' %}?device={{ device.id }}" 
+                                   class="btn btn-sm btn-success flex-fill">
+                                    <i class="bi bi-person-plus me-1"></i>Assign
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="empty-results">
+                        <div class="empty-icon">
+                            <i class="bi bi-funnel"></i>
+                        </div>
+                        <h4 class="text-muted mb-3">No Devices Match Your Filters</h4>
+                        <p class="text-muted mb-4">
+                            Try adjusting your filter criteria to see more results.
+                        </p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <a href="{% url 'devices:filter' %}" class="btn btn-primary">
+                                <i class="bi bi-arrow-clockwise me-2"></i>Clear Filters
+                            </a>
+                            <a href="{% url 'devices:list' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-list me-2"></i>View All Devices
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Results Table View -->
+        <div id="tableView" class="table-view d-none">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Device</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th>Location</th>
+                        <th>Vendor</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for device in devices %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="bi bi-laptop fs-4 text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">{{ device.name }}</div>
+                                    <small class="text-muted">{{ device.device_id }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ device.subcategory.category.name }}</td>
+                        <td>
+                            {% if device.status == 'AVAILABLE' %}
+                                <span class="badge bg-success">Available</span>
+                            {% elif device.status == 'ASSIGNED' %}
+                                <span class="badge bg-info">Assigned</span>
+                            {% elif device.status == 'MAINTENANCE' %}
+                                <span class="badge bg-warning">Maintenance</span>
+                            {% elif device.status == 'RETIRED' %}
+                                <span class="badge bg-secondary">Retired</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ device.current_location.name|default:"-" }}</td>
+                        <td>{{ device.vendor.name|default:"-" }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'devices:detail' device.id %}" class="btn btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if device.status == 'AVAILABLE' and device.is_assignable %}
+                                    <a href="{% url 'assignments:create' %}?device={{ device.id }}" class="btn btn-success">
+                                        <i class="bi bi-person-plus"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Filter results pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">
+                            <i class="bi bi-chevron-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">
+                            <i class="bi bi-chevron-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// View Toggle Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const viewBtns = document.querySelectorAll('.view-btn');
+    const gridView = document.getElementById('gridView');
+    const tableView = document.getElementById('tableView');
+
+    viewBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const view = this.dataset.view;
+            
+            // Update active button
+            viewBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Toggle views
+            if (view === 'grid') {
+                gridView.classList.remove('d-none');
+                tableView.classList.add('d-none');
+            } else {
+                gridView.classList.add('d-none');
+                tableView.classList.remove('d-none');
+            }
+        });
+    });
+});
+
+// Filter Management
+function removeFilter(filterKey) {
+    const url = new URL(window.location);
+    url.searchParams.delete(filterKey);
+    url.searchParams.delete('page'); // Reset to first page
+    window.location.href = url.toString();
+}
+
+// Auto-submit form on filter change
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('filterForm');
+    const filterInputs = filterForm.querySelectorAll('select, input');
+    
+    filterInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            if (this.type !== 'text') {
+                filterForm.submit();
+            }
+        });
+    });
+    
+    // Search input with debounce
+    const searchInput = document.getElementById('search');
+    let searchTimeout;
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            if (this.value.length >= 3 || this.value.length === 0) {
+                filterForm.submit();
+            }
+        }, 500);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1118 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ room_type_display }} Rooms{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --parliament-primary: #00875a;
+        --parliament-secondary: #f8f9fa;
+        --parliament-dark: #333;
+        --parliament-light: #6c757d;
+        --parliament-neutral: #495057;
+        --parliament-success: #28a745;
+        --parliament-info: #17a2b8;
+        --parliament-warning: #ffc107;
+        --parliament-danger: #dc3545;
+        --spacing-xs: 0.25rem;
+        --spacing-sm: 0.5rem;
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        --spacing-xl: 2rem;
+        --border-radius: 0.375rem;
+        --transition: all 0.15s ease-in-out;
+        --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--parliament-primary) 0%, #00a86b 100%);
+        padding: var(--spacing-xl);
+        margin-bottom: var(--spacing-xl);
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+        color: white;
+        box-shadow: var(--shadow-md);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: -50%;
+        width: 100%;
+        height: 100%;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+        animation: float 20s infinite linear;
+    }
+
+    @keyframes float {
+        0% { transform: translateX(0) translateY(0); }
+        100% { transform: translateX(-60px) translateY(-60px); }
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        position: relative;
+        z-index: 1;
+    }
+
+    .page-subtitle {
+        font-size: 1.125rem;
+        opacity: 0.9;
+        margin: var(--spacing-sm) 0 0 0;
+        font-weight: 400;
+        position: relative;
+        z-index: 1;
+    }
+
+    .breadcrumb-nav {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md) var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .breadcrumb {
+        margin: 0;
+        background: none;
+        padding: 0;
+    }
+
+    .breadcrumb-item a {
+        color: var(--parliament-primary);
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .breadcrumb-item a:hover {
+        text-decoration: underline;
+    }
+
+    .breadcrumb-item.active {
+        font-weight: 600;
+        color: var(--parliament-dark);
+    }
+
+    .type-summary-card {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        margin-bottom: var(--spacing-xl);
+        border: 1px solid #e9ecef;
+    }
+
+    .summary-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: var(--spacing-lg) var(--spacing-xl);
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .summary-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .room-type-icon {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .room-type-icon.office { background: #6f42c1; }
+    .room-type-icon.meeting { background: #fd7e14; }
+    .room-type-icon.storage { background: #6c757d; }
+    .room-type-icon.server { background: #dc3545; }
+    .room-type-icon.conference { background: #20c997; }
+    .room-type-icon.hall { background: #0d6efd; }
+    .room-type-icon.chamber { background: #6610f2; }
+    .room-type-icon.lobby { background: #e83e8c; }
+    .room-type-icon.utility { background: #495057; }
+    .room-type-icon.washroom { background: #17a2b8; }
+    .room-type-icon.pantry { background: #28a745; }
+    .room-type-icon.oath { background: #ffc107; }
+    .room-type-icon.other { background: #adb5bd; }
+
+    .summary-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: var(--spacing-lg);
+        padding: var(--spacing-lg) var(--spacing-xl);
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: var(--spacing-md);
+        background: #f8f9fa;
+        border-radius: var(--border-radius);
+        border: 1px solid #dee2e6;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--parliament-primary);
+        display: block;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--parliament-neutral);
+        margin-top: var(--spacing-xs);
+        font-weight: 500;
+    }
+
+    .action-bar {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--spacing-md);
+        flex-wrap: wrap;
+    }
+
+    .view-options {
+        display: flex;
+        gap: var(--spacing-sm);
+        align-items: center;
+    }
+
+    .view-toggle {
+        border: 2px solid #dee2e6;
+        background: transparent;
+        color: var(--parliament-neutral);
+        padding: 0.5rem;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .view-toggle.active,
+    .view-toggle:hover {
+        border-color: var(--parliament-primary);
+        background: var(--parliament-primary);
+        color: white;
+    }
+
+    .rooms-container {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+    }
+
+    .container-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: var(--spacing-lg) var(--spacing-xl);
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .container-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .rooms-count {
+        font-size: 0.875rem;
+        color: var(--parliament-light);
+        background: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        border: 1px solid #dee2e6;
+    }
+
+    /* Grid View */
+    .rooms-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: var(--spacing-lg);
+        padding: var(--spacing-xl);
+    }
+
+    .room-card {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-lg);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .room-card:hover {
+        border-color: var(--parliament-primary);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .room-card-header {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .room-card-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .room-card-title {
+        flex: 1;
+    }
+
+    .room-name {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .room-number {
+        font-size: 0.875rem;
+        color: var(--parliament-light);
+        margin: 0;
+    }
+
+    .room-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .detail-label {
+        font-size: 0.75rem;
+        color: var(--parliament-light);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+
+    .detail-value {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .room-actions {
+        display: flex;
+        gap: var(--spacing-sm);
+        margin-top: auto;
+        padding-top: var(--spacing-md);
+        border-top: 1px solid #e9ecef;
+    }
+
+    .btn-sm {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+        border-radius: var(--border-radius);
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        transition: var(--transition);
+        cursor: pointer;
+        border: 1px solid transparent;
+    }
+
+    .btn-parliament-primary {
+        background: var(--parliament-primary);
+        color: white;
+        border-color: var(--parliament-primary);
+    }
+
+    .btn-parliament-primary:hover {
+        background: #00734d;
+        border-color: #00734d;
+        color: white;
+    }
+
+    .btn-outline-primary {
+        background: transparent;
+        color: var(--parliament-primary);
+        border-color: var(--parliament-primary);
+    }
+
+    .btn-outline-primary:hover {
+        background: var(--parliament-primary);
+        color: white;
+    }
+
+    /* List View */
+    .rooms-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .rooms-table th,
+    .rooms-table td {
+        padding: var(--spacing-md) var(--spacing-lg);
+        text-align: left;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+    }
+
+    .rooms-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .rooms-table tbody tr:hover {
+        background: rgba(0, 135, 90, 0.02);
+    }
+
+    .room-info {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .room-info-icon {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .room-info-details h6 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .room-info-details h6 a {
+        color: var(--parliament-dark);
+        text-decoration: none;
+    }
+
+    .room-info-details h6 a:hover {
+        color: var(--parliament-primary);
+        text-decoration: underline;
+    }
+
+    .room-info-details p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: var(--parliament-light);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: var(--spacing-xl) var(--spacing-lg);
+        color: var(--parliament-light);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--parliament-neutral);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .empty-message {
+        font-size: 1rem;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .pagination-container {
+        padding: var(--spacing-lg) var(--spacing-xl);
+        border-top: 1px solid #e9ecef;
+        background: #f8f9fa;
+    }
+
+    @media (max-width: 768px) {
+        .action-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .rooms-grid {
+            grid-template-columns: 1fr;
+            padding: var(--spacing-lg);
+        }
+
+        .room-details {
+            grid-template-columns: 1fr;
+        }
+
+        .rooms-table {
+            font-size: 0.875rem;
+        }
+
+        .rooms-table th,
+        .rooms-table td {
+            padding: var(--spacing-sm) var(--spacing-md);
+        }
+
+        .room-info {
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+        }
+
+        .summary-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    .view-grid {
+        display: block;
+    }
+
+    .view-list {
+        display: none;
+    }
+
+    .view-list.active {
+        display: block;
+    }
+
+    .view-grid.active {
+        display: block;
+    }
+
+    body[data-view="list"] .view-grid {
+        display: none;
+    }
+
+    body[data-view="list"] .view-list {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <span class="room-type-icon {{ room_type }}">
+            {% if room_type == 'office' %}
+                <i class="bi bi-building"></i>
+            {% elif room_type == 'meeting' %}
+                <i class="bi bi-people"></i>
+            {% elif room_type == 'storage' %}
+                <i class="bi bi-box"></i>
+            {% elif room_type == 'server' %}
+                <i class="bi bi-hdd-rack"></i>
+            {% elif room_type == 'conference' %}
+                <i class="bi bi-camera-video"></i>
+            {% elif room_type == 'hall' %}
+                <i class="bi bi-shop"></i>
+            {% elif room_type == 'chamber' %}
+                <i class="bi bi-bank"></i>
+            {% elif room_type == 'lobby' %}
+                <i class="bi bi-door-open"></i>
+            {% elif room_type == 'utility' %}
+                <i class="bi bi-tools"></i>
+            {% elif room_type == 'washroom' %}
+                <i class="bi bi-droplet"></i>
+            {% elif room_type == 'pantry' %}
+                <i class="bi bi-cup-hot"></i>
+            {% elif room_type == 'oath' %}
+                <i class="bi bi-award"></i>
+            {% else %}
+                <i class="bi bi-three-dots"></i>
+            {% endif %}
+        </span>
+        {{ room_type_display }} Rooms
+    </h1>
+    <p class="page-subtitle">
+        Browse and manage all {{ room_type_display|lower }} type rooms in the system
+    </p>
+</div>
+
+<div class="container-fluid">
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb-nav">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'locations:room_list' %}">
+                    <i class="bi bi-door-open me-1"></i>
+                    All Rooms
+                </a>
+            </li>
+            <li class="breadcrumb-item active">
+                {{ room_type_display }} Rooms
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Type Summary Card -->
+    <div class="type-summary-card">
+        <div class="summary-header">
+            <h2 class="summary-title">
+                <span class="room-type-icon {{ room_type }}">
+                    {% if room_type == 'office' %}
+                        <i class="bi bi-building"></i>
+                    {% elif room_type == 'meeting' %}
+                        <i class="bi bi-people"></i>
+                    {% elif room_type == 'storage' %}
+                        <i class="bi bi-box"></i>
+                    {% elif room_type == 'server' %}
+                        <i class="bi bi-hdd-rack"></i>
+                    {% elif room_type == 'conference' %}
+                        <i class="bi bi-camera-video"></i>
+                    {% elif room_type == 'hall' %}
+                        <i class="bi bi-shop"></i>
+                    {% elif room_type == 'chamber' %}
+                        <i class="bi bi-bank"></i>
+                    {% elif room_type == 'lobby' %}
+                        <i class="bi bi-door-open"></i>
+                    {% elif room_type == 'utility' %}
+                        <i class="bi bi-tools"></i>
+                    {% elif room_type == 'washroom' %}
+                        <i class="bi bi-droplet"></i>
+                    {% elif room_type == 'pantry' %}
+                        <i class="bi bi-cup-hot"></i>
+                    {% elif room_type == 'oath' %}
+                        <i class="bi bi-award"></i>
+                    {% else %}
+                        <i class="bi bi-three-dots"></i>
+                    {% endif %}
+                </span>
+                {{ room_type_display }} Overview
+            </h2>
+        </div>
+        <div class="summary-stats">
+            <div class="stat-item">
+                <span class="stat-number">{{ total_rooms }}</span>
+                <span class="stat-label">Total {{ room_type_display }} Rooms</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" style="color: var(--parliament-success);">{{ rooms|length }}</span>
+                <span class="stat-label">Active Rooms</span>
+            </div>
+            {% if rooms %}
+                <div class="stat-item">
+                    <span class="stat-number" style="color: var(--parliament-info);">
+                        {% with total_capacity=0 %}
+                            {% for room in rooms %}
+                                {% if room.capacity %}
+                                    {% widthratio room.capacity 1 1 as capacity %}
+                                    {{ total_capacity|add:capacity }}
+                                {% endif %}
+                            {% endfor %}
+                        {% endwith %}
+                    </span>
+                    <span class="stat-label">Total Capacity</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" style="color: var(--parliament-warning);">
+                        {% with total_area=0 %}
+                            {% for room in rooms %}
+                                {% if room.area_sqft %}
+                                    {% widthratio room.area_sqft 1 1 as area %}
+                                    {{ total_area|add:area }}
+                                {% endif %}
+                            {% endfor %}
+                        {% endwith %}
+                    </span>
+                    <span class="stat-label">Total Area (sq ft)</span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+        <div class="view-options">
+            <span style="font-weight: 500; color: var(--parliament-neutral); margin-right: var(--spacing-sm);">View:</span>
+            <button class="view-toggle active" id="gridViewBtn" data-view="grid">
+                <i class="bi bi-grid-3x3-gap"></i>
+                <span>Grid</span>
+            </button>
+            <button class="view-toggle" id="listViewBtn" data-view="list">
+                <i class="bi bi-list-ul"></i>
+                <span>List</span>
+            </button>
+        </div>
+        {% if user.has_perm:'locations.add_room' %}
+            <a href="{% url 'locations:room_create' %}" class="btn-parliament-primary btn-sm">
+                <i class="bi bi-plus-lg"></i>
+                Add New Room
+            </a>
+        {% endif %}
+    </div>
+
+    <!-- Rooms Container -->
+    <div class="rooms-container">
+        <div class="container-header">
+            <h3 class="container-title">
+                <i class="bi bi-list-ul"></i>
+                {{ room_type_display }} Rooms
+            </h3>
+            <span class="rooms-count">
+                Showing {{ rooms|length }} room{{ rooms|length|pluralize }}
+            </span>
+        </div>
+
+        {% if rooms %}
+            <!-- Grid View -->
+            <div class="view-grid active" id="gridView">
+                <div class="rooms-grid">
+                    {% for room in rooms %}
+                        <div class="room-card">
+                            <div class="room-card-header">
+                                <div class="room-card-icon {{ room.room_type }}">
+                                    {% if room.room_type == 'office' %}
+                                        <i class="bi bi-building"></i>
+                                    {% elif room.room_type == 'meeting' %}
+                                        <i class="bi bi-people"></i>
+                                    {% elif room.room_type == 'storage' %}
+                                        <i class="bi bi-box"></i>
+                                    {% elif room.room_type == 'server' %}
+                                        <i class="bi bi-hdd-rack"></i>
+                                    {% elif room.room_type == 'conference' %}
+                                        <i class="bi bi-camera-video"></i>
+                                    {% elif room.room_type == 'hall' %}
+                                        <i class="bi bi-shop"></i>
+                                    {% elif room.room_type == 'chamber' %}
+                                        <i class="bi bi-bank"></i>
+                                    {% elif room.room_type == 'lobby' %}
+                                        <i class="bi bi-door-open"></i>
+                                    {% elif room.room_type == 'utility' %}
+                                        <i class="bi bi-tools"></i>
+                                    {% elif room.room_type == 'washroom' %}
+                                        <i class="bi bi-droplet"></i>
+                                    {% elif room.room_type == 'pantry' %}
+                                        <i class="bi bi-cup-hot"></i>
+                                    {% elif room.room_type == 'oath' %}
+                                        <i class="bi bi-award"></i>
+                                    {% else %}
+                                        <i class="bi bi-three-dots"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="room-card-title">
+                                    <h4 class="room-name">{{ room.name }}</h4>
+                                    <p class="room-number">Room #{{ room.room_number|default:"N/A" }}</p>
+                                </div>
+                            </div>
+
+                            <div class="room-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">Capacity</span>
+                                    <span class="detail-value">
+                                        {% if room.capacity %}
+                                            <i class="bi bi-people"></i>
+                                            {{ room.capacity }}
+                                        {% else %}
+                                            <span style="color: var(--parliament-light);">Not specified</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Area</span>
+                                    <span class="detail-value">
+                                        {% if room.area_sqft %}
+                                            <i class="bi bi-aspect-ratio"></i>
+                                            {{ room.area_sqft }} sq ft
+                                        {% else %}
+                                            <span style="color: var(--parliament-light);">Not specified</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {% if room.description %}
+                                <p style="font-size: 0.875rem; color: var(--parliament-neutral); margin-bottom: var(--spacing-lg); line-height: 1.4;">
+                                    {{ room.description|truncatewords:15 }}
+                                </p>
+                            {% endif %}
+
+                            <div class="room-actions">
+                                <a href="{% url 'locations:room_detail' room.pk %}" class="btn-parliament-primary btn-sm">
+                                    <i class="bi bi-eye"></i>
+                                    View Details
+                                </a>
+                                {% if user.has_perm:'locations.change_room' %}
+                                    <a href="{% url 'locations:room_edit' room.pk %}" class="btn-outline-primary btn-sm">
+                                        <i class="bi bi-pencil"></i>
+                                        Edit
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- List View -->
+            <div class="view-list" id="listView">
+                <table class="rooms-table">
+                    <thead>
+                        <tr>
+                            <th>Room Information</th>
+                            <th>Capacity</th>
+                            <th>Area (sq ft)</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for room in rooms %}
+                            <tr>
+                                <td>
+                                    <div class="room-info">
+                                        <div class="room-info-icon {{ room.room_type }}">
+                                            {% if room.room_type == 'office' %}
+                                                <i class="bi bi-building"></i>
+                                            {% elif room.room_type == 'meeting' %}
+                                                <i class="bi bi-people"></i>
+                                            {% elif room.room_type == 'storage' %}
+                                                <i class="bi bi-box"></i>
+                                            {% elif room.room_type == 'server' %}
+                                                <i class="bi bi-hdd-rack"></i>
+                                            {% elif room.room_type == 'conference' %}
+                                                <i class="bi bi-camera-video"></i>
+                                            {% elif room.room_type == 'hall' %}
+                                                <i class="bi bi-shop"></i>
+                                            {% elif room.room_type == 'chamber' %}
+                                                <i class="bi bi-bank"></i>
+                                            {% elif room.room_type == 'lobby' %}
+                                                <i class="bi bi-door-open"></i>
+                                            {% elif room.room_type == 'utility' %}
+                                                <i class="bi bi-tools"></i>
+                                            {% elif room.room_type == 'washroom' %}
+                                                <i class="bi bi-droplet"></i>
+                                            {% elif room.room_type == 'pantry' %}
+                                                <i class="bi bi-cup-hot"></i>
+                                            {% elif room.room_type == 'oath' %}
+                                                <i class="bi bi-award"></i>
+                                            {% else %}
+                                                <i class="bi bi-three-dots"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div class="room-info-details">
+                                            <h6>
+                                                <a href="{% url 'locations:room_detail' room.pk %}">
+                                                    {{ room.name }}
+                                                </a>
+                                            </h6>
+                                            <p>Room #{{ room.room_number|default:"N/A" }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if room.capacity %}
+                                        <span style="display: flex; align-items: center; gap: 0.25rem;">
+                                            <i class="bi bi-people"></i>
+                                            {{ room.capacity }}
+                                        </span>
+                                    {% else %}
+                                        <span style="color: var(--parliament-light);">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if room.area_sqft %}
+                                        {{ room.area_sqft }} sq ft
+                                    {% else %}
+                                        <span style="color: var(--parliament-light);">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if room.description %}
+                                        <span title="{{ room.description }}">
+                                            {{ room.description|truncatewords:8 }}
+                                        </span>
+                                    {% else %}
+                                        <span style="color: var(--parliament-light);">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <a href="{% url 'locations:room_detail' room.pk %}" class="btn-parliament-primary btn-sm">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        {% if user.has_perm:'locations.change_room' %}
+                                            <a href="{% url 'locations:room_edit' room.pk %}" class="btn-outline-primary btn-sm">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="bi bi-door-closed"></i>
+                </div>
+                <h3 class="empty-title">No {{ room_type_display }} Rooms Found</h3>
+                <p class="empty-message">
+                    There are currently no active {{ room_type_display|lower }} rooms in the system.
+                </p>
+                {% if user.has_perm:'locations.add_room' %}
+                    <a href="{% url 'locations:room_create' %}" class="btn-parliament-primary btn-sm">
+                        <i class="bi bi-plus-lg"></i>
+                        Add First {{ room_type_display }} Room
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <div class="pagination-container">
+                <nav aria-label="Rooms pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const gridViewBtn = document.getElementById('gridViewBtn');
+    const listViewBtn = document.getElementById('listViewBtn');
+    const gridView = document.getElementById('gridView');
+    const listView = document.getElementById('listView');
+    
+    // Load saved view preference
+    const savedView = localStorage.getItem('roomsViewPreference') || 'grid';
+    switchView(savedView);
+    
+    function switchView(viewType) {
+        // Update buttons
+        gridViewBtn.classList.toggle('active', viewType === 'grid');
+        listViewBtn.classList.toggle('active', viewType === 'list');
+        
+        // Update views
+        gridView.classList.toggle('active', viewType === 'grid');
+        listView.classList.toggle('active', viewType === 'list');
+        
+        // Update body data attribute for CSS
+        document.body.setAttribute('data-view', viewType);
+        
+        // Save preference
+        localStorage.setItem('roomsViewPreference', viewType);
+    }
+    
+    // Event listeners
+    gridViewBtn.addEventListener('click', function() {
+        switchView('grid');
+    });
+    
+    listViewBtn.addEventListener('click', function() {
+        switchView('list');
+    });
+    
+    // Add loading states for room cards
+    const roomCards = document.querySelectorAll('.room-card');
+    roomCards.forEach(card => {
+        const links = card.querySelectorAll('a');
+        links.forEach(link => {
+            link.addEventListener('click', function() {
+                const icon = this.querySelector('i');
+                if (icon && !icon.classList.contains('bi-eye')) {
+                    icon.className = 'bi bi-hourglass-split';
+                }
+            });
+        });
+    });
+    
+    // Add tooltips for truncated descriptions
+    const truncatedDescriptions = document.querySelectorAll('[title]');
+    truncatedDescriptions.forEach(element => {
+        element.addEventListener('mouseenter', function() {
+            const tooltip = document.createElement('div');
+            tooltip.className = 'custom-tooltip';
+            tooltip.textContent = this.getAttribute('title');
+            tooltip.style.cssText = `
+                position: absolute;
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 0.5rem;
+                border-radius: 0.25rem;
+                font-size: 0.875rem;
+                max-width: 300px;
+                z-index: 1000;
+                pointer-events: none;
+                white-space: normal;
+            `;
+            document.body.appendChild(tooltip);
+            
+            const updatePosition = (e) => {
+                tooltip.style.left = e.clientX + 10 + 'px';
+                tooltip.style.top = e.clientY + 10 + 'px';
+            };
+            
+            this.addEventListener('mousemove', updatePosition);
+            this.addEventListener('mouseleave', function() {
+                if (tooltip.parentNode) {
+                    tooltip.parentNode.removeChild(tooltip);
+                }
+                this.removeEventListener('mousemove', updatePosition);
+            });
+        });
+    });
+    
+    // Auto-refresh stats periodically (optional feature)
+    let refreshInterval;
+    const startAutoRefresh = () => {
+        clearInterval(refreshInterval);
+        refreshInterval = setInterval(() => {
+            // You could fetch updated stats here via AJAX
+            // For now, just add a visual indicator that data is fresh
+            const stats = document.querySelectorAll('.stat-number');
+            stats.forEach(stat => {
+                stat.style.animation = 'pulse 0.5s ease-in-out';
+                setTimeout(() => {
+                    stat.style.animation = '';
+                }, 500);
+            });
+        }, 300000); // Refresh every 5 minutes
+    };
+    
+    // Start auto-refresh if there are rooms
+    if (document.querySelectorAll('.room-card, .rooms-table tbody tr').length > 0) {
+        startAutoRefresh();
+    }
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+        clearInterval(refreshInterval);
+    });
+    
+    // Smooth scroll to top when switching views
+    const viewToggleButtons = document.querySelectorAll('.view-toggle');
+    viewToggleButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            setTimeout(() => {
+                document.querySelector('.rooms-container').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }, 100);
+        });
+    });
+    
+    // Add keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key) {
+                case 'g':
+                    e.preventDefault();
+                    switchView('grid');
+                    break;
+                case 'l':
+                    e.preventDefault();
+                    switchView('list');
+                    break;
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

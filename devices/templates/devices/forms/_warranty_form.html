@@ -1,0 +1,920 @@
+<!-- Device Warranty Form Partial Template -->
+<!-- Location: devices/templates/devices/forms/_warranty_form.html -->
+
+<div class="warranty-form-container">
+    <!-- Device Selection Section -->
+    <div class="form-card">
+        <div class="form-header">
+            <h5 class="mb-0">
+                <i class="bi bi-laptop me-2 text-primary"></i>
+                Device Information
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="field-group">
+                <div class="field-group-title">
+                    <i class="bi bi-hdd-stack text-primary"></i>
+                    Select Device
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.device.id_for_label }}" class="form-label">
+                        <i class="bi bi-laptop me-1"></i>
+                        Device <span class="text-danger">*</span>
+                    </label>
+                    {{ form.device }}
+                    {% if form.device.errors %}
+                        <div class="invalid-feedback d-block">{{ form.device.errors.0 }}</div>
+                    {% endif %}
+                    <div class="help-text">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Select the device for which warranty is being registered
+                    </div>
+                </div>
+                
+                <!-- Device Info Display -->
+                <div class="device-info-display" id="deviceInfoDisplay" style="display: none;">
+                    <div class="device-preview-card">
+                        <div class="device-preview-header">
+                            <div class="device-icon">
+                                <i class="bi bi-laptop"></i>
+                            </div>
+                            <div class="device-details">
+                                <div class="device-name" id="selectedDeviceName"></div>
+                                <div class="device-id" id="selectedDeviceId"></div>
+                            </div>
+                        </div>
+                        <div class="device-specs" id="selectedDeviceSpecs"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warranty Details Section -->
+    <div class="form-card">
+        <div class="form-header">
+            <h5 class="mb-0">
+                <i class="bi bi-shield-check me-2 text-primary"></i>
+                Warranty Details
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="field-group">
+                <div class="field-group-title">
+                    <i class="bi bi-info-circle text-primary"></i>
+                    Basic Warranty Information
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.warranty_type.id_for_label }}" class="form-label">
+                                <i class="bi bi-tag me-1"></i>
+                                Warranty Type <span class="text-danger">*</span>
+                            </label>
+                            {{ form.warranty_type }}
+                            {% if form.warranty_type.errors %}
+                                <div class="invalid-feedback d-block">{{ form.warranty_type.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Type of warranty coverage (e.g., Manufacturer, Extended, On-site)
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.warranty_number.id_for_label }}" class="form-label">
+                                <i class="bi bi-hash me-1"></i>
+                                Warranty Number
+                            </label>
+                            {{ form.warranty_number }}
+                            {% if form.warranty_number.errors %}
+                                <div class="invalid-feedback d-block">{{ form.warranty_number.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Reference number or certificate ID from warranty provider
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Provider Information Section -->
+    <div class="form-card">
+        <div class="form-header">
+            <h5 class="mb-0">
+                <i class="bi bi-building me-2 text-primary"></i>
+                Provider Information
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="field-group">
+                <div class="field-group-title">
+                    <i class="bi bi-person-badge text-primary"></i>
+                    Warranty Provider Details
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.provider.id_for_label }}" class="form-label">
+                                <i class="bi bi-building me-1"></i>
+                                Warranty Provider <span class="text-danger">*</span>
+                            </label>
+                            {{ form.provider }}
+                            {% if form.provider.errors %}
+                                <div class="invalid-feedback d-block">{{ form.provider.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Company or vendor providing the warranty coverage
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.contact_info.id_for_label }}" class="form-label">
+                                <i class="bi bi-telephone me-1"></i>
+                                Contact Information
+                            </label>
+                            {{ form.contact_info }}
+                            {% if form.contact_info.errors %}
+                                <div class="invalid-feedback d-block">{{ form.contact_info.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Phone, email, or support contact details
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warranty Period Section -->
+    <div class="form-card">
+        <div class="form-header">
+            <h5 class="mb-0">
+                <i class="bi bi-calendar-range me-2 text-primary"></i>
+                Warranty Period
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="field-group">
+                <div class="field-group-title">
+                    <i class="bi bi-calendar-check text-primary"></i>
+                    Coverage Duration
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.start_date.id_for_label }}" class="form-label">
+                                <i class="bi bi-calendar-plus me-1"></i>
+                                Start Date <span class="text-danger">*</span>
+                            </label>
+                            {{ form.start_date }}
+                            {% if form.start_date.errors %}
+                                <div class="invalid-feedback d-block">{{ form.start_date.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Date when warranty coverage begins
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.end_date.id_for_label }}" class="form-label">
+                                <i class="bi bi-calendar-x me-1"></i>
+                                End Date <span class="text-danger">*</span>
+                            </label>
+                            {{ form.end_date }}
+                            {% if form.end_date.errors %}
+                                <div class="invalid-feedback d-block">{{ form.end_date.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Date when warranty coverage expires
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Warranty Duration Display -->
+                <div class="warranty-duration-display" id="warrantyDurationDisplay">
+                    <div class="duration-info">
+                        <div class="duration-card">
+                            <div class="duration-icon">
+                                <i class="bi bi-clock"></i>
+                            </div>
+                            <div class="duration-details">
+                                <div class="duration-label">Warranty Duration</div>
+                                <div class="duration-value" id="warrantyDuration">-</div>
+                            </div>
+                        </div>
+                        <div class="status-card">
+                            <div class="status-icon">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                            <div class="status-details">
+                                <div class="status-label">Status</div>
+                                <div class="status-value" id="warrantyStatus">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coverage Details Section -->
+    <div class="form-card">
+        <div class="form-header">
+            <h5 class="mb-0">
+                <i class="bi bi-list-check me-2 text-primary"></i>
+                Coverage Details
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="field-group">
+                <div class="field-group-title">
+                    <i class="bi bi-clipboard-check text-primary"></i>
+                    Coverage Information
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.coverage_details.id_for_label }}" class="form-label">
+                        <i class="bi bi-file-text me-1"></i>
+                        Coverage Details
+                    </label>
+                    {{ form.coverage_details }}
+                    {% if form.coverage_details.errors %}
+                        <div class="invalid-feedback d-block">{{ form.coverage_details.errors.0 }}</div>
+                    {% endif %}
+                    <div class="help-text">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Describe what is covered under this warranty (e.g., parts, labor, on-site service)
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.terms_conditions.id_for_label }}" class="form-label">
+                        <i class="bi bi-file-earmark-text me-1"></i>
+                        Terms & Conditions
+                    </label>
+                    {{ form.terms_conditions }}
+                    {% if form.terms_conditions.errors %}
+                        <div class="invalid-feedback d-block">{{ form.terms_conditions.errors.0 }}</div>
+                    {% endif %}
+                    <div class="help-text">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Important terms, limitations, or exclusions of the warranty
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warranty Settings Section -->
+    <div class="form-card">
+        <div class="form-header">
+            <h5 class="mb-0">
+                <i class="bi bi-toggles me-2 text-primary"></i>
+                Warranty Settings
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="field-group">
+                <div class="field-group-title">
+                    <i class="bi bi-gear text-primary"></i>
+                    Configuration & Status
+                </div>
+                
+                <div class="property-item">
+                    <div class="form-check">
+                        {{ form.is_active }}
+                        <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
+                            <strong>Warranty is Active</strong>
+                        </label>
+                    </div>
+                    <div class="help-text mt-2">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Enable this warranty record. Inactive warranties will not appear in active warranty lists.
+                    </div>
+                </div>
+
+                {% if form.auto_renewal %}
+                <div class="property-item">
+                    <div class="form-check">
+                        {{ form.auto_renewal }}
+                        <label for="{{ form.auto_renewal.id_for_label }}" class="form-check-label">
+                            <strong>Auto-renewal Enabled</strong>
+                        </label>
+                    </div>
+                    <div class="help-text mt-2">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Check if this warranty automatically renews at expiration
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if form.notification_enabled %}
+                <div class="property-item">
+                    <div class="form-check">
+                        {{ form.notification_enabled }}
+                        <label for="{{ form.notification_enabled.id_for_label }}" class="form-check-label">
+                            <strong>Expiration Notifications</strong>
+                        </label>
+                    </div>
+                    <div class="help-text mt-2">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Enable email notifications before warranty expiration
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Required fields are marked with <span class="text-danger">*</span>
+                </small>
+            </div>
+            <div>
+                <button type="button" class="btn btn-outline-secondary me-2" onclick="history.back()">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-shield-check me-1"></i>
+                    Save Warranty
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Warranty Form Styling - Parliament Design System */
+.warranty-form-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    padding: 1.5rem;
+    border-radius: 16px;
+    min-height: 100vh;
+}
+
+.form-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.form-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.form-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.form-header h5 {
+    margin: 0;
+    font-weight: 600;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.field-group {
+    margin-bottom: 1rem;
+}
+
+.field-group-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.form-label {
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.form-control,
+.form-select {
+    border: 1px solid rgba(203, 213, 225, 0.5);
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 0.95rem;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.form-control.is-invalid {
+    border-color: #ef4444;
+}
+
+.invalid-feedback {
+    display: block;
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.help-text {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.text-danger {
+    color: #ef4444 !important;
+}
+
+.device-info-display {
+    margin-top: 1rem;
+}
+
+.device-preview-card {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.device-preview-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.device-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.device-details {
+    flex: 1;
+}
+
+.device-name {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.device-id {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+    font-family: monospace;
+    background: rgba(99, 102, 241, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.device-specs {
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.warranty-duration-display {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.duration-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.duration-card,
+.status-card {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(22, 163, 74, 0.05) 100%);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.duration-icon,
+.status-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.duration-label,
+.status-label {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.duration-value,
+.status-value {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.95rem;
+}
+
+.property-item {
+    background: rgba(248, 250, 252, 0.5);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-check {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+.form-check-input {
+    margin-top: 0.1rem;
+    margin-right: 0.5rem;
+}
+
+.form-check-label {
+    font-weight: 500;
+    color: #374151;
+}
+
+.form-actions {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.btn {
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.btn-outline-secondary {
+    border: 1px solid rgba(107, 114, 128, 0.3);
+    color: #6b7280;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.btn-outline-secondary:hover {
+    background: rgba(107, 114, 128, 0.1);
+    border-color: #6b7280;
+    color: #374151;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .warranty-form-container {
+        padding: 1rem;
+    }
+    
+    .form-header,
+    .card-body,
+    .form-actions {
+        padding: 1rem;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .device-preview-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .duration-info {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+// Warranty Form JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    const warrantyForm = {
+        deviceField: document.querySelector('#id_device'),
+        startDateField: document.querySelector('#id_start_date'),
+        endDateField: document.querySelector('#id_end_date'),
+        
+        deviceInfoDisplay: document.getElementById('deviceInfoDisplay'),
+        durationDisplay: document.getElementById('warrantyDurationDisplay'),
+        
+        init: function() {
+            this.bindEvents();
+            this.calculateDuration();
+            this.loadDeviceInfo();
+        },
+        
+        bindEvents: function() {
+            const self = this;
+            
+            // Device selection change
+            if (this.deviceField) {
+                this.deviceField.addEventListener('change', () => {
+                    self.loadDeviceInfo();
+                });
+            }
+            
+            // Date changes
+            if (this.startDateField) {
+                this.startDateField.addEventListener('change', () => {
+                    self.calculateDuration();
+                    self.validateDates();
+                });
+            }
+            
+            if (this.endDateField) {
+                this.endDateField.addEventListener('change', () => {
+                    self.calculateDuration();
+                    self.validateDates();
+                });
+            }
+            
+            // Form validation
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', (e) => self.validateForm(e));
+            }
+        },
+        
+        loadDeviceInfo: function() {
+            if (!this.deviceField || !this.deviceField.value) {
+                if (this.deviceInfoDisplay) {
+                    this.deviceInfoDisplay.style.display = 'none';
+                }
+                return;
+            }
+            
+            // Get selected option details
+            const selectedOption = this.deviceField.options[this.deviceField.selectedIndex];
+            if (selectedOption && selectedOption.value) {
+                const deviceName = selectedOption.textContent;
+                const deviceId = selectedOption.value;
+                
+                // Update device info display
+                if (this.deviceInfoDisplay) {
+                    const nameElement = document.getElementById('selectedDeviceName');
+                    const idElement = document.getElementById('selectedDeviceId');
+                    const specsElement = document.getElementById('selectedDeviceSpecs');
+                    
+                    if (nameElement) nameElement.textContent = deviceName;
+                    if (idElement) idElement.textContent = `Device ID: ${deviceId}`;
+                    if (specsElement) specsElement.textContent = 'Device selected for warranty registration';
+                    
+                    this.deviceInfoDisplay.style.display = 'block';
+                }
+            }
+        },
+        
+        calculateDuration: function() {
+            if (!this.startDateField || !this.endDateField || !this.durationDisplay) {
+                return;
+            }
+            
+            const startDate = this.startDateField.value;
+            const endDate = this.endDateField.value;
+            
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                const today = new Date();
+                
+                if (end > start) {
+                    // Calculate duration
+                    const diffTime = Math.abs(end - start);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    const diffMonths = Math.round(diffDays / 30);
+                    const diffYears = Math.round(diffDays / 365);
+                    
+                    let durationText = '';
+                    if (diffYears >= 1) {
+                        durationText = `${diffYears} year${diffYears > 1 ? 's' : ''}`;
+                        if (diffMonths % 12 > 0) {
+                            durationText += ` ${diffMonths % 12} month${diffMonths % 12 > 1 ? 's' : ''}`;
+                        }
+                    } else if (diffMonths >= 1) {
+                        durationText = `${diffMonths} month${diffMonths > 1 ? 's' : ''}`;
+                    } else {
+                        durationText = `${diffDays} day${diffDays > 1 ? 's' : ''}`;
+                    }
+                    
+                    // Determine status
+                    let status = '';
+                    let statusClass = '';
+                    if (today < start) {
+                        status = 'Not Started';
+                        statusClass = 'text-warning';
+                    } else if (today >= start && today <= end) {
+                        status = 'Active';
+                        statusClass = 'text-success';
+                    } else {
+                        status = 'Expired';
+                        statusClass = 'text-danger';
+                    }
+                    
+                    // Update display
+                    const durationElement = document.getElementById('warrantyDuration');
+                    const statusElement = document.getElementById('warrantyStatus');
+                    
+                    if (durationElement) {
+                        durationElement.textContent = durationText;
+                    }
+                    
+                    if (statusElement) {
+                        statusElement.textContent = status;
+                        statusElement.className = `status-value ${statusClass}`;
+                    }
+                    
+                    this.durationDisplay.style.display = 'block';
+                } else {
+                    this.durationDisplay.style.display = 'none';
+                }
+            } else {
+                this.durationDisplay.style.display = 'none';
+            }
+        },
+        
+        validateDates: function() {
+            if (!this.startDateField || !this.endDateField) return;
+            
+            const startDate = this.startDateField.value;
+            const endDate = this.endDateField.value;
+            
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                
+                if (end <= start) {
+                    this.showFieldError(this.endDateField, 'End date must be after start date');
+                } else {
+                    this.clearFieldError(this.endDateField);
+                }
+            }
+        },
+        
+        validateForm: function(event) {
+            let isValid = true;
+            
+            // Validate required fields
+            const requiredFields = [
+                { field: this.deviceField, message: 'Device selection is required' },
+                { field: this.startDateField, message: 'Start date is required' },
+                { field: this.endDateField, message: 'End date is required' }
+            ];
+            
+            requiredFields.forEach(item => {
+                if (item.field && !item.field.value.trim()) {
+                    this.showFieldError(item.field, item.message);
+                    isValid = false;
+                } else if (item.field) {
+                    this.clearFieldError(item.field);
+                }
+            });
+            
+            // Validate date range
+            if (this.startDateField && this.endDateField && 
+                this.startDateField.value && this.endDateField.value) {
+                const start = new Date(this.startDateField.value);
+                const end = new Date(this.endDateField.value);
+                
+                if (end <= start) {
+                    this.showFieldError(this.endDateField, 'End date must be after start date');
+                    isValid = false;
+                }
+            }
+            
+            if (!isValid) {
+                event.preventDefault();
+                // Scroll to first error
+                const firstError = document.querySelector('.is-invalid');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstError.focus();
+                }
+            }
+        },
+        
+        showFieldError: function(field, message) {
+            field.classList.add('is-invalid');
+            
+            // Remove existing error message
+            const existingError = field.parentNode.querySelector('.invalid-feedback.custom-error');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // Add new error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'invalid-feedback custom-error';
+            errorDiv.textContent = message;
+            field.parentNode.appendChild(errorDiv);
+        },
+        
+        clearFieldError: function(field) {
+            field.classList.remove('is-invalid');
+            const errorDiv = field.parentNode.querySelector('.invalid-feedback.custom-error');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        }
+    };
+    
+    // Initialize the form
+    warrantyForm.init();
+    
+    // Make available globally for debugging
+    window.warrantyForm = warrantyForm;
+});
+</script>

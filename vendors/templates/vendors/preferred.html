@@ -1,0 +1,649 @@
+{% extends 'vendors/base_vendor.html' %}
+{% load static %}
+
+{% block vendor_title %}Preferred Vendors{% endblock %}
+
+{% block vendor_header_title %}Preferred Vendors{% endblock %}
+{% block vendor_header_subtitle %}High-priority vendors for Parliament Secretariat operations{% endblock %}
+
+{% block vendor_breadcrumb_items %}
+    <li class="breadcrumb-item active">Preferred Vendors</li>
+{% endblock %}
+
+{% block vendor_content %}
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number warning">{{ total_count }}</div>
+                <div class="text-muted">Preferred Vendors</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number success">
+                    {% for vendor in vendors %}{% if vendor.is_active %}{% if forloop.first %}1{% else %}{{ forloop.counter }}{% endif %}{% endif %}{% endfor %}
+                </div>
+                <div class="text-muted">Active Preferred</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number primary">
+                    {% regroup vendors by vendor_type as vendor_groups %}
+                    {{ vendor_groups|length }}
+                </div>
+                <div class="text-muted">Service Types</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number info">
+                    {% for vendor in vendors %}{% if vendor.performance_rating %}{% if forloop.first %}{{ vendor.performance_rating|floatformat:1 }}{% endif %}{% endif %}{% endfor %}
+                </div>
+                <div class="text-muted">Avg Rating</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preferred Vendor Benefits -->
+    <div class="alert alert-warning border-0 mb-4" role="alert">
+        <div class="d-flex align-items-start">
+            <i class="bi bi-star-fill fs-4 me-3 text-warning"></i>
+            <div>
+                <h6 class="alert-heading mb-2">Preferred Vendor Program</h6>
+                <p class="mb-2">Preferred vendors receive priority consideration for new contracts and orders. These vendors have demonstrated:</p>
+                <ul class="mb-0 small">
+                    <li>Exceptional service quality and reliability</li>
+                    <li>Competitive pricing and timely delivery</li>
+                    <li>Strong compliance with government regulations</li>
+                    <li>Proven track record with Parliament Secretariat</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Actions -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card vendor-card">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="search-box">
+                                <i class="bi bi-search search-icon"></i>
+                                <input type="text" id="quickSearch" class="form-control search-input" 
+                                       placeholder="Search preferred vendors..." autocomplete="off">
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <select id="typeFilter" class="form-select filter-dropdown">
+                                <option value="">All Types</option>
+                                {% regroup vendors by vendor_type as vendor_groups %}
+                                {% for group in vendor_groups %}
+                                    <option value="{{ group.grouper }}">{{ group.list.0.get_vendor_type_display }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <select id="statusFilter" class="form-select filter-dropdown">
+                                <option value="">All Status</option>
+                                <option value="active">Active Only</option>
+                                <option value="inactive">Inactive Only</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <button type="button" id="clearFilters" class="btn btn-vendor-secondary w-100">
+                                <i class="bi bi-arrow-clockwise me-1"></i>
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="d-flex gap-2 h-100 align-items-center">
+                {% if vendors %}
+                    <div class="dropdown">
+                        <button class="btn btn-vendor-secondary dropdown-toggle" type="button" 
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-download me-1"></i>
+                            Export
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'vendors:export_csv' %}?is_preferred=true">
+                                    <i class="bi bi-file-earmark-spreadsheet me-2"></i>
+                                    Export Preferred Vendors (CSV)
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'vendors:export_contacts' %}?is_preferred=true">
+                                    <i class="bi bi-person-lines-fill me-2"></i>
+                                    Export Preferred Contacts
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" name="sortBy" id="sortName" autocomplete="off" checked>
+                        <label class="btn btn-outline-secondary" for="sortName" title="Sort by Name">
+                            <i class="bi bi-sort-alpha-down"></i>
+                        </label>
+                        
+                        <input type="radio" class="btn-check" name="sortBy" id="sortRating" autocomplete="off">
+                        <label class="btn btn-outline-secondary" for="sortRating" title="Sort by Rating">
+                            <i class="bi bi-star-fill"></i>
+                        </label>
+                        
+                        <input type="radio" class="btn-check" name="sortBy" id="sortType" autocomplete="off">
+                        <label class="btn btn-outline-secondary" for="sortType" title="Sort by Type">
+                            <i class="bi bi-diagram-3"></i>
+                        </label>
+                    </div>
+                {% endif %}
+                
+                {% if perms.vendors.add_vendor %}
+                    <a href="{% url 'vendors:create' %}" class="btn btn-vendor-primary">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        Add Vendor
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Summary -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-0">
+                <i class="bi bi-star-fill text-warning me-2"></i>
+                <span id="visibleCount">{{ vendors|length }}</span> of {{ total_count }} preferred vendor{{ total_count|pluralize }}
+            </h4>
+            <small class="text-muted" id="filterStatus">All preferred vendors displayed</small>
+        </div>
+        
+        {% if vendors %}
+            <div class="btn-group" role="group">
+                <input type="radio" class="btn-check" name="viewMode" id="cardView" autocomplete="off" checked>
+                <label class="btn btn-outline-secondary" for="cardView" title="Card View">
+                    <i class="bi bi-grid-3x2"></i>
+                </label>
+                
+                <input type="radio" class="btn-check" name="viewMode" id="tableView" autocomplete="off">
+                <label class="btn btn-outline-secondary" for="tableView" title="Table View">
+                    <i class="bi bi-table"></i>
+                </label>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Vendors List -->
+    {% if vendors %}
+        <!-- Card View (Default) -->
+        <div id="cardContainer" class="vendors-list">
+            {% for vendor in vendors %}
+                <div class="vendor-item mb-3" 
+                     data-type="{{ vendor.vendor_type }}" 
+                     data-status="{{ vendor.is_active|yesno:'active,inactive' }}"
+                     data-rating="{{ vendor.performance_rating|default:'0' }}"
+                     data-search="{{ vendor.name|lower }} {{ vendor.vendor_code|lower }} {{ vendor.contact_person|lower }}">
+                    
+                    <div class="card vendor-card">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-1">
+                                    <div class="text-center">
+                                        <i class="bi bi-star-fill text-warning" style="font-size: 2rem;"></i>
+                                        <div class="small text-muted mt-1">Preferred</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-5">
+                                    <div class="d-flex align-items-center">
+                                        <div class="vendor-type-icon vendor-type-{{ vendor.vendor_type|lower }} me-3">
+                                            <i class="{{ vendor.get_vendor_type_display_icon }}"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1">
+                                                <a href="{% url 'vendors:detail' vendor.pk %}" class="text-decoration-none text-dark">
+                                                    {{ vendor.name }}
+                                                </a>
+                                            </h5>
+                                            <div class="text-muted small">
+                                                <strong>{{ vendor.vendor_code }}</strong> • {{ vendor.get_vendor_type_display }}
+                                                {% if vendor.trade_name %}
+                                                    <br>T/A: {{ vendor.trade_name }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-3">
+                                    <div class="small">
+                                        <div class="mb-1">
+                                            <i class="bi bi-person me-1"></i>
+                                            {{ vendor.contact_person }}
+                                        </div>
+                                        <div class="mb-1">
+                                            <i class="bi bi-telephone me-1"></i>
+                                            <a href="tel:{{ vendor.phone_primary }}" class="text-decoration-none">
+                                                {{ vendor.phone_primary }}
+                                            </a>
+                                        </div>
+                                        <div>
+                                            <i class="bi bi-geo-alt me-1"></i>
+                                            {{ vendor.city }}{% if vendor.country != 'Bangladesh' %}, {{ vendor.country }}{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-2">
+                                    <div class="text-center">
+                                        <span class="vendor-badge {% if vendor.is_active %}active{% else %}inactive{% endif %} mb-2">
+                                            {{ vendor.get_status_display }}
+                                        </span>
+                                        
+                                        {% if vendor.performance_rating %}
+                                            <div class="performance-stars">
+                                                {% with rating=vendor.performance_rating|floatformat:1 %}
+                                                    {% for i in "12345" %}
+                                                        {% if forloop.counter <= rating|floatformat:0 %}
+                                                            <i class="bi bi-star-fill"></i>
+                                                        {% elif forloop.counter <= rating|add:0.5 %}
+                                                            <i class="bi bi-star-half"></i>
+                                                        {% else %}
+                                                            <i class="bi bi-star"></i>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                {% endwith %}
+                                                <div class="small text-muted mt-1">{{ vendor.performance_rating }}/5.0</div>
+                                            </div>
+                                        {% else %}
+                                            <small class="text-muted">Not rated</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-1">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                                data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'vendors:detail' vendor.pk %}">
+                                                    <i class="bi bi-eye me-2"></i>View Details
+                                                </a>
+                                            </li>
+                                            {% if perms.vendors.change_vendor %}
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'vendors:edit' vendor.pk %}">
+                                                        <i class="bi bi-pencil me-2"></i>Edit
+                                                    </a>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'vendors:toggle_preferred' vendor.pk %}"
+                                                       onclick="return confirm('Remove preferred status from this vendor?')">
+                                                        <i class="bi bi-star me-2"></i>Remove Preferred
+                                                    </a>
+                                                </li>
+                                                {% if vendor.is_active %}
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'vendors:deactivate' vendor.pk %}"
+                                                           onclick="return confirm('Deactivate this preferred vendor?')">
+                                                            <i class="bi bi-pause-circle me-2"></i>Deactivate
+                                                        </a>
+                                                    </li>
+                                                {% else %}
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'vendors:activate' vendor.pk %}"
+                                                           onclick="return confirm('Activate this preferred vendor?')">
+                                                            <i class="bi bi-play-circle me-2"></i>Activate
+                                                        </a>
+                                                    </li>
+                                                {% endif %}
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% if vendor.specialization %}
+                                <div class="row mt-2">
+                                    <div class="col-12">
+                                        <small class="text-muted">
+                                            <i class="bi bi-gear me-1"></i>
+                                            {{ vendor.specialization|truncatechars:100 }}
+                                        </small>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Table View -->
+        <div id="tableContainer" class="vendors-list d-none">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="5%"><i class="bi bi-star-fill text-warning"></i></th>
+                            <th width="15%">Code</th>
+                            <th width="25%">Name</th>
+                            <th width="15%">Type</th>
+                            <th width="20%">Contact</th>
+                            <th width="10%">Status</th>
+                            <th width="10%">Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for vendor in vendors %}
+                            <tr class="vendor-item" 
+                                data-type="{{ vendor.vendor_type }}" 
+                                data-status="{{ vendor.is_active|yesno:'active,inactive' }}"
+                                data-rating="{{ vendor.performance_rating|default:'0' }}"
+                                data-search="{{ vendor.name|lower }} {{ vendor.vendor_code|lower }} {{ vendor.contact_person|lower }}">
+                                <td class="text-center">
+                                    <i class="bi bi-star-fill text-warning" style="font-size: 1.25rem;"></i>
+                                </td>
+                                <td>
+                                    <code>{{ vendor.vendor_code }}</code>
+                                </td>
+                                <td>
+                                    <a href="{% url 'vendors:detail' vendor.pk %}" class="text-decoration-none fw-medium">
+                                        {{ vendor.name }}
+                                    </a>
+                                    {% if vendor.trade_name %}
+                                        <br><small class="text-muted">T/A: {{ vendor.trade_name }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="vendor-type-icon vendor-type-{{ vendor.vendor_type|lower }} me-2" style="width: 1.5rem; height: 1.5rem;">
+                                            <i class="{{ vendor.get_vendor_type_display_icon }}" style="font-size: 0.75rem;"></i>
+                                        </div>
+                                        <small>{{ vendor.get_vendor_type_display }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="small">
+                                        <div>{{ vendor.contact_person }}</div>
+                                        <div class="text-muted">{{ vendor.phone_primary }}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="vendor-badge {% if vendor.is_active %}active{% else %}inactive{% endif %}">
+                                        {{ vendor.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if vendor.performance_rating %}
+                                        <div class="performance-stars">
+                                            {% with rating=vendor.performance_rating|floatformat:1 %}
+                                                {% for i in "12345" %}
+                                                    {% if forloop.counter <= rating|floatformat:0 %}
+                                                        <i class="bi bi-star-fill"></i>
+                                                    {% else %}
+                                                        <i class="bi bi-star"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% endwith %}
+                                            <div class="small">{{ vendor.performance_rating }}</div>
+                                        </div>
+                                    {% else %}
+                                        <small class="text-muted">Not rated</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- No Results Message -->
+        <div id="noResults" class="text-center py-5 d-none">
+            <div class="mb-4">
+                <i class="bi bi-funnel" style="font-size: 4rem; color: #e5e7eb;"></i>
+            </div>
+            <h4 class="text-muted mb-3">No preferred vendors match your filters</h4>
+            <p class="text-muted mb-4">
+                Try adjusting your search terms or clearing some filters.
+            </p>
+            <button type="button" onclick="clearAllFilters()" class="btn btn-vendor-secondary">
+                <i class="bi bi-arrow-clockwise me-1"></i>
+                Clear All Filters
+            </button>
+        </div>
+    {% else %}
+        <!-- No Preferred Vendors -->
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-star" style="font-size: 4rem; color: #e5e7eb;"></i>
+            </div>
+            <h4 class="text-muted mb-3">No preferred vendors found</h4>
+            <p class="text-muted mb-4">
+                Mark high-performing vendors as preferred to prioritize them for contracts and orders.
+            </p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'vendors:active' %}" class="btn btn-vendor-secondary">
+                    <i class="bi bi-search me-1"></i>
+                    Browse Active Vendors
+                </a>
+                {% if perms.vendors.add_vendor %}
+                    <a href="{% url 'vendors:create' %}" class="btn btn-vendor-primary">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        Add New Vendor
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block vendor_extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const quickSearch = document.getElementById('quickSearch');
+            const typeFilter = document.getElementById('typeFilter');
+            const statusFilter = document.getElementById('statusFilter');
+            const clearFiltersBtn = document.getElementById('clearFilters');
+            const vendorItems = document.querySelectorAll('.vendor-item');
+            const visibleCount = document.getElementById('visibleCount');
+            const filterStatus = document.getElementById('filterStatus');
+            const noResults = document.getElementById('noResults');
+            const cardContainer = document.getElementById('cardContainer');
+            const tableContainer = document.getElementById('tableContainer');
+            const cardView = document.getElementById('cardView');
+            const tableView = document.getElementById('tableView');
+            const sortName = document.getElementById('sortName');
+            const sortRating = document.getElementById('sortRating');
+            const sortType = document.getElementById('sortType');
+            
+            let currentSort = 'name';
+            
+            // Filter and sort functionality
+            function applyFiltersAndSort() {
+                const searchTerm = quickSearch.value.toLowerCase();
+                const typeValue = typeFilter.value;
+                const statusValue = statusFilter.value;
+                
+                // Convert NodeList to Array for sorting
+                const itemsArray = Array.from(vendorItems);
+                
+                // Sort items
+                itemsArray.sort((a, b) => {
+                    switch(currentSort) {
+                        case 'rating':
+                            const ratingA = parseFloat(a.dataset.rating) || 0;
+                            const ratingB = parseFloat(b.dataset.rating) || 0;
+                            return ratingB - ratingA; // Highest rating first
+                        case 'type':
+                            return a.dataset.type.localeCompare(b.dataset.type);
+                        case 'name':
+                        default:
+                            const nameA = a.dataset.search.split(' ')[0];
+                            const nameB = b.dataset.search.split(' ')[0];
+                            return nameA.localeCompare(nameB);
+                    }
+                });
+                
+                // Re-append sorted items to container
+                const container = cardView.checked ? cardContainer : tableContainer.querySelector('tbody');
+                itemsArray.forEach(item => {
+                    if (cardView.checked) {
+                        container.appendChild(item);
+                    } else {
+                        container.appendChild(item);
+                    }
+                });
+                
+                // Apply filters
+                let visibleItems = 0;
+                itemsArray.forEach(item => {
+                    let show = true;
+                    
+                    // Search filter
+                    if (searchTerm && !item.dataset.search.includes(searchTerm)) {
+                        show = false;
+                    }
+                    
+                    // Type filter
+                    if (typeValue && item.dataset.type !== typeValue) {
+                        show = false;
+                    }
+                    
+                    // Status filter
+                    if (statusValue && item.dataset.status !== statusValue) {
+                        show = false;
+                    }
+                    
+                    if (show) {
+                        item.style.display = '';
+                        visibleItems++;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                
+                // Update UI
+                visibleCount.textContent = visibleItems;
+                
+                if (visibleItems === 0) {
+                    cardContainer.style.display = 'none';
+                    tableContainer.style.display = 'none';
+                    noResults.classList.remove('d-none');
+                } else {
+                    noResults.classList.add('d-none');
+                    if (cardView.checked) {
+                        cardContainer.style.display = '';
+                        tableContainer.style.display = 'none';
+                    } else {
+                        cardContainer.style.display = 'none';
+                        tableContainer.style.display = '';
+                    }
+                }
+                
+                // Update filter status
+                const activeFilters = [];
+                if (searchTerm) activeFilters.push(`search: "${searchTerm}"`);
+                if (typeValue) activeFilters.push(`type: ${typeValue}`);
+                if (statusValue) activeFilters.push(`status: ${statusValue}`);
+                
+                if (activeFilters.length > 0) {
+                    filterStatus.textContent = `Filtered by ${activeFilters.join(', ')} • Sorted by ${currentSort}`;
+                } else {
+                    filterStatus.textContent = `All preferred vendors • Sorted by ${currentSort}`;
+                }
+            }
+            
+            // Event listeners
+            let searchTimeout;
+            quickSearch.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(applyFiltersAndSort, 300);
+            });
+            
+            typeFilter.addEventListener('change', applyFiltersAndSort);
+            statusFilter.addEventListener('change', applyFiltersAndSort);
+            
+            // Sort event listeners
+            sortName.addEventListener('change', function() {
+                if (this.checked) {
+                    currentSort = 'name';
+                    applyFiltersAndSort();
+                }
+            });
+            
+            sortRating.addEventListener('change', function() {
+                if (this.checked) {
+                    currentSort = 'rating';
+                    applyFiltersAndSort();
+                }
+            });
+            
+            sortType.addEventListener('change', function() {
+                if (this.checked) {
+                    currentSort = 'type';
+                    applyFiltersAndSort();
+                }
+            });
+            
+            // Clear filters
+            function clearAllFilters() {
+                quickSearch.value = '';
+                typeFilter.selectedIndex = 0;
+                statusFilter.selectedIndex = 0;
+                currentSort = 'name';
+                sortName.checked = true;
+                applyFiltersAndSort();
+            }
+            
+            clearFiltersBtn.addEventListener('click', clearAllFilters);
+            window.clearAllFilters = clearAllFilters;
+            
+            // View switching
+            cardView.addEventListener('change', function() {
+                if (this.checked) {
+                    cardContainer.classList.remove('d-none');
+                    tableContainer.classList.add('d-none');
+                    localStorage.setItem('preferredVendorsView', 'card');
+                    applyFiltersAndSort();
+                }
+            });
+            
+            tableView.addEventListener('change', function() {
+                if (this.checked) {
+                    cardContainer.classList.add('d-none');
+                    tableContainer.classList.remove('d-none');
+                    localStorage.setItem('preferredVendorsView', 'table');
+                    applyFiltersAndSort();
+                }
+            });
+            
+            // Restore view preference
+            const savedView = localStorage.getItem('preferredVendorsView');
+            if (savedView === 'table') {
+                tableView.checked = true;
+                cardContainer.classList.add('d-none');
+                tableContainer.classList.remove('d-none');
+            }
+            
+            // Initialize
+            applyFiltersAndSort();
+        });
+    </script>
+{% endblock %}

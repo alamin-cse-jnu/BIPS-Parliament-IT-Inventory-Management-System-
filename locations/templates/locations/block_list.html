@@ -1,0 +1,568 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Block Management - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'locations:dashboard' %}">Locations</a></li>
+    <li class="breadcrumb-item active">Blocks</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="bi bi-grid me-2 text-primary"></i>
+                Block Management
+            </h1>
+            <p class="text-muted mb-0">Manage building blocks and sections</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'locations:block_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>
+                Add New Block
+            </a>
+            <div class="btn-group">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-three-dots me-2"></i>
+                    Actions
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'locations:dashboard' %}">
+                        <i class="bi bi-house me-2"></i>Location Dashboard
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'locations:building_list' %}">
+                        <i class="bi bi-building me-2"></i>Manage Buildings
+                    </a></li>
+                    <li><a class="dropdown-item" href="{% url 'locations:floor_list' %}">
+                        <i class="bi bi-layers me-2"></i>Manage Floors
+                    </a></li>
+                    <li><a class="dropdown-item" href="{% url 'locations:room_list' %}">
+                        <i class="bi bi-door-open me-2"></i>Manage Rooms
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-1">Total Blocks</h6>
+                            <h3 class="mb-0">{{ total_blocks }}</h3>
+                        </div>
+                        <div class="bg-white bg-opacity-25 rounded-circle p-3">
+                            <i class="bi bi-grid fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-1">Active Blocks</h6>
+                            <h3 class="mb-0">{{ active_blocks }}</h3>
+                        </div>
+                        <div class="bg-white bg-opacity-25 rounded-circle p-3">
+                            <i class="bi bi-check-circle fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-1">Inactive Blocks</h6>
+                            <h3 class="mb-0">{{ inactive_blocks }}</h3>
+                        </div>
+                        <div class="bg-white bg-opacity-25 rounded-circle p-3">
+                            <i class="bi bi-x-circle fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-1">Block Sections</h6>
+                            <h3 class="mb-0">{{ blocks.count }}</h3>
+                        </div>
+                        <div class="bg-white bg-opacity-25 rounded-circle p-3">
+                            <i class="bi bi-diagram-3 fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Search Blocks</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="{{ search }}" placeholder="Search by name, code, or description...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status Filter</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">All Blocks</option>
+                        <option value="active" {% if status == 'active' %}selected{% endif %}>Active Only</option>
+                        <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive Only</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="btn-group w-100">
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="bi bi-search me-2"></i>
+                            Search
+                        </button>
+                        <a href="{% url 'locations:block_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>
+                            Clear
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Blocks List -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-list me-2"></i>
+                Blocks List
+                {% if search or status %}
+                    <small class="text-muted">(Filtered Results)</small>
+                {% endif %}
+            </h5>
+            <div class="d-flex align-items-center">
+                {% if is_paginated %}
+                    <small class="text-muted me-3">
+                        Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} 
+                        of {{ page_obj.paginator.count }} blocks
+                    </small>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if blocks %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th scope="col">Block Code</th>
+                                <th scope="col">Block Name</th>
+                                <th scope="col">Description</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Related Locations</th>
+                                <th scope="col">Created</th>
+                                <th scope="col" class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for block in blocks %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-info text-white rounded d-flex align-items-center justify-content-center me-3" 
+                                             style="width: 40px; height: 40px; font-size: 14px; font-weight: bold;">
+                                            {{ block.code }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-medium">{{ block.code }}</div>
+                                            <small class="text-muted">Block Code</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-medium">{{ block.name }}</div>
+                                </td>
+                                <td>
+                                    {% if block.description %}
+                                        <div class="text-truncate" style="max-width: 200px;" title="{{ block.description }}">
+                                            {{ block.description }}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted fst-italic">No description</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if block.is_active %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle me-1"></i>
+                                            Active
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-x-circle me-1"></i>
+                                            Inactive
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-geo-alt text-muted me-2"></i>
+                                        <span class="badge bg-light text-dark">
+                                            {{ block.location_set.count }} location{{ block.location_set.count|pluralize }}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="small">
+                                        <div>{{ block.created_at|date:"M d, Y" }}</div>
+                                        <small class="text-muted">{{ block.created_at|time:"g:i A" }}</small>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'locations:block_detail' block.pk %}" 
+                                           class="btn btn-outline-info" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{% url 'locations:block_edit' block.pk %}" 
+                                           class="btn btn-outline-warning" title="Edit Block">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" 
+                                                    type="button" data-bs-toggle="dropdown">
+                                                <span class="visually-hidden">Toggle Dropdown</span>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <form method="post" action="{% url 'locations:block_toggle_status' block.pk %}" class="d-inline">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="dropdown-item">
+                                                            {% if block.is_active %}
+                                                                <i class="bi bi-pause-circle text-warning me-2"></i>
+                                                                Deactivate
+                                                            {% else %}
+                                                                <i class="bi bi-play-circle text-success me-2"></i>
+                                                                Activate
+                                                            {% endif %}
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <a class="dropdown-item text-danger" 
+                                                       href="{% url 'locations:block_delete' block.pk %}">
+                                                        <i class="bi bi-trash me-2"></i>
+                                                        Delete Block
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="bi bi-grid display-1 text-muted"></i>
+                    </div>
+                    <h5 class="text-muted">No Blocks Found</h5>
+                    <p class="text-muted mb-4">
+                        {% if search or status %}
+                            No blocks match your current search criteria.
+                            <br>Try adjusting your filters or search terms.
+                        {% else %}
+                            There are no blocks in the system yet.
+                            <br>Create your first block to get started.
+                        {% endif %}
+                    </p>
+                    <div class="d-flex justify-content-center gap-2">
+                        {% if search or status %}
+                            <a href="{% url 'locations:block_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-2"></i>
+                                Clear Filters
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'locations:block_create' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Add First Block
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="card-footer">
+            <nav aria-label="Block pagination">
+                <ul class="pagination pagination-sm justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if search %}search={{ search }}&{% endif %}{% if status %}status={{ status }}&{% endif %}page=1">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if search %}search={{ search }}&{% endif %}{% if status %}status={{ status }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if search %}search={{ search }}&{% endif %}{% if status %}status={{ status }}&{% endif %}page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if search %}search={{ search }}&{% endif %}{% if status %}status={{ status }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if search %}search={{ search }}&{% endif %}{% if status %}status={{ status }}&{% endif %}page={{ page_obj.paginator.num_pages }}">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.dropdown-menu .dropdown-item {
+    font-size: 0.875rem;
+}
+
+.card-header h5 {
+    color: #495057;
+}
+
+.pagination-sm .page-link {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fw-medium {
+    font-weight: 500;
+}
+
+.bg-opacity-25 {
+    background-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.card {
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.table th {
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.badge.bg-light {
+    border: 1px solid #dee2e6;
+}
+
+.btn-outline-info:hover {
+    color: #fff;
+    background-color: #0dcaf0;
+    border-color: #0dcaf0;
+}
+
+.btn-outline-warning:hover {
+    color: #000;
+    background-color: #ffc107;
+    border-color: #ffc107;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.display-1 {
+    font-size: 4rem;
+    font-weight: 300;
+    line-height: 1.2;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit search form on status change
+    const statusSelect = document.getElementById('status');
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function() {
+            this.form.submit();
+        });
+    }
+    
+    // Confirm status toggle actions
+    const statusToggleForms = document.querySelectorAll('form[action*="toggle-status"]');
+    statusToggleForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const blockName = this.closest('tr').querySelector('.fw-medium').textContent;
+            const action = this.querySelector('button').textContent.trim().toLowerCase();
+            
+            if (!confirm(`Are you sure you want to ${action} the block "${blockName}"?`)) {
+                e.preventDefault();
+            }
+        });
+    });
+    
+    // Enhanced search functionality
+    const searchInput = document.getElementById('search');
+    if (searchInput) {
+        let searchTimeout;
+        
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            
+            // Auto-submit after 1 second of inactivity
+            searchTimeout = setTimeout(() => {
+                if (this.value.length >= 2 || this.value.length === 0) {
+                    this.form.submit();
+                }
+            }, 1000);
+        });
+        
+        // Clear search on Escape
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                this.form.submit();
+            }
+        });
+    }
+    
+    // Tooltip initialization for truncated text
+    const truncatedElements = document.querySelectorAll('[title]');
+    if (truncatedElements.length > 0 && typeof bootstrap !== 'undefined') {
+        truncatedElements.forEach(element => {
+            new bootstrap.Tooltip(element);
+        });
+    }
+    
+    // Add loading states to action buttons
+    const actionButtons = document.querySelectorAll('.btn-group-sm .btn');
+    actionButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            if (this.getAttribute('href')) {
+                const originalContent = this.innerHTML;
+                this.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+                
+                // Restore original content if navigation fails
+                setTimeout(() => {
+                    this.innerHTML = originalContent;
+                }, 3000);
+            }
+        });
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + K to focus search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            searchInput?.focus();
+        }
+        
+        // Ctrl/Cmd + N for new block
+        if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+            e.preventDefault();
+            window.location.href = '{% url "locations:block_create" %}';
+        }
+    });
+    
+    // Statistics animation on page load
+    const statCards = document.querySelectorAll('.card h3');
+    statCards.forEach((card, index) => {
+        const finalValue = parseInt(card.textContent);
+        card.textContent = '0';
+        
+        setTimeout(() => {
+            animateValue(card, 0, finalValue, 1000);
+        }, index * 200);
+    });
+    
+    function animateValue(element, start, end, duration) {
+        const range = end - start;
+        const startTime = performance.now();
+        
+        function update(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const current = Math.floor(start + (range * progress));
+            
+            element.textContent = current;
+            
+            if (progress < 1) {
+                requestAnimationFrame(update);
+            }
+        }
+        
+        requestAnimationFrame(update);
+    }
+});
+</script>
+{% endblock %}

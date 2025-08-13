@@ -1,0 +1,693 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Maintenance Dashboard - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Maintenance Dashboard Styling - Parliament Design System */
+.dashboard-container {
+    background: var(--bg-gradient-primary);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.dashboard-header {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.dashboard-title {
+    color: var(--parliament-primary);
+    font-weight: 700;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.dashboard-subtitle {
+    color: var(--parliament-neutral);
+    margin-bottom: 0;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.stat-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    text-align: center;
+    transition: var(--transition);
+    box-shadow: var(--glass-shadow);
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--glass-shadow-hover);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--spacing-md);
+    font-size: 1.5rem;
+    color: white;
+}
+
+.stat-icon.total { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.stat-icon.scheduled { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.stat-icon.in-progress { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.stat-icon.completed { background: linear-gradient(135deg, #10b981, #059669); }
+.stat-icon.overdue { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-label {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+}
+
+.dashboard-section {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--glass-shadow);
+}
+
+.section-header {
+    background: linear-gradient(135deg, var(--parliament-primary) 0%, #3b82f6 100%);
+    color: white;
+    padding: var(--spacing-lg);
+    display: flex;
+    justify-content: between;
+    align-items: center;
+}
+
+.section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.section-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.section-content {
+    padding: var(--spacing-lg);
+}
+
+.maintenance-item {
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+    padding: var(--spacing-md) 0;
+    transition: var(--transition);
+}
+
+.maintenance-item:hover {
+    background: rgba(248, 250, 252, 0.5);
+    margin: 0 calc(var(--spacing-lg) * -1);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--border-radius);
+}
+
+.maintenance-item:last-child {
+    border-bottom: none;
+}
+
+.maintenance-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: var(--spacing-md);
+    align-items: center;
+}
+
+.maintenance-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: white;
+}
+
+.maintenance-icon.scheduled { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.maintenance-icon.in-progress { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.maintenance-icon.completed { background: linear-gradient(135deg, #10b981, #059669); }
+.maintenance-icon.overdue { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+.maintenance-info {
+    flex: 1;
+}
+
+.maintenance-title {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.maintenance-meta {
+    color: var(--parliament-neutral);
+    font-size: 0.75rem;
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.meta-badge {
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.device-badge { background: rgba(16, 185, 129, 0.1); color: #059669; }
+.priority-high { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+.priority-medium { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+.priority-low { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
+
+.status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--border-radius);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.status-scheduled { background: rgba(139, 92, 246, 0.1); color: #7c3aed; border: 1px solid rgba(139, 92, 246, 0.3); }
+.status-in-progress { background: rgba(245, 158, 11, 0.1); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3); }
+.status-completed { background: rgba(16, 185, 129, 0.1); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3); }
+.status-overdue { background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+.maintenance-date {
+    color: var(--parliament-neutral);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--parliament-neutral);
+}
+
+.empty-state i {
+    font-size: 2.5rem;
+    margin-bottom: var(--spacing-md);
+    opacity: 0.5;
+}
+
+.chart-container {
+    height: 300px;
+    position: relative;
+}
+
+.quick-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-xl);
+}
+
+.quick-action-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.alert-banner {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.alert-content {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.alert-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    font-size: 1.25rem;
+}
+
+.alert-text {
+    flex: 1;
+}
+
+.alert-title {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin-bottom: 0.25rem;
+}
+
+.alert-subtitle {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .maintenance-row {
+        grid-template-columns: auto 1fr;
+        gap: var(--spacing-sm);
+    }
+    
+    .status-badge,
+    .maintenance-date {
+        grid-column: 1 / -1;
+        margin-top: var(--spacing-xs);
+    }
+    
+    .quick-actions {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container-fluid">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">
+                <i class="bi bi-speedometer2"></i>
+                Maintenance Dashboard
+            </h1>
+            <p class="dashboard-subtitle">Bangladesh Parliament Secretariat - Real-time Maintenance Overview</p>
+        </div>
+
+        <!-- Alert Banner for Overdue Maintenance -->
+        {% if stats.overdue > 0 %}
+        <div class="alert-banner">
+            <div class="alert-content">
+                <div class="alert-icon">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="alert-text">
+                    <div class="alert-title">Urgent: {{ stats.overdue }} Overdue Maintenance</div>
+                    <div class="alert-subtitle">Immediate attention required for overdue maintenance tasks</div>
+                </div>
+                <div>
+                    <a href="{% url 'maintenance:overdue' %}" class="btn btn-danger">
+                        <i class="bi bi-eye me-1"></i>View Overdue
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Statistics Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon total">
+                    <i class="bi bi-wrench"></i>
+                </div>
+                <div class="stat-number">{{ stats.total }}</div>
+                <div class="stat-label">Total Maintenance</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon scheduled">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="stat-number">{{ stats.scheduled }}</div>
+                <div class="stat-label">Scheduled</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon in-progress">
+                    <i class="bi bi-gear"></i>
+                </div>
+                <div class="stat-number">{{ stats.in_progress }}</div>
+                <div class="stat-label">In Progress</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon completed">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-number">{{ stats.completed }}</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon overdue">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="stat-number">{{ stats.overdue }}</div>
+                <div class="stat-label">Overdue</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="{% url 'maintenance:create' %}" class="btn btn-primary quick-action-btn">
+                <i class="bi bi-plus-circle"></i>
+                New Maintenance
+            </a>
+            <a href="{% url 'maintenance:schedule_create' %}" class="btn btn-success quick-action-btn">
+                <i class="bi bi-calendar-plus"></i>
+                Schedule Maintenance
+            </a>
+            <a href="{% url 'maintenance:list' %}" class="btn btn-outline-primary quick-action-btn">
+                <i class="bi bi-list-task"></i>
+                View All
+            </a>
+            <a href="{% url 'maintenance:bulk_export' %}" class="btn btn-outline-secondary quick-action-btn">
+                <i class="bi bi-download"></i>
+                Export Data
+            </a>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Recent Maintenance Activity -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h5 class="section-title">
+                        <i class="bi bi-clock-history"></i>
+                        Recent Maintenance Activity
+                    </h5>
+                    <div class="section-actions">
+                        <a href="{% url 'maintenance:list' %}" class="btn btn-sm btn-light">
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="section-content">
+                    {% if recent_maintenance %}
+                        {% for maintenance in recent_maintenance %}
+                        <div class="maintenance-item">
+                            <div class="maintenance-row">
+                                <div class="maintenance-icon {{ maintenance.status|lower }}">
+                                    {% if maintenance.status == 'SCHEDULED' %}
+                                        <i class="bi bi-calendar-check"></i>
+                                    {% elif maintenance.status == 'IN_PROGRESS' %}
+                                        <i class="bi bi-gear"></i>
+                                    {% elif maintenance.status == 'COMPLETED' %}
+                                        <i class="bi bi-check-circle"></i>
+                                    {% else %}
+                                        <i class="bi bi-wrench"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="maintenance-info">
+                                    <div class="maintenance-title">
+                                        <a href="{% url 'maintenance:detail' maintenance.pk %}" class="text-decoration-none">
+                                            {{ maintenance.title|default:"Maintenance for "|add:maintenance.device.name }}
+                                        </a>
+                                    </div>
+                                    <div class="maintenance-meta">
+                                        <span class="meta-badge device-badge">{{ maintenance.device.device_id }}</span>
+                                        <span class="meta-badge priority-{{ maintenance.priority|lower }}">
+                                            {{ maintenance.get_priority_display }}
+                                        </span>
+                                        {% if maintenance.vendor %}
+                                        <span>{{ maintenance.vendor.name }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="status-badge status-{{ maintenance.status|lower }}">
+                                    {{ maintenance.get_status_display }}
+                                </div>
+                                <div class="maintenance-date">
+                                    {{ maintenance.start_date|date:"M d" }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="bi bi-wrench"></i>
+                            <p>No recent maintenance activity</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Upcoming Maintenance -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h5 class="section-title">
+                        <i class="bi bi-calendar-week"></i>
+                        Upcoming (7 Days)
+                    </h5>
+                    <div class="section-actions">
+                        <a href="{% url 'maintenance:scheduled' %}" class="btn btn-sm btn-light">
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="section-content">
+                    {% if upcoming_maintenance %}
+                        {% for maintenance in upcoming_maintenance %}
+                        <div class="maintenance-item">
+                            <div class="maintenance-row">
+                                <div class="maintenance-icon scheduled">
+                                    <i class="bi bi-calendar-check"></i>
+                                </div>
+                                <div class="maintenance-info">
+                                    <div class="maintenance-title">
+                                        <a href="{% url 'maintenance:detail' maintenance.pk %}" class="text-decoration-none">
+                                            {{ maintenance.device.name }}
+                                        </a>
+                                    </div>
+                                    <div class="maintenance-meta">
+                                        <span class="meta-badge device-badge">{{ maintenance.device.device_id }}</span>
+                                        <span class="meta-badge priority-{{ maintenance.priority|lower }}">
+                                            {{ maintenance.get_priority_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="maintenance-date">
+                                    {{ maintenance.start_date|date:"M d" }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="bi bi-calendar-check"></i>
+                            <p>No upcoming maintenance</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Secondary Grid -->
+        <div class="dashboard-grid">
+            <!-- Overdue Maintenance -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h5 class="section-title">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Overdue Maintenance
+                    </h5>
+                    <div class="section-actions">
+                        <a href="{% url 'maintenance:overdue' %}" class="btn btn-sm btn-light">
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="section-content">
+                    {% if overdue_maintenance %}
+                        {% for maintenance in overdue_maintenance %}
+                        <div class="maintenance-item">
+                            <div class="maintenance-row">
+                                <div class="maintenance-icon overdue">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                </div>
+                                <div class="maintenance-info">
+                                    <div class="maintenance-title">
+                                        <a href="{% url 'maintenance:detail' maintenance.pk %}" class="text-decoration-none">
+                                            {{ maintenance.device.name }}
+                                        </a>
+                                    </div>
+                                    <div class="maintenance-meta">
+                                        <span class="meta-badge device-badge">{{ maintenance.device.device_id }}</span>
+                                        <span class="meta-badge priority-high">Overdue</span>
+                                    </div>
+                                </div>
+                                <div class="maintenance-date">
+                                    {{ maintenance.expected_end_date|date:"M d" }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="bi bi-check-circle"></i>
+                            <p>No overdue maintenance</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Maintenance by Type -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h5 class="section-title">
+                        <i class="bi bi-pie-chart"></i>
+                        Maintenance by Type
+                    </h5>
+                </div>
+                <div class="section-content">
+                    {% if maintenance_by_type %}
+                        {% for type_data in maintenance_by_type %}
+                        <div class="maintenance-item">
+                            <div class="maintenance-row">
+                                <div class="maintenance-icon completed">
+                                    <i class="bi bi-bar-chart"></i>
+                                </div>
+                                <div class="maintenance-info">
+                                    <div class="maintenance-title">
+                                        {{ type_data.maintenance_type|default:"Unspecified" }}
+                                    </div>
+                                </div>
+                                <div class="status-badge status-completed">
+                                    {{ type_data.count }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="bi bi-pie-chart"></i>
+                            <p>No maintenance data</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Cost Trend -->
+        {% if monthly_costs %}
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h5 class="section-title">
+                    <i class="bi bi-graph-up"></i>
+                    Monthly Cost Trend (Last 6 Months)
+                </h5>
+            </div>
+            <div class="section-content">
+                <div class="chart-container">
+                    <canvas id="costTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+// Monthly Cost Trend Chart
+{% if monthly_costs %}
+const costTrendCtx = document.getElementById('costTrendChart').getContext('2d');
+const costTrendChart = new Chart(costTrendCtx, {
+    type: 'line',
+    data: {
+        labels: [{% for month in monthly_costs %}'{{ month.month }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Maintenance Cost (BDT)',
+            data: [{% for month in monthly_costs %}{{ month.cost }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '৳' + value.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
+{% endif %}
+
+// Auto-refresh dashboard every 5 minutes
+setInterval(function() {
+    location.reload();
+}, 300000);
+</script>
+{% endblock %}

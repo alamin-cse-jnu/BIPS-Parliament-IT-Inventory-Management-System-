@@ -1,0 +1,682 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cancelled Maintenance - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Cancelled Maintenance Styling - Parliament Design System */
+.cancelled-container {
+    background: var(--bg-gradient-primary);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.page-header {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.page-title {
+    color: #6b7280;
+    font-weight: 700;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.page-subtitle {
+    color: var(--parliament-neutral);
+    margin-bottom: 0;
+}
+
+.cancelled-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.stat-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    text-align: center;
+    transition: var(--transition);
+    box-shadow: var(--glass-shadow);
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--glass-shadow-hover);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--spacing-md);
+    font-size: 1.5rem;
+    color: white;
+}
+
+.stat-icon.cancelled { background: linear-gradient(135deg, #6b7280, #4b5563); }
+.stat-icon.today { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.stat-icon.week { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.stat-icon.month { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-label {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.filters-section {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.filters-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.filters-title {
+    color: var(--parliament-dark);
+    font-weight: 600;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+    align-items: end;
+}
+
+.form-group {
+    margin-bottom: 0;
+}
+
+.form-label {
+    color: var(--parliament-dark);
+    font-weight: 500;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.form-control, .form-select {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-sm) var(--spacing-md);
+    transition: var(--transition);
+}
+
+.form-control:focus, .form-select:focus {
+    background: rgba(255, 255, 255, 1);
+    border-color: #6b7280;
+    box-shadow: 0 0 0 0.25rem rgba(107, 114, 128, 0.1);
+}
+
+.cancelled-grid {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--glass-shadow);
+}
+
+.grid-header {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+    padding: var(--spacing-lg);
+    display: flex;
+    justify-content: between;
+    align-items: center;
+}
+
+.grid-title {
+    font-weight: 600;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.grid-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.grid-content {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.cancelled-item {
+    border-bottom: 1px solid var(--glass-border);
+    transition: var(--transition);
+    opacity: 0.8;
+}
+
+.cancelled-item:last-child {
+    border-bottom: none;
+}
+
+.cancelled-item:hover {
+    background: rgba(107, 114, 128, 0.05);
+    opacity: 1;
+}
+
+.cancelled-content {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-lg);
+    align-items: center;
+}
+
+.cancelled-indicator {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.cancelled-info {
+    min-width: 0;
+}
+
+.cancelled-title {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.cancelled-title a {
+    text-decoration: none;
+    color: var(--parliament-primary);
+    transition: var(--transition);
+}
+
+.cancelled-title a:hover {
+    color: #6b7280;
+}
+
+.cancelled-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+}
+
+.meta-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--border-radius);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.maintenance-id { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.device-badge { background: rgba(16, 185, 129, 0.1); color: #059669; }
+.priority-high { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+.priority-medium { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+.priority-low { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
+.status-cancelled { background: rgba(107, 114, 128, 0.1); color: #4b5563; }
+
+.cancelled-dates {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+}
+
+.cancellation-info {
+    text-align: center;
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+}
+
+.cancellation-date {
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: var(--spacing-xs);
+}
+
+.cancellation-reason {
+    background: rgba(107, 114, 128, 0.1);
+    color: #4b5563;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--border-radius);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.cancelled-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-3xl);
+    color: var(--parliament-neutral);
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-lg);
+    opacity: 0.5;
+    color: #6b7280;
+}
+
+.pagination-wrapper {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.cancellation-banner {
+    background: linear-gradient(135deg, rgba(107, 114, 128, 0.1), rgba(75, 85, 99, 0.1));
+    border: 1px solid rgba(107, 114, 128, 0.3);
+    color: #374151;
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.banner-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(107, 114, 128, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: #6b7280;
+}
+
+.banner-text h4 {
+    color: #374151;
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+}
+
+.banner-text p {
+    margin: 0;
+    opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .cancelled-content {
+        grid-template-columns: auto 1fr;
+        gap: var(--spacing-md);
+    }
+    
+    .cancellation-info,
+    .cancelled-actions {
+        grid-column: 1 / -1;
+        margin-top: var(--spacing-md);
+        padding-top: var(--spacing-md);
+        border-top: 1px solid var(--glass-border);
+    }
+    
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .cancelled-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cancelled-container">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-x-circle"></i>
+                Cancelled Maintenance
+            </h1>
+            <p class="page-subtitle">View and manage all cancelled maintenance activities</p>
+        </div>
+
+        <!-- Information Banner -->
+        <div class="cancellation-banner">
+            <div class="banner-content">
+                <div class="banner-icon">
+                    <i class="bi bi-info-circle"></i>
+                </div>
+                <div class="banner-text">
+                    <h4>Cancelled Maintenance Records</h4>
+                    <p>These maintenance tasks were cancelled for various reasons including schedule conflicts, equipment replacement, or changed priorities.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cancellation Statistics -->
+        <div class="cancelled-stats">
+            <div class="stat-card">
+                <div class="stat-icon cancelled">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+                <div class="stat-number">{{ stats.total_cancelled|default:0 }}</div>
+                <div class="stat-label">Total Cancelled</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon today">
+                    <i class="bi bi-calendar-day"></i>
+                </div>
+                <div class="stat-number">{{ stats.cancelled_today|default:0 }}</div>
+                <div class="stat-label">Cancelled Today</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon week">
+                    <i class="bi bi-calendar-week"></i>
+                </div>
+                <div class="stat-number">{{ stats.cancelled_this_week|default:0 }}</div>
+                <div class="stat-label">This Week</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon month">
+                    <i class="bi bi-calendar-month"></i>
+                </div>
+                <div class="stat-number">{{ stats.cancelled_this_month|default:0 }}</div>
+                <div class="stat-label">This Month</div>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="filters-section">
+            <div class="filters-header">
+                <h5 class="filters-title">
+                    <i class="bi bi-funnel"></i>
+                    Filter Cancelled Maintenance
+                </h5>
+            </div>
+            
+            <form method="get" class="filter-form">
+                <div class="filter-grid">
+                    <div class="form-group">
+                        <label for="date_range" class="form-label">
+                            <i class="bi bi-calendar-range"></i>
+                            Date Range
+                        </label>
+                        <select name="date_range" id="date_range" class="form-select">
+                            <option value="">All Time</option>
+                            <option value="today" {% if request.GET.date_range == 'today' %}selected{% endif %}>Today</option>
+                            <option value="week" {% if request.GET.date_range == 'week' %}selected{% endif %}>This Week</option>
+                            <option value="month" {% if request.GET.date_range == 'month' %}selected{% endif %}>This Month</option>
+                            <option value="quarter" {% if request.GET.date_range == 'quarter' %}selected{% endif %}>This Quarter</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="device" class="form-label">
+                            <i class="bi bi-laptop"></i>
+                            Device
+                        </label>
+                        <select name="device" id="device" class="form-select">
+                            <option value="">All Devices</option>
+                            {% for device in devices %}
+                            <option value="{{ device.pk }}" {% if request.GET.device == device.pk|stringformat:"s" %}selected{% endif %}>
+                                {{ device.name }} ({{ device.device_id }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="maintenance_type" class="form-label">
+                            <i class="bi bi-wrench"></i>
+                            Type
+                        </label>
+                        <select name="maintenance_type" id="maintenance_type" class="form-select">
+                            <option value="">All Types</option>
+                            <option value="PREVENTIVE" {% if request.GET.maintenance_type == 'PREVENTIVE' %}selected{% endif %}>Preventive</option>
+                            <option value="CORRECTIVE" {% if request.GET.maintenance_type == 'CORRECTIVE' %}selected{% endif %}>Corrective</option>
+                            <option value="EMERGENCY" {% if request.GET.maintenance_type == 'EMERGENCY' %}selected{% endif %}>Emergency</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reason" class="form-label">
+                            <i class="bi bi-chat-left-text"></i>
+                            Reason
+                        </label>
+                        <select name="reason" id="reason" class="form-select">
+                            <option value="">All Reasons</option>
+                            <option value="SCHEDULE_CONFLICT" {% if request.GET.reason == 'SCHEDULE_CONFLICT' %}selected{% endif %}>Schedule Conflict</option>
+                            <option value="EQUIPMENT_REPLACED" {% if request.GET.reason == 'EQUIPMENT_REPLACED' %}selected{% endif %}>Equipment Replaced</option>
+                            <option value="BUDGET_CONSTRAINT" {% if request.GET.reason == 'BUDGET_CONSTRAINT' %}selected{% endif %}>Budget Constraint</option>
+                            <option value="VENDOR_ISSUE" {% if request.GET.reason == 'VENDOR_ISSUE' %}selected{% endif %}>Vendor Issue</option>
+                            <option value="OTHER" {% if request.GET.reason == 'OTHER' %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-secondary">
+                            <i class="bi bi-search me-1"></i>Filter
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Cancelled Maintenance List -->
+        <div class="cancelled-grid">
+            <div class="grid-header">
+                <h5 class="grid-title">
+                    <i class="bi bi-x-circle"></i>
+                    Cancelled Maintenance Records
+                </h5>
+                <div class="grid-actions">
+                    <a href="{% url 'maintenance:export_cancelled' %}" class="btn btn-light btn-sm">
+                        <i class="bi bi-download"></i> Export
+                    </a>
+                </div>
+            </div>
+            
+            <div class="grid-content">
+                {% if cancelled_maintenance %}
+                    {% for maintenance in cancelled_maintenance %}
+                    <div class="cancelled-item">
+                        <div class="cancelled-content">
+                            <!-- Cancellation Indicator -->
+                            <div class="cancelled-indicator">
+                                <i class="bi bi-x"></i>
+                            </div>
+
+                            <!-- Maintenance Information -->
+                            <div class="cancelled-info">
+                                <div class="cancelled-title">
+                                    <a href="{% url 'maintenance:detail' maintenance.pk %}">
+                                        {{ maintenance.device.name }}
+                                    </a>
+                                </div>
+
+                                <div class="cancelled-meta">
+                                    <span class="meta-badge maintenance-id">{{ maintenance.maintenance_id }}</span>
+                                    <span class="meta-badge device-badge">{{ maintenance.device.device_id }}</span>
+                                    <span class="meta-badge priority-{{ maintenance.priority|lower }}">
+                                        {{ maintenance.get_priority_display }}
+                                    </span>
+                                    <span class="meta-badge status-cancelled">
+                                        Cancelled
+                                    </span>
+                                    {% if maintenance.maintenance_type %}
+                                    <span class="meta-badge" style="background: rgba(34, 197, 94, 0.1); color: #059669;">
+                                        {{ maintenance.get_maintenance_type_display }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="cancelled-dates">
+                                    <i class="bi bi-calendar me-1"></i>
+                                    Originally Scheduled: {{ maintenance.start_date|date:"M d, Y" }}
+                                    {% if maintenance.vendor %}
+                                        <br><i class="bi bi-building me-1"></i>Vendor: {{ maintenance.vendor.name }}
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Cancellation Information -->
+                            <div class="cancellation-info">
+                                <div class="cancellation-date">
+                                    {{ maintenance.cancelled_date|date:"M d, Y"|default:"N/A" }}
+                                </div>
+                                {% if maintenance.cancellation_reason %}
+                                <div class="cancellation-reason">
+                                    {{ maintenance.get_cancellation_reason_display|default:"No reason provided" }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="cancelled-actions">
+                                <a href="{% url 'maintenance:detail' maintenance.pk %}" 
+                                   class="btn btn-sm btn-outline-primary" 
+                                   title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                
+                                {% if can_edit %}
+                                <a href="{% url 'maintenance:reactivate' maintenance.pk %}" 
+                                   class="btn btn-sm btn-outline-success" 
+                                   title="Reactivate"
+                                   onclick="return confirm('Are you sure you want to reactivate this maintenance?')">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </a>
+                                {% endif %}
+                                
+                                <a href="{% url 'maintenance:report' maintenance.pk %}" 
+                                   class="btn btn-sm btn-outline-secondary" 
+                                   title="Generate Report">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-check-circle"></i>
+                        <h5>No Cancelled Maintenance Found</h5>
+                        <p>No cancelled maintenance records match your current filter criteria.</p>
+                        <a href="{% url 'maintenance:list' %}" class="btn btn-primary">
+                            <i class="bi bi-arrow-left me-1"></i>View All Maintenance
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="pagination-wrapper">
+            <nav aria-label="Cancelled maintenance pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}{% if request.GET.device %}&device={{ request.GET.device }}{% endif %}{% if request.GET.maintenance_type %}&maintenance_type={{ request.GET.maintenance_type }}{% endif %}{% if request.GET.reason %}&reason={{ request.GET.reason }}{% endif %}">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}{% if request.GET.device %}&device={{ request.GET.device }}{% endif %}{% if request.GET.maintenance_type %}&maintenance_type={{ request.GET.maintenance_type }}{% endif %}{% if request.GET.reason %}&reason={{ request.GET.reason }}{% endif %}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}{% if request.GET.device %}&device={{ request.GET.device }}{% endif %}{% if request.GET.maintenance_type %}&maintenance_type={{ request.GET.maintenance_type }}{% endif %}{% if request.GET.reason %}&reason={{ request.GET.reason }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}{% if request.GET.device %}&device={{ request.GET.device }}{% endif %}{% if request.GET.maintenance_type %}&maintenance_type={{ request.GET.maintenance_type }}{% endif %}{% if request.GET.reason %}&reason={{ request.GET.reason }}{% endif %}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}{% if request.GET.device %}&device={{ request.GET.device }}{% endif %}{% if request.GET.maintenance_type %}&maintenance_type={{ request.GET.maintenance_type }}{% endif %}{% if request.GET.reason %}&reason={{ request.GET.reason }}{% endif %}">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

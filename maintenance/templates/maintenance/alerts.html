@@ -1,0 +1,621 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Maintenance Alerts - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Maintenance Alerts Styling - Parliament Design System */
+.alerts-container {
+    background: var(--bg-gradient-primary);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.alerts-header {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.alerts-title {
+    color: var(--parliament-primary);
+    font-weight: 700;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.alerts-subtitle {
+    color: var(--parliament-neutral);
+    margin-bottom: 0;
+}
+
+.alert-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.stat-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    text-align: center;
+    box-shadow: var(--glass-shadow);
+    transition: var(--transition);
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--glass-shadow-hover);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--spacing-md);
+    font-size: 1.5rem;
+    color: white;
+}
+
+.stat-icon.critical {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+}
+
+.stat-icon.warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-icon.info {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.stat-icon.success {
+    background: linear-gradient(135deg, #059669, #047857);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-label {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.alerts-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+}
+
+.alert-section {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--glass-shadow);
+}
+
+.section-header {
+    padding: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.section-header.critical {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(185, 28, 28, 0.1));
+    border-bottom-color: rgba(220, 38, 38, 0.2);
+}
+
+.section-header.warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+    border-bottom-color: rgba(245, 158, 11, 0.2);
+}
+
+.section-header.info {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+    border-bottom-color: rgba(59, 130, 246, 0.2);
+}
+
+.section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.section-count {
+    background: var(--glass-bg-secondary);
+    color: var(--parliament-neutral);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1px solid var(--glass-border);
+}
+
+.alert-list {
+    padding: var(--spacing-lg);
+}
+
+.alert-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--spacing-md);
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--glass-border);
+    transition: var(--transition);
+}
+
+.alert-item:hover {
+    background: rgba(255, 255, 255, 0.8);
+    transform: translateX(4px);
+}
+
+.alert-item:last-child {
+    margin-bottom: 0;
+}
+
+.alert-priority {
+    width: 8px;
+    height: 60px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.priority-critical {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+}
+
+.priority-high {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.priority-medium {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.priority-low {
+    background: linear-gradient(135deg, #059669, #047857);
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-device {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+}
+
+.alert-details {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+    margin-bottom: var(--spacing-xs);
+}
+
+.alert-meta {
+    display: flex;
+    gap: var(--spacing-md);
+    font-size: 0.75rem;
+    color: var(--parliament-neutral);
+}
+
+.alert-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-shrink: 0;
+}
+
+.action-btn {
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: var(--transition);
+    border: none;
+    cursor: pointer;
+}
+
+.btn-view {
+    background: var(--glass-bg-secondary);
+    color: var(--parliament-primary);
+    border: 1px solid rgba(30, 58, 138, 0.2);
+}
+
+.btn-view:hover {
+    background: var(--parliament-primary);
+    color: white;
+}
+
+.btn-complete {
+    background: linear-gradient(135deg, #059669, #047857);
+    color: white;
+    border: 1px solid transparent;
+}
+
+.btn-complete:hover {
+    background: linear-gradient(135deg, #047857, #065f46);
+    transform: translateY(-1px);
+}
+
+.btn-reschedule {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    border: 1px solid transparent;
+}
+
+.btn-reschedule:hover {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    transform: translateY(-1px);
+}
+
+.empty-alerts {
+    text-align: center;
+    padding: var(--spacing-3xl);
+    color: var(--parliament-neutral);
+}
+
+.empty-alerts i {
+    font-size: 4rem;
+    opacity: 0.3;
+    margin-bottom: var(--spacing-lg);
+}
+
+.empty-alerts h3 {
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-md);
+}
+
+.filter-controls {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.filter-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    align-items: end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.filter-label {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    font-size: 0.875rem;
+}
+
+.form-control,
+.form-select {
+    padding: 0.75rem;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+    transition: var(--transition);
+}
+
+.form-control:focus,
+.form-select:focus {
+    outline: none;
+    border-color: var(--parliament-primary);
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+    background: white;
+}
+
+.btn-filter {
+    background: linear-gradient(135deg, var(--parliament-primary), #2563eb);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    transition: var(--transition);
+    height: fit-content;
+}
+
+.btn-filter:hover {
+    background: linear-gradient(135deg, #1e40af, #1d4ed8);
+    transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .alerts-container {
+        padding: 1rem 0;
+    }
+    
+    .alert-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .alert-item {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+    
+    .alert-priority {
+        width: 100%;
+        height: 4px;
+        order: -1;
+    }
+    
+    .alert-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+    
+    .action-btn {
+        flex: 1;
+        text-align: center;
+    }
+    
+    .filter-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        align-items: flex-start;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="alerts-container">
+    <div class="container-fluid">
+        <!-- Alerts Header -->
+        <div class="alerts-header">
+            <h1 class="alerts-title">
+                <i class="bi bi-exclamation-triangle"></i>
+                Maintenance Alerts
+            </h1>
+            <p class="alerts-subtitle">Bangladesh Parliament Secretariat - Critical Maintenance Notifications</p>
+        </div>
+
+        <!-- Alert Statistics -->
+        <div class="alert-stats">
+            <div class="stat-card">
+                <div class="stat-icon critical">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <div class="stat-number">{{ stats.critical }}</div>
+                <div class="stat-label">Critical Alerts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon warning">
+                    <i class="bi bi-clock-fill"></i>
+                </div>
+                <div class="stat-number">{{ stats.overdue }}</div>
+                <div class="stat-label">Overdue Tasks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon info">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="stat-number">{{ stats.upcoming }}</div>
+                <div class="stat-label">Due Soon</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon success">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div class="stat-number">{{ stats.total }}</div>
+                <div class="stat-label">Total Alerts</div>
+            </div>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="filter-controls">
+            <form method="get" class="filter-form">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label class="filter-label">Priority Level</label>
+                        <select name="priority" class="form-select">
+                            <option value="">All Priorities</option>
+                            <option value="critical" {% if request.GET.priority == 'critical' %}selected{% endif %}>Critical</option>
+                            <option value="high" {% if request.GET.priority == 'high' %}selected{% endif %}>High</option>
+                            <option value="medium" {% if request.GET.priority == 'medium' %}selected{% endif %}>Medium</option>
+                            <option value="low" {% if request.GET.priority == 'low' %}selected{% endif %}>Low</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Alert Type</label>
+                        <select name="alert_type" class="form-select">
+                            <option value="">All Types</option>
+                            <option value="overdue" {% if request.GET.alert_type == 'overdue' %}selected{% endif %}>Overdue</option>
+                            <option value="due_soon" {% if request.GET.alert_type == 'due_soon' %}selected{% endif %}>Due Soon</option>
+                            <option value="scheduled" {% if request.GET.alert_type == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Device Category</label>
+                        <select name="category" class="form-select">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <button type="submit" class="btn-filter">
+                            <i class="bi bi-funnel me-1"></i>
+                            Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Alerts Grid -->
+        <div class="alerts-grid">
+            <!-- Critical Alerts -->
+            {% if critical_alerts %}
+            <div class="alert-section">
+                <div class="section-header critical">
+                    <h3 class="section-title">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        Critical Alerts
+                    </h3>
+                    <span class="section-count">{{ critical_alerts|length }}</span>
+                </div>
+                <div class="alert-list">
+                    {% for alert in critical_alerts %}
+                    <div class="alert-item">
+                        <div class="alert-priority priority-critical"></div>
+                        <div class="alert-content">
+                            <div class="alert-device">{{ alert.device.device_id }} - {{ alert.device.name }}</div>
+                            <div class="alert-details">{{ alert.description }}</div>
+                            <div class="alert-meta">
+                                <span><i class="bi bi-calendar me-1"></i>Due: {{ alert.scheduled_date|date:"M d, Y" }}</span>
+                                <span><i class="bi bi-geo-alt me-1"></i>{{ alert.device.location }}</span>
+                                <span><i class="bi bi-person me-1"></i>{{ alert.assigned_to|default:"Unassigned" }}</span>
+                            </div>
+                        </div>
+                        <div class="alert-actions">
+                            <a href="{% url 'maintenance:detail' alert.id %}" class="action-btn btn-view">
+                                <i class="bi bi-eye me-1"></i>View
+                            </a>
+                            <a href="{% url 'maintenance:complete' alert.id %}" class="action-btn btn-complete">
+                                <i class="bi bi-check me-1"></i>Complete
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Overdue Alerts -->
+            {% if overdue_alerts %}
+            <div class="alert-section">
+                <div class="section-header warning">
+                    <h3 class="section-title">
+                        <i class="bi bi-clock-fill"></i>
+                        Overdue Maintenance
+                    </h3>
+                    <span class="section-count">{{ overdue_alerts|length }}</span>
+                </div>
+                <div class="alert-list">
+                    {% for alert in overdue_alerts %}
+                    <div class="alert-item">
+                        <div class="alert-priority priority-high"></div>
+                        <div class="alert-content">
+                            <div class="alert-device">{{ alert.device.device_id }} - {{ alert.device.name }}</div>
+                            <div class="alert-details">{{ alert.description }}</div>
+                            <div class="alert-meta">
+                                <span><i class="bi bi-calendar-x me-1"></i>Overdue: {{ alert.scheduled_date|date:"M d, Y" }}</span>
+                                <span><i class="bi bi-geo-alt me-1"></i>{{ alert.device.location }}</span>
+                                <span><i class="bi bi-person me-1"></i>{{ alert.assigned_to|default:"Unassigned" }}</span>
+                            </div>
+                        </div>
+                        <div class="alert-actions">
+                            <a href="{% url 'maintenance:detail' alert.id %}" class="action-btn btn-view">
+                                <i class="bi bi-eye me-1"></i>View
+                            </a>
+                            <a href="{% url 'maintenance:reschedule' alert.id %}" class="action-btn btn-reschedule">
+                                <i class="bi bi-calendar me-1"></i>Reschedule
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Upcoming Alerts -->
+            {% if upcoming_alerts %}
+            <div class="alert-section">
+                <div class="section-header info">
+                    <h3 class="section-title">
+                        <i class="bi bi-calendar-check"></i>
+                        Due Soon
+                    </h3>
+                    <span class="section-count">{{ upcoming_alerts|length }}</span>
+                </div>
+                <div class="alert-list">
+                    {% for alert in upcoming_alerts %}
+                    <div class="alert-item">
+                        <div class="alert-priority priority-medium"></div>
+                        <div class="alert-content">
+                            <div class="alert-device">{{ alert.device.device_id }} - {{ alert.device.name }}</div>
+                            <div class="alert-details">{{ alert.description }}</div>
+                            <div class="alert-meta">
+                                <span><i class="bi bi-calendar me-1"></i>Due: {{ alert.scheduled_date|date:"M d, Y" }}</span>
+                                <span><i class="bi bi-geo-alt me-1"></i>{{ alert.device.location }}</span>
+                                <span><i class="bi bi-person me-1"></i>{{ alert.assigned_to|default:"Unassigned" }}</span>
+                            </div>
+                        </div>
+                        <div class="alert-actions">
+                            <a href="{% url 'maintenance:detail' alert.id %}" class="action-btn btn-view">
+                                <i class="bi bi-eye me-1"></i>View
+                            </a>
+                            <a href="{% url 'maintenance:complete' alert.id %}" class="action-btn btn-complete">
+                                <i class="bi bi-check me-1"></i>Complete
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Empty State -->
+            {% if not critical_alerts and not overdue_alerts and not upcoming_alerts %}
+            <div class="alert-section">
+                <div class="empty-alerts">
+                    <i class="bi bi-check-circle"></i>
+                    <h3>No Active Alerts</h3>
+                    <p>All maintenance tasks are up to date. Great work!</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

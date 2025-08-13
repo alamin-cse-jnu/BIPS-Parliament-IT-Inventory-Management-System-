@@ -1,0 +1,669 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Device Categories - PIMS Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Device Categories List Styling - Bangladesh Parliament Secretariat PIMS */
+.categories-container {
+    background: linear-gradient(135deg, rgba(239, 246, 255, 0.8) 0%, rgba(243, 244, 246, 0.8) 100%);
+    min-height: calc(100vh - 120px);
+    padding: 2rem 0;
+}
+
+.categories-header {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.08);
+}
+
+.glass-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.08);
+    transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 35px rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.2);
+}
+
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.category-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.category-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--category-color, #6366f1);
+    border-radius: 16px 16px 0 0;
+}
+
+.category-card.desktop::before { --category-color: #3b82f6; }
+.category-card.laptop::before { --category-color: #10b981; }
+.category-card.printer::before { --category-color: #f59e0b; }
+.category-card.network::before { --category-color: #8b5cf6; }
+.category-card.mobile::before { --category-color: #ef4444; }
+.category-card.server::before { --category-color: #06b6d4; }
+
+.category-header {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%);
+    border-radius: 16px 16px 0 0;
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.2);
+    position: relative;
+}
+
+.category-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.category-icon.desktop { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+.category-icon.laptop { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.category-icon.printer { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+.category-icon.network { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+.category-icon.mobile { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+.category-icon.server { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); }
+
+.category-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.category-code {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
+    background: rgba(241, 245, 249, 0.8);
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.category-description {
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-top: 0.75rem;
+}
+
+.category-body {
+    padding: 1.5rem;
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.6) 0%, rgba(241, 245, 249, 0.6) 100%);
+    border-radius: 10px;
+    border: 1px solid rgba(203, 213, 225, 0.2);
+    transition: all 0.2s ease;
+}
+
+.stat-item:hover {
+    background: linear-gradient(135deg, rgba(241, 245, 249, 0.8) 0%, rgba(226, 232, 240, 0.8) 100%);
+    border-color: rgba(148, 163, 184, 0.3);
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.subcategories-preview {
+    margin-bottom: 1.5rem;
+}
+
+.subcategory-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.subcategory-tag {
+    padding: 0.375rem 0.75rem;
+    background: rgba(241, 245, 249, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: #475569;
+    transition: all 0.2s ease;
+}
+
+.subcategory-tag:hover {
+    background: rgba(226, 232, 240, 0.8);
+    border-color: rgba(148, 163, 184, 0.4);
+    color: #334155;
+}
+
+.category-actions {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.6) 0%, rgba(241, 245, 249, 0.6) 100%);
+    border-radius: 0 0 16px 16px;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(203, 213, 225, 0.2);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.btn-action {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 1px solid;
+}
+
+.btn-view {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
+    color: #2563eb;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.btn-view:hover {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border-color: #3b82f6;
+    transform: translateY(-1px);
+}
+
+.btn-edit {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%);
+    color: #d97706;
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.btn-edit:hover {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    border-color: #f59e0b;
+    transform: translateY(-1px);
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
+    color: #dc2626;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.btn-delete:hover {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    border-color: #ef4444;
+    transform: translateY(-1px);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: #d1d5db;
+    margin-bottom: 1.5rem;
+}
+
+.empty-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 1rem;
+}
+
+.empty-description {
+    color: #9ca3af;
+    margin-bottom: 2rem;
+}
+
+.toolbar {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(99, 102, 241, 0.05);
+}
+
+.search-container {
+    position: relative;
+}
+
+.search-input {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 10px;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: #6366f1;
+    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.1);
+    outline: none;
+}
+
+.search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .categories-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .categories-container {
+        padding: 1rem 0;
+    }
+    
+    .categories-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .categories-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .stats-row {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .btn-action {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .subcategory-tags {
+        justify-content: center;
+    }
+}
+
+/* Animation */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.category-card {
+    animation: slideIn 0.5s ease-out;
+}
+
+.category-card:nth-child(1) { animation-delay: 0.1s; }
+.category-card:nth-child(2) { animation-delay: 0.2s; }
+.category-card:nth-child(3) { animation-delay: 0.3s; }
+.category-card:nth-child(4) { animation-delay: 0.4s; }
+.category-card:nth-child(5) { animation-delay: 0.5s; }
+.category-card:nth-child(6) { animation-delay: 0.6s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="categories-container">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="categories-header">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h2 class="text-dark mb-2">
+                        <i class="bi bi-grid-3x3-gap me-2"></i>
+                        Device Categories
+                    </h2>
+                    <p class="text-muted mb-0">
+                        Manage device categories and subcategories for Bangladesh Parliament Secretariat inventory
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                    <a href="{% url 'devices:category_create' %}" class="btn btn-primary me-2">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        Add Category
+                    </a>
+                    <a href="{% url 'devices:subcategory_list' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-list-ul me-1"></i>
+                        Subcategories
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter Toolbar -->
+        <div class="toolbar">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="search-container">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="text" class="form-control search-input" id="categorySearch" 
+                               placeholder="Search categories...">
+                    </div>
+                </div>
+                <div class="col-lg-6 text-lg-end mt-3 mt-lg-0">
+                    <div class="d-flex gap-2 justify-content-lg-end">
+                        <button class="btn btn-outline-secondary" id="sortByName">
+                            <i class="bi bi-sort-alpha-down me-1"></i>
+                            Name
+                        </button>
+                        <button class="btn btn-outline-secondary" id="sortByDevices">
+                            <i class="bi bi-sort-numeric-down me-1"></i>
+                            Devices
+                        </button>
+                        <button class="btn btn-outline-secondary" id="viewToggle">
+                            <i class="bi bi-grid-3x3-gap me-1"></i>
+                            Grid
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories Grid -->
+        {% if categories %}
+            <div class="categories-grid" id="categoriesGrid">
+                {% for category in categories %}
+                <div class="glass-card category-card {{ category.name|lower|slugify }}" data-name="{{ category.name|lower }}" data-devices="{{ category.device_count }}">
+                    <!-- Category Header -->
+                    <div class="category-header">
+                        <div class="category-icon {{ category.name|lower|slugify }}">
+                            {% if category.icon_class %}
+                                <i class="{{ category.icon_class }}"></i>
+                            {% else %}
+                                <i class="bi bi-laptop"></i>
+                            {% endif %}
+                        </div>
+                        <div class="category-title">{{ category.name }}</div>
+                        <div class="category-code">{{ category.code }}</div>
+                        {% if category.description %}
+                            <div class="category-description">{{ category.description|truncatechars:100 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Category Body -->
+                    <div class="category-body">
+                        <!-- Statistics -->
+                        <div class="stats-row">
+                            <div class="stat-item">
+                                <div class="stat-number">{{ category.device_count|default:0 }}</div>
+                                <div class="stat-label">Total Devices</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">{{ category.subcategory_count|default:0 }}</div>
+                                <div class="stat-label">Subcategories</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">
+                                    {% if category.device_count > 0 %}
+                                        {{ category.subcategories.all|length|default:0 }}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                </div>
+                                <div class="stat-label">Active</div>
+                            </div>
+                        </div>
+
+                        <!-- Subcategories Preview -->
+                        {% if category.subcategories.all %}
+                            <div class="subcategories-preview">
+                                <h6 class="text-muted mb-2">
+                                    <i class="bi bi-tags me-1"></i>
+                                    Subcategories
+                                </h6>
+                                <div class="subcategory-tags">
+                                    {% for subcategory in category.subcategories.all|slice:":4" %}
+                                        <span class="subcategory-tag">{{ subcategory.name }}</span>
+                                    {% endfor %}
+                                    {% if category.subcategories.all|length > 4 %}
+                                        <span class="subcategory-tag">+{{ category.subcategories.all|length|add:"-4" }} more</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Category Actions -->
+                    <div class="category-actions">
+                        <div class="action-buttons">
+                            <a href="{% url 'devices:category_detail' category.pk %}" class="btn btn-action btn-view">
+                                <i class="bi bi-eye me-1"></i>
+                                View
+                            </a>
+                            <a href="{% url 'devices:category_edit' category.pk %}" class="btn btn-action btn-edit">
+                                <i class="bi bi-pencil me-1"></i>
+                                Edit
+                            </a>
+                            <a href="{% url 'devices:category_delete' category.pk %}" class="btn btn-action btn-delete">
+                                <i class="bi bi-trash me-1"></i>
+                                Delete
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                </div>
+                <h3 class="empty-title">No Device Categories Found</h3>
+                <p class="empty-description">
+                    Start organizing your IT inventory by creating device categories.
+                    Categories help you group similar devices together.
+                </p>
+                <a href="{% url 'devices:category_create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Create First Category
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Device Categories List JavaScript - Bangladesh Parliament Secretariat PIMS
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('categorySearch');
+    const categoriesGrid = document.getElementById('categoriesGrid');
+    const categoryCards = document.querySelectorAll('.category-card');
+    const sortByName = document.getElementById('sortByName');
+    const sortByDevices = document.getElementById('sortByDevices');
+    const viewToggle = document.getElementById('viewToggle');
+
+    // Search functionality
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            
+            categoryCards.forEach(card => {
+                const categoryName = card.dataset.name;
+                const categoryElement = card.querySelector('.category-title');
+                const categoryDescription = card.querySelector('.category-description');
+                
+                let isVisible = false;
+                
+                if (categoryName.includes(searchTerm)) {
+                    isVisible = true;
+                }
+                
+                if (categoryDescription && categoryDescription.textContent.toLowerCase().includes(searchTerm)) {
+                    isVisible = true;
+                }
+                
+                if (searchTerm === '') {
+                    isVisible = true;
+                }
+                
+                card.style.display = isVisible ? 'block' : 'none';
+            });
+        });
+    }
+
+    // Sort by name
+    if (sortByName) {
+        sortByName.addEventListener('click', function() {
+            const cards = Array.from(categoryCards);
+            cards.sort((a, b) => {
+                const nameA = a.dataset.name;
+                const nameB = b.dataset.name;
+                return nameA.localeCompare(nameB);
+            });
+            
+            // Clear and re-append sorted cards
+            categoriesGrid.innerHTML = '';
+            cards.forEach(card => categoriesGrid.appendChild(card));
+            
+            // Update button states
+            updateSortButtons(this);
+        });
+    }
+
+    // Sort by device count
+    if (sortByDevices) {
+        sortByDevices.addEventListener('click', function() {
+            const cards = Array.from(categoryCards);
+            cards.sort((a, b) => {
+                const devicesA = parseInt(a.dataset.devices) || 0;
+                const devicesB = parseInt(b.dataset.devices) || 0;
+                return devicesB - devicesA; // Descending order
+            });
+            
+            // Clear and re-append sorted cards
+            categoriesGrid.innerHTML = '';
+            cards.forEach(card => categoriesGrid.appendChild(card));
+            
+            // Update button states
+            updateSortButtons(this);
+        });
+    }
+
+    // View toggle (placeholder for future list view)
+    if (viewToggle) {
+        viewToggle.addEventListener('click', function() {
+            // Placeholder for grid/list view toggle
+            console.log('View toggle clicked');
+        });
+    }
+
+    function updateSortButtons(activeButton) {
+        // Remove active class from all sort buttons
+        document.querySelectorAll('#sortByName, #sortByDevices').forEach(btn => {
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-outline-secondary');
+        });
+        
+        // Add active class to clicked button
+        activeButton.classList.remove('btn-outline-secondary');
+        activeButton.classList.add('btn-primary');
+    }
+
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Add hover effects
+    categoryCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-4px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+
+    // Confirm delete actions
+    document.querySelectorAll('.btn-delete').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const categoryName = this.closest('.category-card').querySelector('.category-title').textContent;
+            
+            if (confirm(`Are you sure you want to delete the category "${categoryName}"? This action cannot be undone.`)) {
+                window.location.href = this.href;
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

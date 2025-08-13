@@ -1,0 +1,548 @@
+{% extends 'vendors/base_vendor.html' %}
+{% load static %}
+
+{% block vendor_title %}Inactive Vendors{% endblock %}
+
+{% block vendor_header_title %}
+    <i class="bi bi-x-circle me-3"></i>Inactive Vendors
+{% endblock %}
+
+{% block vendor_header_subtitle %}
+    Deactivated vendors and suspended service providers for Bangladesh Parliament Secretariat
+{% endblock %}
+
+{% block vendor_breadcrumb_items %}
+    <li class="breadcrumb-item">
+        <a href="{% url 'vendors:list' %}">
+            <i class="bi bi-building me-1"></i>
+            Vendors
+        </a>
+    </li>
+    <li class="breadcrumb-item active">Inactive Vendors</li>
+{% endblock %}
+
+{% block vendor_content %}
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number primary">{{ total_count }}</div>
+                <div class="text-muted">Total Inactive</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number warning">
+                    {% for vendor in vendors %}{% if vendor.status == 'SUSPENDED' %}1{% else %}0{% endif %}{% endfor %}
+                </div>
+                <div class="text-muted">Suspended</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number danger" style="color: #dc2626;">
+                    {% for vendor in vendors %}{% if vendor.status == 'BLACKLISTED' %}1{% else %}0{% endif %}{% endfor %}
+                </div>
+                <div class="text-muted">Blacklisted</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number info">
+                    {% for vendor in vendors %}{% if vendor.status == 'INACTIVE' %}1{% else %}0{% endif %}{% endfor %}
+                </div>
+                <div class="text-muted">Deactivated</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter and Actions Bar -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="search-box">
+                                <i class="bi bi-search search-icon"></i>
+                                <input type="text" id="inactiveSearch" class="form-control search-input" 
+                                       placeholder="Search inactive vendors...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="statusFilter" class="form-select">
+                                <option value="">All Status</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="suspended">Suspended</option>
+                                <option value="blacklisted">Blacklisted</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="typeFilter" class="form-select">
+                                <option value="">All Types</option>
+                                <option value="supplier">Suppliers</option>
+                                <option value="manufacturer">Manufacturers</option>
+                                <option value="maintenance">Maintenance</option>
+                                <option value="support">Support</option>
+                                <option value="installation">Installation</option>
+                                <option value="consultant">Consultants</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="btn-group me-2" role="group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="cardViewBtn">
+                            <i class="bi bi-grid-3x3-gap me-1"></i>Cards
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="listViewBtn">
+                            <i class="bi bi-list me-1"></i>List
+                        </button>
+                    </div>
+                    
+                    {% if perms.vendors.view_vendor %}
+                        <div class="btn-group me-2" role="group">
+                            <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" 
+                                    data-bs-toggle="dropdown">
+                                <i class="bi bi-download me-1"></i>Export
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'vendors:export_csv' %}?is_active=False">
+                                        <i class="bi bi-file-earmark-spreadsheet me-2"></i>
+                                        Export CSV
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'vendors:export_contacts' %}?is_active=False">
+                                        <i class="bi bi-person-lines-fill me-2"></i>
+                                        Contact List
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    {% endif %}
+                    
+                    {% if perms.vendors.change_vendor %}
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-success btn-sm dropdown-toggle" 
+                                    data-bs-toggle="dropdown">
+                                <i class="bi bi-arrow-up-circle me-1"></i>Bulk Actions
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="#" onclick="bulkActivate()">
+                                        <i class="bi bi-check-circle me-2"></i>Activate Selected
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inactive Vendors Content -->
+    {% if vendors %}
+        <!-- Card View (Default) -->
+        <div id="cardViewContainer" class="inactive-grid">
+            {% for vendor in vendors %}
+                <div class="vendor-search-item" data-vendor="{{ vendor.name|lower }} {{ vendor.vendor_code|lower }} {{ vendor.contact_person|lower }} {{ vendor.vendor_type|lower }} {{ vendor.status|lower }}">
+                    <div class="card vendor-card">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-1">
+                                    {% if perms.vendors.change_vendor %}
+                                        <div class="text-center">
+                                            <input type="checkbox" class="form-check-input vendor-checkbox" value="{{ vendor.pk }}">
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-1">
+                                    <div class="text-center">
+                                        <div class="vendor-type-icon vendor-type-{{ vendor.vendor_type|lower }}">
+                                            {% if vendor.vendor_type == 'SUPPLIER' %}
+                                                <i class="bi bi-box-seam"></i>
+                                            {% elif vendor.vendor_type == 'MANUFACTURER' %}
+                                                <i class="bi bi-gear-fill"></i>
+                                            {% elif vendor.vendor_type == 'MAINTENANCE' %}
+                                                <i class="bi bi-wrench"></i>
+                                            {% elif vendor.vendor_type == 'SUPPORT' %}
+                                                <i class="bi bi-headset"></i>
+                                            {% elif vendor.vendor_type == 'INSTALLATION' %}
+                                                <i class="bi bi-hammer"></i>
+                                            {% elif vendor.vendor_type == 'CONSULTANT' %}
+                                                <i class="bi bi-person-badge"></i>
+                                            {% else %}
+                                                <i class="bi bi-building"></i>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="d-flex align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h5 class="mb-1">
+                                                <a href="{% url 'vendors:detail' vendor.pk %}" class="text-decoration-none text-dark">
+                                                    {{ vendor.name }}
+                                                </a>
+                                                {% if vendor.is_preferred %}
+                                                    <span class="vendor-badge preferred ms-2">
+                                                        <i class="bi bi-star-fill me-1"></i>Was Preferred
+                                                    </span>
+                                                {% endif %}
+                                            </h5>
+                                            <div class="text-muted small mb-1">
+                                                <strong>{{ vendor.vendor_code }}</strong> • {{ vendor.get_vendor_type_display }}
+                                            </div>
+                                            {% if vendor.trade_name %}
+                                                <div class="text-muted small">
+                                                    <i class="bi bi-tag me-1"></i>T/A: {{ vendor.trade_name }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-3">
+                                    <div class="small">
+                                        {% if vendor.contact_person %}
+                                            <div class="mb-2">
+                                                <i class="bi bi-person me-1"></i>{{ vendor.contact_person }}
+                                                {% if vendor.contact_designation %}
+                                                    <div class="text-muted">{{ vendor.contact_designation }}</div>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if vendor.phone_primary %}
+                                            <div class="mb-1">
+                                                <i class="bi bi-telephone me-1"></i>
+                                                <a href="tel:{{ vendor.phone_primary }}" class="text-decoration-none">
+                                                    {{ vendor.phone_primary }}
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if vendor.email_primary %}
+                                            <div>
+                                                <i class="bi bi-envelope me-1"></i>
+                                                <a href="mailto:{{ vendor.email_primary }}" class="text-decoration-none text-truncate d-inline-block" 
+                                                   style="max-width: 150px;">
+                                                    {{ vendor.email_primary }}
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-2">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <div class="text-center mb-2">
+                                            {% if vendor.status == 'INACTIVE' %}
+                                                <span class="vendor-badge inactive">Inactive</span>
+                                            {% elif vendor.status == 'SUSPENDED' %}
+                                                <span class="vendor-badge suspended">Suspended</span>
+                                            {% elif vendor.status == 'BLACKLISTED' %}
+                                                <span class="vendor-badge blacklisted">Blacklisted</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        {% if vendor.deactivated_date %}
+                                            <div class="small text-muted text-center">
+                                                <i class="bi bi-calendar-x me-1"></i>
+                                                {{ vendor.deactivated_date|date:"M d, Y" }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-1">
+                                    <div class="text-center">
+                                        {% if perms.vendors.change_vendor %}
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" 
+                                                        data-bs-toggle="dropdown">
+                                                    <i class="bi bi-three-dots"></i>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'vendors:activate' vendor.pk %}" 
+                                                           onclick="return confirm('Reactivate this vendor?')">
+                                                            <i class="bi bi-check-circle me-2"></i>Reactivate
+                                                        </a>
+                                                    </li>
+                                                    {% if perms.vendors.view_vendor %}
+                                                        <li>
+                                                            <a class="dropdown-item" href="{% url 'vendors:detail' vendor.pk %}">
+                                                                <i class="bi bi-eye me-2"></i>View Details
+                                                            </a>
+                                                        </li>
+                                                    {% endif %}
+                                                </ul>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- List View (Compact) -->
+        <div id="listViewContainer" class="d-none">
+            <div class="list-group">
+                {% for vendor in vendors %}
+                    <div class="vendor-search-item list-group-item list-group-item-action" 
+                         data-vendor="{{ vendor.name|lower }} {{ vendor.vendor_code|lower }} {{ vendor.contact_person|lower }} {{ vendor.vendor_type|lower }} {{ vendor.status|lower }}">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                {% if perms.vendors.change_vendor %}
+                                    <input type="checkbox" class="form-check-input vendor-checkbox me-3" value="{{ vendor.pk }}">
+                                {% endif %}
+                                <div class="vendor-type-icon vendor-type-{{ vendor.vendor_type|lower }} me-3">
+                                    {% if vendor.vendor_type == 'SUPPLIER' %}
+                                        <i class="bi bi-box-seam"></i>
+                                    {% elif vendor.vendor_type == 'MANUFACTURER' %}
+                                        <i class="bi bi-gear-fill"></i>
+                                    {% elif vendor.vendor_type == 'MAINTENANCE' %}
+                                        <i class="bi bi-wrench"></i>
+                                    {% elif vendor.vendor_type == 'SUPPORT' %}
+                                        <i class="bi bi-headset"></i>
+                                    {% elif vendor.vendor_type == 'INSTALLATION' %}
+                                        <i class="bi bi-hammer"></i>
+                                    {% elif vendor.vendor_type == 'CONSULTANT' %}
+                                        <i class="bi bi-person-badge"></i>
+                                    {% else %}
+                                        <i class="bi bi-building"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">
+                                        <a href="{% url 'vendors:detail' vendor.pk %}" class="text-decoration-none">
+                                            {{ vendor.name }}
+                                        </a>
+                                        {% if vendor.is_preferred %}
+                                            <span class="badge bg-warning text-dark ms-2">Was Preferred</span>
+                                        {% endif %}
+                                    </h6>
+                                    <p class="mb-1 small text-muted">
+                                        {{ vendor.vendor_code }} • {{ vendor.contact_person|default:"No contact" }} • {{ vendor.get_vendor_type_display }}
+                                        {% if vendor.deactivated_date %}
+                                            <br><i class="bi bi-calendar-x me-1"></i>Deactivated: {{ vendor.deactivated_date|date:"M d, Y" }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if vendor.status == 'INACTIVE' %}
+                                        <span class="vendor-badge inactive">Inactive</span>
+                                    {% elif vendor.status == 'SUSPENDED' %}
+                                        <span class="vendor-badge suspended">Suspended</span>
+                                    {% elif vendor.status == 'BLACKLISTED' %}
+                                        <span class="vendor-badge blacklisted">Blacklisted</span>
+                                    {% endif %}
+                                    
+                                    {% if perms.vendors.change_vendor %}
+                                        <a href="{% url 'vendors:activate' vendor.pk %}" class="btn btn-success btn-sm"
+                                           onclick="return confirm('Reactivate this vendor?')">
+                                            <i class="bi bi-check-circle me-1"></i>Reactivate
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+            <nav aria-label="Inactive vendors pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
+            </div>
+            <h4 class="text-muted mb-3">No Inactive Vendors</h4>
+            <p class="text-muted mb-4">
+                All vendors are currently active. This is good news!
+            </p>
+            <a href="{% url 'vendors:list' %}" class="btn btn-vendor-primary">
+                <i class="bi bi-building me-2"></i>View All Vendors
+            </a>
+        </div>
+    {% endif %}
+
+    <style>
+        .inactive-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .search-box {
+            position: relative;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            z-index: 10;
+        }
+        
+        .search-input {
+            padding-left: 2.5rem;
+        }
+        
+        .vendor-search-item.hidden {
+            display: none !important;
+        }
+        
+        .text-truncate {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .vendor-badge.suspended {
+            background-color: #fef3c7;
+            color: #b45309;
+        }
+        
+        .vendor-badge.blacklisted {
+            background-color: #fecaca;
+            color: #dc2626;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Search functionality
+            const searchInput = document.getElementById('inactiveSearch');
+            const statusFilter = document.getElementById('statusFilter');
+            const typeFilter = document.getElementById('typeFilter');
+            const cardViewBtn = document.getElementById('cardViewBtn');
+            const listViewBtn = document.getElementById('listViewBtn');
+            const cardContainer = document.getElementById('cardViewContainer');
+            const listContainer = document.getElementById('listViewContainer');
+            
+            function filterInactiveVendors() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const selectedStatus = statusFilter.value;
+                const selectedType = typeFilter.value;
+                const items = document.querySelectorAll('.vendor-search-item');
+                
+                items.forEach(item => {
+                    const vendorData = item.dataset.vendor;
+                    
+                    let show = true;
+                    
+                    // Search filter
+                    if (searchTerm && !vendorData.includes(searchTerm)) {
+                        show = false;
+                    }
+                    
+                    // Status filter
+                    if (selectedStatus && !vendorData.includes(selectedStatus)) {
+                        show = false;
+                    }
+                    
+                    // Type filter
+                    if (selectedType && !vendorData.includes(selectedType)) {
+                        show = false;
+                    }
+                    
+                    item.style.display = show ? '' : 'none';
+                });
+            }
+            
+            // Attach event listeners
+            searchInput.addEventListener('input', filterInactiveVendors);
+            statusFilter.addEventListener('change', filterInactiveVendors);
+            typeFilter.addEventListener('change', filterInactiveVendors);
+            
+            // View toggle functionality
+            cardViewBtn.addEventListener('click', function() {
+                cardContainer.classList.remove('d-none');
+                listContainer.classList.add('d-none');
+                cardViewBtn.classList.add('active');
+                listViewBtn.classList.remove('active');
+            });
+            
+            listViewBtn.addEventListener('click', function() {
+                cardContainer.classList.add('d-none');
+                listContainer.classList.remove('d-none');
+                listViewBtn.classList.add('active');
+                cardViewBtn.classList.remove('active');
+            });
+        });
+        
+        // Bulk activation function
+        function bulkActivate() {
+            const checkboxes = document.querySelectorAll('.vendor-checkbox:checked');
+            if (checkboxes.length === 0) {
+                alert('Please select vendors to activate.');
+                return;
+            }
+            
+            if (confirm(`Activate ${checkboxes.length} selected vendor(s)?`)) {
+                const vendorIds = Array.from(checkboxes).map(cb => cb.value);
+                // Implement bulk activation logic here
+                console.log('Activating vendors:', vendorIds);
+            }
+        }
+    </script>
+{% endblock %}

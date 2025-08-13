@@ -1,0 +1,650 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Maintenance Management - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Maintenance List Styling - Parliament Design System */
+.maintenance-container {
+    background: var(--bg-gradient-primary);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.page-header {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.page-title {
+    color: var(--parliament-primary);
+    font-weight: 700;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.page-subtitle {
+    color: var(--parliament-neutral);
+    margin-bottom: 0;
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.stat-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    text-align: center;
+    transition: var(--transition);
+    box-shadow: var(--glass-shadow);
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--glass-shadow-hover);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--spacing-md);
+    font-size: 1.25rem;
+    color: white;
+}
+
+.stat-icon.total { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.stat-icon.scheduled { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.stat-icon.in-progress { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.stat-icon.completed { background: linear-gradient(135deg, #10b981, #059669); }
+.stat-icon.overdue { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-label {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.filters-section {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.filters-header {
+    color: var(--parliament-primary);
+    font-weight: 600;
+    margin-bottom: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.maintenance-list {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--glass-shadow);
+}
+
+.list-header {
+    background: linear-gradient(135deg, var(--parliament-primary) 0%, #3b82f6 100%);
+    color: white;
+    padding: var(--spacing-lg);
+    display: flex;
+    justify-content: between;
+    align-items: center;
+}
+
+.list-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.list-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.maintenance-item {
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+    padding: var(--spacing-lg);
+    transition: var(--transition);
+}
+
+.maintenance-item:hover {
+    background: rgba(248, 250, 252, 0.8);
+}
+
+.maintenance-item:last-child {
+    border-bottom: none;
+}
+
+.maintenance-content {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: var(--spacing-lg);
+    align-items: center;
+}
+
+.maintenance-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+}
+
+.maintenance-icon.scheduled { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.maintenance-icon.in-progress { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.maintenance-icon.completed { background: linear-gradient(135deg, #10b981, #059669); }
+.maintenance-icon.overdue { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.maintenance-icon.cancelled { background: linear-gradient(135deg, #6b7280, #4b5563); }
+
+.maintenance-details {
+    flex: 1;
+}
+
+.maintenance-title {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+}
+
+.maintenance-title a {
+    color: var(--parliament-dark);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.maintenance-title a:hover {
+    color: var(--parliament-primary);
+}
+
+.maintenance-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+}
+
+.meta-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.maintenance-id { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.device-badge { background: rgba(16, 185, 129, 0.1); color: #059669; }
+.priority-high { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+.priority-medium { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+.priority-low { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
+
+.maintenance-dates {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+}
+
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.status-scheduled { background: rgba(139, 92, 246, 0.1); color: #7c3aed; border: 1px solid rgba(139, 92, 246, 0.3); }
+.status-in-progress { background: rgba(245, 158, 11, 0.1); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3); }
+.status-completed { background: rgba(16, 185, 129, 0.1); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3); }
+.status-overdue { background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); }
+.status-cancelled { background: rgba(107, 114, 128, 0.1); color: #4b5563; border: 1px solid rgba(107, 114, 128, 0.3); }
+
+.maintenance-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-3xl);
+    color: var(--parliament-neutral);
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-lg);
+    opacity: 0.5;
+}
+
+.pagination-wrapper {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+/* Quick Action Buttons */
+.quick-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-xl);
+}
+
+.quick-action-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .maintenance-content {
+        grid-template-columns: auto 1fr;
+        gap: var(--spacing-md);
+    }
+    
+    .maintenance-actions {
+        grid-column: 1 / -1;
+        margin-top: var(--spacing-md);
+        padding-top: var(--spacing-md);
+        border-top: 1px solid rgba(203, 213, 225, 0.3);
+    }
+    
+    .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .quick-actions {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="maintenance-container">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-wrench-adjustable"></i>
+                Maintenance Management
+            </h1>
+            <p class="page-subtitle">Bangladesh Parliament Secretariat - IT Inventory Management</p>
+        </div>
+
+        <!-- Statistics Overview -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon total">
+                    <i class="bi bi-wrench"></i>
+                </div>
+                <div class="stat-number">{{ total_maintenance }}</div>
+                <div class="stat-label">Total Maintenance</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon scheduled">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="stat-number">{{ stats.scheduled }}</div>
+                <div class="stat-label">Scheduled</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon in-progress">
+                    <i class="bi bi-gear"></i>
+                </div>
+                <div class="stat-number">{{ in_progress_count }}</div>
+                <div class="stat-label">In Progress</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon completed">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-number">{{ completed_count }}</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon overdue">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="stat-number">{{ overdue_count }}</div>
+                <div class="stat-label">Overdue</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="{% url 'maintenance:create' %}" class="btn btn-primary quick-action-btn">
+                <i class="bi bi-plus-circle"></i>
+                New Maintenance
+            </a>
+            <a href="{% url 'maintenance:schedule_create' %}" class="btn btn-success quick-action-btn">
+                <i class="bi bi-calendar-plus"></i>
+                Schedule Maintenance
+            </a>
+            <a href="{% url 'maintenance:overdue' %}" class="btn btn-warning quick-action-btn">
+                <i class="bi bi-exclamation-triangle"></i>
+                Overdue ({{ overdue_count }})
+            </a>
+            <a href="{% url 'maintenance:bulk_export' %}" class="btn btn-outline-secondary quick-action-btn">
+                <i class="bi bi-download"></i>
+                Export Data
+            </a>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="filters-section">
+            <h6 class="filters-header">
+                <i class="bi bi-funnel"></i>
+                Filter & Search
+            </h6>
+            <form method="get" action="" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    {{ filter_form.status }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Priority</label>
+                    {{ filter_form.priority }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Maintenance Type</label>
+                    {{ filter_form.maintenance_type }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Device Category</label>
+                    {{ filter_form.device_category }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Date Range</label>
+                    <div class="row g-2">
+                        <div class="col">
+                            {{ filter_form.start_date_from }}
+                        </div>
+                        <div class="col">
+                            {{ filter_form.start_date_to }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Search</label>
+                    <div class="input-group">
+                        <input type="text" name="search" class="form-control" placeholder="Search maintenance..." value="{{ request.GET.search }}">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search"></i>
+                        </button>
+                        <a href="{% url 'maintenance:list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i>
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Maintenance List -->
+        <div class="maintenance-list">
+            <div class="list-header">
+                <h5 class="list-title">
+                    <i class="bi bi-list-task"></i>
+                    Maintenance Records
+                    {% if maintenance_records %}({{ maintenance_records|length }}){% endif %}
+                </h5>
+                <div class="list-actions">
+                    <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#bulkUpdateModal">
+                        <i class="bi bi-pencil-square"></i>
+                        Bulk Update
+                    </button>
+                </div>
+            </div>
+
+            {% if maintenance_records %}
+                {% for maintenance in maintenance_records %}
+                <div class="maintenance-item">
+                    <div class="maintenance-content">
+                        <!-- Status Icon -->
+                        <div class="maintenance-icon {{ maintenance.status|lower }}">
+                            {% if maintenance.status == 'SCHEDULED' %}
+                                <i class="bi bi-calendar-check"></i>
+                            {% elif maintenance.status == 'IN_PROGRESS' %}
+                                <i class="bi bi-gear"></i>
+                            {% elif maintenance.status == 'COMPLETED' %}
+                                <i class="bi bi-check-circle"></i>
+                            {% elif maintenance.is_overdue %}
+                                <i class="bi bi-exclamation-triangle"></i>
+                            {% else %}
+                                <i class="bi bi-wrench"></i>
+                            {% endif %}
+                        </div>
+
+                        <!-- Maintenance Details -->
+                        <div class="maintenance-details">
+                            <h6 class="maintenance-title">
+                                <a href="{% url 'maintenance:detail' maintenance.pk %}">
+                                    {{ maintenance.title|default:"Maintenance for "|add:maintenance.device.name }}
+                                </a>
+                            </h6>
+                            
+                            <div class="maintenance-meta">
+                                <span class="meta-badge maintenance-id">{{ maintenance.maintenance_id }}</span>
+                                <span class="meta-badge device-badge">{{ maintenance.device.device_id }}</span>
+                                <span class="meta-badge priority-{{ maintenance.priority|lower }}">
+                                    {{ maintenance.get_priority_display }}
+                                </span>
+                                {% if maintenance.maintenance_type %}
+                                <span class="meta-badge" style="background: rgba(34, 197, 94, 0.1); color: #059669;">
+                                    {{ maintenance.get_maintenance_type_display }}
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            <div class="maintenance-dates">
+                                <i class="bi bi-calendar me-1"></i>
+                                Start: {{ maintenance.start_date|date:"M d, Y" }}
+                                {% if maintenance.expected_end_date %}
+                                    | Expected End: {{ maintenance.expected_end_date|date:"M d, Y" }}
+                                {% endif %}
+                                {% if maintenance.actual_end_date %}
+                                    | Completed: {{ maintenance.actual_end_date|date:"M d, Y" }}
+                                {% endif %}
+                                {% if maintenance.vendor %}
+                                    <br><i class="bi bi-building me-1"></i>Vendor: {{ maintenance.vendor.name }}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Status Badge -->
+                        <div class="status-badge status-{{ maintenance.status|lower }}">
+                            {% if maintenance.is_overdue and maintenance.status != 'COMPLETED' %}
+                                Overdue
+                            {% else %}
+                                {{ maintenance.get_status_display }}
+                            {% endif %}
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="maintenance-actions">
+                            <a href="{% url 'maintenance:detail' maintenance.pk %}" 
+                               class="btn btn-sm btn-outline-primary" 
+                               title="View Details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            {% if perms.maintenance.change_maintenance %}
+                            <a href="{% url 'maintenance:edit' maintenance.pk %}" 
+                               class="btn btn-sm btn-outline-warning" 
+                               title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            {% endif %}
+                            {% if perms.maintenance.delete_maintenance %}
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-danger" 
+                                    onclick="confirmDelete('{{ maintenance.maintenance_id }}', '{% url 'maintenance:delete' maintenance.pk %}')"
+                                    title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-wrench"></i>
+                    <h5>No Maintenance Records Found</h5>
+                    <p>No maintenance records match your current filters.</p>
+                    <a href="{% url 'maintenance:create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Create First Maintenance
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="pagination-wrapper">
+            <nav aria-label="Maintenance pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Bulk Update Modal -->
+<div class="modal fade" id="bulkUpdateModal" tabindex="-1" aria-labelledby="bulkUpdateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bulkUpdateModalLabel">
+                    <i class="bi bi-pencil-square me-2"></i>
+                    Bulk Update Maintenance
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'maintenance:bulk_update' %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Select maintenance records from the list and choose an action to apply to all selected items.
+                    </div>
+                    <!-- Bulk update form fields would go here -->
+                    <p>Bulk update functionality will be implemented here.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Apply Updates</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Confirm delete function
+function confirmDelete(maintenanceId, deleteUrl) {
+    if (confirm(`Are you sure you want to delete maintenance ${maintenanceId}? This action cannot be undone.`)) {
+        window.location.href = deleteUrl;
+    }
+}
+
+// Auto-submit filter form on change
+document.addEventListener('DOMContentLoaded', function() {
+    const filterSelects = document.querySelectorAll('.filters-section select');
+    filterSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+});
+</script>
+{% endblock %}

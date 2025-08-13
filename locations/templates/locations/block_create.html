@@ -1,0 +1,571 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'locations:dashboard' %}">Locations</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:block_list' %}">Blocks</a></li>
+    <li class="breadcrumb-item active">{{ form_action }} Block</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="bi bi-plus-circle me-2 text-primary"></i>
+                {{ page_title }}
+            </h1>
+            <p class="text-muted mb-0">Add a new block or section to the system</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'locations:block_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Back to Block List
+            </a>
+            <div class="btn-group">
+                <button class="btn btn-outline-info dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Help
+                </button>
+                <ul class="dropdown-menu">
+                    <li><h6 class="dropdown-header">Block Information</h6></li>
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#helpModal">
+                        <i class="bi bi-question-circle me-2"></i>How to create blocks
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'locations:building_list' %}">
+                        <i class="bi bi-building me-2"></i>Manage Buildings
+                    </a></li>
+                    <li><a class="dropdown-item" href="{% url 'locations:floor_list' %}">
+                        <i class="bi bi-layers me-2"></i>Manage Floors
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-grid me-2"></i>
+                        Block Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="blockForm" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Block Name and Code Fields -->
+                        <div class="row mb-3">
+                            <div class="col-md-7">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    <i class="bi bi-tag me-1"></i>
+                                    Block Name <span class="text-danger">*</span>
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.name.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Enter a descriptive name (e.g., "East Block", "West Wing", "Section A")
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <label for="{{ form.code.id_for_label }}" class="form-label">
+                                    <i class="bi bi-hash me-1"></i>
+                                    Block Code <span class="text-danger">*</span>
+                                </label>
+                                {{ form.code }}
+                                {% if form.code.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.code.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Short identifier (e.g., "EB", "WW", "SA")
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Block Code Examples -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="alert alert-info border-0">
+                                    <h6 class="alert-heading">
+                                        <i class="bi bi-lightbulb me-2"></i>
+                                        Block Code Examples
+                                    </h6>
+                                    <div class="row text-center">
+                                        <div class="col-md-3 mb-2">
+                                            <div class="badge bg-primary fs-6 w-100 py-2">
+                                                <div>EB</div>
+                                                <small>East Block</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <div class="badge bg-success fs-6 w-100 py-2">
+                                                <div>WW</div>
+                                                <small>West Wing</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <div class="badge bg-warning fs-6 w-100 py-2">
+                                                <div>SA</div>
+                                                <small>Section A</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <div class="badge bg-info fs-6 w-100 py-2">
+                                                <div>NB</div>
+                                                <small>North Block</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description Field -->
+                        <div class="mb-4">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                <i class="bi bi-card-text me-1"></i>
+                                Description
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Optional: Describe the purpose of this block or what it contains
+                            </div>
+                        </div>
+
+                        <!-- Status Field -->
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    <i class="bi bi-toggle-on me-1"></i>
+                                    Active Block
+                                </label>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Only active blocks can be used in location assignments
+                                </div>
+                            </div>
+                            {% if form.is_active.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.is_active.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <div class="text-muted">
+                                <small>
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Fields marked with <span class="text-danger">*</span> are required
+                                </small>
+                            </div>
+                            <div class="btn-group">
+                                <a href="{% url 'locations:block_list' %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle me-2"></i>
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary" id="submitBtn">
+                                    <i class="bi bi-save me-2"></i>
+                                    {{ form_action }} Block
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Help Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="helpModalLabel">
+                    <i class="bi bi-question-circle me-2"></i>
+                    Block Creation Guide
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">
+                            <i class="bi bi-1-circle me-2"></i>
+                            Block Naming Guidelines
+                        </h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                Use clear, descriptive names
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                Include directional or functional information
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                Be consistent across the complex
+                            </li>
+                        </ul>
+                        
+                        <h6 class="text-primary mt-4">
+                            <i class="bi bi-2-circle me-2"></i>
+                            Block Code System
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Block Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="badge bg-primary">EB, WB</span></td>
+                                        <td>Directional Blocks</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-success">MW, EW</span></td>
+                                        <td>Wing Designations</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-warning">SA, SB</span></td>
+                                        <td>Section Labels</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-info">A1, A2</span></td>
+                                        <td>Alphanumeric</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary">
+                            <i class="bi bi-3-circle me-2"></i>
+                            Examples
+                        </h6>
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item">
+                                <div class="fw-bold">East Block</div>
+                                <small class="text-muted">Code: EB</small>
+                            </div>
+                            <div class="list-group-item">
+                                <div class="fw-bold">Administrative Wing</div>
+                                <small class="text-muted">Code: AW</small>
+                            </div>
+                            <div class="list-group-item">
+                                <div class="fw-bold">Parliament Section A</div>
+                                <small class="text-muted">Code: PSA</small>
+                            </div>
+                            <div class="list-group-item">
+                                <div class="fw-bold">North Tower</div>
+                                <small class="text-muted">Code: NT</small>
+                            </div>
+                        </div>
+                        
+                        <h6 class="text-primary mt-4">
+                            <i class="bi bi-4-circle me-2"></i>
+                            Tips
+                        </h6>
+                        <div class="alert alert-light">
+                            <ul class="mb-0">
+                                <li>Block codes are automatically converted to uppercase</li>
+                                <li>Keep codes short but meaningful (2-4 characters)</li>
+                                <li>Descriptions help users understand block purposes</li>
+                                <li>Inactive blocks won't appear in location selections</li>
+                                <li>You can always edit block information later</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.alert-info {
+    background-color: rgba(13, 202, 240, 0.1);
+    border-color: rgba(13, 202, 240, 0.2);
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+.card {
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #0d6efd 0%, #0056b3 100%);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #0d6efd 0%, #0056b3 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+    transform: translateY(-1px);
+}
+
+.form-text {
+    font-size: 0.875rem;
+}
+
+.invalid-feedback {
+    font-size: 0.875rem;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #0dcaf0 0%, #0aa2c0 100%);
+}
+
+#submitBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #495057;
+}
+
+.list-group-item {
+    border-left: none;
+    border-right: none;
+}
+
+.list-group-item:first-child {
+    border-top: none;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+.fw-bold {
+    font-weight: 600;
+}
+
+.alert-heading {
+    color: inherit;
+    font-weight: 600;
+}
+
+.border-top {
+    border-top: 1px solid #dee2e6 !important;
+}
+
+#{{ form.code.id_for_label }} {
+    text-transform: uppercase;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.getElementById('blockForm');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Real-time validation feedback
+    const nameField = document.getElementById('{{ form.name.id_for_label }}');
+    const codeField = document.getElementById('{{ form.code.id_for_label }}');
+    
+    // Add validation styling
+    function validateField(field, isValid) {
+        if (isValid) {
+            field.classList.remove('is-invalid');
+            field.classList.add('is-valid');
+        } else {
+            field.classList.remove('is-valid');
+            field.classList.add('is-invalid');
+        }
+    }
+    
+    // Name validation
+    nameField.addEventListener('input', function() {
+        const isValid = this.value.trim().length > 0;
+        validateField(this, isValid);
+    });
+    
+    // Code validation and auto-uppercase
+    codeField.addEventListener('input', function() {
+        // Auto-uppercase
+        const cursorPosition = this.selectionStart;
+        const uppercaseValue = this.value.toUpperCase();
+        this.value = uppercaseValue;
+        this.setSelectionRange(cursorPosition, cursorPosition);
+        
+        // Validation
+        const isValid = this.value.trim().length > 0 && this.value.length <= 10;
+        validateField(this, isValid);
+    });
+    
+    // Auto-generate code from name
+    nameField.addEventListener('input', function() {
+        const name = this.value.trim();
+        
+        if (!codeField.value && name) {
+            let autoCode = '';
+            const words = name.split(' ');
+            
+            if (words.length === 1) {
+                // Single word: take first 2-3 characters
+                autoCode = words[0].substring(0, 3).toUpperCase();
+            } else if (words.length === 2) {
+                // Two words: take first letter of each
+                autoCode = (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+            } else {
+                // Multiple words: take first letter of first 3 words
+                autoCode = words.slice(0, 3).map(word => word.charAt(0)).join('').toUpperCase();
+            }
+            
+            codeField.value = autoCode;
+            validateField(codeField, autoCode.length > 0);
+        }
+    });
+    
+    // Form submission with loading state
+    form.addEventListener('submit', function(e) {
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Creating Block...';
+        submitBtn.disabled = true;
+        
+        // Re-enable if form validation fails
+        setTimeout(function() {
+            if (!form.checkValidity()) {
+                submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>{{ form_action }} Block';
+                submitBtn.disabled = false;
+            }
+        }, 100);
+    });
+    
+    // Auto-focus first field
+    nameField.focus();
+    
+    // Code format suggestions
+    const codeExamples = {
+        'east': 'EB',
+        'west': 'WB',
+        'north': 'NB',
+        'south': 'SB',
+        'main': 'MB',
+        'admin': 'AB',
+        'parliament': 'PB',
+        'secretariat': 'SB',
+        'wing': 'W',
+        'block': 'B',
+        'section': 'S',
+        'tower': 'T'
+    };
+    
+    nameField.addEventListener('blur', function() {
+        const name = this.value.toLowerCase();
+        
+        if (!codeField.value) {
+            for (let keyword in codeExamples) {
+                if (name.includes(keyword)) {
+                    codeField.value = codeExamples[keyword];
+                    validateField(codeField, true);
+                    break;
+                }
+            }
+        }
+    });
+    
+    // Real-time code availability check (placeholder for future implementation)
+    let codeCheckTimeout;
+    codeField.addEventListener('input', function() {
+        const code = this.value.trim();
+        
+        if (code.length >= 2) {
+            clearTimeout(codeCheckTimeout);
+            codeCheckTimeout = setTimeout(() => {
+                // This could check code uniqueness via AJAX
+                // For now, just show it's being checked
+                console.log('Checking code availability:', code);
+            }, 500);
+        }
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + Enter to submit
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            form.submit();
+        }
+        
+        // Escape to cancel
+        if (e.key === 'Escape') {
+            window.location.href = '{% url "locations:block_list" %}';
+        }
+    });
+    
+    // Form field enhancements
+    const allInputs = form.querySelectorAll('input, textarea, select');
+    allInputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            this.parentElement.classList.remove('focused');
+        });
+    });
+});
+</script>
+{% endblock %}

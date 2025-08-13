@@ -1,0 +1,626 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Maintenance - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Maintenance Delete Styling - Parliament Design System */
+.delete-container {
+    background: var(--bg-gradient-primary);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.delete-header {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.delete-title {
+    color: var(--parliament-accent);
+    font-weight: 700;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.delete-subtitle {
+    color: var(--parliament-neutral);
+    margin-bottom: 0;
+}
+
+.maintenance-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--glass-shadow);
+    overflow: hidden;
+    margin-bottom: var(--spacing-xl);
+    transition: var(--transition);
+}
+
+.maintenance-card:hover {
+    box-shadow: var(--glass-shadow-hover);
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--parliament-accent) 0%, #ef4444 100%);
+    color: white;
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.card-header h5 {
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.card-body {
+    padding: var(--spacing-xl);
+}
+
+.maintenance-details {
+    margin-bottom: var(--spacing-xl);
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.detail-item {
+    background: rgba(248, 250, 252, 0.7);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    transition: var(--transition);
+}
+
+.detail-item:hover {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: var(--parliament-primary);
+}
+
+.detail-label {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    font-size: 0.875rem;
+    margin-bottom: var(--spacing-xs);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.detail-value {
+    color: var(--parliament-neutral);
+    font-size: 0.95rem;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.status-scheduled {
+    background: rgba(59, 130, 246, 0.1);
+    color: #1e40af;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.status-in-progress {
+    background: rgba(245, 158, 11, 0.1);
+    color: #92400e;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.status-completed {
+    background: rgba(34, 197, 94, 0.1);
+    color: #166534;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.priority-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.priority-low {
+    background: rgba(34, 197, 94, 0.1);
+    color: #166534;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.priority-medium {
+    background: rgba(245, 158, 11, 0.1);
+    color: #92400e;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.priority-high {
+    background: rgba(239, 68, 68, 0.1);
+    color: #991b1b;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.priority-critical {
+    background: rgba(147, 51, 234, 0.1);
+    color: #6b21a8;
+    border: 1px solid rgba(147, 51, 234, 0.3);
+}
+
+.impact-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.impact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.impact-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: rgba(248, 250, 252, 0.7);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: var(--border-radius);
+}
+
+.impact-icon {
+    font-size: 1.5rem;
+    color: var(--parliament-neutral);
+}
+
+.impact-content h6 {
+    margin: 0 0 var(--spacing-xs) 0;
+    color: var(--parliament-dark);
+    font-weight: 600;
+}
+
+.impact-content p {
+    margin: 0;
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+}
+
+.alert {
+    border: none;
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.alert-warning {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #92400e;
+}
+
+.alert-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #991b1b;
+}
+
+.alert-success {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #166534;
+}
+
+.form-check {
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-check-input {
+    margin-top: 0.125rem;
+}
+
+.form-check-label {
+    color: var(--parliament-dark);
+    font-weight: 500;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-xl);
+    border-top: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.action-buttons {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+.btn {
+    padding: var(--spacing-md) var(--spacing-xl);
+    font-weight: 600;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    border: none;
+    cursor: pointer;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--parliament-accent), #ef4444);
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: linear-gradient(135deg, #b91c1c, #dc2626);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    color: white;
+}
+
+.btn-danger:disabled {
+    background: var(--parliament-neutral);
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 2px solid var(--parliament-neutral);
+    color: var(--parliament-neutral);
+    padding: calc(var(--spacing-md) - 2px) calc(var(--spacing-xl) - 2px);
+}
+
+.btn-secondary:hover {
+    background: var(--parliament-neutral);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-outline-primary {
+    background: transparent;
+    border: 2px solid var(--parliament-primary);
+    color: var(--parliament-primary);
+    padding: calc(var(--spacing-md) - 2px) calc(var(--spacing-xl) - 2px);
+}
+
+.btn-outline-primary:hover {
+    background: var(--parliament-primary);
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .impact-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .action-buttons {
+        width: 100%;
+    }
+    
+    .action-buttons .btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <div class="container-fluid">
+        <!-- Delete Header -->
+        <div class="delete-header">
+            <h1 class="delete-title">
+                <i class="bi bi-trash"></i>
+                Delete Maintenance
+            </h1>
+            <p class="delete-subtitle">
+                Confirm deletion of maintenance record
+            </p>
+        </div>
+
+        <!-- Maintenance Details -->
+        <div class="maintenance-card">
+            <div class="card-header">
+                <h5>
+                    <i class="bi bi-info-circle"></i>
+                    Maintenance Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="maintenance-details">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">
+                                <i class="bi bi-hash"></i>
+                                Maintenance ID
+                            </div>
+                            <div class="detail-value">{{ object.maintenance_id }}</div>
+                        </div>
+
+                        <div class="detail-item">
+                            <div class="detail-label">
+                                <i class="bi bi-laptop"></i>
+                                Device
+                            </div>
+                            <div class="detail-value">
+                                {{ object.device.device_id }} - {{ object.device.subcategory.name }}
+                            </div>
+                        </div>
+
+                        <div class="detail-item">
+                            <div class="detail-label">
+                                <i class="bi bi-flag"></i>
+                                Status
+                            </div>
+                            <div class="detail-value">
+                                <span class="status-badge status-{{ object.status|lower }}">
+                                    {% if object.status == 'SCHEDULED' %}
+                                        <i class="bi bi-calendar-check"></i>
+                                    {% elif object.status == 'IN_PROGRESS' %}
+                                        <i class="bi bi-gear"></i>
+                                    {% elif object.status == 'COMPLETED' %}
+                                        <i class="bi bi-check-circle"></i>
+                                    {% elif object.status == 'CANCELLED' %}
+                                        <i class="bi bi-x-circle"></i>
+                                    {% endif %}
+                                    {{ object.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="detail-item">
+                            <div class="detail-label">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                Priority
+                            </div>
+                            <div class="detail-value">
+                                <span class="priority-badge priority-{{ object.priority|lower }}">
+                                    {% if object.priority == 'LOW' %}
+                                        <i class="bi bi-arrow-down"></i>
+                                    {% elif object.priority == 'MEDIUM' %}
+                                        <i class="bi bi-dash"></i>
+                                    {% elif object.priority == 'HIGH' %}
+                                        <i class="bi bi-arrow-up"></i>
+                                    {% elif object.priority == 'CRITICAL' %}
+                                        <i class="bi bi-exclamation-triangle-fill"></i>
+                                    {% endif %}
+                                    {{ object.get_priority_display }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="detail-item">
+                            <div class="detail-label">
+                                <i class="bi bi-calendar-event"></i>
+                                Scheduled Date
+                            </div>
+                            <div class="detail-value">{{ object.scheduled_date|date:"F d, Y" }}</div>
+                        </div>
+
+                        <div class="detail-item">
+                            <div class="detail-label">
+                                <i class="bi bi-person"></i>
+                                Created By
+                            </div>
+                            <div class="detail-value">{{ object.created_by.get_full_name|default:object.created_by.username }}</div>
+                        </div>
+
+                        {% if object.maintenance_type %}
+                        <div class="detail-item">
+                            <div class="detail-label">
+                                <i class="bi bi-tag"></i>
+                                Type
+                            </div>
+                            <div class="detail-value">{{ object.get_maintenance_type_display }}</div>
+                        </div>
+                        {% endif %}
+
+                        {% if object.estimated_cost %}
+                        <div class="detail-item">
+                            <div class="detail-label">
+                                <i class="bi bi-currency-dollar"></i>
+                                Estimated Cost
+                            </div>
+                            <div class="detail-value">৳{{ object.estimated_cost|floatformat:2 }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if object.description %}
+                    <div class="detail-item mt-3">
+                        <div class="detail-label">
+                            <i class="bi bi-card-text"></i>
+                            Description
+                        </div>
+                        <div class="detail-value">{{ object.description }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Impact Assessment -->
+                <div class="impact-section">
+                    <h6 class="mb-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Deletion Impact
+                    </h6>
+                    
+                    <div class="impact-grid">
+                        <div class="impact-item">
+                            <i class="bi bi-database impact-icon"></i>
+                            <div class="impact-content">
+                                <h6>Data Removal</h6>
+                                <p>Maintenance record will be permanently deleted</p>
+                            </div>
+                        </div>
+                        
+                        <div class="impact-item">
+                            <i class="bi bi-laptop impact-icon"></i>
+                            <div class="impact-content">
+                                <h6>Device Status</h6>
+                                <p>Device will remain in current status</p>
+                            </div>
+                        </div>
+                        
+                        <div class="impact-item">
+                            <i class="bi bi-file-text impact-icon"></i>
+                            <div class="impact-content">
+                                <h6>Reports</h6>
+                                <p>Will be excluded from future reports</p>
+                            </div>
+                        </div>
+                        
+                        <div class="impact-item">
+                            <i class="bi bi-clock-history impact-icon"></i>
+                            <div class="impact-content">
+                                <h6>History</h6>
+                                <p>Maintenance history will be lost</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if object.status == 'IN_PROGRESS' %}
+                        <div class="alert alert-danger">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-exclamation-triangle me-2 mt-1"></i>
+                                <div>
+                                    <strong>Warning:</strong> This maintenance is currently in progress. Deleting it may cause data inconsistency. Consider marking it as cancelled instead.
+                                </div>
+                            </div>
+                        </div>
+                    {% elif object.status == 'COMPLETED' %}
+                        <div class="alert alert-warning">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-info-circle me-2 mt-1"></i>
+                                <div>
+                                    <strong>Notice:</strong> This completed maintenance record may be important for audit trails and device history.
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-check-circle me-2"></i>
+                                <div>
+                                    <strong>Safe to delete:</strong> This maintenance record can be safely removed.
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Deletion Form -->
+                <form method="post" id="deleteForm">
+                    {% csrf_token %}
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                        <label class="form-check-label" for="confirmDelete">
+                            I understand that this action cannot be undone and confirm that I want to permanently delete this maintenance record.
+                        </label>
+                    </div>
+
+                    {% if object.status == 'IN_PROGRESS' %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="confirmInProgress" required>
+                        <label class="form-check-label" for="confirmInProgress">
+                            I acknowledge that this maintenance is in progress and understand the risks of deleting it.
+                        </label>
+                    </div>
+                    {% endif %}
+
+                    <div class="form-actions">
+                        <div class="action-buttons">
+                            <a href="{% url 'maintenance:detail' object.pk %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i>
+                                Cancel
+                            </a>
+                            <a href="{% url 'maintenance:list' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-list"></i>
+                                Back to List
+                            </a>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-danger" id="deleteButton" disabled>
+                            <i class="bi bi-trash"></i>
+                            Delete Maintenance
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteButton = document.getElementById('deleteButton');
+    const confirmDelete = document.getElementById('confirmDelete');
+    const confirmInProgress = document.getElementById('confirmInProgress');
+    
+    function updateDeleteButton() {
+        let allChecked = confirmDelete.checked;
+        
+        if (confirmInProgress) {
+            allChecked = allChecked && confirmInProgress.checked;
+        }
+        
+        deleteButton.disabled = !allChecked;
+    }
+    
+    confirmDelete.addEventListener('change', updateDeleteButton);
+    if (confirmInProgress) {
+        confirmInProgress.addEventListener('change', updateDeleteButton);
+    }
+    
+    // Confirm deletion on form submit
+    document.getElementById('deleteForm').addEventListener('submit', function(e) {
+        if (!confirm('Are you absolutely sure you want to delete this maintenance record? This action cannot be undone.')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

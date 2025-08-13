@@ -1,0 +1,1294 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ assignment.assignment_id }} - Assignment Details - Bangladesh Parliament Secretariat PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'assignments:list' %}">Assignments</a></li>
+    <li class="breadcrumb-item active">{{ assignment.assignment_id }}</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Assignment Detail Styling - Bangladesh Parliament Secretariat PIMS */
+.detail-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.detail-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.detail-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--status-gradient);
+    border-radius: 16px 16px 0 0;
+}
+
+.detail-header.assigned::before { --status-gradient: linear-gradient(135deg, #10b981, #059669); }
+.detail-header.returned::before { --status-gradient: linear-gradient(135deg, #6b7280, #4b5563); }
+.detail-header.overdue::before { --status-gradient: linear-gradient(135deg, #ef4444, #dc2626); }
+.detail-header.cancelled::before { --status-gradient: linear-gradient(135deg, #f59e0b, #d97706); }
+
+.assignment-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.assignment-subtitle {
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+}
+
+.assignment-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+}
+
+.detail-actions {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    display: flex;
+    gap: 0.75rem;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.main-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.sidebar-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.detail-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.detail-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 48px rgba(30, 58, 138, 0.15);
+}
+
+.card-header-glass {
+    background: rgba(248, 250, 252, 0.8);
+    backdrop-filter: blur(5px);
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.card-body-glass {
+    padding: 1.5rem;
+}
+
+.info-grid {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: start;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(248, 250, 252, 0.5);
+    border: 1px solid rgba(203, 213, 225, 0.2);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.info-item:hover {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: #3b82f6;
+}
+
+.info-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.info-icon.device { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.info-icon.user { background: linear-gradient(135deg, #10b981, #059669); }
+.info-icon.location { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.info-icon.date { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.info-icon.purpose { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+.info-icon.condition { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+.info-content {
+    flex: 1;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.info-value {
+    color: #1f2937;
+    font-size: 1rem;
+}
+
+.info-value strong {
+    color: #1e3a8a;
+}
+
+.info-subtext {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-assigned {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-color: #10b981;
+}
+
+.status-returned {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+    border-color: #6b7280;
+}
+
+.status-overdue {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    border-color: #ef4444;
+}
+
+.status-cancelled {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    border-color: #f59e0b;
+}
+
+/* Badge Components */
+.badge-primary {
+    background: rgba(30, 58, 138, 0.1);
+    color: #1e3a8a;
+    padding: 0.375rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.badge-secondary {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+    padding: 0.375rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
+.badge-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    padding: 0.375rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
+.badge-warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    padding: 0.375rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
+.badge-danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    padding: 0.375rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
+.timeline-container {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.timeline-item:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: #3b82f6;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -2.125rem;
+    top: 1rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--timeline-color, #3b82f6);
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-item.assigned::before { --timeline-color: #10b981; }
+.timeline-item.returned::before { --timeline-color: #6b7280; }
+.timeline-item.overdue::before { --timeline-color: #ef4444; }
+
+.timeline-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 1rem;
+}
+
+.timeline-text {
+    flex: 1;
+}
+
+.timeline-title {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.timeline-subtitle {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.timeline-date {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+.qr-preview {
+    text-align: center;
+    padding: 1rem;
+}
+
+.qr-image {
+    max-width: 200px;
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.device-preview {
+    text-align: center;
+    padding: 1rem;
+}
+
+.device-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 2rem;
+    color: white;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.device-name {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.device-id {
+    font-family: monospace;
+    background: rgba(30, 58, 138, 0.1);
+    color: #1e3a8a;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+.action-timeline {
+    margin-top: 2rem;
+}
+
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.alert-warning-custom {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 12px;
+    padding: 1rem;
+    color: #92400e;
+    margin-bottom: 1.5rem;
+}
+
+.alert-danger-custom {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 12px;
+    padding: 1rem;
+    color: #991b1b;
+    margin-bottom: 1.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 991.98px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .detail-actions {
+        position: static;
+        margin-top: 1.5rem;
+        justify-content: center;
+    }
+    
+    .timeline-container {
+        padding-left: 1rem;
+    }
+    
+    .timeline-container::before {
+        left: 0.25rem;
+    }
+    
+    .timeline-item::before {
+        left: -1.375rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .assignment-meta {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .timeline-content {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="detail-header {{ assignment.status|lower }}">
+            <div class="row">
+                <div class="col-lg-8">
+                    <h1 class="assignment-title">
+                        <i class="bi bi-clipboard-check"></i>
+                        Assignment {{ assignment.assignment_id }}
+                    </h1>
+                    <p class="assignment-subtitle">
+                        Detailed information about device assignment for Bangladesh Parliament Secretariat
+                    </p>
+                    <div class="assignment-meta">
+                        <span class="status-badge status-{{ assignment.status|lower }}">
+                            {% if assignment.status == 'ASSIGNED' %}
+                                <i class="bi bi-check-circle"></i>
+                            {% elif assignment.status == 'RETURNED' %}
+                                <i class="bi bi-arrow-return-left"></i>
+                            {% elif assignment.status == 'OVERDUE' %}
+                                <i class="bi bi-exclamation-triangle"></i>
+                            {% else %}
+                                <i class="bi bi-x-circle"></i>
+                            {% endif %}
+                            {{ assignment.get_status_display }}
+                        </span>
+                        
+                        <span class="badge-primary">{{ assignment.get_assignment_type_display }}</span>
+                        
+                        {% if assignment.status == 'ASSIGNED' and assignment.expected_return_date %}
+                            {% if assignment.expected_return_date < today %}
+                                <span class="badge-danger">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    {{ assignment.days_overdue }} days overdue
+                                </span>
+                            {% else %}
+                                <span class="badge-success">
+                                    <i class="bi bi-calendar-check me-1"></i>
+                                    {{ assignment.days_assigned }} days assigned
+                                </span>
+                            {% endif %}
+                        {% elif assignment.status == 'RETURNED' %}
+                            <span class="badge-secondary">
+                                <i class="bi bi-clock me-1"></i>
+                                {{ assignment.days_assigned }} days duration
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="detail-actions">
+                        {% if can_edit %}
+                            <a href="{% url 'assignments:edit' assignment.pk %}" class="btn btn-warning">
+                                <i class="bi bi-pencil me-2"></i>Edit
+                            </a>
+                        {% endif %}
+                        
+                        {% if can_return %}
+                            <a href="{% url 'assignments:return' assignment.pk %}" class="btn btn-success">
+                                <i class="bi bi-arrow-return-left me-2"></i>Return
+                            </a>
+                        {% endif %}
+                        
+                        {% if can_transfer %}
+                            <a href="{% url 'assignments:transfer' assignment.pk %}" class="btn btn-info">
+                                <i class="bi bi-arrow-right-circle me-2"></i>Transfer
+                            </a>
+                        {% endif %}
+                        
+                        <div class="btn-group">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots me-2"></i>More
+                            </button>
+                            <ul class="dropdown-menu">
+                                {% if qr_code %}
+                                    <li><a class="dropdown-item" href="{% url 'assignments:qr_code' assignment.pk %}">
+                                        <i class="bi bi-qr-code me-2"></i>View QR Code
+                                    </a></li>
+                                {% endif %}
+                                <li><a class="dropdown-item" href="#" onclick="window.print()">
+                                    <i class="bi bi-printer me-2"></i>Print Details
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'assignments:list' %}">
+                                    <i class="bi bi-arrow-left me-2"></i>Back to List
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Messages -->
+        {% if assignment.status == 'ASSIGNED' and assignment.expected_return_date < today %}
+            <div class="alert-danger-custom">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+                    <div>
+                        <strong>Assignment Overdue!</strong><br>
+                        This assignment was due on {{ assignment.expected_return_date }} and is now {{ assignment.days_overdue }} days overdue.
+                    </div>
+                </div>
+            </div>
+        {% elif assignment.status == 'ASSIGNED' and assignment.expected_return_date %}
+            {% if assignment.expected_return_date|timeuntil < "7 days" %}
+                <div class="alert-warning-custom">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-exclamation-circle-fill me-3 fs-4"></i>
+                        <div>
+                            <strong>Return Due Soon!</strong><br>
+                            This assignment is due for return on {{ assignment.expected_return_date }}.
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endif %}
+
+        <!-- Main Content Grid -->
+        <div class="content-grid">
+            <!-- Main Details -->
+            <div class="main-details">
+                <!-- Assignment Information -->
+                <div class="detail-card">
+                    <div class="card-header-glass">
+                        <h5 class="card-title">
+                            <i class="bi bi-info-circle"></i>
+                            Assignment Information
+                        </h5>
+                    </div>
+                    <div class="card-body-glass">
+                        <div class="info-grid">
+                            <!-- Device Information -->
+                            <div class="info-item">
+                                <div class="info-icon device">
+                                    <i class="bi bi-laptop"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Device</div>
+                                    {% if assignment.device %}
+                                        <div class="info-value">
+                                            <strong>{{ assignment.device.name }}</strong>
+                                        </div>
+                                        <div class="info-subtext">
+                                            ID: {{ assignment.device.device_id }} | 
+                                            {{ assignment.device.subcategory.category.name }} - {{ assignment.device.subcategory.name }}
+                                        </div>
+                                    {% else %}
+                                        <div class="info-value text-muted">No device assigned</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Employee Information -->
+                            <div class="info-item">
+                                <div class="info-icon user">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Assigned To</div>
+                                    {% if assignment.assigned_to %}
+                                        <div class="info-value">
+                                            <strong>{{ assignment.assigned_to.get_full_name }}</strong>
+                                        </div>
+                                        <div class="info-subtext">
+                                            {{ assignment.assigned_to.email }}
+                                            {% if assignment.assigned_to.employee_id %}
+                                                | ID: {{ assignment.assigned_to.employee_id }}
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <div class="info-value text-muted">No employee assigned</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Location Information -->
+                            <div class="info-item">
+                                <div class="info-icon location">
+                                    <i class="bi bi-geo-alt"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Location</div>
+                                    {% if assignment.assigned_location %}
+                                        <div class="info-value">
+                                            <strong>{{ assignment.assigned_location.name }}</strong>
+                                        </div>
+                                        <div class="info-subtext">{{ assignment.assigned_location.get_full_address }}</div>
+                                    {% else %}
+                                        <div class="info-value text-muted">Location not specified</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Assignment Date -->
+                            <div class="info-item">
+                                <div class="info-icon date">
+                                    <i class="bi bi-calendar"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Assignment Date</div>
+                                    <div class="info-value">
+                                        <strong>{{ assignment.assigned_date }}</strong>
+                                    </div>
+                                    <div class="info-subtext">
+                                        Assigned by {{ assignment.assigned_by.get_full_name }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Return Date -->
+                            {% if assignment.expected_return_date %}
+                                <div class="info-item">
+                                    <div class="info-icon date">
+                                        <i class="bi bi-calendar-event"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <div class="info-label">Expected Return Date</div>
+                                        <div class="info-value">
+                                            <strong>{{ assignment.expected_return_date }}</strong>
+                                        </div>
+                                        {% if assignment.actual_return_date %}
+                                            <div class="info-subtext">
+                                                Actually returned: {{ assignment.actual_return_date }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <!-- Purpose -->
+                            {% if assignment.purpose %}
+                                <div class="info-item">
+                                    <div class="info-icon purpose">
+                                        <i class="bi bi-journal-text"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <div class="info-label">Purpose</div>
+                                        <div class="info-value">{{ assignment.purpose }}</div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assignment Timeline -->
+                <div class="detail-card">
+                    <div class="card-header-glass">
+                        <h5 class="card-title">
+                            <i class="bi bi-clock-history"></i>
+                            Assignment Timeline
+                        </h5>
+                    </div>
+                    <div class="card-body-glass">
+                        <div class="timeline-container">
+                            <!-- Assignment Created -->
+                            <div class="timeline-item assigned">
+                                <div class="timeline-content">
+                                    <div class="timeline-text">
+                                        <div class="timeline-title">Assignment Created</div>
+                                        <div class="timeline-subtitle">
+                                            Device assigned to {{ assignment.assigned_to.get_full_name|default:"employee" }}
+                                        </div>
+                                    </div>
+                                    <div class="timeline-date">{{ assignment.assigned_date }}</div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Timeline Items -->
+                            {% if assignment.condition_at_assignment %}
+                                <div class="timeline-item">
+                                    <div class="timeline-content">
+                                        <div class="timeline-text">
+                                            <div class="timeline-title">Condition Noted</div>
+                                            <div class="timeline-subtitle">
+                                                Device condition: {{ assignment.get_condition_at_assignment_display }}
+                                            </div>
+                                        </div>
+                                        <div class="timeline-date">{{ assignment.assigned_date }}</div>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <!-- Return Status -->
+                            {% if assignment.status == 'RETURNED' %}
+                                <div class="timeline-item returned">
+                                    <div class="timeline-content">
+                                        <div class="timeline-text">
+                                            <div class="timeline-title">Assignment Returned</div>
+                                            <div class="timeline-subtitle">
+                                                Device successfully returned
+                                                {% if assignment.condition_at_return %}
+                                                    in {{ assignment.get_condition_at_return_display|lower }} condition
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="timeline-date">{{ assignment.actual_return_date }}</div>
+                                    </div>
+                                </div>
+                            {% elif assignment.status == 'OVERDUE' %}
+                                <div class="timeline-item overdue">
+                                    <div class="timeline-content">
+                                        <div class="timeline-text">
+                                            <div class="timeline-title">Assignment Overdue</div>
+                                            <div class="timeline-subtitle">
+                                                Assignment became overdue ({{ assignment.days_overdue }} days)
+                                            </div>
+                                        </div>
+                                        <div class="timeline-date">{{ assignment.expected_return_date }}</div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {% if assignment.assignment_notes %}
+                    <!-- Notes -->
+                    <div class="detail-card">
+                        <div class="card-header-glass">
+                            <h5 class="card-title">
+                                <i class="bi bi-sticky"></i>
+                                Notes
+                            </h5>
+                        </div>
+                        <div class="card-body-glass">
+                            <div class="notes-content">
+                                {{ assignment.assignment_notes|linebreaks }}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar-info">
+                <!-- QR Code -->
+                {% if qr_code %}
+                    <div class="detail-card">
+                        <div class="card-header-glass">
+                            <h5 class="card-title">
+                                <i class="bi bi-qr-code"></i>
+                                QR Code
+                            </h5>
+                        </div>
+                        <div class="card-body-glass">
+                            <div class="qr-preview">
+                                <img src="{{ qr_code.qr_code.url }}" alt="Assignment QR Code" class="qr-image">
+                                <div class="action-buttons">
+                                    <a href="{% url 'assignments:qr_code' assignment.pk %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-eye me-1"></i>View
+                                    </a>
+                                    <a href="{% url 'assignments:qr_download' qr_code.pk %}" class="btn btn-outline-success btn-sm">
+                                        <i class="bi bi-download me-1"></i>Download
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Device Quick Info -->
+                {% if assignment.device %}
+                    <div class="detail-card">
+                        <div class="card-header-glass">
+                            <h5 class="card-title">
+                                <i class="bi bi-laptop"></i>
+                                Device Info
+                        </h5>
+                    </div>
+                    <div class="card-body-glass">
+                        <div class="device-preview">
+                            <div class="device-image">
+                                <i class="bi bi-{{ assignment.device.subcategory.category.icon_class|default:'laptop' }}"></i>
+                            </div>
+                            <div class="device-name">{{ assignment.device.name }}</div>
+                            <div class="device-id">{{ assignment.device.device_id }}</div>
+                            
+                            <div class="device-details mt-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted">Status:</span>
+                                    <span class="badge-{{ assignment.device.status|lower }}">
+                                        {{ assignment.device.get_status_display }}
+                                    </span>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted">Category:</span>
+                                    <span class="text-dark">{{ assignment.device.subcategory.category.name }}</span>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted">Brand:</span>
+                                    <span class="text-dark">{{ assignment.device.brand }}</span>
+                                </div>
+                                
+                                {% if assignment.device.model %}
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted">Model:</span>
+                                    <span class="text-dark">{{ assignment.device.model }}</span>
+                                </div>
+                                {% endif %}
+                                
+                                {% if assignment.device.serial_number %}
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted">Serial:</span>
+                                    <span class="text-dark font-monospace">{{ assignment.device.serial_number }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="action-buttons">
+                                <a href="{% url 'devices:detail' assignment.device.pk %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-eye me-1"></i>View Device
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Assignment Type & Priority -->
+                {% if assignment.assignment_type or assignment.priority %}
+                    <div class="detail-card">
+                        <div class="card-header-glass">
+                            <h5 class="card-title">
+                                <i class="bi bi-flag"></i>
+                                Assignment Details
+                            </h5>
+                        </div>
+                        <div class="card-body-glass">
+                            <div class="assignment-meta-grid">
+                                {% if assignment.assignment_type %}
+                                    <div class="meta-item">
+                                        <div class="meta-label">Type</div>
+                                        <div class="meta-value">
+                                            <span class="badge-primary">
+                                                {{ assignment.get_assignment_type_display }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if assignment.priority %}
+                                    <div class="meta-item">
+                                        <div class="meta-label">Priority</div>
+                                        <div class="meta-value">
+                                            <span class="badge-{{ assignment.priority|lower }}">
+                                                {{ assignment.get_priority_display }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if assignment.purpose %}
+                                    <div class="meta-item purpose-full">
+                                        <div class="meta-label">Purpose</div>
+                                        <div class="meta-value purpose-text">
+                                            {{ assignment.purpose }}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Location Quick Info -->
+                {% if assignment.assigned_location %}
+                    <div class="detail-card">
+                        <div class="card-header-glass">
+                            <h5 class="card-title">
+                                <i class="bi bi-geo-alt"></i>
+                                Location Info
+                            </h5>
+                        </div>
+                        <div class="card-body-glass">
+                            <div class="location-preview">
+                                <div class="location-name">{{ assignment.assigned_location.name }}</div>
+                                <div class="location-address">
+                                    {{ assignment.assigned_location.get_full_address }}
+                                </div>
+                                
+                                {% if assignment.assigned_location.building %}
+                                    <div class="location-details mt-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="text-muted">Building:</span>
+                                            <span class="text-dark">{{ assignment.assigned_location.building.name }}</span>
+                                        </div>
+                                        
+                                        {% if assignment.assigned_location.floor %}
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="text-muted">Floor:</span>
+                                                <span class="text-dark">{{ assignment.assigned_location.floor.name }}</span>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if assignment.assigned_location.room %}
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="text-muted">Room:</span>
+                                                <span class="text-dark">{{ assignment.assigned_location.room.name }}</span>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if assignment.assigned_location.office %}
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="text-muted">Office:</span>
+                                                <span class="text-dark">{{ assignment.assigned_location.office.name }}</span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="action-buttons">
+                                    <a href="{% url 'locations:detail' assignment.assigned_location.pk %}" class="btn btn-outline-success btn-sm">
+                                        <i class="bi bi-geo me-1"></i>View Location
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Employee Quick Info -->
+                {% if assignment.assigned_to %}
+                    <div class="detail-card">
+                        <div class="card-header-glass">
+                            <h5 class="card-title">
+                                <i class="bi bi-person"></i>
+                                Employee Info
+                            </h5>
+                        </div>
+                        <div class="card-body-glass">
+                            <div class="employee-preview">
+                                <div class="employee-avatar">
+                                    {% if assignment.assigned_to.profile_image %}
+                                        <img src="{{ assignment.assigned_to.profile_image.url }}" alt="{{ assignment.assigned_to.get_full_name }}" class="avatar-image">
+                                    {% else %}
+                                        <i class="bi bi-person-circle"></i>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="employee-name">{{ assignment.assigned_to.get_full_name }}</div>
+                                
+                                {% if assignment.assigned_to.employee_id %}
+                                    <div class="employee-id">ID: {{ assignment.assigned_to.employee_id }}</div>
+                                {% endif %}
+                                
+                                <div class="employee-details mt-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-muted">Email:</span>
+                                        <span class="text-dark">{{ assignment.assigned_to.email }}</span>
+                                    </div>
+                                    
+                                    {% if assignment.assigned_to.department %}
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="text-muted">Department:</span>
+                                            <span class="text-dark">{{ assignment.assigned_to.department }}</span>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    {% if assignment.assigned_to.designation %}
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="text-muted">Designation:</span>
+                                            <span class="text-dark">{{ assignment.assigned_to.designation }}</span>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    {% if assignment.assigned_to.phone %}
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">Phone:</span>
+                                            <span class="text-dark">{{ assignment.assigned_to.phone }}</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="action-buttons">
+                                    <a href="{% url 'users:detail' assignment.assigned_to.pk %}" class="btn btn-outline-info btn-sm">
+                                        <i class="bi bi-person me-1"></i>View Profile
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Assignment Statistics -->
+                <div class="detail-card">
+                    <div class="card-header-glass">
+                        <h5 class="card-title">
+                            <i class="bi bi-graph-up"></i>
+                            Assignment Statistics
+                        </h5>
+                    </div>
+                    <div class="card-body-glass">
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="bi bi-calendar-check"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-label">Days Active</div>
+                                    <div class="stat-value">{{ assignment.days_assigned }}</div>
+                                </div>
+                            </div>
+                            
+                            {% if assignment.expected_return_date %}
+                                <div class="stat-item">
+                                    <div class="stat-icon {% if assignment.expected_return_date < today %}danger{% else %}success{% endif %}">
+                                        <i class="bi bi-calendar-event"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-label">
+                                            {% if assignment.expected_return_date < today %}
+                                                Days Overdue
+                                            {% else %}
+                                                Days Until Due
+                                            {% endif %}
+                                        </div>
+                                        <div class="stat-value">
+                                            {% if assignment.expected_return_date < today %}
+                                                {{ assignment.days_overdue }}
+                                            {% else %}
+                                                {{ assignment.expected_return_date|timeuntil }}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if assignment.condition_at_assignment %}
+                                <div class="stat-item">
+                                    <div class="stat-icon condition">
+                                        <i class="bi bi-shield-check"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-label">Initial Condition</div>
+                                        <div class="stat-value">{{ assignment.get_condition_at_assignment_display }}</div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional CSS for new components -->
+<style>
+/* Additional Styling for Assignment Detail Components - Bangladesh Parliament Secretariat PIMS */
+
+.assignment-meta-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.meta-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: rgba(248, 250, 252, 0.5);
+    border: 1px solid rgba(203, 213, 225, 0.2);
+    border-radius: 8px;
+}
+
+.meta-item.purpose-full {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.meta-label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.meta-value {
+    color: #1f2937;
+}
+
+.purpose-text {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 6px;
+    border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.location-preview, .employee-preview {
+    text-align: center;
+}
+
+.location-name, .employee-name {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+    font-size: 1.125rem;
+}
+
+.location-address {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.employee-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    font-size: 1.5rem;
+    overflow: hidden;
+}
+
+.avatar-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.employee-id {
+    font-family: monospace;
+    background: rgba(30, 58, 138, 0.1);
+    color: #1e3a8a;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+    display: inline-block;
+}
+
+.location-details, .employee-details {
+    text-align: left;
+    background: rgba(248, 250, 252, 0.8);
+    border-radius: 8px;
+    padding: 0.75rem;
+    border: 1px solid rgba(203, 213, 225, 0.2);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(248, 250, 252, 0.5);
+    border: 1px solid rgba(203, 213, 225, 0.2);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: #3b82f6;
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.stat-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
+.stat-icon.danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.stat-icon.condition { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+}
+
+.stat-value {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 767.98px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .meta-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    
+    .stat-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+    }
+}
+</style>
+{% endblock %}

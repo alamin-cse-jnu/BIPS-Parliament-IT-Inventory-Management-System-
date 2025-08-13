@@ -1,0 +1,865 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Search Maintenance - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Search Maintenance Styling - Parliament Design System */
+.search-container {
+    background: var(--bg-gradient-primary);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.page-header {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.page-title {
+    color: var(--parliament-primary);
+    font-weight: 700;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.page-subtitle {
+    color: var(--parliament-neutral);
+    margin-bottom: 0;
+}
+
+.search-form-section {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.search-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.search-title {
+    color: var(--parliament-dark);
+    font-weight: 600;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.search-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.main-search {
+    margin-bottom: var(--spacing-lg);
+}
+
+.search-input-group {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: var(--glass-shadow);
+}
+
+.main-search-input {
+    border: none;
+    padding: var(--spacing-lg);
+    font-size: 1.1rem;
+    background: transparent;
+    outline: none;
+}
+
+.main-search-input::placeholder {
+    color: var(--parliament-neutral);
+}
+
+.search-btn {
+    background: linear-gradient(135deg, var(--parliament-primary), #3b82f6);
+    color: white;
+    border: none;
+    padding: var(--spacing-md) var(--spacing-lg);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-weight: 500;
+}
+
+.search-btn:hover {
+    background: linear-gradient(135deg, #1e40af, #1d4ed8);
+}
+
+.clear-btn {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+    border: none;
+    padding: var(--spacing-md) var(--spacing-lg);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.clear-btn:hover {
+    background: rgba(107, 114, 128, 0.2);
+}
+
+.advanced-filters {
+    border-top: 1px solid var(--glass-border);
+    padding-top: var(--spacing-lg);
+}
+
+.filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--parliament-primary);
+    cursor: pointer;
+    margin-bottom: var(--spacing-lg);
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.filter-toggle:hover {
+    color: #1e40af;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.filter-label {
+    color: var(--parliament-dark);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.form-control, .form-select {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-sm) var(--spacing-md);
+    transition: var(--transition);
+}
+
+.form-control:focus, .form-select:focus {
+    background: rgba(255, 255, 255, 1);
+    border-color: var(--parliament-primary);
+    box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+
+.search-summary {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.summary-content {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+}
+
+.summary-text {
+    color: var(--parliament-dark);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.result-count {
+    background: linear-gradient(135deg, var(--parliament-primary), #3b82f6);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+}
+
+.quick-filters {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.quick-filter-btn {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--parliament-primary);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+}
+
+.quick-filter-btn:hover,
+.quick-filter-btn.active {
+    background: var(--parliament-primary);
+    color: white;
+}
+
+.search-results {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--glass-shadow);
+}
+
+.results-header {
+    background: linear-gradient(135deg, var(--parliament-primary) 0%, #3b82f6 100%);
+    color: white;
+    padding: var(--spacing-lg);
+    display: flex;
+    justify-content: between;
+    align-items: center;
+}
+
+.results-title {
+    font-weight: 600;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.results-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.results-content {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.maintenance-item {
+    border-bottom: 1px solid var(--glass-border);
+    transition: var(--transition);
+}
+
+.maintenance-item:last-child {
+    border-bottom: none;
+}
+
+.maintenance-item:hover {
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.maintenance-content {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-lg);
+    align-items: center;
+}
+
+.maintenance-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+}
+
+.maintenance-icon.scheduled { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.maintenance-icon.in-progress { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.maintenance-icon.completed { background: linear-gradient(135deg, #10b981, #059669); }
+.maintenance-icon.overdue { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.maintenance-icon.cancelled { background: linear-gradient(135deg, #6b7280, #4b5563); }
+
+.maintenance-info {
+    min-width: 0;
+}
+
+.maintenance-title {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.maintenance-title a {
+    text-decoration: none;
+    color: var(--parliament-primary);
+    transition: var(--transition);
+}
+
+.maintenance-title a:hover {
+    color: var(--parliament-dark);
+}
+
+.maintenance-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+}
+
+.meta-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--border-radius);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.maintenance-id { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.device-badge { background: rgba(16, 185, 129, 0.1); color: #059669; }
+.priority-high { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+.priority-medium { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+.priority-low { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
+
+.maintenance-dates {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+}
+
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.status-scheduled { background: rgba(139, 92, 246, 0.1); color: #7c3aed; border: 1px solid rgba(139, 92, 246, 0.3); }
+.status-in-progress { background: rgba(245, 158, 11, 0.1); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3); }
+.status-completed { background: rgba(16, 185, 129, 0.1); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3); }
+.status-overdue { background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); }
+.status-cancelled { background: rgba(107, 114, 128, 0.1); color: #4b5563; border: 1px solid rgba(107, 114, 128, 0.3); }
+
+.maintenance-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-3xl);
+    color: var(--parliament-neutral);
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-lg);
+    opacity: 0.5;
+}
+
+.pagination-wrapper {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.search-tips {
+    background: rgba(59, 130, 246, 0.05);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.tips-header {
+    color: var(--parliament-primary);
+    font-weight: 600;
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.tips-list {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+    margin: 0;
+    padding-left: var(--spacing-lg);
+}
+
+.tips-list li {
+    margin-bottom: var(--spacing-xs);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .search-input-group {
+        grid-template-columns: 1fr;
+    }
+    
+    .search-btn,
+    .clear-btn {
+        justify-content: center;
+        padding: var(--spacing-md);
+    }
+    
+    .maintenance-content {
+        grid-template-columns: auto 1fr;
+        gap: var(--spacing-md);
+    }
+    
+    .status-badge,
+    .maintenance-actions {
+        grid-column: 1 / -1;
+        margin-top: var(--spacing-md);
+        padding-top: var(--spacing-md);
+        border-top: 1px solid var(--glass-border);
+    }
+    
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .summary-content {
+        flex-direction: column;
+        gap: var(--spacing-md);
+        align-items: flex-start;
+    }
+    
+    .quick-filters {
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="search-container">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-search"></i>
+                Search Maintenance
+            </h1>
+            <p class="page-subtitle">Advanced search and filtering for maintenance records</p>
+        </div>
+
+        <!-- Search Tips -->
+        <div class="search-tips">
+            <div class="tips-header">
+                <i class="bi bi-lightbulb"></i>
+                Search Tips
+            </div>
+            <ul class="tips-list">
+                <li>Use device ID, maintenance ID, or device name for quick searches</li>
+                <li>Combine multiple filters for more precise results</li>
+                <li>Date ranges help narrow down specific periods</li>
+                <li>Status filters show current maintenance states</li>
+            </ul>
+        </div>
+
+        <!-- Search Form -->
+        <div class="search-form-section">
+            <div class="search-header">
+                <h5 class="search-title">
+                    <i class="bi bi-funnel"></i>
+                    Search & Filter
+                </h5>
+                <div class="search-actions">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleAdvancedFilters()">
+                        <i class="bi bi-sliders"></i>
+                        Advanced
+                    </button>
+                </div>
+            </div>
+
+            <form method="get" id="searchForm">
+                <!-- Main Search -->
+                <div class="main-search">
+                    <div class="search-input-group">
+                        <input type="text" 
+                               name="q" 
+                               class="main-search-input" 
+                               placeholder="Search by device name, ID, maintenance ID, or description..."
+                               value="{{ request.GET.q }}"
+                               autocomplete="off">
+                        <button type="submit" class="search-btn">
+                            <i class="bi bi-search"></i>
+                            Search
+                        </button>
+                        <a href="{% url 'maintenance:search' %}" class="clear-btn">
+                            <i class="bi bi-x-circle"></i>
+                            Clear
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Advanced Filters -->
+                <div class="advanced-filters" id="advancedFilters" style="display: none;">
+                    <div class="filter-toggle" onclick="toggleAdvancedFilters()">
+                        <i class="bi bi-chevron-down" id="filterToggleIcon"></i>
+                        Advanced Filters
+                    </div>
+
+                    <div class="filter-grid">
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="bi bi-flag"></i>
+                                Status
+                            </label>
+                            <select name="status" class="form-select">
+                                <option value="">All Statuses</option>
+                                <option value="SCHEDULED" {% if request.GET.status == 'SCHEDULED' %}selected{% endif %}>Scheduled</option>
+                                <option value="IN_PROGRESS" {% if request.GET.status == 'IN_PROGRESS' %}selected{% endif %}>In Progress</option>
+                                <option value="COMPLETED" {% if request.GET.status == 'COMPLETED' %}selected{% endif %}>Completed</option>
+                                <option value="CANCELLED" {% if request.GET.status == 'CANCELLED' %}selected{% endif %}>Cancelled</option>
+                                <option value="OVERDUE" {% if request.GET.status == 'OVERDUE' %}selected{% endif %}>Overdue</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                Priority
+                            </label>
+                            <select name="priority" class="form-select">
+                                <option value="">All Priorities</option>
+                                <option value="HIGH" {% if request.GET.priority == 'HIGH' %}selected{% endif %}>High</option>
+                                <option value="MEDIUM" {% if request.GET.priority == 'MEDIUM' %}selected{% endif %}>Medium</option>
+                                <option value="LOW" {% if request.GET.priority == 'LOW' %}selected{% endif %}>Low</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="bi bi-wrench"></i>
+                                Type
+                            </label>
+                            <select name="maintenance_type" class="form-select">
+                                <option value="">All Types</option>
+                                <option value="PREVENTIVE" {% if request.GET.maintenance_type == 'PREVENTIVE' %}selected{% endif %}>Preventive</option>
+                                <option value="CORRECTIVE" {% if request.GET.maintenance_type == 'CORRECTIVE' %}selected{% endif %}>Corrective</option>
+                                <option value="EMERGENCY" {% if request.GET.maintenance_type == 'EMERGENCY' %}selected{% endif %}>Emergency</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="bi bi-laptop"></i>
+                                Device
+                            </label>
+                            <select name="device" class="form-select">
+                                <option value="">All Devices</option>
+                                {% for device in devices %}
+                                <option value="{{ device.pk }}" {% if request.GET.device == device.pk|stringformat:"s" %}selected{% endif %}>
+                                    {{ device.name }} ({{ device.device_id }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="bi bi-building"></i>
+                                Vendor
+                            </label>
+                            <select name="vendor" class="form-select">
+                                <option value="">All Vendors</option>
+                                {% for vendor in vendors %}
+                                <option value="{{ vendor.pk }}" {% if request.GET.vendor == vendor.pk|stringformat:"s" %}selected{% endif %}>
+                                    {{ vendor.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="bi bi-calendar-event"></i>
+                                Start Date From
+                            </label>
+                            <input type="date" name="start_date_from" class="form-control" value="{{ request.GET.start_date_from }}">
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="bi bi-calendar-check"></i>
+                                Start Date To
+                            </label>
+                            <input type="date" name="start_date_to" class="form-control" value="{{ request.GET.start_date_to }}">
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="bi bi-currency-dollar"></i>
+                                Cost Range
+                            </label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                <input type="number" name="cost_min" class="form-control" placeholder="Min" value="{{ request.GET.cost_min }}">
+                                <input type="number" name="cost_max" class="form-control" placeholder="Max" value="{{ request.GET.cost_max }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Quick Filters -->
+        {% if request.GET.q or request.GET.status or request.GET.priority %}
+        <div class="search-summary">
+            <div class="summary-content">
+                <div class="summary-text">
+                    <i class="bi bi-funnel"></i>
+                    <span class="result-count">{{ maintenance_records|length }}</span>
+                    result{{ maintenance_records|length|pluralize }} found
+                </div>
+                <div class="quick-filters">
+                    <a href="{% url 'maintenance:search' %}?q={{ request.GET.q }}&status=SCHEDULED" 
+                       class="quick-filter-btn {% if request.GET.status == 'SCHEDULED' %}active{% endif %}">
+                        Scheduled
+                    </a>
+                    <a href="{% url 'maintenance:search' %}?q={{ request.GET.q }}&status=IN_PROGRESS" 
+                       class="quick-filter-btn {% if request.GET.status == 'IN_PROGRESS' %}active{% endif %}">
+                        In Progress
+                    </a>
+                    <a href="{% url 'maintenance:search' %}?q={{ request.GET.q }}&status=OVERDUE" 
+                       class="quick-filter-btn {% if request.GET.status == 'OVERDUE' %}active{% endif %}">
+                        Overdue
+                    </a>
+                    <a href="{% url 'maintenance:search' %}?q={{ request.GET.q }}&status=COMPLETED" 
+                       class="quick-filter-btn {% if request.GET.status == 'COMPLETED' %}active{% endif %}">
+                        Completed
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Search Results -->
+        <div class="search-results">
+            <div class="results-header">
+                <h5 class="results-title">
+                    <i class="bi bi-list-ul"></i>
+                    Search Results
+                    {% if maintenance_records %}
+                        ({{ page_obj.paginator.count }} total)
+                    {% endif %}
+                </h5>
+                <div class="results-actions">
+                    {% if maintenance_records %}
+                    <a href="{% url 'maintenance:export_search' %}?{{ request.GET.urlencode }}" class="btn btn-light btn-sm">
+                        <i class="bi bi-download"></i> Export
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="results-content">
+                {% if maintenance_records %}
+                    {% for maintenance in maintenance_records %}
+                    <div class="maintenance-item">
+                        <div class="maintenance-content">
+                            <!-- Status Icon -->
+                            <div class="maintenance-icon {{ maintenance.status|lower }}{% if maintenance.is_overdue and maintenance.status != 'COMPLETED' %} overdue{% endif %}">
+                                {% if maintenance.status == 'SCHEDULED' %}
+                                    <i class="bi bi-calendar-check"></i>
+                                {% elif maintenance.status == 'IN_PROGRESS' %}
+                                    <i class="bi bi-gear"></i>
+                                {% elif maintenance.status == 'COMPLETED' %}
+                                    <i class="bi bi-check-circle"></i>
+                                {% elif maintenance.status == 'CANCELLED' %}
+                                    <i class="bi bi-x-circle"></i>
+                                {% elif maintenance.is_overdue %}
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                {% else %}
+                                    <i class="bi bi-wrench"></i>
+                                {% endif %}
+                            </div>
+
+                            <!-- Maintenance Information -->
+                            <div class="maintenance-info">
+                                <div class="maintenance-title">
+                                    <a href="{% url 'maintenance:detail' maintenance.pk %}">
+                                        {{ maintenance.device.name }}
+                                    </a>
+                                </div>
+
+                                <div class="maintenance-meta">
+                                    <span class="meta-badge maintenance-id">{{ maintenance.maintenance_id }}</span>
+                                    <span class="meta-badge device-badge">{{ maintenance.device.device_id }}</span>
+                                    <span class="meta-badge priority-{{ maintenance.priority|lower }}">
+                                        {{ maintenance.get_priority_display }}
+                                    </span>
+                                    {% if maintenance.maintenance_type %}
+                                    <span class="meta-badge" style="background: rgba(34, 197, 94, 0.1); color: #059669;">
+                                        {{ maintenance.get_maintenance_type_display }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="maintenance-dates">
+                                    <i class="bi bi-calendar me-1"></i>
+                                    Start: {{ maintenance.start_date|date:"M d, Y" }}
+                                    {% if maintenance.expected_end_date %}
+                                        | Expected End: {{ maintenance.expected_end_date|date:"M d, Y" }}
+                                    {% endif %}
+                                    {% if maintenance.vendor %}
+                                        <br><i class="bi bi-building me-1"></i>Vendor: {{ maintenance.vendor.name }}
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Status Badge -->
+                            <div class="status-badge status-{{ maintenance.status|lower }}">
+                                {% if maintenance.is_overdue and maintenance.status != 'COMPLETED' %}
+                                    Overdue
+                                {% else %}
+                                    {{ maintenance.get_status_display }}
+                                {% endif %}
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="maintenance-actions">
+                                <a href="{% url 'maintenance:detail' maintenance.pk %}" 
+                                   class="btn btn-sm btn-outline-primary" 
+                                   title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                
+                                {% if can_edit %}
+                                <a href="{% url 'maintenance:edit' maintenance.pk %}" 
+                                   class="btn btn-sm btn-outline-warning" 
+                                   title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-search"></i>
+                        <h5>No Results Found</h5>
+                        <p>No maintenance records match your search criteria.</p>
+                        <p>Try adjusting your search terms or filters.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="pagination-wrapper">
+            <nav aria-label="Search results pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1&{{ request.GET.urlencode }}">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}&{{ request.GET.urlencode }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&{{ request.GET.urlencode }}">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function toggleAdvancedFilters() {
+    const filters = document.getElementById('advancedFilters');
+    const icon = document.getElementById('filterToggleIcon');
+    
+    if (filters.style.display === 'none') {
+        filters.style.display = 'block';
+        icon.className = 'bi bi-chevron-up';
+    } else {
+        filters.style.display = 'none';
+        icon.className = 'bi bi-chevron-down';
+    }
+}
+
+// Show advanced filters if any advanced filter is active
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const advancedParams = ['status', 'priority', 'maintenance_type', 'device', 'vendor', 'start_date_from', 'start_date_to', 'cost_min', 'cost_max'];
+    
+    if (advancedParams.some(param => urlParams.has(param))) {
+        toggleAdvancedFilters();
+    }
+});
+</script>
+{% endblock %}

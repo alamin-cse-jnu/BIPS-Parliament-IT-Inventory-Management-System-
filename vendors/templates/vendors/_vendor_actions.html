@@ -1,0 +1,532 @@
+{% load static %}
+
+<!-- Vendor Actions Component -->
+<div class="vendor-actions-component">
+    <!-- Primary Actions -->
+    <div class="actions-section mb-4">
+        <div class="actions-header">
+            <h6 class="actions-title">
+                <i class="bi bi-lightning-charge me-2"></i>
+                Quick Actions
+            </h6>
+        </div>
+        <div class="actions-grid">
+            {% if perms.vendors.change_vendor %}
+                <a href="{% url 'vendors:edit' vendor.pk %}" class="action-btn action-primary">
+                    <div class="action-icon">
+                        <i class="bi bi-pencil"></i>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-label">Edit Vendor</div>
+                        <div class="action-desc">Update vendor information</div>
+                    </div>
+                </a>
+            {% endif %}
+
+            {% if perms.vendors.view_vendor %}
+                <a href="{% url 'vendors:detail' vendor.pk %}" class="action-btn action-info">
+                    <div class="action-icon">
+                        <i class="bi bi-eye"></i>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-label">View Details</div>
+                        <div class="action-desc">Complete vendor profile</div>
+                    </div>
+                </a>
+            {% endif %}
+
+            {% if vendor.phone_primary %}
+                <a href="tel:{{ vendor.phone_primary }}" class="action-btn action-success">
+                    <div class="action-icon">
+                        <i class="bi bi-telephone"></i>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-label">Call Vendor</div>
+                        <div class="action-desc">{{ vendor.phone_primary }}</div>
+                    </div>
+                </a>
+            {% endif %}
+
+            {% if vendor.email_primary %}
+                <a href="mailto:{{ vendor.email_primary }}" class="action-btn action-secondary">
+                    <div class="action-icon">
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-label">Send Email</div>
+                        <div class="action-desc">{{ vendor.email_primary|truncatechars:25 }}</div>
+                    </div>
+                </a>
+            {% endif %}
+
+            {% if vendor.website %}
+                <a href="{{ vendor.website }}" target="_blank" class="action-btn action-warning">
+                    <div class="action-icon">
+                        <i class="bi bi-globe"></i>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-label">Visit Website</div>
+                        <div class="action-desc">Open in new tab</div>
+                    </div>
+                </a>
+            {% endif %}
+
+            {% if vendor.address %}
+                <a href="https://maps.google.com/?q={{ vendor.address|urlencode }}" target="_blank" class="action-btn action-info">
+                    <div class="action-icon">
+                        <i class="bi bi-geo-alt"></i>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-label">View on Map</div>
+                        <div class="action-desc">Google Maps</div>
+                    </div>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Status Management Actions -->
+    {% if perms.vendors.change_vendor %}
+        <div class="actions-section mb-4">
+            <div class="actions-header">
+                <h6 class="actions-title">
+                    <i class="bi bi-toggle-on me-2"></i>
+                    Status Management
+                </h6>
+            </div>
+            <div class="actions-grid">
+                {% if vendor.is_active %}
+                    <a href="{% url 'vendors:deactivate' vendor.pk %}" 
+                       class="action-btn action-danger"
+                       onclick="return confirm('Deactivate this vendor? This will make them unavailable for new assignments.')">
+                        <div class="action-icon">
+                            <i class="bi bi-pause-circle"></i>
+                        </div>
+                        <div class="action-content">
+                            <div class="action-label">Deactivate</div>
+                            <div class="action-desc">Suspend vendor operations</div>
+                        </div>
+                    </a>
+                {% else %}
+                    <a href="{% url 'vendors:activate' vendor.pk %}" 
+                       class="action-btn action-success"
+                       onclick="return confirm('Reactivate this vendor?')">
+                        <div class="action-icon">
+                            <i class="bi bi-play-circle"></i>
+                        </div>
+                        <div class="action-content">
+                            <div class="action-label">Reactivate</div>
+                            <div class="action-desc">Resume vendor operations</div>
+                        </div>
+                    </a>
+                {% endif %}
+
+                {% if vendor.is_preferred %}
+                    <a href="{% url 'vendors:toggle_preferred' vendor.pk %}" 
+                       class="action-btn action-warning"
+                       onclick="return confirm('Remove preferred status from this vendor?')">
+                        <div class="action-icon">
+                            <i class="bi bi-star"></i>
+                        </div>
+                        <div class="action-content">
+                            <div class="action-label">Remove Preferred</div>
+                            <div class="action-desc">Remove priority status</div>
+                        </div>
+                    </a>
+                {% else %}
+                    <a href="{% url 'vendors:toggle_preferred' vendor.pk %}" 
+                       class="action-btn action-warning"
+                       onclick="return confirm('Mark this vendor as preferred? They will receive priority consideration.')">
+                        <div class="action-icon">
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <div class="action-content">
+                            <div class="action-label">Mark Preferred</div>
+                            <div class="action-desc">Grant priority status</div>
+                        </div>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Advanced Actions -->
+    {% if perms.vendors.change_vendor or perms.vendors.delete_vendor %}
+        <div class="actions-section">
+            <div class="actions-header">
+                <h6 class="actions-title">
+                    <i class="bi bi-gear me-2"></i>
+                    Advanced Actions
+                </h6>
+            </div>
+            <div class="actions-grid">
+                {% if perms.vendors.view_vendor %}
+                    <div class="action-btn action-info" data-bs-toggle="modal" data-bs-target="#vendorHistoryModal">
+                        <div class="action-icon">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <div class="action-content">
+                            <div class="action-label">View History</div>
+                            <div class="action-desc">Audit trail & changes</div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if perms.vendors.change_vendor %}
+                    <div class="action-btn action-secondary" data-bs-toggle="modal" data-bs-target="#vendorNotesModal">
+                        <div class="action-icon">
+                            <i class="bi bi-sticky"></i>
+                        </div>
+                        <div class="action-content">
+                            <div class="action-label">Add Notes</div>
+                            <div class="action-desc">Internal comments</div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if perms.vendors.view_vendor %}
+                    <a href="{% url 'vendors:export_csv' %}?vendor_id={{ vendor.pk }}" class="action-btn action-info">
+                        <div class="action-icon">
+                            <i class="bi bi-download"></i>
+                        </div>
+                        <div class="action-content">
+                            <div class="action-label">Export Data</div>
+                            <div class="action-desc">Download CSV</div>
+                        </div>
+                    </a>
+                {% endif %}
+
+                {% if perms.vendors.change_vendor and vendor.performance_rating %}
+                    <div class="action-btn action-warning" data-bs-toggle="modal" data-bs-target="#vendorRatingModal">
+                        <div class="action-icon">
+                            <i class="bi bi-star-half"></i>
+                        </div>
+                        <div class="action-content">
+                            <div class="action-label">Update Rating</div>
+                            <div class="action-desc">Performance review</div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if perms.vendors.add_vendor %}
+                    <a href="{% url 'vendors:create' %}?copy_from={{ vendor.pk }}" class="action-btn action-secondary">
+                        <div class="action-icon">
+                            <i class="bi bi-files"></i>
+                        </div>
+                        <div class="action-content">
+                            <div class="action-label">Duplicate</div>
+                            <div class="action-desc">Create similar vendor</div>
+                        </div>
+                    </a>
+                {% endif %}
+
+                {% if perms.vendors.delete_vendor %}
+                    <a href="{% url 'vendors:delete' vendor.pk %}" 
+                       class="action-btn action-danger"
+                       onclick="return confirm('Are you sure you want to delete this vendor? This action cannot be undone.')">
+                        <div class="action-icon">
+                            <i class="bi bi-trash"></i>
+                        </div>
+                        <div class="action-content">
+                            <div class="action-label">Delete Vendor</div>
+                            <div class="action-desc">Permanent removal</div>
+                        </div>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Contextual Actions based on Vendor Type -->
+    <div class="actions-section">
+        <div class="actions-header">
+            <h6 class="actions-title">
+                <i class="bi bi-diagram-3 me-2"></i>
+                {{ vendor.get_vendor_type_display }} Actions
+            </h6>
+        </div>
+        <div class="actions-grid">
+            {% if vendor.vendor_type == 'SUPPLIER' or vendor.vendor_type == 'MANUFACTURER' %}
+                <div class="action-btn action-primary">
+                    <div class="action-icon">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-label">View Products</div>
+                        <div class="action-desc">Supplied equipment</div>
+                    </div>
+                </div>
+                
+                <div class="action-btn action-info">
+                    <div class="action-icon">
+                        <i class="bi bi-receipt"></i>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-label">Purchase Orders</div>
+                        <div class="action-desc">Order history</div>
+                    </div>
+                </div>
+            {% elif vendor.vendor_type == 'MAINTENANCE' or vendor.vendor_type == 'SUPPORT' %}
+                <div class="action-btn action-success">
+                    <div class="action-icon">
+                        <i class="bi bi-wrench"></i>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-label">Service Requests</div>
+                        <div class="action-desc">Active tickets</div>
+                    </div>
+                </div>
+                
+                <div class="action-btn action-warning">
+                    <div class="action-icon">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-label">Schedule Service</div>
+                        <div class="action-desc">Book maintenance</div>
+                    </div>
+                </div>
+            {% elif vendor.vendor_type == 'CONSULTANT' %}
+                <div class="action-btn action-info">
+                    <div class="action-icon">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-label">Consultations</div>
+                        <div class="action-desc">Project history</div>
+                    </div>
+                </div>
+                
+                <div class="action-btn action-secondary">
+                    <div class="action-icon">
+                        <i class="bi bi-file-text"></i>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-label">Reports</div>
+                        <div class="action-desc">Delivered reports</div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .vendor-actions-component {
+        max-width: 100%;
+    }
+    
+    .actions-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .actions-header {
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+    
+    .actions-title {
+        color: #1f2937;
+        font-weight: 600;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+    
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .action-btn {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+        cursor: pointer;
+        background: #f9fafb;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        text-decoration: none;
+    }
+    
+    .action-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin-right: 0.75rem;
+        flex-shrink: 0;
+    }
+    
+    .action-content {
+        flex-grow: 1;
+    }
+    
+    .action-label {
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+        font-size: 0.875rem;
+    }
+    
+    .action-desc {
+        font-size: 0.75rem;
+        color: #6b7280;
+        line-height: 1.3;
+    }
+    
+    /* Action Button Color Variants */
+    .action-primary {
+        background: #eff6ff;
+        border-color: #dbeafe;
+    }
+    
+    .action-primary:hover {
+        background: #dbeafe;
+        border-color: #1e3a8a;
+    }
+    
+    .action-primary .action-icon {
+        background: #1e3a8a;
+        color: white;
+    }
+    
+    .action-success {
+        background: #f0fdf4;
+        border-color: #dcfce7;
+    }
+    
+    .action-success:hover {
+        background: #dcfce7;
+        border-color: #059669;
+    }
+    
+    .action-success .action-icon {
+        background: #059669;
+        color: white;
+    }
+    
+    .action-warning {
+        background: #fffbeb;
+        border-color: #fed7aa;
+    }
+    
+    .action-warning:hover {
+        background: #fed7aa;
+        border-color: #d97706;
+    }
+    
+    .action-warning .action-icon {
+        background: #d97706;
+        color: white;
+    }
+    
+    .action-danger {
+        background: #fef2f2;
+        border-color: #fecaca;
+    }
+    
+    .action-danger:hover {
+        background: #fecaca;
+        border-color: #dc2626;
+    }
+    
+    .action-danger .action-icon {
+        background: #dc2626;
+        color: white;
+    }
+    
+    .action-info {
+        background: #f0f9ff;
+        border-color: #e0f2fe;
+    }
+    
+    .action-info:hover {
+        background: #e0f2fe;
+        border-color: #0891b2;
+    }
+    
+    .action-info .action-icon {
+        background: #0891b2;
+        color: white;
+    }
+    
+    .action-secondary {
+        background: #f8fafc;
+        border-color: #e2e8f0;
+    }
+    
+    .action-secondary:hover {
+        background: #e2e8f0;
+        border-color: #64748b;
+    }
+    
+    .action-secondary .action-icon {
+        background: #64748b;
+        color: white;
+    }
+    
+    @media (max-width: 768px) {
+        .actions-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .actions-section {
+            padding: 1rem;
+        }
+        
+        .action-btn {
+            padding: 0.75rem;
+        }
+        
+        .action-icon {
+            width: 32px;
+            height: 32px;
+            font-size: 1rem;
+            margin-right: 0.5rem;
+        }
+        
+        .action-label {
+            font-size: 0.875rem;
+        }
+        
+        .action-desc {
+            font-size: 0.75rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .actions-grid {
+            gap: 0.75rem;
+        }
+        
+        .action-btn {
+            padding: 0.625rem;
+        }
+        
+        .action-content {
+            min-width: 0;
+        }
+        
+        .action-desc {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+</style>

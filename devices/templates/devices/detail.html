@@ -1,0 +1,540 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ device.brand }} {{ device.model }} | PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: linear-gradient(135deg, #1f2937 0%, #374151 50%, #4b5563 100%);
+        color: #f9fafb;
+        min-height: 100vh;
+    }
+    .main-content {
+        background: transparent;
+    }
+    .device-header {
+        background: linear-gradient(135deg, var(--parliament-primary) 0%, #1e40af 100%);
+        color: white;
+        border-radius: 0.75rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 25px rgba(30, 58, 138, 0.3);
+    }
+    .device-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+        color: #f9fafb;
+    }
+    .device-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        background: rgba(255, 255, 255, 0.15);
+    }
+    .card-header {
+        background: rgba(30, 58, 138, 0.2) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        color: #f9fafb !important;
+    }
+    .card-title, .card-title i {
+        color: #f9fafb !important;
+    }
+    .text-muted {
+        color: #d1d5db !important;
+    }
+    .spec-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        color: #f9fafb;
+    }
+    .spec-item:last-child {
+        border-bottom: none;
+    }
+    .qr-code-preview {
+        max-width: 150px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+        background: white;
+    }
+    .table {
+        color: #f9fafb;
+    }
+    .table th {
+        color: #e5e7eb;
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    .table td {
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    .border-top, .border-end {
+        border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    .btn-outline-primary {
+        border-color: rgba(255, 255, 255, 0.3);
+        color: #f9fafb;
+    }
+    .btn-outline-primary:hover {
+        background: var(--parliament-primary);
+        border-color: var(--parliament-primary);
+        color: white;
+    }
+    .dropdown-menu {
+        background: rgba(31, 41, 55, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+    }
+    .dropdown-item {
+        color: #f9fafb;
+    }
+    .dropdown-item:hover {
+        background: rgba(30, 58, 138, 0.3);
+        color: white;
+    }
+    strong, .fw-bold, .fw-medium {
+        color: #f9fafb;
+    }
+    .timeline .bg-warning {
+        background: var(--parliament-warning) !important;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'devices:list' %}">Devices</a></li>
+    <li class="breadcrumb-item active">{{ device.device_id }}</li>
+{% endblock %}
+
+{% block content %}
+<!-- Device Header -->
+<div class="device-header">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <div class="d-flex align-items-center mb-3">
+                <i class="bi bi-{{ device.subcategory.category.icon_class|default:'laptop' }} display-4 me-3"></i>
+                <div>
+                    <h1 class="mb-1">{{ device.brand }} {{ device.model }}</h1>
+                    <p class="mb-0 opacity-75">{{ device.subcategory.category.name }} • {{ device.subcategory.name }}</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6 col-md-3">
+                    <div class="text-white-50 small">Device ID</div>
+                    <div class="fw-bold">{{ device.device_id }}</div>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <div class="text-white-50 small">Serial Number</div>
+                    <div class="fw-bold">{{ device.serial_number|default:'Not specified' }}</div>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <div class="text-white-50 small">Purchase Date</div>
+                    <div class="fw-bold">{{ device.purchase_date|date:'M d, Y' }}</div>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <div class="text-white-50 small">Current Value</div>
+                    <div class="fw-bold">৳{{ device.current_value|floatformat:0 }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-gear me-2"></i>Actions
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'devices:edit' device.pk %}">
+                        <i class="bi bi-pencil me-2"></i>Edit Device
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'devices:qr_generate' device.pk %}">
+                        <i class="bi bi-qr-code me-2"></i>Generate QR Code
+                    </a></li>
+                    {% if device.can_have_components %}
+                    <li><a class="dropdown-item" href="{% url 'devices:components' device.pk %}">
+                        <i class="bi bi-cpu me-2"></i>Manage Components
+                    </a></li>
+                    {% endif %}
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="{% url 'devices:delete' device.pk %}">
+                        <i class="bi bi-trash me-2"></i>Delete Device
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Column -->
+    <div class="col-lg-8">
+        <!-- Status and Information -->
+        <div class="card device-card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2 text-primary"></i>Device Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Status Information</h6>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <strong>Status:</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="{{ device.get_status_badge_class }}">
+                                    {{ device.get_status_display }}
+                                </span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Condition:</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="{{ device.get_condition_badge_class }}">
+                                    {{ device.get_condition_display }}
+                                </span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Priority:</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="badge bg-secondary">{{ device.get_priority_display }}</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Assignable:</strong>
+                            </div>
+                            <div class="col-6">
+                                {% if device.is_assignable %}
+                                    <i class="bi bi-check-circle text-success"></i> Yes
+                                {% else %}
+                                    <i class="bi bi-x-circle text-danger"></i> No
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Financial Information</h6>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <strong>Purchase Price:</strong>
+                            </div>
+                            <div class="col-6">
+                                ৳{{ device.purchase_price|floatformat:0 }}
+                            </div>
+                            <div class="col-6">
+                                <strong>Current Value:</strong>
+                            </div>
+                            <div class="col-6">
+                                ৳{{ device.current_value|floatformat:0 }}
+                            </div>
+                            <div class="col-6">
+                                <strong>Age:</strong>
+                            </div>
+                            <div class="col-6">
+                                {{ device.age_in_years|floatformat:1 }} years
+                            </div>
+                            <div class="col-6">
+                                <strong>Vendor:</strong>
+                            </div>
+                            <div class="col-6">
+                                {{ device.vendor.name }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if device.current_location %}
+                <div class="mt-4 pt-3 border-top">
+                    <h6 class="text-muted mb-2">Current Location</h6>
+                    <p class="mb-0">
+                        <i class="bi bi-geo-alt text-primary me-1"></i>
+                        {{ device.current_location.name }}
+                    </p>
+                </div>
+                {% endif %}
+
+                {% if device.notes %}
+                <div class="mt-4 pt-3 border-top">
+                    <h6 class="text-muted mb-2">Notes</h6>
+                    <p class="mb-0">{{ device.notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Specifications -->
+        {% if device.specifications %}
+        <div class="card device-card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-gear me-2 text-primary"></i>Technical Specifications
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for key, value in device.specifications.items %}
+                    <div class="col-md-6">
+                        <div class="spec-item">
+                            <span class="fw-medium">{{ key|title|capfirst }}:</span>
+                            <span class="text-end">{{ value }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Current Assignment -->
+        {% if current_assignment %}
+        <div class="card device-card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-person-check me-2 text-primary"></i>Current Assignment
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Assigned To:</strong>
+                        <p class="mb-1">{{ current_assignment.assigned_to.get_full_name }}</p>
+                        <small class="text-muted">{{ current_assignment.assigned_to.employee_id }}</small>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Assignment Date:</strong>
+                        <p class="mb-1">{{ current_assignment.assignment_date|date:'M d, Y' }}</p>
+                        {% if current_assignment.expected_return_date %}
+                        <small class="text-muted">Expected return: {{ current_assignment.expected_return_date|date:'M d, Y' }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if current_assignment.notes %}
+                <div class="mt-3 pt-3 border-top">
+                    <strong>Assignment Notes:</strong>
+                    <p class="mb-0">{{ current_assignment.notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Components (for complete devices) -->
+        {% if components %}
+        <div class="card device-card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-cpu me-2 text-primary"></i>Components
+                </h5>
+                <a href="{% url 'devices:add_component' device.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-plus me-1"></i>Add Component
+                </a>
+            </div>
+            <div class="card-body">
+                {% if components %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Component</th>
+                                <th>Brand/Model</th>
+                                <th>Serial Number</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for component in components %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'devices:detail' component.pk %}" class="text-decoration-none">
+                                        {{ component.subcategory.name }}
+                                    </a>
+                                </td>
+                                <td>{{ component.brand }} {{ component.model }}</td>
+                                <td><code>{{ component.serial_number|default:'N/A' }}</code></td>
+                                <td>
+                                    <span class="{{ component.get_status_badge_class }}">
+                                        {{ component.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No components added yet.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Maintenance History -->
+        {% if maintenance_history %}
+        <div class="card device-card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-wrench me-2 text-primary"></i>Recent Maintenance History
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    {% for maintenance in maintenance_history %}
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0 me-3">
+                            <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                <i class="bi bi-wrench text-white small"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">{{ maintenance.maintenance_type|title }}</h6>
+                            <p class="mb-1 small text-muted">{{ maintenance.start_date|date:'M d, Y' }} - {{ maintenance.end_date|date:'M d, Y'|default:'Ongoing' }}</p>
+                            {% if maintenance.description %}
+                            <p class="mb-0 small">{{ maintenance.description|truncatewords:15 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-lg-4">
+        <!-- Warranty Information -->
+        <div class="card device-card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-shield me-2 text-primary"></i>Warranty Status
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if device.is_under_warranty %}
+                    <div class="text-center mb-3">
+                        <i class="bi bi-shield-check display-4 text-success"></i>
+                        <h6 class="text-success mt-2">Under Warranty</h6>
+                    </div>
+                {% elif device.warranty_expires_soon %}
+                    <div class="text-center mb-3">
+                        <i class="bi bi-shield-exclamation display-4 text-warning"></i>
+                        <h6 class="text-warning mt-2">Warranty Expires Soon</h6>
+                    </div>
+                {% else %}
+                    <div class="text-center mb-3">
+                        <i class="bi bi-shield-x display-4 text-danger"></i>
+                        <h6 class="text-danger mt-2">No Active Warranty</h6>
+                    </div>
+                {% endif %}
+
+                {% if active_warranties %}
+                    {% for warranty in active_warranties %}
+                    <div class="border rounded p-3 mb-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>{{ warranty.warranty_type|title }}</strong>
+                                <br><small class="text-muted">{{ warranty.provider.name }}</small>
+                            </div>
+                            <small class="text-muted">{{ warranty.end_date|date:'M d, Y' }}</small>
+                        </div>
+                        {% if warranty.warranty_number %}
+                        <div class="mt-2">
+                            <small class="text-muted">Warranty #: {{ warranty.warranty_number }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center">No warranty information available</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- QR Codes -->
+        <div class="card device-card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-qr-code me-2 text-primary"></i>QR Codes
+                </h5>
+                <a href="{% url 'devices:qr_generate' device.pk %}" class="btn btn-sm btn-outline-primary">
+                    Generate
+                </a>
+            </div>
+            <div class="card-body text-center">
+                {% if qr_codes %}
+                    {% for qr_code in qr_codes %}
+                    <div class="mb-3">
+                        {% if qr_code.qr_code %}
+                        <img src="{{ qr_code.qr_code.url }}" alt="QR Code" class="qr-code-preview">
+                        <div class="mt-2">
+                            <a href="{% url 'devices:qr_download' qr_code.pk %}" class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-download me-1"></i>Download
+                            </a>
+                        </div>
+                        {% endif %}
+                        <small class="d-block text-muted mt-1">
+                            Generated: {{ qr_code.generated_at|date:'M d, Y' }}
+                        </small>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No QR codes generated</p>
+                    <a href="{% url 'devices:qr_generate' device.pk %}" class="btn btn-primary">
+                        <i class="bi bi-qr-code me-2"></i>Generate QR Code
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Device Statistics -->
+        <div class="card device-card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-graph-up me-2 text-primary"></i>Device Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <div class="h4 text-primary mb-1">{{ device.age_in_years|floatformat:1 }}</div>
+                            <small class="text-muted">Years Old</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="h4 text-success mb-1">
+                            {{ device.current_value|floatformat:0|default:"0" }}
+                        </div>
+                        <small class="text-muted">Current Value (৳)</small>
+                    </div>
+                </div>
+                
+                <div class="mt-3 pt-3 border-top">
+                    <div class="row text-center">
+                        <div class="col-12">
+                            <small class="text-muted">Depreciation Rate</small>
+                            <div class="fw-bold">{{ device.depreciation_rate }}% annually</div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if device.device_type == 'COMPLETE' %}
+                <div class="mt-3 pt-3 border-top">
+                    <div class="row text-center">
+                        <div class="col-12">
+                            <small class="text-muted">Components</small>
+                            <div class="fw-bold">{{ components|length|default:0 }} attached</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

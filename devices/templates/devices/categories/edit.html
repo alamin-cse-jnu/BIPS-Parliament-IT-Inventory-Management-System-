@@ -1,0 +1,435 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Category - {{ category.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.gradient-bg {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.9) 100%);
+    min-height: 100vh;
+}
+
+.form-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.form-header {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+    border-radius: 16px 16px 0 0;
+    padding: 1.5rem;
+}
+
+.form-control, .form-select {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    background: rgba(255, 255, 255, 1);
+    border-color: #6366f1;
+    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.1);
+}
+
+.form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.btn-outline-secondary {
+    border: 1px solid #6b7280;
+    color: #6b7280;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-secondary:hover {
+    background: #6b7280;
+    border-color: #6b7280;
+    color: white;
+}
+
+.category-preview {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.category-preview:hover {
+    border-color: rgba(99, 102, 241, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.1);
+}
+
+.icon-preview {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.help-text {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+.field-group {
+    background: rgba(249, 250, 251, 0.8);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.field-group-title {
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.breadcrumb-item a {
+    color: #6366f1;
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .form-header {
+        padding: 1rem;
+    }
+    
+    .category-preview {
+        padding: 1rem;
+    }
+    
+    .field-group {
+        padding: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gradient-bg">
+    <div class="container py-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'dashboard' %}">
+                        <i class="bi bi-house me-1"></i>Dashboard
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'devices:category_list' %}">Device Categories</a>
+                </li>
+                <li class="breadcrumb-item active">Edit Category</li>
+            </ol>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h2 class="h3 mb-1">Edit Device Category</h2>
+                        <p class="text-muted mb-0">Update category information and settings</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Edit Form -->
+            <div class="col-lg-8">
+                <div class="form-card">
+                    <div class="form-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-pencil-square me-2"></i>
+                            Category Information
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <form method="post" novalidate>
+                            {% csrf_token %}
+                            
+                            <!-- Basic Information -->
+                            <div class="field-group">
+                                <div class="field-group-title">
+                                    <i class="bi bi-info-circle text-primary"></i>
+                                    Basic Information
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="mb-3">
+                                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                                Category Name <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.name }}
+                                            {% if form.name.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>
+                                            {% endif %}
+                                            <div class="help-text">
+                                                Enter a descriptive name for this device category
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.code.id_for_label }}" class="form-label">
+                                                Category Code <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.code }}
+                                            {% if form.code.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.code.errors.0 }}</div>
+                                            {% endif %}
+                                            <div class="help-text">
+                                                Short code for identification
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">
+                                        Description
+                                    </label>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.description.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="help-text">
+                                        Detailed description of this category and its purpose
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Display Settings -->
+                            <div class="field-group">
+                                <div class="field-group-title">
+                                    <i class="bi bi-palette text-primary"></i>
+                                    Display Settings
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.icon_class.id_for_label }}" class="form-label">
+                                                Icon Class
+                                            </label>
+                                            {{ form.icon_class }}
+                                            {% if form.icon_class.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.icon_class.errors.0 }}</div>
+                                            {% endif %}
+                                            <div class="help-text">
+                                                Bootstrap icon class (e.g., bi-laptop, bi-router)
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="{{ form.sort_order.id_for_label }}" class="form-label">
+                                                Sort Order
+                                            </label>
+                                            {{ form.sort_order }}
+                                            {% if form.sort_order.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.sort_order.errors.0 }}</div>
+                                            {% endif %}
+                                            <div class="help-text">
+                                                Display order (0-999)
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label class="form-label d-block">Status</label>
+                                            <div class="form-check form-switch">
+                                                {{ form.is_active }}
+                                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                                    Active Category
+                                                </label>
+                                            </div>
+                                            {% if form.is_active.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.is_active.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="d-flex gap-2 justify-content-end">
+                                <a href="{% url 'devices:category_detail' category.pk %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle me-1"></i>
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    Update Category
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Preview -->
+            <div class="col-lg-4">
+                <div class="category-preview">
+                    <div class="text-center">
+                        <div class="icon-preview mx-auto" id="iconPreview">
+                            <i class="{{ category.icon_class|default:'bi-laptop' }}" id="previewIcon"></i>
+                        </div>
+                        <h6 class="mb-2" id="previewName">{{ category.name }}</h6>
+                        <div class="badge bg-primary mb-3" id="previewCode">{{ category.code }}</div>
+                        <p class="text-muted small mb-3" id="previewDescription">
+                            {{ category.description|default:"No description provided" }}
+                        </p>
+                        
+                        <!-- Statistics -->
+                        <div class="row g-2 text-center">
+                            <div class="col-6">
+                                <div class="bg-light rounded p-2">
+                                    <div class="fw-bold text-primary">{{ category.get_subcategories_count }}</div>
+                                    <small class="text-muted">Subcategories</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="bg-light rounded p-2">
+                                    <div class="fw-bold text-success">{{ category.get_devices_count }}</div>
+                                    <small class="text-muted">Total Devices</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="mt-4">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'devices:category_detail' category.pk %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye me-1"></i>
+                            View Details
+                        </a>
+                        <a href="{% url 'devices:subcategory_create' %}?category={{ category.pk }}" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-plus-circle me-1"></i>
+                            Add Subcategory
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Live preview updates
+    const nameField = document.getElementById('{{ form.name.id_for_label }}');
+    const codeField = document.getElementById('{{ form.code.id_for_label }}');
+    const descriptionField = document.getElementById('{{ form.description.id_for_label }}');
+    const iconField = document.getElementById('{{ form.icon_class.id_for_label }}');
+    
+    const previewName = document.getElementById('previewName');
+    const previewCode = document.getElementById('previewCode');
+    const previewDescription = document.getElementById('previewDescription');
+    const previewIcon = document.getElementById('previewIcon');
+    
+    // Update preview on field changes
+    nameField?.addEventListener('input', function() {
+        previewName.textContent = this.value || '{{ category.name }}';
+    });
+    
+    codeField?.addEventListener('input', function() {
+        previewCode.textContent = this.value.toUpperCase() || '{{ category.code }}';
+    });
+    
+    descriptionField?.addEventListener('input', function() {
+        previewDescription.textContent = this.value || 'No description provided';
+    });
+    
+    iconField?.addEventListener('input', function() {
+        const iconClass = this.value || '{{ category.icon_class|default:"bi-laptop" }}';
+        previewIcon.className = iconClass;
+    });
+    
+    // Auto-uppercase code field
+    codeField?.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+    
+    // Form validation feedback
+    const form = document.querySelector('form');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    
+    form?.addEventListener('submit', function() {
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Updating...';
+        submitBtn.disabled = true;
+    });
+    
+    // Icon suggestions
+    const iconSuggestions = [
+        'bi-laptop', 'bi-pc-display', 'bi-router', 'bi-hdd',
+        'bi-memory', 'bi-cpu', 'bi-printer', 'bi-phone',
+        'bi-tablet', 'bi-mouse', 'bi-keyboard', 'bi-headphones',
+        'bi-webcam', 'bi-usb-drive', 'bi-usb-symbol'
+    ];
+    
+    // Add icon suggestions dropdown (optional enhancement)
+    if (iconField) {
+        const datalist = document.createElement('datalist');
+        datalist.id = 'iconSuggestions';
+        iconSuggestions.forEach(icon => {
+            const option = document.createElement('option');
+            option.value = icon;
+            datalist.appendChild(option);
+        });
+        iconField.setAttribute('list', 'iconSuggestions');
+        iconField.parentNode.appendChild(datalist);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,980 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inactive Locations - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .inactive-locations-container {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .stats-overview {
+        background: linear-gradient(135deg, #fef2f2, #fee2e2);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border-left: 4px solid #dc2626;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 6px;
+        padding: 1rem;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border-left: 3px solid #dc2626;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .stat-number {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #dc2626;
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+    
+    .filter-panel {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+        border-left: 3px solid #dc2626;
+    }
+    
+    .filter-toggle {
+        width: 100%;
+        background: #f8fafc;
+        border: none;
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        color: #374151;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .filter-toggle:hover {
+        background: #f1f5f9;
+    }
+    
+    .filter-form {
+        padding: 1.5rem;
+        border-top: 1px solid #e5e7eb;
+    }
+    
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        align-items: end;
+    }
+    
+    .locations-table-container {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        overflow: hidden;
+        border-left: 3px solid #dc2626;
+    }
+    
+    .table-header {
+        background: #fef2f2;
+        border-bottom: 1px solid #fecaca;
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+    
+    .table-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #dc2626;
+        margin: 0;
+    }
+    
+    .table-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .location-code {
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+        background: #fef2f2;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        color: #dc2626;
+        font-weight: 500;
+        border: 1px solid #fecaca;
+    }
+    
+    .location-name {
+        font-weight: 500;
+        color: #1f2937;
+        opacity: 0.7;
+    }
+    
+    .location-address {
+        color: #6b7280;
+        font-size: 0.875rem;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .component-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+    
+    .component-tag {
+        font-size: 0.75rem;
+        padding: 0.125rem 0.5rem;
+        border-radius: 12px;
+        font-weight: 500;
+        opacity: 0.7;
+    }
+    
+    .component-tag.building {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .component-tag.floor {
+        background: #f0f9ff;
+        color: #0369a1;
+    }
+    
+    .component-tag.block {
+        background: #ecfdf5;
+        color: #059669;
+    }
+    
+    .component-tag.room {
+        background: #fef3c7;
+        color: #d97706;
+    }
+    
+    .component-tag.office {
+        background: #fce7f3;
+        color: #be185d;
+    }
+    
+    .coordinates-badge {
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-weight: 500;
+    }
+    
+    .coordinates-badge.has-coords {
+        background: #d1fae5;
+        color: #065f46;
+        opacity: 0.7;
+    }
+    
+    .coordinates-badge.no-coords {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-weight: 500;
+    }
+    
+    .status-badge.inactive {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.25rem;
+    }
+    
+    .btn-icon {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        border: 1px solid #d1d5db;
+        background: white;
+        color: #6b7280;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .btn-icon:hover {
+        background: #f9fafb;
+        color: var(--parliament-primary);
+        border-color: var(--parliament-primary);
+    }
+    
+    .btn-icon.activate {
+        border-color: #059669;
+        color: #059669;
+    }
+    
+    .btn-icon.activate:hover {
+        background: #d1fae5;
+        border-color: #047857;
+        color: #047857;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #6b7280;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+        color: #dc2626;
+    }
+    
+    .pagination-container {
+        padding: 1rem 1.5rem;
+        background: #fef2f2;
+        border-top: 1px solid #fecaca;
+    }
+    
+    .inactive-warning {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .inactive-warning i {
+        color: #dc2626;
+        font-size: 1.25rem;
+    }
+    
+    .inactive-warning-content h5 {
+        color: #dc2626;
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .inactive-warning-content p {
+        color: #7f1d1d;
+        font-size: 0.875rem;
+        margin: 0;
+    }
+    
+    .bulk-actions {
+        background: white;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border-left: 3px solid #f59e0b;
+    }
+    
+    .deactivation-info {
+        background: #fffbeb;
+        border: 1px solid #fed7aa;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .deactivation-info h6 {
+        color: #d97706;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .deactivation-info ul {
+        color: #92400e;
+        font-size: 0.875rem;
+        margin: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Inactive Locations</h1>
+            <p class="text-muted mb-0">Locations that have been deactivated in the system</p>
+        </div>
+        <div class="btn-group" role="group">
+            <a href="{% url 'locations:available' %}" class="btn btn-success">
+                <i class="bi bi-check-circle me-2"></i>
+                Active Locations
+            </a>
+            <a href="{% url 'locations:list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-list-ul me-2"></i>
+                All Locations
+            </a>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-warning dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="bi bi-tools me-2"></i>
+                    Actions
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="bulkActivateLocations()">
+                        <i class="bi bi-check-circle me-2"></i>Bulk Activate
+                    </a></li>
+                    <li><a class="dropdown-item" href="{% url 'locations:export_all' %}?status=inactive&format=excel">
+                        <i class="bi bi-file-earmark-excel me-2"></i>Export Inactive
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="confirmBulkDelete()">
+                        <i class="bi bi-trash me-2"></i>Bulk Delete
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inactive Warning -->
+    <div class="inactive-warning">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <div class="inactive-warning-content">
+            <h5>Inactive Locations Notice</h5>
+            <p>These locations are currently deactivated and will not appear in active location lists or reports.</p>
+        </div>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="stats-overview">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-number">{{ total_inactive }}</span>
+                <div class="stat-label">Total Inactive</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">{{ component_stats.with_building }}</span>
+                <div class="stat-label">With Building</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">{{ component_stats.with_office }}</span>
+                <div class="stat-label">With Office</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">{{ component_stats.with_room }}</span>
+                <div class="stat-label">With Room</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">
+                    {% widthratio total_inactive locations.count 100 %}%
+                </span>
+                <div class="stat-label">Of Total Locations</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deactivation Information -->
+    <div class="deactivation-info">
+        <h6>
+            <i class="bi bi-info-circle me-2"></i>
+            Why Locations Become Inactive
+        </h6>
+        <ul>
+            <li>Temporarily closed or under renovation</li>
+            <li>Reassigned to different purposes</li>
+            <li>Administrative restructuring</li>
+            <li>Maintenance or safety issues</li>
+            <li>Pending demolition or reconstruction</li>
+        </ul>
+    </div>
+
+    <!-- Search and Filter Panel -->
+    <div class="filter-panel">
+        <button class="filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#filterForm">
+            <i class="bi bi-funnel me-2"></i>
+            Search & Filter Inactive Locations
+            <i class="bi bi-chevron-down ms-auto"></i>
+        </button>
+        
+        <div class="collapse" id="filterForm">
+            <form method="get" class="filter-form">
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label for="search" class="form-label fw-medium">
+                            <i class="bi bi-search me-1"></i>
+                            Search Locations
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="search" 
+                               name="search" 
+                               value="{{ request.GET.search }}"
+                               placeholder="Search by name, code, or address...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="building" class="form-label fw-medium">
+                            <i class="bi bi-building me-1"></i>
+                            Building
+                        </label>
+                        <select class="form-select" id="building" name="building">
+                            <option value="">All Buildings</option>
+                            {% for building in buildings %}
+                                <option value="{{ building.id }}" {% if request.GET.building == building.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ building.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="deactivated_period" class="form-label fw-medium">
+                            <i class="bi bi-calendar me-1"></i>
+                            Deactivated Period
+                        </label>
+                        <select class="form-select" id="deactivated_period" name="deactivated_period">
+                            <option value="">All Time</option>
+                            <option value="week" {% if request.GET.deactivated_period == 'week' %}selected{% endif %}>Last Week</option>
+                            <option value="month" {% if request.GET.deactivated_period == 'month' %}selected{% endif %}>Last Month</option>
+                            <option value="quarter" {% if request.GET.deactivated_period == 'quarter' %}selected{% endif %}>Last Quarter</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label fw-medium">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-search me-2"></i>
+                                Search
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bulk Actions Panel -->
+    {% if locations %}
+        <div class="bulk-actions">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Bulk Actions:</strong>
+                    <span class="text-muted">Select locations below to perform bulk operations</span>
+                </div>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-success" onclick="selectAll()">
+                        <i class="bi bi-check-square me-1"></i>Select All
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="selectNone()">
+                        <i class="bi bi-square me-1"></i>Clear Selection
+                    </button>
+                    <button class="btn btn-success" onclick="activateSelected()" disabled id="activateBtn">
+                        <i class="bi bi-check-circle me-1"></i>Activate Selected
+                    </button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Locations Table -->
+    {% if locations %}
+        <div class="locations-table-container">
+            <div class="table-header">
+                <h3 class="table-title">
+                    <i class="bi bi-x-circle me-2"></i>
+                    Inactive Locations
+                </h3>
+                <div class="table-actions">
+                    <a href="{% url 'locations:available' %}" class="btn btn-outline-success btn-sm">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Active Locations
+                    </a>
+                    <a href="{% url 'locations:analytics' %}" class="btn btn-outline-info btn-sm">
+                        <i class="bi bi-graph-up me-2"></i>
+                        Analytics
+                    </a>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="50">
+                                <input type="checkbox" id="selectAllCheckbox" onchange="toggleAll(this)">
+                            </th>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Address</th>
+                            <th>Components</th>
+                            <th>Coordinates</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for location in locations %}
+                            <tr class="location-row" style="opacity: 0.8;">
+                                <td>
+                                    <input type="checkbox" class="location-checkbox" value="{{ location.id }}" onchange="updateBulkActions()">
+                                </td>
+                                <td>
+                                    <span class="location-code">{{ location.location_code }}</span>
+                                </td>
+                                <td>
+                                    <div class="location-name">
+                                        <a href="{% url 'locations:detail' location.pk %}" class="text-decoration-none">
+                                            {{ location.name }}
+                                        </a>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="location-address" title="{{ location.address }}">
+                                        {{ location.address|default:"No address specified"|truncatechars:30 }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="component-tags">
+                                        {% if location.building %}
+                                            <span class="component-tag building">
+                                                <i class="bi bi-building me-1"></i>{{ location.building.name }}
+                                            </span>
+                                        {% endif %}
+                                        {% if location.floor %}
+                                            <span class="component-tag floor">
+                                                <i class="bi bi-layers me-1"></i>{{ location.floor.name }}
+                                            </span>
+                                        {% endif %}
+                                        {% if location.block %}
+                                            <span class="component-tag block">
+                                                <i class="bi bi-grid-3x3 me-1"></i>{{ location.block.name }}
+                                            </span>
+                                        {% endif %}
+                                        {% if location.room %}
+                                            <span class="component-tag room">
+                                                <i class="bi bi-door-open me-1"></i>{{ location.room.name }}
+                                            </span>
+                                        {% endif %}
+                                        {% if location.office %}
+                                            <span class="component-tag office">
+                                                <i class="bi bi-briefcase me-1"></i>{{ location.office.name }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if location.has_coordinates %}
+                                        <span class="coordinates-badge has-coords">
+                                            <i class="bi bi-geo-alt-fill me-1"></i>
+                                            Available
+                                        </span>
+                                    {% else %}
+                                        <span class="coordinates-badge no-coords">
+                                            <i class="bi bi-geo-alt me-1"></i>
+                                            Not Set
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="status-badge inactive">
+                                        <i class="bi bi-x-circle me-1"></i>
+                                        Inactive
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{% url 'locations:detail' location.pk %}" 
+                                           class="btn-icon" 
+                                           title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        {% if perms.locations.change_location %}
+                                            <a href="{% url 'locations:edit' location.pk %}" 
+                                               class="btn-icon" 
+                                               title="Edit Location">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <button class="btn-icon activate" 
+                                                    title="Activate Location"
+                                                    onclick="activateLocation({{ location.id }}, '{{ location.name|escapejs }}')">
+                                                <i class="bi bi-check-circle"></i>
+                                            </button>
+                                        {% endif %}
+                                        <a href="{% url 'locations:qrcode' location.pk %}" 
+                                           class="btn-icon" 
+                                           title="QR Code">
+                                            <i class="bi bi-qr-code"></i>
+                                        </a>
+                                        {% if location.has_coordinates %}
+                                            <a href="#" 
+                                               class="btn-icon" 
+                                               title="View on Map"
+                                               onclick="showLocationOnMap({{ location.latitude }}, {{ location.longitude }}, '{{ location.name|escapejs }}')">
+                                                <i class="bi bi-map"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+                <div class="pagination-container">
+                    <nav aria-label="Inactive locations pagination">
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.building %}building={{ request.GET.building }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.building %}building={{ request.GET.building }}&{% endif %}page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.building %}building={{ request.GET.building }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    
+                    <div class="text-center mt-2">
+                        <small class="text-muted">
+                            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} 
+                            of {{ page_obj.paginator.count }} inactive locations
+                        </small>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="bi bi-check-circle"></i>
+            <h4>No Inactive Locations</h4>
+            <p>Great! All locations in the system are currently active.</p>
+            <div class="mt-3">
+                <a href="{% url 'locations:available' %}" class="btn btn-success me-2">
+                    <i class="bi bi-list-ul me-2"></i>
+                    View Active Locations
+                </a>
+                <a href="{% url 'locations:create' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Add New Location
+                </a>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Reactivation Tips -->
+    {% if locations %}
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <div class="card border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-lightbulb me-2"></i>
+                            Reactivation Tips
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="mb-0">
+                            <li>Review location details before reactivating</li>
+                            <li>Update coordinates if the location has moved</li>
+                            <li>Verify component associations are still valid</li>
+                            <li>Check if any devices are still assigned to the location</li>
+                            <li>Update address and contact information if needed</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-question-circle me-2"></i>
+                            Need Help?
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Contact IT support for assistance with location management.</p>
+                        <div class="d-grid">
+                            <a href="#" class="btn btn-outline-info">
+                                <i class="bi bi-envelope me-2"></i>
+                                Contact Support
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let selectedLocations = [];
+    
+    function toggleAll(checkbox) {
+        const checkboxes = document.querySelectorAll('.location-checkbox');
+        checkboxes.forEach(cb => {
+            cb.checked = checkbox.checked;
+        });
+        updateBulkActions();
+    }
+    
+    function selectAll() {
+        document.getElementById('selectAllCheckbox').checked = true;
+        toggleAll(document.getElementById('selectAllCheckbox'));
+    }
+    
+    function selectNone() {
+        document.getElementById('selectAllCheckbox').checked = false;
+        toggleAll(document.getElementById('selectAllCheckbox'));
+    }
+    
+    function updateBulkActions() {
+        const checkboxes = document.querySelectorAll('.location-checkbox:checked');
+        const activateBtn = document.getElementById('activateBtn');
+        
+        selectedLocations = Array.from(checkboxes).map(cb => cb.value);
+        
+        if (selectedLocations.length > 0) {
+            activateBtn.disabled = false;
+            activateBtn.innerHTML = `<i class="bi bi-check-circle me-1"></i>Activate Selected (${selectedLocations.length})`;
+        } else {
+            activateBtn.disabled = true;
+            activateBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Activate Selected';
+        }
+    }
+    
+    function activateLocation(locationId, locationName) {
+        if (confirm(`Are you sure you want to activate "${locationName}"?`)) {
+            // Create a form and submit it
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/locations/${locationId}/toggle-status/`;
+            
+            // Add CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (csrfToken) {
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                csrfInput.value = csrfToken.value;
+                form.appendChild(csrfInput);
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+    
+    function activateSelected() {
+        if (selectedLocations.length === 0) {
+            alert('Please select locations to activate.');
+            return;
+        }
+        
+        if (confirm(`Are you sure you want to activate ${selectedLocations.length} selected location(s)?`)) {
+            // Create form for bulk activation
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{% url "locations:bulk_activate" %}';
+            
+            // Add CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (csrfToken) {
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                csrfInput.value = csrfToken.value;
+                form.appendChild(csrfInput);
+            }
+            
+            // Add selected location IDs
+            selectedLocations.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'location_ids';
+                input.value = id;
+                form.appendChild(input);
+            });
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+    
+    function bulkActivateLocations() {
+        if (selectedLocations.length === 0) {
+            alert('Please select locations first using the checkboxes in the table.');
+            return;
+        }
+        activateSelected();
+    }
+    
+    function confirmBulkDelete() {
+        if (selectedLocations.length === 0) {
+            alert('Please select locations first using the checkboxes in the table.');
+            return;
+        }
+        
+        if (confirm(`WARNING: This will permanently delete ${selectedLocations.length} location(s). This action cannot be undone. Are you sure?`)) {
+            // Create form for bulk deletion
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{% url "locations:bulk_delete" %}';
+            
+            // Add CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (csrfToken) {
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                csrfInput.value = csrfToken.value;
+                form.appendChild(csrfInput);
+            }
+            
+            // Add selected location IDs
+            selectedLocations.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'location_ids';
+                input.value = id;
+                form.appendChild(input);
+            });
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+    
+    function showLocationOnMap(lat, lng, name) {
+        alert(`Opening map for ${name} at coordinates: ${lat}, ${lng}`);
+        // In a real implementation, this would open a map modal or redirect to a map page
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                if (alert.classList.contains('show')) {
+                    bootstrap.Alert.getOrCreateInstance(alert).close();
+                }
+            });
+        }, 5000);
+        
+        // Add hover effects to action buttons
+        const actionButtons = document.querySelectorAll('.btn-icon');
+        actionButtons.forEach(button => {
+            button.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.1)';
+            });
+            
+            button.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+        
+        // Add animation to stat cards
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'all 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+        
+        // Auto-submit form when filters change
+        document.getElementById('building')?.addEventListener('change', function() {
+            this.form.submit();
+        });
+        
+        document.getElementById('deactivated_period')?.addEventListener('change', function() {
+            this.form.submit();
+        });
+        
+        // Add CSRF token to page for JavaScript use
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfToken) {
+            // Create hidden CSRF token input if it doesn't exist
+            const tokenInput = document.createElement('input');
+            tokenInput.type = 'hidden';
+            tokenInput.name = 'csrfmiddlewaretoken';
+            tokenInput.value = '{{ csrf_token }}';
+            document.body.appendChild(tokenInput);
+        }
+    });
+</script>
+{% endblock %}

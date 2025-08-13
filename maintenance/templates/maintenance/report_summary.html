@@ -1,0 +1,599 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Maintenance Summary Report - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Report Summary Styling - Parliament Design System */
+.report-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.report-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.report-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.report-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.report-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Summary Statistics */
+.summary-stats {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.stats-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    padding: 1.5rem;
+}
+
+.stat-item {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-align: center;
+    transition: transform 0.2s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-2px);
+}
+
+.stat-item.total { 
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.1)); 
+}
+
+.stat-item.completed { 
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1)); 
+}
+
+.stat-item.pending { 
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1)); 
+}
+
+.stat-item.inprogress { 
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1)); 
+}
+
+.stat-number {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Period Summary */
+.period-summary {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.period-header {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+.period-content {
+    padding: 1.5rem;
+}
+
+.period-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.period-item:last-child {
+    border-bottom: none;
+}
+
+.period-label {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+}
+
+.period-value {
+    color: #16a34a;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* Status Distribution */
+.status-distribution {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.distribution-header {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+.status-list {
+    padding: 1.5rem;
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.status-item:hover {
+    background: rgba(255, 255, 255, 0.8);
+    transform: translateX(4px);
+}
+
+.status-item:last-child {
+    margin-bottom: 0;
+}
+
+.status-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.status-indicator.scheduled { background-color: #3b82f6; }
+.status-indicator.inprogress { background-color: #f59e0b; }
+.status-indicator.pending { background-color: #ef4444; }
+.status-indicator.completed { background-color: #22c55e; }
+.status-indicator.cancelled { background-color: #6b7280; }
+
+.status-name {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.status-count {
+    background: rgba(59, 130, 246, 0.1);
+    color: #1e40af;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Export Actions */
+.export-actions {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.export-header {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+.export-buttons {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.btn-export {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.btn-export:hover {
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.btn-pdf {
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.btn-pdf:hover {
+    background: rgba(220, 38, 38, 0.15);
+    color: #b91c1c;
+}
+
+.btn-excel {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.btn-excel:hover {
+    background: rgba(34, 197, 94, 0.15);
+    color: #15803d;
+}
+
+.btn-csv {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.btn-csv:hover {
+    background: rgba(59, 130, 246, 0.15);
+    color: #1d4ed8;
+}
+
+/* Recent Activities */
+.recent-activities {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.activities-header {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+.activities-list {
+    padding: 1.5rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.activity-title {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+}
+
+.activity-date {
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+.activity-details {
+    color: #64748b;
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #64748b;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .report-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .export-buttons {
+        gap: 0.5rem;
+    }
+    
+    .btn-export {
+        font-size: 0.8rem;
+        padding: 0.625rem 0.875rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+    <div class="container-fluid">
+        <!-- Report Header -->
+        <div class="report-header">
+            <h1 class="report-title">
+                <i class="bi bi-file-text"></i>
+                Maintenance Summary Report
+            </h1>
+            <p class="report-subtitle">Bangladesh Parliament Secretariat - IT Inventory Management</p>
+        </div>
+
+        <div class="report-grid">
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Summary Statistics -->
+                <div class="summary-stats">
+                    <div class="stats-header">
+                        <i class="bi bi-bar-chart-line"></i>
+                        Overall Statistics
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-item total">
+                            <div class="stat-number">{{ summary.total_maintenance|default:0 }}</div>
+                            <div class="stat-label">Total Maintenance</div>
+                        </div>
+                        <div class="stat-item completed">
+                            <div class="stat-number">{{ summary.completed_maintenance|default:0 }}</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                        <div class="stat-item inprogress">
+                            <div class="stat-number">{{ summary.in_progress_maintenance|default:0 }}</div>
+                            <div class="stat-label">In Progress</div>
+                        </div>
+                        <div class="stat-item pending">
+                            <div class="stat-number">{{ summary.pending_maintenance|default:0 }}</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Period Summary -->
+                <div class="period-summary">
+                    <div class="period-header">
+                        <i class="bi bi-calendar-range"></i>
+                        Period Analysis
+                    </div>
+                    <div class="period-content">
+                        <div class="period-item">
+                            <span class="period-label">This Month</span>
+                            <span class="period-value">{{ summary.this_month_maintenance|default:0 }} tasks</span>
+                        </div>
+                        <div class="period-item">
+                            <span class="period-label">Last Month</span>
+                            <span class="period-value">{{ summary.last_month_maintenance|default:0 }} tasks</span>
+                        </div>
+                        <div class="period-item">
+                            <span class="period-label">This Quarter</span>
+                            <span class="period-value">{{ summary.quarter_maintenance|default:0 }} tasks</span>
+                        </div>
+                        <div class="period-item">
+                            <span class="period-label">Total Cost (This Month)</span>
+                            <span class="period-value">৳ {{ summary.this_month_cost|default:0|floatformat:2 }}</span>
+                        </div>
+                        <div class="period-item">
+                            <span class="period-label">Completion Rate</span>
+                            <span class="period-value">{{ summary.completion_rate|default:0|floatformat:1 }}%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activities -->
+                <div class="recent-activities">
+                    <div class="activities-header">
+                        <i class="bi bi-clock-history"></i>
+                        Recent Activities
+                    </div>
+                    <div class="activities-list">
+                        {% if recent_activities %}
+                            {% for activity in recent_activities %}
+                            <div class="activity-item">
+                                <div class="activity-header">
+                                    <span class="activity-title">{{ activity.title }}</span>
+                                    <span class="activity-date">{{ activity.created_at|date:"M d, Y" }}</span>
+                                </div>
+                                <div class="activity-details">
+                                    Device: {{ activity.device.name }} | Status: {{ activity.get_status_display }}
+                                    {% if activity.assigned_to %}| Assigned: {{ activity.assigned_to.get_full_name }}{% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="bi bi-clock-history"></i>
+                                <p>No recent maintenance activities</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Status Distribution -->
+                <div class="status-distribution">
+                    <div class="distribution-header">
+                        <i class="bi bi-pie-chart"></i>
+                        Status Distribution
+                    </div>
+                    <div class="status-list">
+                        {% if status_distribution %}
+                            {% for status in status_distribution %}
+                            <div class="status-item">
+                                <div class="status-info">
+                                    <div class="status-indicator {{ status.status|lower }}"></div>
+                                    <span class="status-name">{{ status.status_display }}</span>
+                                </div>
+                                <span class="status-count">{{ status.count }}</span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="bi bi-pie-chart"></i>
+                                <p>No status data available</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Export Actions -->
+                <div class="export-actions">
+                    <div class="export-header">
+                        <i class="bi bi-download"></i>
+                        Export Report
+                    </div>
+                    <div class="export-buttons">
+                        <a href="{% url 'maintenance:export_pdf' %}?type=summary" class="btn-export btn-pdf">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                            PDF Report
+                        </a>
+                        <a href="{% url 'maintenance:export_excel' %}?type=summary" class="btn-export btn-excel">
+                            <i class="bi bi-file-earmark-excel"></i>
+                            Excel Analysis
+                        </a>
+                        <a href="{% url 'maintenance:export_csv' %}?type=summary" class="btn-export btn-csv">
+                            <i class="bi bi-file-text"></i>
+                            CSV Data
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add any interactive features for the report
+    console.log('Maintenance Summary Report loaded');
+    
+    // Optional: Add tooltips or interactive elements
+    const statItems = document.querySelectorAll('.stat-item');
+    statItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-3px)';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %}

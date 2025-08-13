@@ -1,0 +1,831 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Maintenance Schedule - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Maintenance Schedule Styling - Parliament Design System */
+.schedule-container {
+    background: var(--bg-gradient-primary);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.schedule-header {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.schedule-title {
+    color: var(--parliament-primary);
+    font-weight: 700;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.schedule-subtitle {
+    color: var(--parliament-neutral);
+    margin-bottom: 0;
+}
+
+.schedule-controls {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--glass-shadow);
+}
+
+.controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+}
+
+.view-controls {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.view-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.7);
+    color: var(--parliament-neutral);
+    text-decoration: none;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.view-btn.active,
+.view-btn:hover {
+    background: linear-gradient(135deg, var(--parliament-primary), #2563eb);
+    color: white;
+    border-color: var(--parliament-primary);
+}
+
+.filter-controls {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.filter-select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+    transition: var(--transition);
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--parliament-primary);
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+}
+
+.btn-add {
+    background: linear-gradient(135deg, var(--parliament-primary), #2563eb);
+    color: white;
+    border: none;
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    text-decoration: none;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.btn-add:hover {
+    background: linear-gradient(135deg, #1e40af, #1d4ed8);
+    transform: translateY(-1px);
+    color: white;
+}
+
+.calendar-view {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--glass-shadow);
+    margin-bottom: var(--spacing-xl);
+}
+
+.calendar-header {
+    background: linear-gradient(135deg, var(--parliament-primary) 0%, #3b82f6 100%);
+    color: white;
+    padding: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.calendar-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.calendar-nav {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.nav-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--border-radius);
+    padding: 0.5rem;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.nav-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background: white;
+}
+
+.calendar-day-header {
+    background: rgba(30, 58, 138, 0.1);
+    color: var(--parliament-dark);
+    padding: var(--spacing-md);
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.calendar-day {
+    min-height: 120px;
+    padding: var(--spacing-sm);
+    border-right: 1px solid var(--glass-border);
+    border-bottom: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.8);
+    transition: var(--transition);
+}
+
+.calendar-day:hover {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.calendar-day.other-month {
+    background: rgba(248, 250, 252, 0.5);
+    color: var(--parliament-neutral);
+}
+
+.calendar-day.today {
+    background: rgba(30, 58, 138, 0.1);
+    border: 2px solid var(--parliament-primary);
+}
+
+.day-number {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+    font-size: 0.875rem;
+}
+
+.day-events {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.event-item {
+    background: var(--event-color);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+}
+
+.event-item:hover {
+    transform: scale(1.02);
+    color: white;
+}
+
+.event-scheduled {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.event-in-progress {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.event-overdue {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.event-completed {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.list-view {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--glass-shadow);
+}
+
+.list-header {
+    background: linear-gradient(135deg, var(--parliament-primary) 0%, #3b82f6 100%);
+    color: white;
+    padding: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.list-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.schedule-list {
+    padding: var(--spacing-lg);
+}
+
+.schedule-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid var(--glass-border);
+    margin-bottom: var(--spacing-md);
+    transition: var(--transition);
+}
+
+.schedule-item:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateX(4px);
+}
+
+.schedule-item:last-child {
+    margin-bottom: 0;
+}
+
+.schedule-status {
+    width: 8px;
+    height: 60px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.status-scheduled {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.status-in-progress {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.status-overdue {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.status-completed {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.schedule-content {
+    flex: 1;
+}
+
+.schedule-device {
+    font-weight: 600;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+}
+
+.schedule-type {
+    color: var(--parliament-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: var(--spacing-xs);
+}
+
+.schedule-details {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+    margin-bottom: var(--spacing-xs);
+}
+
+.schedule-meta {
+    display: flex;
+    gap: var(--spacing-md);
+    font-size: 0.75rem;
+    color: var(--parliament-neutral);
+}
+
+.schedule-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+    flex-shrink: 0;
+}
+
+.action-btn {
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--border-radius);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: var(--transition);
+    border: none;
+    cursor: pointer;
+}
+
+.btn-view {
+    background: rgba(30, 58, 138, 0.1);
+    color: var(--parliament-primary);
+    border: 1px solid rgba(30, 58, 138, 0.2);
+}
+
+.btn-view:hover {
+    background: var(--parliament-primary);
+    color: white;
+}
+
+.btn-edit {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.btn-edit:hover {
+    background: #d97706;
+    color: white;
+}
+
+.btn-complete {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.btn-complete:hover {
+    background: #059669;
+    color: white;
+}
+
+.schedule-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.stat-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    text-align: center;
+    box-shadow: var(--glass-shadow);
+    transition: var(--transition);
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--glass-shadow-hover);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--spacing-md);
+    font-size: 1.25rem;
+    color: white;
+}
+
+.stat-icon.today { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.stat-icon.week { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.stat-icon.month { background: linear-gradient(135deg, #10b981, #059669); }
+.stat-icon.overdue { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-label {
+    color: var(--parliament-neutral);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.empty-schedule {
+    text-align: center;
+    padding: var(--spacing-3xl);
+    color: var(--parliament-neutral);
+}
+
+.empty-schedule i {
+    font-size: 4rem;
+    opacity: 0.3;
+    margin-bottom: var(--spacing-lg);
+}
+
+.empty-schedule h3 {
+    color: var(--parliament-dark);
+    margin-bottom: var(--spacing-md);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .calendar-grid {
+        font-size: 0.875rem;
+    }
+    
+    .calendar-day {
+        min-height: 100px;
+    }
+    
+    .controls-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filter-controls {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .schedule-container {
+        padding: 1rem 0;
+    }
+    
+    .calendar-day {
+        min-height: 80px;
+        padding: 0.25rem;
+    }
+    
+    .day-number {
+        font-size: 0.75rem;
+    }
+    
+    .event-item {
+        font-size: 0.625rem;
+        padding: 1px 4px;
+    }
+    
+    .schedule-item {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+    
+    .schedule-status {
+        width: 100%;
+        height: 4px;
+        order: -1;
+    }
+    
+    .schedule-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+    
+    .action-btn {
+        flex: 1;
+        text-align: center;
+    }
+    
+    .schedule-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .calendar-day-header {
+        padding: var(--spacing-sm);
+        font-size: 0.75rem;
+    }
+    
+    .calendar-day {
+        min-height: 60px;
+    }
+    
+    .view-controls {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .schedule-stats {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="schedule-container">
+    <div class="container-fluid">
+        <!-- Schedule Header -->
+        <div class="schedule-header">
+            <h1 class="schedule-title">
+                <i class="bi bi-calendar-week"></i>
+                Maintenance Schedule
+            </h1>
+            <p class="schedule-subtitle">Bangladesh Parliament Secretariat - Comprehensive Maintenance Planning</p>
+        </div>
+
+        <!-- Schedule Statistics -->
+        <div class="schedule-stats">
+            <div class="stat-card">
+                <div class="stat-icon today">
+                    <i class="bi bi-calendar-day"></i>
+                </div>
+                <div class="stat-number">{{ stats.today }}</div>
+                <div class="stat-label">Due Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon week">
+                    <i class="bi bi-calendar-week"></i>
+                </div>
+                <div class="stat-number">{{ stats.this_week }}</div>
+                <div class="stat-label">This Week</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon month">
+                    <i class="bi bi-calendar-month"></i>
+                </div>
+                <div class="stat-number">{{ stats.this_month }}</div>
+                <div class="stat-label">This Month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon overdue">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="stat-number">{{ stats.overdue }}</div>
+                <div class="stat-label">Overdue</div>
+            </div>
+        </div>
+
+        <!-- Schedule Controls -->
+        <div class="schedule-controls">
+            <div class="controls-row">
+                <div class="view-controls">
+                    <a href="?view=calendar" class="view-btn {% if view == 'calendar' %}active{% endif %}">
+                        <i class="bi bi-calendar3 me-1"></i>Calendar
+                    </a>
+                    <a href="?view=list" class="view-btn {% if view == 'list' %}active{% endif %}">
+                        <i class="bi bi-list-ul me-1"></i>List
+                    </a>
+                    <a href="?view=timeline" class="view-btn {% if view == 'timeline' %}active{% endif %}">
+                        <i class="bi bi-bar-chart-steps me-1"></i>Timeline
+                    </a>
+                </div>
+                
+                <div class="filter-controls">
+                    <select class="filter-select" name="status" onchange="this.form.submit()">
+                        <option value="">All Status</option>
+                        <option value="scheduled" {% if request.GET.status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                        <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                        <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completed</option>
+                        <option value="overdue" {% if request.GET.status == 'overdue' %}selected{% endif %}>Overdue</option>
+                    </select>
+                    
+                    <select class="filter-select" name="priority" onchange="this.form.submit()">
+                        <option value="">All Priorities</option>
+                        <option value="critical" {% if request.GET.priority == 'critical' %}selected{% endif %}>Critical</option>
+                        <option value="high" {% if request.GET.priority == 'high' %}selected{% endif %}>High</option>
+                        <option value="medium" {% if request.GET.priority == 'medium' %}selected{% endif %}>Medium</option>
+                        <option value="low" {% if request.GET.priority == 'low' %}selected{% endif %}>Low</option>
+                    </select>
+                    
+                    <a href="{% url 'maintenance:create' %}" class="btn-add">
+                        <i class="bi bi-plus-circle"></i>
+                        Schedule New
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar View -->
+        {% if view == 'calendar' %}
+        <div class="calendar-view">
+            <div class="calendar-header">
+                <h3 class="calendar-title">{{ current_month|date:"F Y" }}</h3>
+                <div class="calendar-nav">
+                    <button class="nav-btn" onclick="navigateMonth(-1)">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <button class="nav-btn" onclick="navigateMonth(0)">
+                        <i class="bi bi-house"></i>
+                    </button>
+                    <button class="nav-btn" onclick="navigateMonth(1)">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="calendar-grid">
+                <!-- Day Headers -->
+                <div class="calendar-day-header">Sun</div>
+                <div class="calendar-day-header">Mon</div>
+                <div class="calendar-day-header">Tue</div>
+                <div class="calendar-day-header">Wed</div>
+                <div class="calendar-day-header">Thu</div>
+                <div class="calendar-day-header">Fri</div>
+                <div class="calendar-day-header">Sat</div>
+                
+                <!-- Calendar Days -->
+                {% for week in calendar_weeks %}
+                    {% for day in week %}
+                    <div class="calendar-day {% if not day.in_month %}other-month{% endif %} {% if day.is_today %}today{% endif %}">
+                        <div class="day-number">{{ day.day }}</div>
+                        <div class="day-events">
+                            {% for event in day.events %}
+                            <a href="{% url 'maintenance:detail' event.id %}" 
+                               class="event-item event-{{ event.status|lower }}">
+                                {{ event.device.device_id|truncatechars:10 }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- List View -->
+        {% if view == 'list' %}
+        <div class="list-view">
+            <div class="list-header">
+                <i class="bi bi-list-check"></i>
+                <h3 class="list-title">Maintenance Schedule List</h3>
+            </div>
+            
+            <div class="schedule-list">
+                {% for maintenance in maintenance_list %}
+                <div class="schedule-item">
+                    <div class="schedule-status status-{{ maintenance.status|lower }}"></div>
+                    <div class="schedule-content">
+                        <div class="schedule-device">{{ maintenance.device.device_id }} - {{ maintenance.device.name }}</div>
+                        <div class="schedule-type">{{ maintenance.get_maintenance_type_display }}</div>
+                        <div class="schedule-details">{{ maintenance.description|truncatechars:80 }}</div>
+                        <div class="schedule-meta">
+                            <span><i class="bi bi-calendar me-1"></i>{{ maintenance.scheduled_date|date:"M d, Y" }}</span>
+                            <span><i class="bi bi-clock me-1"></i>{{ maintenance.estimated_duration }}h</span>
+                            <span><i class="bi bi-flag me-1"></i>{{ maintenance.get_priority_display }}</span>
+                            <span><i class="bi bi-geo-alt me-1"></i>{{ maintenance.device.location }}</span>
+                        </div>
+                    </div>
+                    <div class="schedule-actions">
+                        <a href="{% url 'maintenance:detail' maintenance.id %}" class="action-btn btn-view">
+                            <i class="bi bi-eye me-1"></i>View
+                        </a>
+                        {% if maintenance.status == 'SCHEDULED' %}
+                        <a href="{% url 'maintenance:edit' maintenance.id %}" class="action-btn btn-edit">
+                            <i class="bi bi-pencil me-1"></i>Edit
+                        </a>
+                        <a href="{% url 'maintenance:complete' maintenance.id %}" class="action-btn btn-complete">
+                            <i class="bi bi-check me-1"></i>Complete
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-schedule">
+                    <i class="bi bi-calendar-x"></i>
+                    <h3>No Scheduled Maintenance</h3>
+                    <p>No maintenance tasks are currently scheduled for the selected filters.</p>
+                    <a href="{% url 'maintenance:create' %}" class="btn-add">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        Schedule First Maintenance
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Timeline View -->
+        {% if view == 'timeline' %}
+        <div class="list-view">
+            <div class="list-header">
+                <i class="bi bi-bar-chart-steps"></i>
+                <h3 class="list-title">Maintenance Timeline</h3>
+            </div>
+            
+            <div class="schedule-list">
+                {% for date_group in timeline_data %}
+                <div class="timeline-date">
+                    <h4>{{ date_group.date|date:"l, F d, Y" }}</h4>
+                    {% for maintenance in date_group.maintenance_list %}
+                    <div class="schedule-item">
+                        <div class="schedule-status status-{{ maintenance.status|lower }}"></div>
+                        <div class="schedule-content">
+                            <div class="schedule-device">{{ maintenance.device.device_id }} - {{ maintenance.device.name }}</div>
+                            <div class="schedule-type">{{ maintenance.get_maintenance_type_display }}</div>
+                            <div class="schedule-details">{{ maintenance.description|truncatechars:80 }}</div>
+                            <div class="schedule-meta">
+                                <span><i class="bi bi-clock me-1"></i>{{ maintenance.scheduled_time|time:"H:i" }}</span>
+                                <span><i class="bi bi-flag me-1"></i>{{ maintenance.get_priority_display }}</span>
+                                <span><i class="bi bi-person me-1"></i>{{ maintenance.assigned_to|default:"Unassigned" }}</span>
+                            </div>
+                        </div>
+                        <div class="schedule-actions">
+                            <a href="{% url 'maintenance:detail' maintenance.id %}" class="action-btn btn-view">
+                                <i class="bi bi-eye me-1"></i>View
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% empty %}
+                <div class="empty-schedule">
+                    <i class="bi bi-calendar-x"></i>
+                    <h3>No Timeline Data</h3>
+                    <p>No maintenance tasks are scheduled for the current timeline view.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function navigateMonth(direction) {
+    const currentUrl = new URL(window.location);
+    const currentMonth = currentUrl.searchParams.get('month') || new Date().getMonth() + 1;
+    const currentYear = currentUrl.searchParams.get('year') || new Date().getFullYear();
+    
+    let newMonth = parseInt(currentMonth);
+    let newYear = parseInt(currentYear);
+    
+    if (direction === 1) {
+        newMonth++;
+        if (newMonth > 12) {
+            newMonth = 1;
+            newYear++;
+        }
+    } else if (direction === -1) {
+        newMonth--;
+        if (newMonth < 1) {
+            newMonth = 12;
+            newYear--;
+        }
+    } else {
+        newMonth = new Date().getMonth() + 1;
+        newYear = new Date().getFullYear();
+    }
+    
+    currentUrl.searchParams.set('month', newMonth);
+    currentUrl.searchParams.set('year', newYear);
+    window.location.href = currentUrl.toString();
+}
+
+// Auto-submit filter forms
+document.querySelectorAll('.filter-select').forEach(select => {
+    select.addEventListener('change', function() {
+        const currentUrl = new URL(window.location);
+        currentUrl.searchParams.set(this.name, this.value);
+        window.location.href = currentUrl.toString();
+    });
+});
+</script>
+{% endblock %}

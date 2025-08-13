@@ -1,0 +1,807 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ object.get_display_name }} - Manage Roles - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'users:list' %}">Users</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'users:detail' object.pk %}">{{ object.get_display_name }}</a></li>
+    <li class="breadcrumb-item active">Manage Roles</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="bi bi-shield-check me-2 text-primary"></i>
+                Manage User Roles
+            </h1>
+            <p class="text-muted mb-0">Update roles and permissions for {{ object.get_display_name }}</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'users:permissions' object.pk %}" class="btn btn-outline-info">
+                <i class="bi bi-eye me-2"></i>
+                View Permissions
+            </a>
+            <a href="{% url 'users:detail' object.pk %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Back to User
+            </a>
+        </div>
+    </div>
+
+    <!-- User Info Card -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex align-items-center">
+                {% if object.profile_image %}
+                    <img src="{{ object.profile_image.url }}" alt="{{ object.get_full_name }}" class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                {% else %}
+                    <div class="bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center text-white" style="width: 60px; height: 60px;">
+                        <i class="bi bi-person fs-4"></i>
+                    </div>
+                {% endif %}
+                <div class="flex-grow-1">
+                    <h5 class="mb-1">{{ object.get_full_name }}</h5>
+                    <p class="text-muted mb-0">{{ object.username }} • {{ object.email|default:"No email" }}</p>
+                    <small class="text-muted">{{ object.designation|default:"No designation" }} • {{ object.office|default:"No office" }}</small>
+                </div>
+                <div class="text-end">
+                    {% if object.is_active and object.is_active_employee %}
+                        <span class="badge bg-success">Active</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                    {% endif %}
+                    {% if object.is_superuser %}
+                        <span class="badge bg-danger ms-1">Super Admin</span>
+                    {% elif object.is_staff %}
+                        <span class="badge bg-warning ms-1">Staff</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if object.is_superuser %}
+        <!-- Superuser Warning -->
+        <div class="alert alert-warning mb-4">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-shield-fill me-3 fs-4"></i>
+                <div>
+                    <h6 class="alert-heading mb-1">Superuser Account</h6>
+                    <p class="mb-0">
+                        This user has superuser privileges and automatically has ALL permissions in the system.
+                        Role assignments will not affect their access level.
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Role Management Form -->
+    <div class="form-container">
+        <div class="form-header">
+            <h2 class="form-title">
+                <i class="bi bi-people-fill"></i>
+                Role & Permission Management
+            </h2>
+        </div>
+
+        <div class="form-body">
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+
+                <!-- System Permissions Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">System Permissions</h3>
+                    <div class="system-permissions">
+                        <div class="permission-card">
+                            <div class="permission-header">
+                                <i class="bi bi-person-check text-success me-2"></i>
+                                <h6>Staff Access</h6>
+                            </div>
+                            <div class="permission-body">
+                                <div class="form-check">
+                                    {{ form.is_staff }}
+                                    <label class="form-check-label" for="{{ form.is_staff.id_for_label }}">
+                                        Grant staff access to admin interface
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Staff users can access the Django admin interface
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="permission-card">
+                            <div class="permission-header">
+                                <i class="bi bi-shield-fill text-danger me-2"></i>
+                                <h6>Superuser Access</h6>
+                            </div>
+                            <div class="permission-body">
+                                <div class="form-check">
+                                    {{ form.is_superuser }}
+                                    <label class="form-check-label" for="{{ form.is_superuser.id_for_label }}">
+                                        Grant superuser privileges (all permissions)
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-exclamation-triangle text-warning me-1"></i>
+                                    <strong>WARNING:</strong> Superusers have complete access to the system
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group Roles Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Group Roles</h3>
+                    <div class="groups-section">
+                        {% if form.groups %}
+                            <div class="group-selection">
+                                <div class="form-text mb-3">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Select groups to assign roles to this user. Groups provide predefined sets of permissions.
+                                </div>
+                                <div class="groups-grid">
+                                    {% for group in form.groups %}
+                                        <div class="group-card">
+                                            <div class="group-checkbox">
+                                                {{ group.tag }}
+                                                <label class="group-label" for="{{ group.id_for_label }}">
+                                                    <div class="group-name">{{ group.choice_label }}</div>
+                                                    <div class="group-permissions">
+                                                        {% with group.choice_label as group_name %}
+                                                            {% for group_obj in all_groups %}
+                                                                {% if group_obj.name == group_name %}
+                                                                    <small class="text-muted">{{ group_obj.permissions.count }} permission{{ group_obj.permissions.count|pluralize }}</small>
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        {% endwith %}
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="empty-groups">
+                                <i class="bi bi-people text-muted"></i>
+                                <p class="text-muted">No groups available for assignment</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Individual Permissions Section -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Individual Permissions</h3>
+                    <div class="permissions-section">
+                        <div class="form-text mb-3">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Grant specific permissions to this user in addition to group permissions.
+                        </div>
+                        
+                        <div class="permission-search mb-3">
+                            <input type="text" class="form-control" id="permissionSearch" placeholder="Search permissions..." autocomplete="off">
+                        </div>
+                        
+                        {% if form.user_permissions %}
+                            <div class="permissions-container">
+                                {% regroup form.user_permissions by choice_label.content_type.app_label as permission_apps %}
+                                {% for app in permission_apps %}
+                                    <div class="permission-app" data-app="{{ app.grouper }}">
+                                        <div class="app-header">
+                                            <button type="button" class="btn btn-link p-0 app-toggle" data-bs-toggle="collapse" data-bs-target="#app-{{ app.grouper }}" aria-expanded="false">
+                                                <i class="bi bi-chevron-down me-2"></i>
+                                                <strong>{{ app.grouper|title }}</strong>
+                                            </button>
+                                        </div>
+                                        <div class="collapse" id="app-{{ app.grouper }}">
+                                            <div class="app-body">
+                                                {% regroup app.list by choice_label.content_type.model as permission_models %}
+                                                {% for model in permission_models %}
+                                                    <div class="permission-model">
+                                                        <h6 class="model-title">{{ model.grouper|title }}</h6>
+                                                        <div class="permission-list">
+                                                            {% for permission in model.list %}
+                                                                <div class="permission-item">
+                                                                    <div class="form-check">
+                                                                        {{ permission.tag }}
+                                                                        <label class="form-check-label" for="{{ permission.id_for_label }}">
+                                                                            <div class="permission-name">{{ permission.choice_label.name }}</div>
+                                                                            <div class="permission-codename">
+                                                                                <code>{{ permission.choice_label.codename }}</code>
+                                                                            </div>
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
+                                                            {% endfor %}
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="empty-permissions">
+                                <i class="bi bi-key text-muted"></i>
+                                <p class="text-muted">No individual permissions available</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-footer">
+                    <div class="text-muted">
+                        <i class="bi bi-shield-check me-1"></i>
+                        <small>Changes will take effect immediately after saving</small>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-parliament-primary">
+                            <i class="bi bi-check-circle me-2"></i>
+                            Save Changes
+                        </button>
+                        <button type="button" class="btn btn-outline-warning" onclick="resetForm()">
+                            <i class="bi bi-arrow-clockwise me-2"></i>
+                            Reset
+                        </button>
+                        <a href="{% url 'users:detail' object.pk %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>
+                            Cancel
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Current Permissions Summary -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-list-check me-2"></i>
+                Current Permissions Summary
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="bi bi-people text-primary"></i>
+                        </div>
+                        <div class="summary-content">
+                            <div class="summary-value">{{ object.groups.count }}</div>
+                            <div class="summary-label">Groups Assigned</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="bi bi-key text-success"></i>
+                        </div>
+                        <div class="summary-content">
+                            <div class="summary-value">{{ object.user_permissions.count }}</div>
+                            <div class="summary-label">Direct Permissions</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="bi bi-shield-check text-info"></i>
+                        </div>
+                        <div class="summary-content">
+                            <div class="summary-value">
+                                {% if object.is_superuser %}
+                                    All
+                                {% else %}
+                                    {{ object.get_all_permissions|length }}
+                                {% endif %}
+                            </div>
+                            <div class="summary-label">Total Permissions</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Permission search functionality
+        const searchInput = document.getElementById('permissionSearch');
+        const permissionItems = document.querySelectorAll('.permission-item');
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                let visibleCount = 0;
+                
+                permissionItems.forEach(item => {
+                    const permissionName = item.querySelector('.permission-name').textContent.toLowerCase();
+                    const permissionCodename = item.querySelector('.permission-codename').textContent.toLowerCase();
+                    
+                    if (permissionName.includes(searchTerm) || permissionCodename.includes(searchTerm)) {
+                        item.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                
+                // Show/hide app sections based on visible permissions
+                updateAppVisibility();
+                
+                // Highlight search terms
+                if (searchTerm.length > 1) {
+                    highlightSearchTerms(searchTerm);
+                } else {
+                    removeHighlights();
+                }
+            });
+        }
+        
+        function updateAppVisibility() {
+            const apps = document.querySelectorAll('.permission-app');
+            
+            apps.forEach(app => {
+                const visibleItems = app.querySelectorAll('.permission-item:not([style*="display: none"])');
+                const appCollapse = app.querySelector('.collapse');
+                
+                if (visibleItems.length > 0) {
+                    app.style.display = 'block';
+                    if (searchInput.value.trim()) {
+                        appCollapse.classList.add('show');
+                    }
+                } else {
+                    app.style.display = 'none';
+                }
+            });
+        }
+        
+        function highlightSearchTerms(searchTerm) {
+            permissionItems.forEach(item => {
+                const nameElement = item.querySelector('.permission-name');
+                const codenameElement = item.querySelector('.permission-codename code');
+                
+                if (nameElement && codenameElement) {
+                    // Remove existing highlights
+                    nameElement.innerHTML = nameElement.textContent;
+                    codenameElement.innerHTML = codenameElement.textContent;
+                    
+                    // Add highlights
+                    const nameText = nameElement.textContent;
+                    const codenameText = codenameElement.textContent;
+                    
+                    const regex = new RegExp(`(${searchTerm})`, 'gi');
+                    nameElement.innerHTML = nameText.replace(regex, '<mark>$1</mark>');
+                    codenameElement.innerHTML = codenameText.replace(regex, '<mark>$1</mark>');
+                }
+            });
+        }
+        
+        function removeHighlights() {
+            permissionItems.forEach(item => {
+                const nameElement = item.querySelector('.permission-name');
+                const codenameElement = item.querySelector('.permission-codename code');
+                
+                if (nameElement && codenameElement) {
+                    nameElement.innerHTML = nameElement.textContent;
+                    codenameElement.innerHTML = codenameElement.textContent;
+                }
+            });
+        }
+        
+        // Select all/none functionality for groups
+        const groupCheckboxes = document.querySelectorAll('.group-card input[type="checkbox"]');
+        
+        // Add select all/none buttons
+        const groupsGrid = document.querySelector('.groups-grid');
+        if (groupsGrid) {
+            const selectAllBtn = document.createElement('button');
+            selectAllBtn.type = 'button';
+            selectAllBtn.className = 'btn btn-outline-primary btn-sm me-2';
+            selectAllBtn.innerHTML = '<i class="bi bi-check-all me-1"></i>Select All';
+            selectAllBtn.onclick = () => toggleAllGroups(true);
+            
+            const selectNoneBtn = document.createElement('button');
+            selectNoneBtn.type = 'button';
+            selectNoneBtn.className = 'btn btn-outline-secondary btn-sm';
+            selectNoneBtn.innerHTML = '<i class="bi bi-x-circle me-1"></i>Select None';
+            selectNoneBtn.onclick = () => toggleAllGroups(false);
+            
+            const buttonContainer = document.createElement('div');
+            buttonContainer.className = 'mb-3';
+            buttonContainer.appendChild(selectAllBtn);
+            buttonContainer.appendChild(selectNoneBtn);
+            
+            groupsGrid.parentNode.insertBefore(buttonContainer, groupsGrid);
+        }
+        
+        function toggleAllGroups(select) {
+            groupCheckboxes.forEach(checkbox => {
+                checkbox.checked = select;
+            });
+        }
+        
+        // Form validation
+        const form = document.querySelector('.needs-validation');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        }
+        
+        // Superuser checkbox warning
+        const superuserCheckbox = document.getElementById('{{ form.is_superuser.id_for_label }}');
+        if (superuserCheckbox) {
+            superuserCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    if (!confirm('Are you sure you want to grant superuser privileges? This will give the user complete access to the system.')) {
+                        this.checked = false;
+                    }
+                }
+            });
+        }
+        
+        // Show changes indicator
+        const originalFormData = new FormData(form);
+        let hasChanges = false;
+        
+        function checkForChanges() {
+            const currentFormData = new FormData(form);
+            hasChanges = false;
+            
+            for (let [key, value] of currentFormData.entries()) {
+                if (originalFormData.get(key) !== value) {
+                    hasChanges = true;
+                    break;
+                }
+            }
+            
+            const indicator = document.getElementById('changesIndicator');
+            if (hasChanges && !indicator) {
+                const alertDiv = document.createElement('div');
+                alertDiv.id = 'changesIndicator';
+                alertDiv.className = 'alert alert-warning position-fixed';
+                alertDiv.style.cssText = 'top: 80px; right: 20px; z-index: 1050;';
+                alertDiv.innerHTML = `
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    You have unsaved changes
+                `;
+                document.body.appendChild(alertDiv);
+            } else if (!hasChanges && indicator) {
+                indicator.remove();
+            }
+        }
+        
+        // Listen for form changes
+        form.addEventListener('change', checkForChanges);
+        
+        // Warn before leaving with unsaved changes
+        window.addEventListener('beforeunload', function(e) {
+            if (hasChanges) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+            }
+        });
+        
+        // Remove warning when form is submitted
+        form.addEventListener('submit', function() {
+            window.removeEventListener('beforeunload', arguments.callee);
+        });
+    });
+    
+    // Reset form function
+    function resetForm() {
+        if (confirm('Are you sure you want to reset all changes?')) {
+            document.querySelector('form').reset();
+            document.getElementById('changesIndicator')?.remove();
+        }
+    }
+</script>
+
+<style>
+    .system-permissions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .permission-card {
+        background: #f8f9fa;
+        border: 1px solid #e5e7eb;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-lg);
+    }
+    
+    .permission-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .permission-header h6 {
+        margin: 0;
+        font-weight: 600;
+        color: var(--parliament-dark);
+    }
+    
+    .permission-body .form-check {
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .permission-body .form-check-label {
+        font-weight: 500;
+        color: var(--parliament-dark);
+    }
+    
+    .groups-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--spacing-md);
+    }
+    
+    .group-card {
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
+        transition: var(--transition);
+        cursor: pointer;
+    }
+    
+    .group-card:hover {
+        border-color: var(--parliament-primary);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .group-card:has(input:checked) {
+        border-color: var(--parliament-primary);
+        background-color: rgba(var(--parliament-primary-rgb), 0.05);
+    }
+    
+    .group-checkbox {
+        display: flex;
+        align-items: start;
+        gap: var(--spacing-sm);
+    }
+    
+    .group-checkbox input[type="checkbox"] {
+        margin-top: 0.2rem;
+    }
+    
+    .group-label {
+        flex: 1;
+        cursor: pointer;
+        margin: 0;
+    }
+    
+    .group-name {
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .group-permissions {
+        color: var(--parliament-neutral);
+        font-size: 0.875rem;
+    }
+    
+    .permission-search {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: white;
+        padding: var(--spacing-sm) 0;
+    }
+    
+    .permissions-container {
+        max-height: 500px;
+        overflow-y: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: var(--border-radius);
+        background: white;
+    }
+    
+    .permission-app {
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .permission-app:last-child {
+        border-bottom: none;
+    }
+    
+    .app-header {
+        padding: var(--spacing-md);
+        background: #f8f9fa;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .app-toggle {
+        color: var(--parliament-primary);
+        text-decoration: none;
+        font-weight: 600;
+    }
+    
+    .app-toggle:hover {
+        color: #1e40af;
+    }
+    
+    .app-body {
+        padding: var(--spacing-md);
+    }
+    
+    .permission-model {
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .permission-model:last-child {
+        margin-bottom: 0;
+    }
+    
+    .model-title {
+        font-weight: 600;
+        color: var(--parliament-neutral);
+        margin-bottom: var(--spacing-md);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .permission-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-sm);
+    }
+    
+    .permission-item {
+        padding: var(--spacing-sm);
+        border-radius: var(--border-radius);
+        transition: var(--transition);
+    }
+    
+    .permission-item:hover {
+        background-color: rgba(var(--parliament-primary-rgb), 0.05);
+    }
+    
+    .permission-item .form-check {
+        margin: 0;
+    }
+    
+    .permission-item .form-check-label {
+        cursor: pointer;
+        width: 100%;
+    }
+    
+    .permission-name {
+        font-weight: 500;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .permission-codename {
+        font-size: 0.875rem;
+    }
+    
+    .permission-codename code {
+        background-color: rgba(var(--parliament-primary-rgb), 0.1);
+        color: var(--parliament-primary);
+        padding: 0.2rem 0.4rem;
+        border-radius: var(--border-radius);
+        font-size: 0.8rem;
+    }
+    
+    .summary-card {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        padding: var(--spacing-md);
+        background: #f8f9fa;
+        border-radius: var(--border-radius);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .summary-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .summary-content {
+        flex: 1;
+    }
+    
+    .summary-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .summary-label {
+        font-size: 0.875rem;
+        color: var(--parliament-neutral);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .empty-groups,
+    .empty-permissions {
+        text-align: center;
+        padding: var(--spacing-xl);
+        color: var(--parliament-neutral);
+    }
+    
+    .empty-groups i,
+    .empty-permissions i {
+        font-size: 3rem;
+        margin-bottom: var(--spacing-md);
+        opacity: 0.5;
+    }
+    
+    mark {
+        background-color: #fff3cd;
+        padding: 0.1em 0.2em;
+        border-radius: 0.2em;
+    }
+    
+    @media (max-width: 991.98px) {
+        .system-permissions {
+            grid-template-columns: 1fr;
+        }
+        
+        .groups-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .permission-list {
+            grid-template-columns: 1fr;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+        
+        .btn-group .btn {
+            width: 100%;
+        }
+    }
+    
+    @media (max-width: 767.98px) {
+        .permissions-container {
+            max-height: 400px;
+        }
+        
+        .summary-card {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}

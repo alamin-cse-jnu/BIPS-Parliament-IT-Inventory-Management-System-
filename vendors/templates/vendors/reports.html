@@ -1,0 +1,600 @@
+{% extends 'vendors/base_vendor.html' %}
+{% load static %}
+
+{% block vendor_title %}Vendor Reports{% endblock %}
+
+{% block vendor_header_title %}
+    <i class="bi bi-file-bar-graph me-3"></i>Vendor Reports
+{% endblock %}
+
+{% block vendor_header_subtitle %}
+    Comprehensive reporting and analytics for Bangladesh Parliament Secretariat vendor management
+{% endblock %}
+
+{% block vendor_breadcrumb_items %}
+    <li class="breadcrumb-item">
+        <a href="{% url 'vendors:list' %}">
+            <i class="bi bi-building me-1"></i>
+            Vendors
+        </a>
+    </li>
+    <li class="breadcrumb-item active">Reports</li>
+{% endblock %}
+
+{% block vendor_content %}
+    <!-- Quick Statistics Overview -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon primary mb-3">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div class="stats-number primary">{{ total_vendors }}</div>
+                <div class="text-muted">Total Vendors</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon success mb-3">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stats-number success">{{ active_vendors }}</div>
+                <div class="text-muted">Active Vendors</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon warning mb-3">
+                    <i class="bi bi-star-fill"></i>
+                </div>
+                <div class="stats-number warning">{{ preferred_vendors }}</div>
+                <div class="text-muted">Preferred Vendors</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon info mb-3">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+                <div class="stats-number info">
+                    {{ average_rating|default:0|floatformat:1 }}
+                </div>
+                <div class="text-muted">Average Rating</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Actions -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card vendor-card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark-text me-2"></i>
+                        Generate Reports
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <!-- Vendor Directory Report -->
+                        <div class="col-md-6">
+                            <div class="report-option">
+                                <div class="report-icon">
+                                    <i class="bi bi-journal-bookmark"></i>
+                                </div>
+                                <div class="report-content">
+                                    <h6 class="report-title">Vendor Directory</h6>
+                                    <p class="report-description">Complete vendor contact directory with all active vendors</p>
+                                    <div class="report-actions">
+                                        <a href="{% url 'vendors:export_csv' %}" class="btn btn-outline-primary btn-sm me-2">
+                                            <i class="bi bi-file-spreadsheet me-1"></i>CSV
+                                        </a>
+                                        <a href="{% url 'vendors:export_contacts' %}" class="btn btn-outline-success btn-sm">
+                                            <i class="bi bi-person-lines-fill me-1"></i>Contacts
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Performance Report -->
+                        <div class="col-md-6">
+                            <div class="report-option">
+                                <div class="report-icon">
+                                    <i class="bi bi-award"></i>
+                                </div>
+                                <div class="report-content">
+                                    <h6 class="report-title">Performance Analysis</h6>
+                                    <p class="report-description">Vendor performance ratings and preferred vendor analysis</p>
+                                    <div class="report-actions">
+                                        <a href="{% url 'vendors:export_csv' %}?include_rating=1" class="btn btn-outline-warning btn-sm me-2">
+                                            <i class="bi bi-star me-1"></i>Ratings
+                                        </a>
+                                        <a href="{% url 'vendors:export_csv' %}?preferred_only=1" class="btn btn-outline-info btn-sm">
+                                            <i class="bi bi-bookmark-star me-1"></i>Preferred
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Service Type Report -->
+                        <div class="col-md-6">
+                            <div class="report-option">
+                                <div class="report-icon">
+                                    <i class="bi bi-diagram-3"></i>
+                                </div>
+                                <div class="report-content">
+                                    <h6 class="report-title">Service Categories</h6>
+                                    <p class="report-description">Breakdown by supplier types and service categories</p>
+                                    <div class="report-actions">
+                                        <a href="{% url 'vendors:suppliers' %}" class="btn btn-outline-primary btn-sm me-2">
+                                            <i class="bi bi-box-seam me-1"></i>Suppliers
+                                        </a>
+                                        <a href="{% url 'vendors:service_providers' %}" class="btn btn-outline-secondary btn-sm">
+                                            <i class="bi bi-tools me-1"></i>Services
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status Report -->
+                        <div class="col-md-6">
+                            <div class="report-option">
+                                <div class="report-icon">
+                                    <i class="bi bi-clipboard-data"></i>
+                                </div>
+                                <div class="report-content">
+                                    <h6 class="report-title">Status Overview</h6>
+                                    <p class="report-description">Active, inactive, and suspended vendor analysis</p>
+                                    <div class="report-actions">
+                                        <a href="{% url 'vendors:active' %}" class="btn btn-outline-success btn-sm me-2">
+                                            <i class="bi bi-check-circle me-1"></i>Active
+                                        </a>
+                                        <a href="{% url 'vendors:inactive' %}" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-x-circle me-1"></i>Inactive
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card vendor-card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-calendar-week me-2"></i>
+                        Report Schedule
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="schedule-item mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="schedule-icon success me-3">
+                                <i class="bi bi-calendar-check"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">Weekly Directory</div>
+                                <div class="small text-muted">Auto-generated every Monday</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="schedule-item mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="schedule-icon warning me-3">
+                                <i class="bi bi-calendar-month"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">Monthly Summary</div>
+                                <div class="small text-muted">Performance and status report</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="schedule-item">
+                        <div class="d-flex align-items-center">
+                            <div class="schedule-icon info me-3">
+                                <i class="bi bi-calendar-range"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">Quarterly Review</div>
+                                <div class="small text-muted">Comprehensive analysis</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vendor Type Distribution -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card vendor-card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pie-chart me-2"></i>
+                        Vendor Type Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-lg-4 col-sm-6">
+                            <div class="distribution-item">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <div class="vendor-type-icon vendor-type-supplier me-3">
+                                            <i class="bi bi-box-seam"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">Suppliers</div>
+                                            <div class="small text-muted">Equipment providers</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="h5 mb-0">{{ suppliers }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4 col-sm-6">
+                            <div class="distribution-item">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <div class="vendor-type-icon vendor-type-manufacturer me-3">
+                                            <i class="bi bi-gear-fill"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">Manufacturers</div>
+                                            <div class="small text-muted">Original equipment manufacturers</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="h5 mb-0">{{ manufacturers }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4 col-sm-6">
+                            <div class="distribution-item">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <div class="vendor-type-icon vendor-type-maintenance me-3">
+                                            <i class="bi bi-wrench"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">Maintenance</div>
+                                            <div class="small text-muted">Maintenance services</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="h5 mb-0">{{ maintenance_providers }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4 col-sm-6">
+                            <div class="distribution-item">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <div class="vendor-type-icon vendor-type-support me-3">
+                                            <i class="bi bi-headset"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">Support</div>
+                                            <div class="small text-muted">Technical support</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="h5 mb-0">{{ support_providers }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4 col-sm-6">
+                            <div class="distribution-item">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <div class="vendor-type-icon vendor-type-installation me-3">
+                                            <i class="bi bi-hammer"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">Installation</div>
+                                            <div class="small text-muted">Installation services</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="h5 mb-0">{{ installation_providers }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4 col-sm-6">
+                            <div class="distribution-item">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <div class="vendor-type-icon vendor-type-consultant me-3">
+                                            <i class="bi bi-person-badge"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">Consultants</div>
+                                            <div class="small text-muted">IT consultancy</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="h5 mb-0">{{ consultants }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card vendor-card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-geo-alt me-2"></i>
+                        Location Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="location-stat mb-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold">Dhaka Based</div>
+                                <div class="small text-muted">Local vendors in capital</div>
+                            </div>
+                            <div class="location-number">
+                                {{ dhaka_vendors }}
+                            </div>
+                        </div>
+                        <div class="progress mt-2" style="height: 4px;">
+                            <div class="progress-bar bg-info" 
+                                 style="width: {{ dhaka_vendors|default:0|mul:100|div:total_vendors|default:0 }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="location-stat mb-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold">International</div>
+                                <div class="small text-muted">Foreign vendors</div>
+                            </div>
+                            <div class="location-number">
+                                {{ international_vendors }}
+                            </div>
+                        </div>
+                        <div class="progress mt-2" style="height: 4px;">
+                            <div class="progress-bar bg-warning" 
+                                 style="width: {{ international_vendors|default:0|mul:100|div:total_vendors|default:0 }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="location-stat">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold">With Ratings</div>
+                                <div class="small text-muted">Performance rated</div>
+                            </div>
+                            <div class="location-number">
+                                {{ rated_vendors }}
+                            </div>
+                        </div>
+                        <div class="progress mt-2" style="height: 4px;">
+                            <div class="progress-bar bg-success" 
+                                 style="width: {{ rated_vendors|default:0|mul:100|div:total_vendors|default:0 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Report Builder -->
+    <div class="card vendor-card">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="bi bi-sliders me-2"></i>
+                Custom Report Builder
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{% url 'vendors:export_csv' %}" class="custom-report-form">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <label for="reportType" class="form-label">Report Type</label>
+                        <select id="reportType" name="report_type" class="form-select">
+                            <option value="directory">Complete Directory</option>
+                            <option value="contacts">Contact Information</option>
+                            <option value="performance">Performance Analysis</option>
+                            <option value="status">Status Report</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="vendorStatus" class="form-label">Vendor Status</label>
+                        <select id="vendorStatus" name="status" class="form-select">
+                            <option value="">All Statuses</option>
+                            <option value="active">Active Only</option>
+                            <option value="inactive">Inactive Only</option>
+                            <option value="preferred">Preferred Only</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="vendorType" class="form-label">Vendor Type</label>
+                        <select id="vendorType" name="vendor_type" class="form-select">
+                            <option value="">All Types</option>
+                            <option value="SUPPLIER">Suppliers</option>
+                            <option value="MANUFACTURER">Manufacturers</option>
+                            <option value="MAINTENANCE">Maintenance</option>
+                            <option value="SUPPORT">Support</option>
+                            <option value="INSTALLATION">Installation</option>
+                            <option value="CONSULTANT">Consultants</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="exportFormat" class="form-label">Export Format</label>
+                        <select id="exportFormat" name="format" class="form-select">
+                            <option value="csv">CSV Spreadsheet</option>
+                            <option value="pdf">PDF Document</option>
+                            <option value="json">JSON Data</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="include_inactive" id="includeInactive">
+                        <label class="form-check-label" for="includeInactive">
+                            Include inactive vendors in report
+                        </label>
+                    </div>
+                    
+                    <div>
+                        <button type="button" class="btn btn-outline-secondary me-2">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                        </button>
+                        <button type="submit" class="btn btn-vendor-primary">
+                            <i class="bi bi-download me-2"></i>Generate Report
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .report-option {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.2s ease;
+        height: 100%;
+    }
+    
+    .report-option:hover {
+        border-color: #1e3a8a;
+        box-shadow: 0 4px 12px rgba(30, 58, 138, 0.1);
+    }
+    
+    .report-icon {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #1e3a8a, #1e40af);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .report-title {
+        color: #1e3a8a;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .report-description {
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+    }
+    
+    .schedule-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        color: white;
+    }
+    
+    .schedule-icon.success { background-color: #059669; }
+    .schedule-icon.warning { background-color: #d97706; }
+    .schedule-icon.info { background-color: #0891b2; }
+    
+    .distribution-item {
+        padding: 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    .distribution-item:hover {
+        border-color: #d1d5db;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .location-stat {
+        padding: 1rem 0;
+    }
+    
+    .location-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e3a8a;
+    }
+    
+    .custom-report-form {
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 1.5rem;
+    }
+    
+    .stats-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        margin: 0 auto;
+    }
+    
+    .stats-icon.primary { background: linear-gradient(135deg, #1e3a8a, #1e40af); }
+    .stats-icon.success { background: linear-gradient(135deg, #059669, #16a34a); }
+    .stats-icon.warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .stats-icon.info { background: linear-gradient(135deg, #0891b2, #06b6d4); }
+    
+    .vendor-type-icon {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        color: white;
+    }
+    
+    .vendor-type-supplier { background-color: #059669; }
+    .vendor-type-manufacturer { background-color: #7c3aed; }
+    .vendor-type-maintenance { background-color: #ea580c; }
+    .vendor-type-support { background-color: #0891b2; }
+    .vendor-type-installation { background-color: #dc2626; }
+    .vendor-type-consultant { background-color: #9333ea; }
+</style>
+{% endblock %}

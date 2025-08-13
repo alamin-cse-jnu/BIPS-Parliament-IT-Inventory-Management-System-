@@ -1,0 +1,1028 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Assignment {{ assignment.assignment_id }} - Bangladesh Parliament Secretariat PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'assignments:list' %}">Assignments</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'assignments:detail' assignment.pk %}">{{ assignment.assignment_id }}</a></li>
+    <li class="breadcrumb-item active">Edit</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Assignment Edit Form Styling - Bangladesh Parliament Secretariat PIMS */
+.edit-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.edit-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.1);
+    position: relative;
+}
+
+.edit-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-radius: 16px 16px 0 0;
+}
+
+.edit-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.edit-subtitle {
+    color: #6b7280;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.assignment-status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 1rem;
+}
+
+.assignment-status-indicator.assigned {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.assignment-status-indicator.returned {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+}
+
+.assignment-status-indicator.overdue {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.form-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.1);
+    transition: all 0.3s ease;
+}
+
+.form-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 48px rgba(30, 58, 138, 0.15);
+}
+
+.section-header {
+    background: rgba(248, 250, 252, 0.8);
+    backdrop-filter: blur(5px);
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-content {
+    padding: 2rem;
+}
+
+.current-info-card {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.current-info-title {
+    font-weight: 600;
+    color: #059669;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.current-info-content {
+    color: #1f2937;
+    font-size: 0.875rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-row.single {
+    grid-template-columns: 1fr;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-label.required::after {
+    content: '*';
+    color: #ef4444;
+    margin-left: 0.25rem;
+}
+
+.form-control, .form-select {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(203, 213, 225, 0.5);
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    background: rgba(255, 255, 255, 1);
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    outline: none;
+}
+
+.form-text {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.invalid-feedback {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.readonly-field {
+    background: rgba(248, 250, 252, 0.8) !important;
+    border-color: rgba(203, 213, 225, 0.3) !important;
+    color: #6b7280 !important;
+    cursor: not-allowed;
+}
+
+.change-indicator {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    color: #d97706;
+    margin-top: 0.25rem;
+    display: none;
+}
+
+.change-indicator.show {
+    display: block;
+}
+
+.form-check {
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.form-check-input {
+    margin-right: 0.75rem;
+}
+
+.form-check-label {
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+}
+
+.form-actions {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.1);
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.btn {
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+    color: white;
+}
+
+.btn-secondary {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+.btn-secondary:hover {
+    background: #6b7280;
+    color: white;
+    border-color: #6b7280;
+}
+
+.btn-outline-primary {
+    background: rgba(30, 58, 138, 0.1);
+    color: #1e3a8a;
+    border: 1px solid rgba(30, 58, 138, 0.3);
+}
+
+.btn-outline-primary:hover {
+    background: #1e3a8a;
+    color: white;
+    border-color: #1e3a8a;
+}
+
+.alert-warning {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    color: #92400e;
+    margin-bottom: 1.5rem;
+}
+
+.changes-summary {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+    display: none;
+}
+
+.changes-summary.show {
+    display: block;
+}
+
+.changes-title {
+    font-weight: 600;
+    color: #1e40af;
+    margin-bottom: 0.5rem;
+}
+
+.changes-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.changes-list li {
+    padding: 0.25rem 0;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+/* Responsive Design */
+@media (max-width: 991.98px) {
+    .edit-container {
+        padding: 1rem 0;
+    }
+    
+    .edit-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-content {
+        padding: 1.5rem;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .assignment-status-indicator {
+        margin-left: 0;
+        margin-top: 0.5rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .edit-title {
+        font-size: 1.5rem;
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+    
+    .form-actions {
+        padding: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-container">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="edit-header">
+            <h1 class="edit-title">
+                <i class="bi bi-pencil-square"></i>
+                Edit Assignment {{ assignment.assignment_id }}
+                <span class="assignment-status-indicator {{ assignment.status|lower }}">
+                    {% if assignment.status == 'ASSIGNED' %}
+                        <i class="bi bi-check-circle"></i>
+                    {% elif assignment.status == 'RETURNED' %}
+                        <i class="bi bi-arrow-return-left"></i>
+                    {% elif assignment.status == 'OVERDUE' %}
+                        <i class="bi bi-exclamation-triangle"></i>
+                    {% else %}
+                        <i class="bi bi-x-circle"></i>
+                    {% endif %}
+                    {{ assignment.get_status_display }}
+                </span>
+            </h1>
+            <p class="edit-subtitle">
+                <i class="bi bi-building"></i>
+                Modify assignment details for Bangladesh Parliament Secretariat
+                <span class="text-muted ms-2">
+                    Last updated: {{ assignment.updated_at|date:"M d, Y H:i" }}
+                </span>
+            </p>
+        </div>
+
+        <!-- Warning Messages -->
+        {% if assignment.status == 'RETURNED' %}
+            <div class="alert-warning">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+                    <div>
+                        <strong>Assignment Already Returned!</strong><br>
+                        This assignment was returned on {{ assignment.actual_return_date }}. Changes should be made carefully.
+                    </div>
+                </div>
+            </div>
+        {% elif assignment.status == 'OVERDUE' %}
+            <div class="alert-warning">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+                    <div>
+                        <strong>Assignment Overdue!</strong><br>
+                        This assignment is {{ assignment.days_overdue }} days overdue. Consider updating the return date or processing the return.
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Edit Form -->
+        <form method="post" id="assignmentEditForm">
+            {% csrf_token %}
+            
+            <!-- Device Information Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="bi bi-laptop"></i>
+                        Device Information
+                    </h3>
+                </div>
+                <div class="section-content">
+                    <!-- Current Device Info -->
+                    <div class="current-info-card">
+                        <div class="current-info-title">
+                            <i class="bi bi-info-circle"></i>
+                            Current Device Assignment
+                        </div>
+                        <div class="current-info-content">
+                            <strong>{{ assignment.device.name }}</strong> ({{ assignment.device.device_id }})<br>
+                            Category: {{ assignment.device.subcategory.category.name }} - {{ assignment.device.subcategory.name }}<br>
+                            Status: {{ assignment.device.get_status_display }}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.device.id_for_label }}" class="form-label required">
+                            <i class="bi bi-laptop"></i>
+                            Change Device
+                        </label>
+                        {{ form.device }}
+                        {% if form.device.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.device.errors %}
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Only available devices are shown. Current device will become available if changed.
+                        </div>
+                        <div class="change-indicator" id="deviceChangeIndicator">
+                            Device will be changed
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employee Assignment Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="bi bi-person"></i>
+                        Employee Assignment
+                    </h3>
+                </div>
+                <div class="section-content">
+                    <!-- Current Employee Info -->
+                    <div class="current-info-card">
+                        <div class="current-info-title">
+                            <i class="bi bi-info-circle"></i>
+                            Currently Assigned To
+                        </div>
+                        <div class="current-info-content">
+                            <strong>{{ assignment.assigned_to.get_full_name }}</strong><br>
+                            Email: {{ assignment.assigned_to.email }}<br>
+                            {% if assignment.assigned_to.employee_id %}
+                                Employee ID: {{ assignment.assigned_to.employee_id }}<br>
+                            {% endif %}
+                            {% if assignment.assigned_to.department %}
+                                Department: {{ assignment.assigned_to.department }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.assigned_to.id_for_label }}" class="form-label required">
+                                <i class="bi bi-person"></i>
+                                Reassign To
+                            </label>
+                            {{ form.assigned_to }}
+                            {% if form.assigned_to.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.assigned_to.errors %}
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                Change the employee assigned to this device
+                            </div>
+                            <div class="change-indicator" id="employeeChangeIndicator">
+                                Employee assignment will be changed
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.assigned_location.id_for_label }}" class="form-label">
+                                <i class="bi bi-geo-alt"></i>
+                                Location
+                            </label>
+                            {{ form.assigned_location }}
+                            {% if form.assigned_location.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.assigned_location.errors %}
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                Update the location where device will be used
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignment Details Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="bi bi-calendar"></i>
+                        Assignment Details
+                    </h3>
+                </div>
+                <div class="section-content">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.assignment_type.id_for_label }}" class="form-label required">
+                                <i class="bi bi-tag"></i>
+                                Assignment Type
+                            </label>
+                            {{ form.assignment_type }}
+                            {% if form.assignment_type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.assignment_type.errors %}
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                Update the type of assignment
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.assigned_date.id_for_label }}" class="form-label">
+                                <i class="bi bi-calendar"></i>
+                                Assignment Date
+                            </label>
+                            {{ form.assigned_date }}
+                            {% if form.assigned_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.assigned_date.errors %}
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                Original assignment date: {{ assignment.assigned_date }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.expected_return_date.id_for_label }}" class="form-label">
+                                <i class="bi bi-calendar-event"></i>
+                                Expected Return Date
+                            </label>
+                            {{ form.expected_return_date }}
+                            {% if form.expected_return_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.expected_return_date.errors %}
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                Update when the device should be returned
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.condition_at_assignment.id_for_label }}" class="form-label">
+                                <i class="bi bi-shield-check"></i>
+                                Device Condition
+                            </label>
+                            {{ form.condition_at_assignment }}
+                            {% if form.condition_at_assignment.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.condition_at_assignment.errors %}
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                Update the condition assessment
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row single">
+                        <div class="form-group">
+                            <label for="{{ form.purpose.id_for_label }}" class="form-label">
+                                <i class="bi bi-journal-text"></i>
+                                Purpose
+                            </label>
+                            {{ form.purpose }}
+                            {% if form.purpose.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.purpose.errors %}
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                Update the purpose or reason for this assignment
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Contact Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="bi bi-telephone"></i>
+                        Emergency Contact
+                    </h3>
+                </div>
+                <div class="section-content">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.emergency_contact.id_for_label }}" class="form-label">
+                                <i class="bi bi-person-lines-fill"></i>
+                                Emergency Contact Name
+                            </label>
+                            {{ form.emergency_contact }}
+                            {% if form.emergency_contact.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.emergency_contact.errors %}
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                Update alternative contact person
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.emergency_phone.id_for_label }}" class="form-label">
+                                <i class="bi bi-telephone"></i>
+                                Emergency Phone
+                            </label>
+                            {{ form.emergency_phone }}
+                            {% if form.emergency_phone.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.emergency_phone.errors %}
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                Update emergency contact phone number
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="bi bi-sticky"></i>
+                        Additional Information
+                    </h3>
+                </div>
+                <div class="section-content">
+                    <div class="form-group">
+                        <label for="{{ form.assignment_notes.id_for_label }}" class="form-label">
+                            <i class="bi bi-sticky"></i>
+                            Assignment Notes
+                        </label>
+                        {{ form.assignment_notes }}
+                        {% if form.assignment_notes.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.assignment_notes.errors %}
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Update notes or special instructions for this assignment
+                        </div>
+                    </div>
+                    
+                    <div class="form-check">
+                        {{ form.acknowledgment_received }}
+                        <label for="{{ form.acknowledgment_received.id_for_label }}" class="form-check-label">
+                            <i class="bi bi-check-square"></i>
+                            I acknowledge that the changes have been communicated and accepted
+                        </label>
+                        {% if form.acknowledgment_received.errors %}
+                            <div class="invalid-feedback d-block mt-2">
+                                {% for error in form.acknowledgment_received.errors %}
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Changes Summary -->
+                    <div class="changes-summary" id="changesSummary">
+                        <div class="changes-title">
+                            <i class="bi bi-list-check"></i>
+                            Changes to be made:
+                        </div>
+                        <ul class="changes-list" id="changesList">
+                            <!-- Changes will be populated by JavaScript -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <div class="action-buttons">
+                    <div>
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Required fields are marked with <span class="text-danger">*</span>
+                        </small>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <a href="{% url 'assignments:detail' assignment.pk %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i>
+                            Cancel
+                        </a>
+                        <a href="{% url 'assignments:detail' assignment.pk %}" class="btn btn-outline-primary">
+                            <i class="bi bi-eye"></i>
+                            View Details
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-check-lg"></i>
+                            Update Assignment
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Assignment Edit Form JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('assignmentEditForm');
+    const originalValues = {};
+    const changes = [];
+    
+    // Store original form values
+    const formElements = form.querySelectorAll('input, select, textarea');
+    formElements.forEach(element => {
+        originalValues[element.name] = element.value;
+    });
+    
+    // Track changes
+    function trackChanges() {
+        changes.length = 0;
+        
+        formElements.forEach(element => {
+            if (element.value !== originalValues[element.name]) {
+                const label = document.querySelector(`label[for="${element.id}"]`);
+                const fieldName = label ? label.textContent.replace('*', '').trim() : element.name;
+                changes.push(`${fieldName}: "${originalValues[element.name]}" → "${element.value}"`);
+            }
+        });
+        
+        updateChangesDisplay();
+        updateChangeIndicators();
+    }
+    
+    // Update changes summary display
+    function updateChangesDisplay() {
+        const changesSummary = document.getElementById('changesSummary');
+        const changesList = document.getElementById('changesList');
+        
+        if (changes.length > 0) {
+            changesList.innerHTML = changes.map(change => `<li><i class="bi bi-arrow-right me-2"></i>${change}</li>`).join('');
+            changesSummary.classList.add('show');
+        } else {
+            changesSummary.classList.remove('show');
+        }
+    }
+    
+    // Update individual field change indicators
+    function updateChangeIndicators() {
+        const deviceSelect = document.getElementById('{{ form.device.id_for_label }}');
+        const employeeSelect = document.getElementById('{{ form.assigned_to.id_for_label }}');
+        const deviceIndicator = document.getElementById('deviceChangeIndicator');
+        const employeeIndicator = document.getElementById('employeeChangeIndicator');
+        
+        if (deviceSelect && deviceIndicator) {
+            if (deviceSelect.value !== originalValues[deviceSelect.name]) {
+                deviceIndicator.classList.add('show');
+            } else {
+                deviceIndicator.classList.remove('show');
+            }
+        }
+        
+        if (employeeSelect && employeeIndicator) {
+            if (employeeSelect.value !== originalValues[employeeSelect.name]) {
+                employeeIndicator.classList.add('show');
+            } else {
+                employeeIndicator.classList.remove('show');
+            }
+        }
+    }
+    
+    // Add event listeners to form elements
+    formElements.forEach(element => {
+        element.addEventListener('change', trackChanges);
+        element.addEventListener('input', trackChanges);
+    });
+    
+    // Form validation
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const device = document.getElementById('{{ form.device.id_for_label }}').value;
+            const assignedTo = document.getElementById('{{ form.assigned_to.id_for_label }}').value;
+            const assignmentType = document.getElementById('{{ form.assignment_type.id_for_label }}').value;
+            
+            if (!device || !assignedTo || !assignmentType) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+                return false;
+            }
+            
+            // Confirm major changes
+            if (changes.length > 0) {
+                const confirmMessage = `You are about to make ${changes.length} change(s) to this assignment:\n\n${changes.join('\n')}\n\nAre you sure you want to continue?`;
+                if (!confirm(confirmMessage)) {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+        });
+    }
+    
+    // Device selection change warning
+    const deviceSelect = document.getElementById('{{ form.device.id_for_label }}');
+    if (deviceSelect) {
+        deviceSelect.addEventListener('change', function() {
+            if (this.value !== originalValues[this.name] && originalValues[this.name]) {
+                const currentDevice = '{{ assignment.device.name }} ({{ assignment.device.device_id }})';
+                const warningMessage = `Warning: Changing the device will make "${currentDevice}" available for other assignments. This action should be done carefully.`;
+                
+                // Show warning after a short delay to allow the change indicator to appear
+                setTimeout(() => {
+                    if (this.value !== originalValues[this.name]) {
+                        alert(warningMessage);
+                    }
+                }, 100);
+            }
+        });
+    }
+    
+    // Employee selection change warning
+    const employeeSelect = document.getElementById('{{ form.assigned_to.id_for_label }}');
+    if (employeeSelect) {
+        employeeSelect.addEventListener('change', function() {
+            if (this.value !== originalValues[this.name] && originalValues[this.name]) {
+                const currentEmployee = '{{ assignment.assigned_to.get_full_name }}';
+                const warningMessage = `Warning: You are transferring this assignment from "${currentEmployee}" to a different employee. Please ensure proper handover procedures are followed.`;
+                
+                // Show warning after a short delay
+                setTimeout(() => {
+                    if (this.value !== originalValues[this.name]) {
+                        alert(warningMessage);
+                    }
+                }, 100);
+            }
+        });
+    }
+    
+    // Auto-save draft functionality (optional)
+    let autoSaveTimeout;
+    function autoSaveDraft() {
+        clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(() => {
+            if (changes.length > 0) {
+                // Save draft to localStorage
+                const draftData = {};
+                formElements.forEach(element => {
+                    draftData[element.name] = element.value;
+                });
+                localStorage.setItem('assignment_edit_draft_{{ assignment.pk }}', JSON.stringify(draftData));
+            }
+        }, 2000);
+    }
+    
+    // Load draft on page load
+    const savedDraft = localStorage.getItem('assignment_edit_draft_{{ assignment.pk }}');
+    if (savedDraft) {
+        const draftData = JSON.parse(savedDraft);
+        const confirmLoad = confirm('A draft of unsaved changes was found. Would you like to restore it?');
+        
+        if (confirmLoad) {
+            Object.keys(draftData).forEach(name => {
+                const element = form.querySelector(`[name="${name}"]`);
+                if (element) {
+                    element.value = draftData[name];
+                }
+            });
+            trackChanges();
+        } else {
+            localStorage.removeItem('assignment_edit_draft_{{ assignment.pk }}');
+        }
+    }
+    
+    // Add auto-save listeners
+    formElements.forEach(element => {
+        element.addEventListener('change', autoSaveDraft);
+        element.addEventListener('input', autoSaveDraft);
+    });
+    
+    // Clear draft on successful form submission
+    form.addEventListener('submit', function() {
+        localStorage.removeItem('assignment_edit_draft_{{ assignment.pk }}');
+    });
+    
+    // Warn before leaving page with unsaved changes
+    window.addEventListener('beforeunload', function(e) {
+        if (changes.length > 0) {
+            const message = 'You have unsaved changes. Are you sure you want to leave?';
+            e.returnValue = message;
+            return message;
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,890 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Bulk Update Devices - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Bulk Update Styling - Parliament Design System */
+.bulk-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+}
+
+.bulk-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    padding: 2rem;
+}
+
+.bulk-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.bulk-subtitle {
+    color: #64748b;
+    font-size: 1.1rem;
+}
+
+.action-selection-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.device-selection-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+}
+
+.section-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    margin: 0;
+    padding: 1rem 1.5rem;
+    border-radius: 12px 12px 0 0;
+    font-weight: 600;
+}
+
+.selection-stats {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    text-align: center;
+}
+
+.stat-item {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    padding: 0.75rem;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #059669;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.action-form {
+    padding: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.form-select, .form-control {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.form-select:focus, .form-control:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.conditional-field {
+    display: none;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.conditional-field.show {
+    display: block;
+    opacity: 1;
+}
+
+.device-table-container {
+    max-height: 600px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+}
+
+.device-table {
+    margin-bottom: 0;
+}
+
+.device-table thead {
+    position: sticky;
+    top: 0;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    z-index: 10;
+}
+
+.device-table th {
+    border-bottom: 2px solid #d1d5db;
+    font-weight: 600;
+    padding: 1rem 0.75rem;
+}
+
+.device-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.device-row {
+    transition: all 0.2s ease;
+}
+
+.device-row:hover {
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.device-row.selected {
+    background: rgba(16, 185, 129, 0.1);
+    border-left: 3px solid #10b981;
+}
+
+.device-checkbox {
+    transform: scale(1.2);
+    accent-color: #10b981;
+}
+
+.device-id {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: #1e3a8a;
+}
+
+.device-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-available {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-assigned {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.status-maintenance {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.status-retired {
+    background: rgba(107, 114, 128, 0.1);
+    color: #4b5563;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+.device-condition {
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.condition-excellent {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+
+.condition-good {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+}
+
+.condition-fair {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+}
+
+.condition-poor {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.bulk-actions {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.btn-bulk-action {
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: 1px solid;
+}
+
+.btn-primary-bulk {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-color: #10b981;
+}
+
+.btn-primary-bulk:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-1px);
+    color: white;
+}
+
+.btn-secondary-bulk {
+    background: linear-gradient(135deg, rgba(107, 114, 128, 0.1) 0%, rgba(75, 85, 99, 0.1) 100%);
+    color: #4b5563;
+    border-color: rgba(107, 114, 128, 0.3);
+}
+
+.btn-secondary-bulk:hover {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.selection-helper {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.helper-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.btn-helper {
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: 1px solid;
+}
+
+.btn-select-all {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border-color: #3b82f6;
+}
+
+.btn-select-all:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+    transform: scale(1.05);
+}
+
+.btn-select-none {
+    background: rgba(107, 114, 128, 0.1);
+    color: #4b5563;
+    border-color: rgba(107, 114, 128, 0.3);
+}
+
+.btn-select-none:hover {
+    background: #6b7280;
+    color: white;
+    transform: scale(1.05);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #9ca3af;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.empty-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .bulk-container {
+        padding: 1rem 0;
+    }
+    
+    .bulk-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .bulk-title {
+        font-size: 1.5rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+    
+    .device-table-container {
+        max-height: 400px;
+    }
+    
+    .device-table th,
+    .device-table td {
+        padding: 0.5rem 0.375rem;
+        font-size: 0.875rem;
+    }
+    
+    .helper-buttons {
+        justify-content: center;
+    }
+    
+    .bulk-actions {
+        text-align: center;
+    }
+    
+    .btn-bulk-action {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Loading States */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 0.25rem solid rgba(255, 255, 255, 0.3);
+    border-top: 0.25rem solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bulk-container">
+    <div class="container-fluid px-4">
+        <!-- Header -->
+        <div class="bulk-header">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h1 class="bulk-title">
+                        <i class="bi bi-arrow-repeat me-3"></i>
+                        Bulk Update Devices
+                    </h1>
+                    <p class="bulk-subtitle mb-0">
+                        Select devices and choose an action to update multiple devices at once
+                    </p>
+                </div>
+                <a href="{% url 'devices:list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>
+                    Back to Devices
+                </a>
+            </div>
+        </div>
+
+        <form method="post" id="bulkUpdateForm">
+            {% csrf_token %}
+            
+            <!-- Action Selection -->
+            <div class="action-selection-card mb-4">
+                <h5 class="section-header">
+                    <i class="bi bi-gear me-2"></i>
+                    Select Action
+                </h5>
+                <div class="action-form">
+                    <div class="form-group">
+                        <label for="{{ form.action.id_for_label }}" class="form-label">
+                            <i class="bi bi-lightning me-2"></i>
+                            Bulk Action
+                        </label>
+                        {{ form.action }}
+                        <small class="form-text text-muted">
+                            Choose what property you want to update for the selected devices
+                        </small>
+                    </div>
+
+                    <!-- Conditional Fields -->
+                    <div id="statusField" class="conditional-field">
+                        <div class="form-group">
+                            <label for="{{ form.new_status.id_for_label }}" class="form-label">
+                                <i class="bi bi-circle me-2"></i>
+                                New Status
+                            </label>
+                            {{ form.new_status }}
+                            <small class="form-text text-muted">
+                                All selected devices will be updated to this status
+                            </small>
+                        </div>
+                    </div>
+
+                    <div id="conditionField" class="conditional-field">
+                        <div class="form-group">
+                            <label for="{{ form.new_condition.id_for_label }}" class="form-label">
+                                <i class="bi bi-heart me-2"></i>
+                                New Condition
+                            </label>
+                            {{ form.new_condition }}
+                            <small class="form-text text-muted">
+                                All selected devices will be updated to this condition
+                            </small>
+                        </div>
+                    </div>
+
+                    <div id="locationField" class="conditional-field">
+                        <div class="form-group">
+                            <label for="{{ form.new_location.id_for_label }}" class="form-label">
+                                <i class="bi bi-geo-alt me-2"></i>
+                                New Location
+                            </label>
+                            {{ form.new_location }}
+                            <small class="form-text text-muted">
+                                All selected devices will be moved to this location
+                            </small>
+                        </div>
+                    </div>
+
+                    <div id="assignabilityField" class="conditional-field">
+                        <div class="form-group">
+                            <div class="form-check">
+                                {{ form.new_assignability }}
+                                <label for="{{ form.new_assignability.id_for_label }}" class="form-check-label">
+                                    <i class="bi bi-person-check me-2"></i>
+                                    Make devices assignable
+                                </label>
+                                <small class="form-text text-muted d-block">
+                                    Check to make selected devices assignable to users
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Device Selection -->
+            <div class="device-selection-card">
+                <h5 class="section-header">
+                    <i class="bi bi-check2-square me-2"></i>
+                    Select Devices
+                </h5>
+                
+                <div class="p-3">
+                    <!-- Selection Stats -->
+                    <div class="selection-stats">
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-number" id="totalDevices">{{ devices|length }}</div>
+                                <div class="stat-label">Total Devices</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number" id="selectedCount">0</div>
+                                <div class="stat-label">Selected</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number" id="availableDevices">
+                                    {{ devices|length }}
+                                </div>
+                                <div class="stat-label">Available</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selection Helper -->
+                    <div class="selection-helper">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold text-primary">
+                                <i class="bi bi-magic me-2"></i>
+                                Quick Selection
+                            </span>
+                        </div>
+                        <div class="helper-buttons">
+                            <button type="button" class="btn btn-select-all btn-helper" id="selectAll">
+                                <i class="bi bi-check-all me-1"></i>
+                                Select All
+                            </button>
+                            <button type="button" class="btn btn-select-none btn-helper" id="selectNone">
+                                <i class="bi bi-x me-1"></i>
+                                Select None
+                            </button>
+                            <button type="button" class="btn btn-helper btn-select-all" id="selectAvailable">
+                                <i class="bi bi-circle me-1"></i>
+                                Available Only
+                            </button>
+                            <button type="button" class="btn btn-helper btn-select-all" id="selectMaintenance">
+                                <i class="bi bi-tools me-1"></i>
+                                Maintenance Only
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Device Table -->
+                    {% if devices %}
+                    <div class="device-table-container">
+                        <table class="table device-table">
+                            <thead>
+                                <tr>
+                                    <th width="50">
+                                        <input type="checkbox" class="form-check-input device-checkbox" id="selectAllCheckbox">
+                                    </th>
+                                    <th>Device ID</th>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Condition</th>
+                                    <th>Location</th>
+                                    <th>Assignable</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for device in devices %}
+                                <tr class="device-row" data-status="{{ device.status }}" data-condition="{{ device.condition }}">
+                                    <td>
+                                        <input type="checkbox" 
+                                               class="form-check-input device-checkbox device-select" 
+                                               name="devices" 
+                                               value="{{ device.id }}"
+                                               data-device-id="{{ device.id }}">
+                                    </td>
+                                    <td>
+                                        <span class="device-id">{{ device.device_id }}</span>
+                                    </td>
+                                    <td>
+                                        <strong>{{ device.name }}</strong>
+                                        {% if device.model %}
+                                        <br><small class="text-muted">{{ device.model }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">
+                                            {{ device.subcategory.category.name }}
+                                        </span>
+                                        <br><small class="text-muted">{{ device.subcategory.name }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="device-status status-{{ device.status }}">
+                                            {{ device.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="device-condition condition-{{ device.condition }}">
+                                            {{ device.get_condition_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if device.current_location %}
+                                            <i class="bi bi-geo-alt me-1"></i>
+                                            {{ device.current_location.name|truncatechars:20 }}
+                                        {% else %}
+                                            <span class="text-muted">No location</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if device.is_assignable %}
+                                            <i class="bi bi-check-circle text-success"></i>
+                                            <span class="text-success">Yes</span>
+                                        {% else %}
+                                            <i class="bi bi-x-circle text-danger"></i>
+                                            <span class="text-danger">No</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-inbox empty-icon"></i>
+                        <h4 class="empty-title">No Devices Found</h4>
+                        <p>There are no devices available for bulk updates.</p>
+                        <a href="{% url 'devices:create' %}" class="btn btn-primary">
+                            <i class="bi bi-plus me-2"></i>Add First Device
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            {% if devices %}
+            <div class="bulk-actions">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Select devices and an action, then click Update to proceed
+                        </span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'devices:list' %}" class="btn btn-secondary-bulk">
+                            <i class="bi bi-x-circle me-2"></i>
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary-bulk" id="updateButton" disabled>
+                            <i class="bi bi-arrow-repeat me-2"></i>
+                            Update Selected Devices
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const actionSelect = document.getElementById('{{ form.action.id_for_label }}');
+    const conditionalFields = document.querySelectorAll('.conditional-field');
+    const deviceCheckboxes = document.querySelectorAll('.device-select');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const selectAllBtn = document.getElementById('selectAll');
+    const selectNoneBtn = document.getElementById('selectNone');
+    const selectAvailableBtn = document.getElementById('selectAvailable');
+    const selectMaintenanceBtn = document.getElementById('selectMaintenance');
+    const selectedCountElement = document.getElementById('selectedCount');
+    const updateButton = document.getElementById('updateButton');
+    const form = document.getElementById('bulkUpdateForm');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+
+    // Handle action selection
+    actionSelect.addEventListener('change', function() {
+        const selectedAction = this.value;
+        
+        // Hide all conditional fields
+        conditionalFields.forEach(field => {
+            field.classList.remove('show');
+        });
+        
+        // Show relevant field based on action
+        switch(selectedAction) {
+            case 'update_status':
+                document.getElementById('statusField').classList.add('show');
+                break;
+            case 'update_condition':
+                document.getElementById('conditionField').classList.add('show');
+                break;
+            case 'update_location':
+                document.getElementById('locationField').classList.add('show');
+                break;
+            case 'update_assignability':
+                document.getElementById('assignabilityField').classList.add('show');
+                break;
+        }
+        
+        updateButtonState();
+    });
+
+    // Handle individual device selection
+    deviceCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const row = this.closest('tr');
+            if (this.checked) {
+                row.classList.add('selected');
+            } else {
+                row.classList.remove('selected');
+            }
+            updateSelectionCount();
+            updateSelectAllCheckbox();
+            updateButtonState();
+        });
+    });
+
+    // Handle select all checkbox
+    selectAllCheckbox.addEventListener('change', function() {
+        const isChecked = this.checked;
+        deviceCheckboxes.forEach(checkbox => {
+            checkbox.checked = isChecked;
+            const row = checkbox.closest('tr');
+            if (isChecked) {
+                row.classList.add('selected');
+            } else {
+                row.classList.remove('selected');
+            }
+        });
+        updateSelectionCount();
+        updateButtonState();
+    });
+
+    // Quick selection buttons
+    selectAllBtn.addEventListener('click', function() {
+        deviceCheckboxes.forEach(checkbox => {
+            checkbox.checked = true;
+            checkbox.closest('tr').classList.add('selected');
+        });
+        selectAllCheckbox.checked = true;
+        updateSelectionCount();
+        updateButtonState();
+    });
+
+    selectNoneBtn.addEventListener('click', function() {
+        deviceCheckboxes.forEach(checkbox => {
+            checkbox.checked = false;
+            checkbox.closest('tr').classList.remove('selected');
+        });
+        selectAllCheckbox.checked = false;
+        updateSelectionCount();
+        updateButtonState();
+    });
+
+    selectAvailableBtn.addEventListener('click', function() {
+        deviceCheckboxes.forEach(checkbox => {
+            const row = checkbox.closest('tr');
+            const status = row.dataset.status;
+            if (status === 'available') {
+                checkbox.checked = true;
+                row.classList.add('selected');
+            } else {
+                checkbox.checked = false;
+                row.classList.remove('selected');
+            }
+        });
+        updateSelectAllCheckbox();
+        updateSelectionCount();
+        updateButtonState();
+    });
+
+    selectMaintenanceBtn.addEventListener('click', function() {
+        deviceCheckboxes.forEach(checkbox => {
+            const row = checkbox.closest('tr');
+            const status = row.dataset.status;
+            if (status === 'maintenance') {
+                checkbox.checked = true;
+                row.classList.add('selected');
+            } else {
+                checkbox.checked = false;
+                row.classList.remove('selected');
+            }
+        });
+        updateSelectAllCheckbox();
+        updateSelectionCount();
+        updateButtonState();
+    });
+
+    // Update selection count
+    function updateSelectionCount() {
+        const selectedCount = document.querySelectorAll('.device-select:checked').length;
+        selectedCountElement.textContent = selectedCount;
+    }
+
+    // Update select all checkbox state
+    function updateSelectAllCheckbox() {
+        const totalCheckboxes = deviceCheckboxes.length;
+        const checkedCheckboxes = document.querySelectorAll('.device-select:checked').length;
+        
+        if (checkedCheckboxes === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else if (checkedCheckboxes === totalCheckboxes) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+
+    // Update button state
+    function updateButtonState() {
+        const hasSelectedDevices = document.querySelectorAll('.device-select:checked').length > 0;
+        const hasSelectedAction = actionSelect.value !== '';
+        
+        updateButton.disabled = !(hasSelectedDevices && hasSelectedAction);
+    }
+
+    // Handle form submission
+    form.addEventListener('submit', function(e) {
+        const selectedDevices = document.querySelectorAll('.device-select:checked').length;
+        const selectedAction = actionSelect.value;
+        
+        if (selectedDevices === 0) {
+            e.preventDefault();
+            alert('Please select at least one device.');
+            return;
+        }
+        
+        if (!selectedAction) {
+            e.preventDefault();
+            alert('Please select an action.');
+            return;
+        }
+        
+        // Show confirmation
+        const actionText = actionSelect.options[actionSelect.selectedIndex].text;
+        if (!confirm(`Are you sure you want to ${actionText.toLowerCase()} for ${selectedDevices} device(s)?`)) {
+            e.preventDefault();
+            return;
+        }
+        
+        // Show loading overlay
+        loadingOverlay.style.display = 'flex';
+    });
+
+    // Initialize button state
+    updateButtonState();
+});
+</script>
+{% endblock %}

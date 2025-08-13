@@ -1,0 +1,763 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Locations Management - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item active">Locations</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .locations-header {
+        background: linear-gradient(135deg, var(--parliament-primary), #1e40af);
+        color: white;
+        padding: var(--spacing-xl);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: var(--spacing-lg);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .locations-header::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 100px;
+        background: linear-gradient(45deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+    }
+    
+    .locations-title {
+        font-size: 2.25rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+    
+    .locations-subtitle {
+        opacity: 0.9;
+        font-size: 1.125rem;
+        margin: 0;
+    }
+    
+    .locations-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        padding: var(--spacing-lg);
+        text-align: center;
+        border-left: 4px solid var(--parliament-primary);
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--parliament-primary);
+        margin-bottom: var(--spacing-xs);
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--parliament-neutral);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 500;
+    }
+    
+    .component-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .component-card {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+        padding: var(--spacing-md);
+        text-align: center;
+        border-top: 3px solid var(--parliament-primary);
+    }
+    
+    .component-number {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--parliament-primary);
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .component-label {
+        font-size: 0.75rem;
+        color: var(--parliament-neutral);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 500;
+    }
+    
+    .search-filter-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .search-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .search-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .filter-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
+        gap: var(--spacing-md);
+        align-items: end;
+    }
+    
+    .locations-table-container {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+    
+    .table-header {
+        background-color: #f8f9fa;
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .table-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .table-actions {
+        display: flex;
+        gap: var(--spacing-sm);
+    }
+    
+    .table th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #e5e7eb;
+        color: var(--parliament-dark);
+        font-weight: 600;
+        padding: var(--spacing-md);
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+    
+    .table td {
+        padding: var(--spacing-md);
+        vertical-align: middle;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+    
+    .location-code {
+        font-family: 'Monaco', 'Consolas', monospace;
+        background-color: #f3f4f6;
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--border-radius);
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--parliament-primary);
+    }
+    
+    .location-name {
+        font-weight: 600;
+        color: var(--parliament-dark);
+    }
+    
+    .location-address {
+        color: var(--parliament-neutral);
+        font-size: 0.875rem;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .component-tag {
+        display: inline-block;
+        background-color: #e5e7eb;
+        color: var(--parliament-dark);
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--border-radius);
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin: 0.125rem;
+    }
+    
+    .component-tag.building {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .component-tag.floor {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+    
+    .component-tag.block {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .component-tag.room {
+        background-color: #fce7f3;
+        color: #be185d;
+    }
+    
+    .component-tag.office {
+        background-color: #f3e8ff;
+        color: #7c2d12;
+    }
+    
+    .coordinates-badge {
+        font-size: 0.75rem;
+        font-weight: 500;
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--border-radius-full);
+    }
+    
+    .coordinates-yes {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .coordinates-no {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .status-badge {
+        font-size: 0.75rem;
+        font-weight: 500;
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--border-radius-full);
+    }
+    
+    .status-active {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-inactive {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: var(--spacing-xs);
+    }
+    
+    .btn-action {
+        padding: 0.375rem;
+        border-radius: var(--border-radius);
+        border: 1px solid #e5e7eb;
+        background: white;
+        color: var(--parliament-neutral);
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-action:hover {
+        background-color: var(--parliament-primary);
+        color: white;
+        border-color: var(--parliament-primary);
+    }
+    
+    .table-footer {
+        background-color: #f8f9fa;
+        padding: var(--spacing-lg);
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .table-info {
+        color: var(--parliament-neutral);
+        font-size: 0.875rem;
+    }
+    
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: var(--spacing-xl) var(--spacing-lg);
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow);
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        color: #e5e7eb;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .empty-state-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--parliament-dark);
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .empty-state-description {
+        color: var(--parliament-neutral);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    @media (max-width: 768px) {
+        .locations-title {
+            font-size: 1.75rem;
+        }
+        
+        .locations-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .component-stats {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        
+        .filter-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .table-header {
+            flex-direction: column;
+            gap: var(--spacing-md);
+            align-items: flex-start;
+        }
+        
+        .table-actions {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .table-footer {
+            flex-direction: column;
+            gap: var(--spacing-md);
+            text-align: center;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Locations Header -->
+    <div class="locations-header">
+        <h1 class="locations-title">
+            <i class="bi bi-geo-alt-fill"></i>
+            Locations Management
+        </h1>
+        <p class="locations-subtitle">
+            Comprehensive location management for Bangladesh Parliament Secretariat
+        </p>
+    </div>
+
+    <!-- Location Statistics -->
+    <div class="locations-stats">
+        <div class="stat-card">
+            <span class="stat-number">{{ total_locations }}</span>
+            <div class="stat-label">Total Locations</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ active_locations }}</span>
+            <div class="stat-label">Active Locations</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ inactive_locations }}</span>
+            <div class="stat-label">Inactive Locations</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ locations_with_coordinates }}</span>
+            <div class="stat-label">With GPS Coordinates</div>
+        </div>
+    </div>
+
+    <!-- Component Statistics -->
+    <div class="component-stats">
+        <div class="component-card">
+            <div class="component-number">{{ component_counts.buildings }}</div>
+            <div class="component-label">Buildings</div>
+        </div>
+        <div class="component-card">
+            <div class="component-number">{{ component_counts.floors }}</div>
+            <div class="component-label">Floors</div>
+        </div>
+        <div class="component-card">
+            <div class="component-number">{{ component_counts.blocks }}</div>
+            <div class="component-label">Blocks</div>
+        </div>
+        <div class="component-card">
+            <div class="component-number">{{ component_counts.rooms }}</div>
+            <div class="component-label">Rooms</div>
+        </div>
+        <div class="component-card">
+            <div class="component-number">{{ component_counts.offices }}</div>
+            <div class="component-label">Offices</div>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="search-filter-card">
+        <div class="search-header">
+            <h3 class="search-title">
+                <i class="bi bi-funnel"></i>
+                Search & Filter Locations
+            </h3>
+            <div class="btn-group">
+                <a href="{% url 'locations:create' %}" class="btn btn-parliament-primary">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Add Location
+                </a>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="bi bi-download me-2"></i>
+                        Export
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'locations:export' %}?format=csv">
+                            <i class="bi bi-file-earmark-text me-2"></i>CSV Export
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'locations:export' %}?format=excel">
+                            <i class="bi bi-file-earmark-excel me-2"></i>Excel Export
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'locations:export' %}?format=pdf">
+                            <i class="bi bi-file-earmark-pdf me-2"></i>PDF Report
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <form method="get" id="searchForm">
+            <div class="filter-row">
+                <div>
+                    {{ search_form.search.label_tag }}
+                    {{ search_form.search }}
+                </div>
+                <div>
+                    {{ search_form.building.label_tag }}
+                    {{ search_form.building }}
+                </div>
+                <div>
+                    {{ search_form.floor.label_tag }}
+                    {{ search_form.floor }}
+                </div>
+                <div>
+                    {{ search_form.has_coordinates.label_tag }}
+                    {{ search_form.has_coordinates }}
+                </div>
+                <div>
+                    {{ search_form.is_active.label_tag }}
+                    {{ search_form.is_active }}
+                </div>
+                <div>
+                    <label>&nbsp;</label>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-parliament-primary">
+                            <i class="bi bi-search me-2"></i>
+                            Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Locations Table -->
+    {% if locations %}
+        <div class="locations-table-container">
+            <div class="table-header">
+                <h3 class="table-title">
+                    <i class="bi bi-list-ul"></i>
+                    Location Listings
+                </h3>
+                <div class="table-actions">
+                    <a href="{% url 'locations:map' %}" class="btn btn-outline-info">
+                        <i class="bi bi-map me-2"></i>
+                        Map View
+                    </a>
+                    <a href="{% url 'locations:hierarchy' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-diagram-3 me-2"></i>
+                        Hierarchy
+                    </a>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Address</th>
+                            <th>Components</th>
+                            <th>Coordinates</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for location in locations %}
+                            <tr>
+                                <td>
+                                    <span class="location-code">{{ location.location_code }}</span>
+                                </td>
+                                <td>
+                                    <div class="location-name">{{ location.name }}</div>
+                                </td>
+                                <td>
+                                    <div class="location-address" title="{{ location.address }}">
+                                        {{ location.address|default:"No address specified" }}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if location.building %}
+                                        <span class="component-tag building">{{ location.building.code }}</span>
+                                    {% endif %}
+                                    {% if location.floor %}
+                                        <span class="component-tag floor">F{{ location.floor.floor_number }}</span>
+                                    {% endif %}
+                                    {% if location.block %}
+                                        <span class="component-tag block">{{ location.block.block_code }}</span>
+                                    {% endif %}
+                                    {% if location.room %}
+                                        <span class="component-tag room">{{ location.room.room_number }}</span>
+                                    {% endif %}
+                                    {% if location.office %}
+                                        <span class="component-tag office">{{ location.office.office_code }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if location.latitude and location.longitude %}
+                                        <span class="coordinates-badge coordinates-yes">
+                                            <i class="bi bi-geo-alt-fill me-1"></i>
+                                            Available
+                                        </span>
+                                    {% else %}
+                                        <span class="coordinates-badge coordinates-no">
+                                            <i class="bi bi-geo-alt me-1"></i>
+                                            Missing
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="status-badge {% if location.is_active %}status-active{% else %}status-inactive{% endif %}">
+                                        {% if location.is_active %}
+                                            <i class="bi bi-check-circle me-1"></i>Active
+                                        {% else %}
+                                            <i class="bi bi-x-circle me-1"></i>Inactive
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{% url 'locations:detail' location.pk %}" 
+                                           class="btn-action" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{% url 'locations:edit' location.pk %}" 
+                                           class="btn-action" title="Edit Location">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        {% if not location.latitude or not location.longitude %}
+                                            <a href="{% url 'locations:coordinates' location.pk %}" 
+                                               class="btn-action" title="Add Coordinates">
+                                                <i class="bi bi-geo-alt"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="table-footer">
+                <div class="table-info">
+                    Showing {{ locations|length }} of {{ page_obj.paginator.count }} locations
+                </div>
+                
+                <!-- Pagination -->
+                {% if is_paginated %}
+                    <div class="pagination-container">
+                        <nav aria-label="Location pagination">
+                            <ul class="pagination pagination-sm mb-0">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{{ request.GET.urlencode }}&page=1">
+                                            <i class="bi bi-chevron-double-left"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}">
+                                            <i class="bi bi-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for num in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ num }}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}">
+                                            <i class="bi bi-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.paginator.num_pages }}">
+                                            <i class="bi bi-chevron-double-right"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="bi bi-geo-alt-slash"></i>
+            </div>
+            <h3 class="empty-state-title">No Locations Found</h3>
+            <p class="empty-state-description">
+                {% if search_form.search.value or search_form.building.value %}
+                    No locations match your search criteria. Try adjusting your filters or search terms.
+                {% else %}
+                    There are currently no locations in the system. Start by adding your first location.
+                {% endif %}
+            </p>
+            <div>
+                <a href="{% url 'locations:create' %}" class="btn btn-parliament-primary">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Add First Location
+                </a>
+                {% if search_form.search.value or search_form.building.value %}
+                    <a href="{% url 'locations:list' %}" class="btn btn-outline-secondary ms-2">
+                        <i class="bi bi-arrow-clockwise me-2"></i>
+                        Clear Filters
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-submit search form when filters change
+        const searchForm = document.getElementById('searchForm');
+        const filterInputs = searchForm.querySelectorAll('select:not([name="search"])');
+        
+        filterInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                searchForm.submit();
+            });
+        });
+        
+        // Search input with debounce
+        const searchInput = searchForm.querySelector('input[name="search"]');
+        let searchTimeout;
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    // Optional: Auto-submit after typing stops
+                    // searchForm.submit();
+                }, 500);
+            });
+        }
+        
+        // Component tag tooltips
+        const componentTags = document.querySelectorAll('.component-tag');
+        componentTags.forEach(tag => {
+            tag.setAttribute('data-bs-toggle', 'tooltip');
+            tag.setAttribute('data-bs-placement', 'top');
+        });
+        
+        // Initialize Bootstrap tooltips
+        if (typeof bootstrap !== 'undefined') {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
+    });
+</script>
+{% endblock %}

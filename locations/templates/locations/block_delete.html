@@ -1,0 +1,487 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete {{ object.name }} - Block - PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'locations:dashboard' %}">Locations</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:block_list' %}">Blocks</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:block_detail' object.pk %}">{{ object.name }}</a></li>
+    <li class="breadcrumb-item active">Delete</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <div class="d-flex align-items-center mb-2">
+                <div class="bg-danger text-white rounded d-flex align-items-center justify-content-center me-3" 
+                     style="width: 50px; height: 50px; font-size: 16px; font-weight: bold;">
+                    {{ object.code }}
+                </div>
+                <div>
+                    <h1 class="h3 mb-1">
+                        <i class="bi bi-trash me-2 text-danger"></i>
+                        Delete Block
+                    </h1>
+                    <p class="text-muted mb-0">Permanently remove this block from the system</p>
+                </div>
+            </div>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'locations:block_detail' object.pk %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Back to Block Details
+            </a>
+            <a href="{% url 'locations:block_list' %}" class="btn btn-outline-info">
+                <i class="bi bi-list me-2"></i>
+                View All Blocks
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Warning Card -->
+            <div class="card border-danger shadow-sm mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Confirm Block Deletion
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger border-0 mb-4">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-exclamation-triangle-fill me-3 fs-3 text-danger"></i>
+                            <div>
+                                <h6 class="alert-heading mb-2">
+                                    <strong>Warning: This action cannot be undone!</strong>
+                                </h6>
+                                <p class="mb-0">
+                                    You are about to permanently delete the block <strong>"{{ object.name }}"</strong> 
+                                    (Code: {{ object.code }}) from the system. This action will remove all 
+                                    block data and cannot be reversed.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Block Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Block Details</h6>
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td class="text-muted" style="width: 120px;">Block Name:</td>
+                                    <td class="fw-bold">{{ object.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Block Code:</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-info text-white rounded d-flex align-items-center justify-content-center me-2" 
+                                                 style="width: 30px; height: 30px; font-size: 12px; font-weight: bold;">
+                                                {{ object.code }}
+                                            </div>
+                                            <span>{{ object.code }}</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Status:</td>
+                                    <td>
+                                        {% if object.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Created:</td>
+                                    <td>{{ object.created_at|date:"F d, Y" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Impact Assessment</h6>
+                            <div class="bg-light rounded p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted">Related Locations:</span>
+                                    <span class="badge {% if related_locations_count > 0 %}bg-warning{% else %}bg-success{% endif %} fs-6">
+                                        {{ related_locations_count }}
+                                    </span>
+                                </div>
+                                {% if related_locations_count > 0 %}
+                                    <small class="text-danger">
+                                        <i class="bi bi-exclamation-circle me-1"></i>
+                                        This will affect {{ related_locations_count }} location{{ related_locations_count|pluralize }}
+                                    </small>
+                                {% else %}
+                                    <small class="text-success">
+                                        <i class="bi bi-check-circle me-1"></i>
+                                        No related locations will be affected
+                                    </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if object.description %}
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">Description</h6>
+                        <div class="border-start border-danger border-3 ps-3">
+                            <p class="mb-0 text-muted">{{ object.description|linebreaks }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Related Locations Warning -->
+                    {% if related_locations_count > 0 %}
+                    <div class="alert alert-warning border-0">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Related Data Impact
+                        </h6>
+                        <p class="mb-2">
+                            This block is currently referenced by <strong>{{ related_locations_count }}</strong> 
+                            location{{ related_locations_count|pluralize }} in the system.
+                        </p>
+                        <p class="mb-3">
+                            <strong>What will happen:</strong>
+                        </p>
+                        <ul class="mb-3">
+                            <li>All {{ related_locations_count }} location{{ related_locations_count|pluralize }} will lose their block reference</li>
+                            <li>Location records will remain but show "No Block" assigned</li>
+                            <li>This may affect reporting and location hierarchy</li>
+                        </ul>
+                        <div class="d-grid">
+                            <a href="{% url 'locations:list' %}?block={{ object.pk }}" 
+                               class="btn btn-outline-warning btn-sm" target="_blank">
+                                <i class="bi bi-eye me-2"></i>
+                                View Affected Locations
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Confirmation Form -->
+                    <div class="border-top pt-4">
+                        <h6 class="text-muted mb-3">Confirmation Required</h6>
+                        <form method="post" id="deleteForm">
+                            {% csrf_token %}
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                                <label class="form-check-label" for="confirmDelete">
+                                    I understand that this action is permanent and cannot be undone
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="confirmImpact" required>
+                                <label class="form-check-label" for="confirmImpact">
+                                    {% if related_locations_count > 0 %}
+                                        I acknowledge that {{ related_locations_count }} location{{ related_locations_count|pluralize }} will be affected
+                                    {% else %}
+                                        I confirm that no related data will be affected by this deletion
+                                    {% endif %}
+                                </label>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="text-muted">
+                                    <small>
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Both confirmations are required to proceed
+                                    </small>
+                                </div>
+                                <div class="btn-group">
+                                    <a href="{% url 'locations:block_detail' object.pk %}" class="btn btn-outline-secondary">
+                                        <i class="bi bi-x-circle me-2"></i>
+                                        Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-danger" id="deleteBtn" disabled>
+                                        <i class="bi bi-trash me-2"></i>
+                                        Delete Block
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alternative Actions Card -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        Alternative Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        Consider these alternatives before permanently deleting this block:
+                    </p>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-pause-circle text-warning me-3 fs-4"></i>
+                                <div>
+                                    <h6 class="mb-1">Deactivate Instead</h6>
+                                    <p class="text-muted small mb-2">
+                                        Hide the block from new assignments without losing data
+                                    </p>
+                                    {% if object.is_active %}
+                                        <form method="post" action="{% url 'locations:block_toggle_status' object.pk %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-outline-warning btn-sm">
+                                                <i class="bi bi-pause-circle me-1"></i>
+                                                Deactivate Block
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Already Inactive</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-pencil text-info me-3 fs-4"></i>
+                                <div>
+                                    <h6 class="mb-1">Edit Information</h6>
+                                    <p class="text-muted small mb-2">
+                                        Update block details instead of deleting
+                                    </p>
+                                    <a href="{% url 'locations:block_edit' object.pk %}" class="btn btn-outline-info btn-sm">
+                                        <i class="bi bi-pencil me-1"></i>
+                                        Edit Block
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card-header {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    border: none;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+    transform: translateY(-1px);
+}
+
+.btn-danger:disabled {
+    background: #6c757d;
+    border-color: #6c757d;
+    opacity: 0.65;
+    transform: none;
+}
+
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-color: rgba(220, 53, 69, 0.2);
+}
+
+.alert-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-color: rgba(255, 193, 7, 0.2);
+}
+
+.border-danger {
+    border-color: #dc3545 !important;
+}
+
+.border-3 {
+    border-width: 3px !important;
+}
+
+.form-check-input:checked {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.table-borderless td {
+    border: none;
+    padding: 0.25rem 0;
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+.alert-heading {
+    color: inherit;
+    font-weight: 600;
+}
+
+.card {
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.bg-light {
+    background-color: #f8f9fa !important;
+}
+
+#deleteBtn:hover:not(:disabled) {
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.fw-bold {
+    font-weight: 600;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteForm = document.getElementById('deleteForm');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const confirmDelete = document.getElementById('confirmDelete');
+    const confirmImpact = document.getElementById('confirmImpact');
+    
+    // Enable/disable delete button based on checkboxes
+    function updateDeleteButton() {
+        const bothChecked = confirmDelete.checked && confirmImpact.checked;
+        deleteBtn.disabled = !bothChecked;
+        
+        if (bothChecked) {
+            deleteBtn.classList.remove('btn-outline-danger');
+            deleteBtn.classList.add('btn-danger');
+        } else {
+            deleteBtn.classList.remove('btn-danger');
+            deleteBtn.classList.add('btn-outline-danger');
+        }
+    }
+    
+    // Add event listeners to checkboxes
+    confirmDelete.addEventListener('change', updateDeleteButton);
+    confirmImpact.addEventListener('change', updateDeleteButton);
+    
+    // Form submission confirmation
+    deleteForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const blockName = '{{ object.name|escapejs }}';
+        const blockCode = '{{ object.code|escapejs }}';
+        const relatedCount = {{ related_locations_count }};
+        
+        let confirmMessage = `Are you absolutely sure you want to delete the block "${blockName}" (${blockCode})?\n\n`;
+        confirmMessage += 'This action is permanent and cannot be undone.\n\n';
+        
+        if (relatedCount > 0) {
+            confirmMessage += `This will affect ${relatedCount} location${relatedCount > 1 ? 's' : ''} in the system.\n\n`;
+        }
+        
+        confirmMessage += 'Type "DELETE" to confirm:';
+        
+        const userInput = prompt(confirmMessage);
+        
+        if (userInput === 'DELETE') {
+            // Show loading state
+            deleteBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Deleting Block...';
+            deleteBtn.disabled = true;
+            
+            // Submit the form
+            this.submit();
+        } else if (userInput !== null) {
+            alert('Deletion cancelled. You must type "DELETE" exactly to confirm.');
+        }
+    });
+    
+    // Warn about leaving page with pending changes
+    let hasInteracted = false;
+    
+    [confirmDelete, confirmImpact].forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            hasInteracted = true;
+        });
+    });
+    
+    window.addEventListener('beforeunload', function(e) {
+        if (hasInteracted && (confirmDelete.checked || confirmImpact.checked)) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+    
+    // Initialize button state
+    updateDeleteButton();
+    
+    // Auto-scroll to form if there are many related locations
+    const relatedCount = {{ related_locations_count }};
+    if (relatedCount > 5) {
+        setTimeout(function() {
+            document.getElementById('deleteForm').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+        }, 500);
+    }
+    
+    // Highlight dangerous action
+    const dangerElements = document.querySelectorAll('.text-danger, .btn-danger, .border-danger');
+    dangerElements.forEach(element => {
+        element.addEventListener('mouseenter', function() {
+            this.style.filter = 'brightness(1.1)';
+        });
+        
+        element.addEventListener('mouseleave', function() {
+            this.style.filter = 'brightness(1)';
+        });
+    });
+    
+    // Copy block code functionality
+    const blockCodeElement = document.querySelector('.bg-info.text-white.rounded');
+    if (blockCodeElement) {
+        blockCodeElement.addEventListener('click', function() {
+            const blockCode = '{{ object.code }}';
+            navigator.clipboard.writeText(blockCode).then(() => {
+                // Show temporary feedback
+                const originalContent = this.innerHTML;
+                this.innerHTML = '<i class="bi bi-check"></i>';
+                
+                setTimeout(() => {
+                    this.innerHTML = originalContent;
+                }, 1000);
+            });
+        });
+        
+        blockCodeElement.style.cursor = 'pointer';
+        blockCodeElement.title = 'Click to copy block code';
+    }
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Escape to cancel
+        if (e.key === 'Escape') {
+            window.location.href = '{% url "locations:block_detail" object.pk %}';
+        }
+        
+        // Ctrl/Cmd + Backspace for quick delete (with confirmation)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Backspace') {
+            e.preventDefault();
+            if (confirmDelete.checked && confirmImpact.checked) {
+                deleteForm.dispatchEvent(new Event('submit'));
+            } else {
+                alert('Please check both confirmation boxes first.');
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

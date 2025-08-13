@@ -1,0 +1,318 @@
+{% extends 'vendors/base_vendor.html' %}
+{% load static %}
+
+{% block vendor_title %}Delete {{ object.name }}{% endblock %}
+
+{% block vendor_header_title %}Delete {{ object.name }}{% endblock %}
+{% block vendor_header_subtitle %}Confirm vendor deletion • {{ object.vendor_code }}{% endblock %}
+
+{% block vendor_header_actions %}
+    <a href="{% url 'vendors:detail' object.pk %}" class="btn btn-light btn-lg">
+        <i class="bi bi-arrow-left me-2"></i>
+        Back to Details
+    </a>
+{% endblock %}
+
+{% block vendor_breadcrumb_items %}
+    <li class="breadcrumb-item">
+        <a href="{% url 'vendors:detail' object.pk %}">{{ object.name }}</a>
+    </li>
+    <li class="breadcrumb-item active">Delete</li>
+{% endblock %}
+
+{% block vendor_content %}
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Warning Alert -->
+            <div class="alert alert-danger border-0 shadow-sm mb-4" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill fs-2 me-3"></i>
+                    <div>
+                        <h5 class="alert-heading mb-1">Confirm Vendor Deletion</h5>
+                        <p class="mb-0">This action cannot be undone. Please review the information below before proceeding.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vendor Information Card -->
+            <div class="card vendor-card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-building me-2"></i>
+                        Vendor Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="text-muted"><strong>Vendor Code:</strong></td>
+                                    <td>{{ object.vendor_code }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted"><strong>Company Name:</strong></td>
+                                    <td>{{ object.name }}</td>
+                                </tr>
+                                {% if object.trade_name %}
+                                <tr>
+                                    <td class="text-muted"><strong>Trade Name:</strong></td>
+                                    <td>{{ object.trade_name }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td class="text-muted"><strong>Vendor Type:</strong></td>
+                                    <td>
+                                        <div class="vendor-type-icon vendor-type-{{ object.vendor_type|lower }} d-inline-flex me-2">
+                                            <i class="{{ object.get_vendor_type_display_icon }}"></i>
+                                        </div>
+                                        {{ object.get_vendor_type_display }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted"><strong>Status:</strong></td>
+                                    <td>
+                                        <span class="vendor-badge {% if object.status == 'ACTIVE' %}active{% elif object.status == 'INACTIVE' %}inactive{% elif object.status == 'SUSPENDED' %}suspended{% elif object.status == 'BLACKLISTED' %}blacklisted{% endif %}">
+                                            {{ object.get_status_display }}
+                                        </span>
+                                        {% if object.is_preferred %}
+                                            <span class="vendor-badge preferred ms-2">
+                                                <i class="bi bi-star-fill me-1"></i>
+                                                Preferred
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="text-muted"><strong>Contact Person:</strong></td>
+                                    <td>{{ object.contact_person }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted"><strong>Phone:</strong></td>
+                                    <td>{{ object.phone_primary }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted"><strong>Email:</strong></td>
+                                    <td>{{ object.email_primary }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted"><strong>Location:</strong></td>
+                                    <td>{{ object.city }}, {{ object.country }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted"><strong>Created:</strong></td>
+                                    <td>{{ object.created_at|date:"M d, Y" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Records Impact -->
+            <div class="card vendor-card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-link-45deg me-2"></i>
+                        Impact Assessment
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi bi-laptop fs-4 me-3 text-primary"></i>
+                                <div>
+                                    <h6 class="mb-0">Associated Devices</h6>
+                                    <p class="mb-0 text-muted">
+                                        <strong>{{ device_count }}</strong> device{{ device_count|pluralize }}
+                                        {% if device_count > 0 %}
+                                            will lose vendor reference
+                                        {% else %}
+                                            (no impact)
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi bi-tools fs-4 me-3 text-success"></i>
+                                <div>
+                                    <h6 class="mb-0">Maintenance Records</h6>
+                                    <p class="mb-0 text-muted">
+                                        <strong>{{ maintenance_count }}</strong> record{{ maintenance_count|pluralize }}
+                                        {% if maintenance_count > 0 %}
+                                            will lose vendor reference
+                                        {% else %}
+                                            (no impact)
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if device_count > 0 or maintenance_count > 0 %}
+                        <div class="alert alert-warning border-0 mt-3" role="alert">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-exclamation-triangle me-2 mt-1"></i>
+                                <div>
+                                    <strong>Warning:</strong> This vendor has associated records. Deleting this vendor will remove the vendor reference from these records, but the records themselves will remain in the system.
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success border-0 mt-3" role="alert">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-check-circle me-2"></i>
+                                <div>
+                                    <strong>Safe to delete:</strong> This vendor has no associated records.
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Deletion Form -->
+            <div class="card vendor-card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-trash me-2"></i>
+                        Confirm Deletion
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                                <label class="form-check-label" for="confirmDelete">
+                                    I understand that this action cannot be undone and confirm that I want to permanently delete this vendor.
+                                </label>
+                            </div>
+                        </div>
+
+                        {% if device_count > 0 or maintenance_count > 0 %}
+                            <div class="mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="confirmImpact" required>
+                                    <label class="form-check-label" for="confirmImpact">
+                                        I acknowledge that this deletion will affect {{ device_count|add:maintenance_count }} related record{{ device_count|add:maintenance_count|pluralize }} and understand the impact.
+                                    </label>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="d-flex gap-3 justify-content-end">
+                            <a href="{% url 'vendors:detail' object.pk %}" class="btn btn-vendor-secondary btn-lg">
+                                <i class="bi bi-x-circle me-2"></i>
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger btn-lg" id="deleteButton" disabled>
+                                <i class="bi bi-trash me-2"></i>
+                                Delete Vendor
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Alternative Actions -->
+            <div class="card border-0 bg-light mt-4">
+                <div class="card-body">
+                    <h6 class="mb-3">Alternative Actions</h6>
+                    <p class="text-muted mb-3">Instead of deleting, consider these options:</p>
+                    
+                    <div class="row">
+                        {% if object.is_active %}
+                            <div class="col-md-6 mb-2">
+                                <a href="{% url 'vendors:deactivate' object.pk %}" class="btn btn-outline-warning w-100">
+                                    <i class="bi bi-pause-circle me-2"></i>
+                                    Deactivate Vendor
+                                </a>
+                            </div>
+                        {% endif %}
+                        
+                        {% if object.is_preferred %}
+                            <div class="col-md-6 mb-2">
+                                <a href="{% url 'vendors:toggle_preferred' object.pk %}" class="btn btn-outline-secondary w-100">
+                                    <i class="bi bi-star me-2"></i>
+                                    Remove Preferred Status
+                                </a>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="col-md-6 mb-2">
+                            <a href="{% url 'vendors:edit' object.pk %}" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-pencil me-2"></i>
+                                Edit Vendor Details
+                            </a>
+                        </div>
+                        
+                        <div class="col-md-6 mb-2">
+                            <a href="{% url 'vendors:list' %}" class="btn btn-outline-info w-100">
+                                <i class="bi bi-list me-2"></i>
+                                Back to Vendor List
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block vendor_extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const confirmDelete = document.getElementById('confirmDelete');
+            const confirmImpact = document.getElementById('confirmImpact');
+            const deleteButton = document.getElementById('deleteButton');
+            
+            function updateDeleteButton() {
+                let canDelete = confirmDelete.checked;
+                
+                // If there are related records, also check the impact confirmation
+                if (confirmImpact) {
+                    canDelete = canDelete && confirmImpact.checked;
+                }
+                
+                deleteButton.disabled = !canDelete;
+                
+                if (canDelete) {
+                    deleteButton.classList.remove('btn-outline-danger');
+                    deleteButton.classList.add('btn-danger');
+                } else {
+                    deleteButton.classList.remove('btn-danger');
+                    deleteButton.classList.add('btn-outline-danger');
+                }
+            }
+            
+            confirmDelete.addEventListener('change', updateDeleteButton);
+            if (confirmImpact) {
+                confirmImpact.addEventListener('change', updateDeleteButton);
+            }
+            
+            // Final confirmation on form submit
+            document.querySelector('form').addEventListener('submit', function(e) {
+                const vendorName = '{{ object.name|escapejs }}';
+                const confirmMessage = `Are you absolutely sure you want to delete "${vendorName}"?\n\nThis action cannot be undone.`;
+                
+                if (!confirm(confirmMessage)) {
+                    e.preventDefault();
+                }
+            });
+            
+            // Auto-focus first checkbox
+            confirmDelete.focus();
+        });
+    </script>
+{% endblock %}

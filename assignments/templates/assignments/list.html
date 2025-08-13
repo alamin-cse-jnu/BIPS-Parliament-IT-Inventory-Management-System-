@@ -1,0 +1,713 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Assignment Management - Bangladesh Parliament Secretariat PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item active">Assignments</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Assignment List Styling - Bangladesh Parliament Secretariat PIMS */
+.assignments-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.assignments-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.1);
+}
+
+.assignments-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.assignments-subtitle {
+    color: #6b7280;
+    margin-bottom: 0;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 48px rgba(30, 58, 138, 0.15);
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--stat-color);
+    border-radius: 16px 16px 0 0;
+}
+
+.stat-card.total::before { --stat-color: linear-gradient(135deg, #3b82f6, #2563eb); }
+.stat-card.active::before { --stat-color: linear-gradient(135deg, #10b981, #059669); }
+.stat-card.overdue::before { --stat-color: linear-gradient(135deg, #ef4444, #dc2626); }
+.stat-card.returned::before { --stat-color: linear-gradient(135deg, #6b7280, #4b5563); }
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.25rem;
+    color: white;
+}
+
+.stat-icon.total { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.stat-icon.active { background: linear-gradient(135deg, #10b981, #059669); }
+.stat-icon.overdue { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.stat-icon.returned { background: linear-gradient(135deg, #6b7280, #4b5563); }
+
+.stat-number {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    color: #6b7280;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.filters-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.1);
+}
+
+.filters-title {
+    color: #1e3a8a;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.assignments-table-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.1);
+}
+
+.table-header {
+    background: rgba(248, 250, 252, 0.8);
+    backdrop-filter: blur(5px);
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.table-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.table-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.assignment-item {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.2);
+    transition: all 0.3s ease;
+}
+
+.assignment-item:hover {
+    background: rgba(59, 130, 246, 0.05);
+    border-left: 4px solid #3b82f6;
+    padding-left: calc(1.5rem - 4px);
+}
+
+.assignment-item:last-child {
+    border-bottom: none;
+}
+
+.assignment-header {
+    display: flex;
+    justify-content: between;
+    align-items: start;
+    margin-bottom: 0.75rem;
+}
+
+.assignment-id {
+    font-weight: 700;
+    color: #1e3a8a;
+    font-size: 1.1rem;
+}
+
+.assignment-status {
+    margin-left: auto;
+}
+
+.assignment-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.detail-icon {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.detail-text {
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.detail-text strong {
+    color: #1f2937;
+}
+
+.assignment-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.assignment-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
+}
+
+.status-assigned {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-color: #10b981;
+}
+
+.status-returned {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+    border-color: #6b7280;
+}
+
+.status-overdue {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    border-color: #ef4444;
+}
+
+.status-cancelled {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    border-color: #f59e0b;
+}
+
+/* Badge Components */
+.badge-primary {
+    background: rgba(30, 58, 138, 0.1);
+    color: #1e3a8a;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.badge-secondary {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+}
+
+.badge-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+}
+
+.badge-warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+}
+
+.badge-danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6b7280;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.pagination-wrapper {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 1rem;
+    margin-top: 2rem;
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .table-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .assignment-header {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .assignment-details {
+        grid-template-columns: 1fr;
+    }
+    
+    .assignment-meta {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .assignment-actions {
+        margin-left: 0;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="assignments-container">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="assignments-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="assignments-title">
+                        <i class="bi bi-clipboard-check"></i>
+                        Assignment Management
+                    </h1>
+                    <p class="assignments-subtitle">
+                        Track and manage device assignments for Bangladesh Parliament Secretariat
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    {% if user.has_perm:'assignments.add_assignment' %}
+                        <a href="{% url 'assignments:create' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            New Assignment
+                        </a>
+                        <a href="{% url 'assignments:quick' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-lightning me-2"></i>
+                            Quick Assign
+                        </a>
+                    {% endif %}
+                    <div class="btn-group">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots me-2"></i>
+                            Actions
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'assignments:export' %}">
+                                <i class="bi bi-download me-2"></i>Export Data
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'assignments:reports' %}">
+                                <i class="bi bi-graph-up me-2"></i>View Reports
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'assignments:active' %}">
+                                <i class="bi bi-check-circle me-2"></i>Active Assignments
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'assignments:overdue' %}">
+                                <i class="bi bi-exclamation-triangle me-2"></i>Overdue Assignments
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <div class="stat-icon total">
+                    <i class="bi bi-clipboard-data"></i>
+                </div>
+                <div class="stat-number">{{ total_assignments }}</div>
+                <div class="stat-label">Total Assignments</div>
+            </div>
+            <div class="stat-card active">
+                <div class="stat-icon active">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-number">{{ active_assignments }}</div>
+                <div class="stat-label">Active Assignments</div>
+            </div>
+            <div class="stat-card overdue">
+                <div class="stat-icon overdue">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="stat-number">{{ overdue_assignments }}</div>
+                <div class="stat-label">Overdue Assignments</div>
+            </div>
+            <div class="stat-card returned">
+                <div class="stat-icon returned">
+                    <i class="bi bi-arrow-return-left"></i>
+                </div>
+                <div class="stat-number">{{ returned_assignments }}</div>
+                <div class="stat-label">Returned Assignments</div>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="filters-card">
+            <h5 class="filters-title">
+                <i class="bi bi-funnel"></i>
+                Filter Assignments
+            </h5>
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           value="{{ filter_form.search.value|default:'' }}" 
+                           placeholder="Assignment ID, Device, Employee...">
+                </div>
+                <div class="col-md-2">
+                    <label for="status" class="form-label">Status</label>
+                    {{ filter_form.status }}
+                </div>
+                <div class="col-md-2">
+                    <label for="assignment_type" class="form-label">Type</label>
+                    {{ filter_form.assignment_type }}
+                </div>
+                <div class="col-md-3">
+                    <label for="assigned_to" class="form-label">Employee</label>
+                    {{ filter_form.assigned_to }}
+                </div>
+                <div class="col-md-2">
+                    <label for="is_overdue" class="form-label">Overdue</label>
+                    {{ filter_form.is_overdue }}
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search me-2"></i>Apply Filters
+                    </button>
+                    <a href="{% url 'assignments:list' %}" class="btn btn-outline-secondary ms-2">
+                        <i class="bi bi-x-circle me-2"></i>Clear Filters
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Assignments Table -->
+        <div class="assignments-table-container">
+            <div class="table-header">
+                <h5 class="table-title">
+                    <i class="bi bi-list-ul me-2"></i>
+                    Assignment List
+                </h5>
+                <div class="table-actions">
+                    <div class="btn-group btn-group-sm">
+                        <a href="{% url 'assignments:active' %}" class="btn btn-outline-success">
+                            <i class="bi bi-check-circle me-1"></i>Active
+                        </a>
+                        <a href="{% url 'assignments:returned' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-return-left me-1"></i>Returned
+                        </a>
+                        <a href="{% url 'assignments:overdue' %}" class="btn btn-outline-danger">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Overdue
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-body">
+                {% if assignments %}
+                    {% for assignment in assignments %}
+                        <div class="assignment-item">
+                            <div class="assignment-header">
+                                <div>
+                                    <a href="{% url 'assignments:detail' assignment.pk %}" class="assignment-id text-decoration-none">
+                                        {{ assignment.assignment_id }}
+                                    </a>
+                                </div>
+                                <div class="assignment-status">
+                                    <span class="status-badge status-{{ assignment.status|lower }}">
+                                        {{ assignment.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="assignment-details">
+                                <div class="detail-item">
+                                    <i class="bi bi-laptop detail-icon"></i>
+                                    <span class="detail-text">
+                                        <strong>Device:</strong> 
+                                        {% if assignment.device %}
+                                            {{ assignment.device.name }} ({{ assignment.device.device_id }})
+                                        {% else %}
+                                            No device assigned
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="bi bi-person detail-icon"></i>
+                                    <span class="detail-text">
+                                        <strong>Employee:</strong> 
+                                        {% if assignment.assigned_to %}
+                                            {{ assignment.assigned_to.get_full_name }}
+                                        {% else %}
+                                            No employee assigned
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="bi bi-geo-alt detail-icon"></i>
+                                    <span class="detail-text">
+                                        <strong>Location:</strong> 
+                                        {% if assignment.assigned_location %}
+                                            {{ assignment.assigned_location.name }}
+                                        {% else %}
+                                            Not specified
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="bi bi-calendar detail-icon"></i>
+                                    <span class="detail-text">
+                                        <strong>Assigned:</strong> {{ assignment.assigned_date }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="assignment-meta">
+                                <span class="badge-primary">{{ assignment.get_assignment_type_display }}</span>
+                                
+                                {% if assignment.expected_return_date %}
+                                    {% if assignment.status == 'ASSIGNED' and assignment.expected_return_date < today %}
+                                        <span class="badge-danger">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>
+                                            Overdue ({{ assignment.days_overdue }} days)
+                                        </span>
+                                    {% else %}
+                                        <span class="badge-secondary">
+                                            Return: {{ assignment.expected_return_date }}
+                                        </span>
+                                    {% endif %}
+                                {% endif %}
+
+                                {% if assignment.purpose %}
+                                    <span class="badge-secondary">{{ assignment.purpose|truncatechars:30 }}</span>
+                                {% endif %}
+
+                                <div class="assignment-actions">
+                                    <a href="{% url 'assignments:detail' assignment.pk %}" 
+                                       class="btn btn-sm btn-outline-primary" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    
+                                    {% if user.has_perm:'assignments.change_assignment' %}
+                                        {% if assignment.status == 'ASSIGNED' %}
+                                            <a href="{% url 'assignments:return' assignment.pk %}" 
+                                               class="btn btn-sm btn-outline-success" title="Return Assignment">
+                                                <i class="bi bi-arrow-return-left"></i>
+                                            </a>
+                                        {% endif %}
+                                        
+                                        <a href="{% url 'assignments:edit' assignment.pk %}" 
+                                           class="btn btn-sm btn-outline-warning" title="Edit Assignment">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    {% endif %}
+
+                                    {% if assignment.qr_codes.exists %}
+                                        <a href="{% url 'assignments:qr_code' assignment.pk %}" 
+                                           class="btn btn-sm btn-outline-info" title="View QR Code">
+                                            <i class="bi bi-qr-code"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-clipboard-x"></i>
+                        <h4>No Assignments Found</h4>
+                        <p>No assignments match your current filters. Try adjusting your search criteria or create a new assignment.</p>
+                        {% if user.has_perm:'assignments.add_assignment' %}
+                            <a href="{% url 'assignments:create' %}" class="btn btn-primary mt-3">
+                                <i class="bi bi-plus-circle me-2"></i>Create First Assignment
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <div class="pagination-wrapper">
+                <nav aria-label="Assignment pagination">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="pagination-info">
+                            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} assignments
+                        </div>
+                        <ul class="pagination mb-0">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">
+                                        <i class="bi bi-chevron-double-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">
+                                        <i class="bi bi-chevron-double-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert-dismissible');
+        alerts.forEach(alert => {
+            if (alert.classList.contains('show')) {
+                bootstrap.Alert.getOrCreateInstance(alert).close();
+            }
+        });
+    }, 5000);
+});
+</script>
+{% endblock %}

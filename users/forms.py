@@ -78,7 +78,7 @@ class CustomUserCreationForm(UserCreationForm):
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': '+880XXXXXXXXX',
-            'pattern': '^\+?1?\d{9,15}$',
+            'pattern': r'^\+?1?\d{9,15}$', 
             'title': 'Phone number format: +880XXXXXXXXX'
         })
     )
@@ -467,3 +467,55 @@ class PasswordResetForm(forms.Form):
             raise ValidationError('This account is inactive.')
         
         return identifier
+    
+class PasswordChangeForm(forms.Form):
+    """
+    Form for changing user passwords.
+    """
+    old_password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Current password'
+        })
+    )
+    
+    new_password1 = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'New password'
+        }),
+        help_text='Password must be at least 8 characters long'
+    )
+    
+    new_password2 = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Confirm new password'
+        })
+    )
+    
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+    
+    def clean_old_password(self):
+        """Validate current password."""
+        old_password = self.cleaned_data.get('old_password')
+        if not self.user.check_password(old_password):
+            raise ValidationError('Current password is incorrect.')
+        return old_password
+    
+    def clean(self):
+        """Validate password confirmation."""
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get('new_password1')
+        password2 = cleaned_data.get('new_password2')
+        
+        if password1 and password2:
+            if password1 != password2:
+                raise ValidationError('New passwords do not match.')
+            
+            if len(password1) < 8:
+                raise ValidationError('Password must be at least 8 characters long.')
+        
+        return cleaned_data

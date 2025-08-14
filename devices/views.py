@@ -26,6 +26,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 )
+from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib import messages
 from django.db.models import Q, Count, Sum, Avg, F

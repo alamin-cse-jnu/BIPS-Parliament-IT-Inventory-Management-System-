@@ -1,12 +1,17 @@
 """
 PIMS - Parliament IT Inventory Management System
-Bangladesh Parliament Secretariat
+Bangladesh Parliament Secretariat, Dhaka, Bangladesh
 
-Main package initialization.
+Main package initialization with MySQL compatibility.
 """
 
 __version__ = '1.0.0'
 __author__ = 'Bangladesh Parliament Secretariat IT Team'
+
+# PyMySQL compatibility for Django MySQL backend
+# This resolves the MySQLdb import error
+import pymysql
+pymysql.install_as_MySQLdb()
 
 # This will make sure the app is always imported when
 # Django starts so that shared_task will use this app.

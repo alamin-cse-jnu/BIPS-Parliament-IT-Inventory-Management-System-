@@ -1,5 +1,5 @@
 """
-WSGI config for pims project.
+WSGI config for PIMS project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 

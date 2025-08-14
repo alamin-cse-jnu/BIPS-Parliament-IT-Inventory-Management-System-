@@ -22,11 +22,11 @@ from django.template.response import TemplateResponse
 from decimal import Decimal
 import csv
 from datetime import datetime, timedelta
-
+from django import forms
 from .models import Maintenance
 
 
-class MaintenanceAdminForm(admin.ModelForm):
+class MaintenanceAdminForm(forms.ModelForm):
     """
     Custom form for Maintenance admin with enhanced validation.
     """

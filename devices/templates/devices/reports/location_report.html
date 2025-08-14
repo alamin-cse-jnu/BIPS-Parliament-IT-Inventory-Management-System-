@@ -1,0 +1,518 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Devices by Location Report - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Location Report Styling - Bangladesh Parliament Secretariat Design */
+.location-report-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.report-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.report-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.report-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.summary-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.summary-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin: 0 auto 1rem;
+    color: white;
+}
+
+.summary-icon.locations { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+.summary-icon.devices { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); }
+.summary-icon.value { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); }
+.summary-icon.average { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+
+.summary-number {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.summary-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.buildings-section {
+    margin-bottom: 2rem;
+}
+
+.building-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.building-header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.building-title {
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.125rem;
+}
+
+.building-stats {
+    display: flex;
+    gap: 1rem;
+}
+
+.building-stat {
+    text-align: center;
+}
+
+.building-stat-number {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.building-stat-label {
+    font-size: 0.75rem;
+    opacity: 0.9;
+}
+
+.locations-grid {
+    padding: 1.5rem;
+    display: grid;
+    gap: 1rem;
+}
+
+.location-item {
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.2s ease;
+}
+
+.location-item:hover {
+    background: rgba(59, 130, 246, 0.05);
+    border-color: rgba(59, 130, 246, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.location-header {
+    display: flex;
+    align-items: center;
+    justify-content: between;
+    margin-bottom: 1rem;
+}
+
+.location-name {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 1rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.location-value {
+    color: #7c3aed;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.device-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 1rem;
+}
+
+.device-stat {
+    text-align: center;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.device-stat-number {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.device-stat-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.device-stat.total .device-stat-number { color: #1e3a8a; }
+.device-stat.available .device-stat-number { color: #16a34a; }
+.device-stat.assigned .device-stat-number { color: #3b82f6; }
+.device-stat.maintenance .device-stat-number { color: #f59e0b; }
+
+.export-actions {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.export-title {
+    color: #1e293b;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.export-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.export-btn {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.export-btn:hover {
+    background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #64748b;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .building-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .building-stats {
+        align-self: stretch;
+        justify-content: space-around;
+    }
+    
+    .location-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .device-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .export-buttons {
+        flex-direction: column;
+    }
+    
+    .export-btn {
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="location-report-container">
+    <div class="container-fluid">
+        <!-- Report Header -->
+        <div class="report-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="report-title">
+                        <i class="bi bi-geo-alt"></i>
+                        Devices by Location Report
+                    </h1>
+                    <p class="report-subtitle">{{ organization }} - {{ location }}</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="text-muted">
+                        <i class="bi bi-calendar3"></i>
+                        Generated: {{ now|date:"M d, Y H:i" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Statistics -->
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-icon locations">
+                    <i class="bi bi-buildings"></i>
+                </div>
+                <div class="summary-number">{{ summary.total_locations|intcomma }}</div>
+                <div class="summary-label">Total Locations</div>
+            </div>
+            
+            <div class="summary-card">
+                <div class="summary-icon devices">
+                    <i class="bi bi-devices"></i>
+                </div>
+                <div class="summary-number">{{ summary.total_devices|intcomma }}</div>
+                <div class="summary-label">Total Devices</div>
+            </div>
+            
+            <div class="summary-card">
+                <div class="summary-icon value">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+                <div class="summary-number">{{ summary.total_value|floatformat:0|intcomma }}</div>
+                <div class="summary-label">Total Value (BDT)</div>
+            </div>
+            
+            <div class="summary-card">
+                <div class="summary-icon average">
+                    <i class="bi bi-bar-chart"></i>
+                </div>
+                <div class="summary-number">{{ summary.avg_devices_per_location }}</div>
+                <div class="summary-label">Avg per Location</div>
+            </div>
+        </div>
+
+        <!-- Buildings Section -->
+        <div class="buildings-section">
+            {% if buildings %}
+                {% for building in buildings %}
+                <div class="building-card">
+                    <div class="building-header">
+                        <h3 class="building-title">
+                            <i class="bi bi-building"></i>
+                            {{ building.name|default:"Unassigned Building" }}
+                        </h3>
+                        <div class="building-stats">
+                            <div class="building-stat">
+                                <div class="building-stat-number">{{ building.total_devices|intcomma }}</div>
+                                <div class="building-stat-label">Devices</div>
+                            </div>
+                            <div class="building-stat">
+                                <div class="building-stat-number">{{ building.total_value|floatformat:0|intcomma }}</div>
+                                <div class="building-stat-label">Value (BDT)</div>
+                            </div>
+                            <div class="building-stat">
+                                <div class="building-stat-number">{{ building.locations|length }}</div>
+                                <div class="building-stat-label">Locations</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="locations-grid">
+                        {% for location in building.locations %}
+                        <div class="location-item">
+                            <div class="location-header">
+                                <h5 class="location-name">
+                                    <i class="bi bi-pin-map"></i>
+                                    {{ location.current_location__name|default:"Unknown Location" }}
+                                </h5>
+                                <div class="location-value">
+                                    {{ location.total_value|floatformat:0|intcomma }} BDT
+                                </div>
+                            </div>
+                            
+                            <div class="device-stats-grid">
+                                <div class="device-stat total">
+                                    <div class="device-stat-number">{{ location.total_devices }}</div>
+                                    <div class="device-stat-label">Total</div>
+                                </div>
+                                <div class="device-stat available">
+                                    <div class="device-stat-number">{{ location.available_devices }}</div>
+                                    <div class="device-stat-label">Available</div>
+                                </div>
+                                <div class="device-stat assigned">
+                                    <div class="device-stat-number">{{ location.assigned_devices }}</div>
+                                    <div class="device-stat-label">Assigned</div>
+                                </div>
+                                <div class="device-stat maintenance">
+                                    <div class="device-stat-number">{{ location.maintenance_devices }}</div>
+                                    <div class="device-stat-label">Maintenance</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="building-card">
+                    <div class="empty-state">
+                        <i class="bi bi-geo-alt"></i>
+                        <h4>No Location Data</h4>
+                        <p>No devices have been assigned to specific locations yet.</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Export Actions -->
+        <div class="export-actions">
+            <h5 class="export-title">
+                <i class="bi bi-download"></i>
+                Export Location Report
+            </h5>
+            <div class="export-buttons">
+                <a href="{% url 'devices:export_excel' %}?report=location" class="export-btn">
+                    <i class="bi bi-file-earmark-excel"></i>
+                    Export to Excel
+                </a>
+                <a href="{% url 'devices:export_pdf' %}?report=location" class="export-btn">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    Export to PDF
+                </a>
+                <a href="{% url 'devices:export_csv' %}?report=location" class="export-btn">
+                    <i class="bi bi-filetype-csv"></i>
+                    Export to CSV
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Location Report JavaScript - Bangladesh Parliament Secretariat
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(tooltipTriggerEl => {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Add loading states to export buttons
+    document.querySelectorAll('.export-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            const originalClass = icon.className;
+            const text = this.innerHTML;
+            
+            icon.className = 'bi bi-arrow-clockwise';
+            icon.style.animation = 'spin 1s linear infinite';
+            
+            // Reset after a delay (simulating download start)
+            setTimeout(() => {
+                icon.className = originalClass;
+                icon.style.animation = '';
+            }, 2000);
+        });
+    });
+
+    // Smooth scrolling for navigation
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+});
+
+// CSS animation for loading state
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

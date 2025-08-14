@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Access Forbidden - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    }
+    
+    .error-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(30, 58, 138, 0.15);
+        padding: 3rem;
+        text-align: center;
+        max-width: 600px;
+        width: 100%;
+    }
+    
+    .error-icon {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 2rem;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+    }
+    
+    .error-icon i {
+        font-size: 4rem;
+        color: white;
+    }
+    
+    .error-code {
+        font-size: 6rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+        line-height: 1;
+    }
+    
+    .error-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 1rem;
+    }
+    
+    .error-message {
+        color: #6b7280;
+        font-size: 1.1rem;
+        line-height: 1.6;
+        margin-bottom: 2rem;
+    }
+    
+    .error-details {
+        background: rgba(239, 68, 68, 0.05);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .error-details h5 {
+        color: #dc2626;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .error-details ul {
+        text-align: left;
+        color: #6b7280;
+        margin: 0;
+        padding-left: 1.5rem;
+    }
+    
+    .error-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .btn-error {
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-primary-error {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        color: white;
+        border: none;
+    }
+    
+    .btn-primary-error:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(30, 58, 138, 0.3);
+        color: white;
+    }
+    
+    .btn-secondary-error {
+        background: rgba(255, 255, 255, 0.9);
+        color: #1e3a8a;
+        border: 2px solid rgba(30, 58, 138, 0.2);
+    }
+    
+    .btn-secondary-error:hover {
+        background: white;
+        border-color: #1e3a8a;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(30, 58, 138, 0.1);
+    }
+    
+    .parliament-footer {
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 1px solid rgba(203, 213, 225, 0.3);
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-card">
+        <!-- Error Icon -->
+        <div class="error-icon">
+            <i class="bi bi-shield-lock-fill"></i>
+        </div>
+        
+        <!-- Error Code -->
+        <div class="error-code">403</div>
+        
+        <!-- Error Title -->
+        <h1 class="error-title">Access Forbidden</h1>
+        
+        <!-- Error Message -->
+        <p class="error-message">
+            You don't have permission to access this resource. 
+            This area is restricted to authorized Parliament personnel only.
+        </p>
+        
+        <!-- Possible Reasons -->
+        <div class="error-details">
+            <h5>
+                <i class="bi bi-exclamation-triangle"></i>
+                Possible Reasons:
+            </h5>
+            <ul>
+                <li>Your account doesn't have the required permissions</li>
+                <li>You need to be assigned to a specific role or group</li>
+                <li>The resource requires admin-level access</li>
+                <li>Your session may have expired</li>
+            </ul>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="error-actions">
+            <a href="{% url 'home' %}" class="btn-error btn-primary-error">
+                <i class="bi bi-house-door"></i>
+                Back to Home
+            </a>
+            <a href="{% url 'users:login' %}" class="btn-error btn-secondary-error">
+                <i class="bi bi-box-arrow-in-right"></i>
+                Login Again
+            </a>
+        </div>
+        
+        <!-- Footer -->
+        <div class="parliament-footer">
+            <p class="mb-0">
+                <strong>Bangladesh Parliament Secretariat</strong><br>
+                IT Inventory Management System (PIMS)<br>
+                Location: Dhaka, Bangladesh
+            </p>
+            <p class="mt-2 mb-0">
+                If you believe you should have access, please contact the IT Administrator.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

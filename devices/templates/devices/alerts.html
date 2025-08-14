@@ -1,0 +1,694 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Device Alerts - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Device Alerts Styling - Parliament Design System */
+.alerts-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.alerts-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.alerts-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.alerts-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.alert-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.stat-icon.critical {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+}
+
+.stat-icon.warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-icon.info {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.stat-icon.success {
+    background: linear-gradient(135deg, #059669, #047857);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.alerts-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+.alert-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.section-header {
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.section-header.critical {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(185, 28, 28, 0.1));
+    border-bottom-color: rgba(220, 38, 38, 0.2);
+}
+
+.section-header.warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+    border-bottom-color: rgba(245, 158, 11, 0.2);
+}
+
+.section-header.info {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+    border-bottom-color: rgba(59, 130, 246, 0.2);
+}
+
+.section-header.success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+    border-bottom-color: rgba(16, 185, 129, 0.2);
+}
+
+.section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-count {
+    background: rgba(248, 250, 252, 0.8);
+    color: #64748b;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.alert-list {
+    padding: 1.5rem;
+}
+
+.alert-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    transition: all 0.3s ease;
+}
+
+.alert-item:hover {
+    background: rgba(255, 255, 255, 0.8);
+    transform: translateX(4px);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.alert-item:last-child {
+    margin-bottom: 0;
+}
+
+.alert-priority {
+    width: 8px;
+    height: 60px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.priority-critical {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+}
+
+.priority-high {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.priority-medium {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.priority-low {
+    background: linear-gradient(135deg, #059669, #047857);
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-device {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.alert-details {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.alert-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.alert-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.alert-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.action-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 1px solid;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-view {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.btn-view:hover {
+    background: #3b82f6;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-complete {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+.btn-complete:hover {
+    background: #10b981;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-reschedule {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+.btn-reschedule:hover {
+    background: #f59e0b;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-repair {
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+    border-color: rgba(220, 38, 38, 0.2);
+}
+
+.btn-repair:hover {
+    background: #dc2626;
+    color: white;
+    text-decoration: none;
+}
+
+.filter-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.filter-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.filter-input {
+    padding: 0.75rem;
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.filter-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background: white;
+}
+
+.btn-filter {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    height: fit-content;
+}
+
+.btn-filter:hover {
+    background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
+    transform: translateY(-1px);
+}
+
+.empty-alerts {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #64748b;
+}
+
+.empty-alerts i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    color: #10b981;
+}
+
+.empty-alerts h3 {
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.empty-alerts p {
+    margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .alerts-container {
+        padding: 1rem 0;
+    }
+    
+    .alert-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .alert-item {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+    
+    .alert-priority {
+        width: 100%;
+        height: 4px;
+        order: -1;
+    }
+    
+    .alert-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+    
+    .action-btn {
+        flex: 1;
+        text-align: center;
+    }
+    
+    .filter-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+    
+    .alert-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="alerts-container">
+    <div class="container-fluid">
+        <!-- Alerts Header -->
+        <div class="alerts-header">
+            <h1 class="alerts-title">
+                <i class="bi bi-exclamation-triangle"></i>
+                Device Alerts & Notifications
+            </h1>
+            <p class="alerts-subtitle">Bangladesh Parliament Secretariat - Dhaka, Bangladesh</p>
+        </div>
+
+        <!-- Alert Statistics -->
+        <div class="alert-stats">
+            <div class="stat-card">
+                <div class="stat-icon critical">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <div class="stat-number">{{ stats.critical|default:0 }}</div>
+                <div class="stat-label">Critical Alerts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon warning">
+                    <i class="bi bi-clock-fill"></i>
+                </div>
+                <div class="stat-number">{{ stats.warranty_expiring|default:0 }}</div>
+                <div class="stat-label">Warranty Expiring</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon info">
+                    <i class="bi bi-tools"></i>
+                </div>
+                <div class="stat-number">{{ stats.maintenance_due|default:0 }}</div>
+                <div class="stat-label">Maintenance Due</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon success">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div class="stat-number">{{ stats.resolved_today|default:0 }}</div>
+                <div class="stat-label">Resolved Today</div>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <form method="get" action="">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label class="filter-label">Priority Level</label>
+                        <select name="priority" class="filter-input">
+                            <option value="">All Priorities</option>
+                            <option value="critical" {% if request.GET.priority == 'critical' %}selected{% endif %}>Critical</option>
+                            <option value="high" {% if request.GET.priority == 'high' %}selected{% endif %}>High</option>
+                            <option value="medium" {% if request.GET.priority == 'medium' %}selected{% endif %}>Medium</option>
+                            <option value="low" {% if request.GET.priority == 'low' %}selected{% endif %}>Low</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Alert Type</label>
+                        <select name="type" class="filter-input">
+                            <option value="">All Types</option>
+                            <option value="warranty" {% if request.GET.type == 'warranty' %}selected{% endif %}>Warranty Expiring</option>
+                            <option value="maintenance" {% if request.GET.type == 'maintenance' %}selected{% endif %}>Maintenance Due</option>
+                            <option value="failure" {% if request.GET.type == 'failure' %}selected{% endif %}>Device Failure</option>
+                            <option value="assignment" {% if request.GET.type == 'assignment' %}selected{% endif %}>Assignment Issues</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Device Category</label>
+                        <select name="category" class="filter-input">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:'s' %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <button type="submit" class="btn-filter">
+                            <i class="bi bi-funnel me-2"></i>Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Alerts Grid -->
+        <div class="alerts-grid">
+            <!-- Critical Alerts -->
+            {% if critical_alerts %}
+            <div class="alert-section">
+                <div class="section-header critical">
+                    <h3 class="section-title">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        Critical Alerts
+                    </h3>
+                    <span class="section-count">{{ critical_alerts|length }}</span>
+                </div>
+                <div class="alert-list">
+                    {% for alert in critical_alerts %}
+                    <div class="alert-item">
+                        <div class="alert-priority priority-critical"></div>
+                        <div class="alert-content">
+                            <div class="alert-device">{{ alert.device.device_id }} - {{ alert.device.brand }} {{ alert.device.model }}</div>
+                            <div class="alert-details">{{ alert.message }}</div>
+                            <div class="alert-meta">
+                                <span><i class="bi bi-calendar me-1"></i>{{ alert.created_at|date:"M d, Y H:i" }}</span>
+                                <span><i class="bi bi-geo-alt me-1"></i>{{ alert.device.location|default:"No location" }}</span>
+                                <span><i class="bi bi-person me-1"></i>{{ alert.device.assigned_user|default:"Unassigned" }}</span>
+                            </div>
+                        </div>
+                        <div class="alert-actions">
+                            <a href="{% url 'devices:detail' alert.device.id %}" class="action-btn btn-view">
+                                <i class="bi bi-eye"></i>View
+                            </a>
+                            <a href="{% url 'maintenance:create' %}?device={{ alert.device.id }}" class="action-btn btn-repair">
+                                <i class="bi bi-tools"></i>Repair
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Warranty Alerts -->
+            {% if warranty_alerts %}
+            <div class="alert-section">
+                <div class="section-header warning">
+                    <h3 class="section-title">
+                        <i class="bi bi-shield-exclamation"></i>
+                        Warranty Expiring
+                    </h3>
+                    <span class="section-count">{{ warranty_alerts|length }}</span>
+                </div>
+                <div class="alert-list">
+                    {% for alert in warranty_alerts %}
+                    <div class="alert-item">
+                        <div class="alert-priority priority-high"></div>
+                        <div class="alert-content">
+                            <div class="alert-device">{{ alert.device.device_id }} - {{ alert.device.brand }} {{ alert.device.model }}</div>
+                            <div class="alert-details">Warranty expires on {{ alert.warranty.end_date|date:"M d, Y" }}</div>
+                            <div class="alert-meta">
+                                <span><i class="bi bi-calendar-x me-1"></i>{{ alert.warranty.days_remaining }} days remaining</span>
+                                <span><i class="bi bi-geo-alt me-1"></i>{{ alert.device.location|default:"No location" }}</span>
+                                <span><i class="bi bi-person me-1"></i>{{ alert.device.assigned_user|default:"Unassigned" }}</span>
+                            </div>
+                        </div>
+                        <div class="alert-actions">
+                            <a href="{% url 'devices:detail' alert.device.id %}" class="action-btn btn-view">
+                                <i class="bi bi-eye"></i>View
+                            </a>
+                            <a href="{% url 'vendors:contact' alert.warranty.vendor.id %}" class="action-btn btn-reschedule">
+                                <i class="bi bi-telephone"></i>Contact Vendor
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Maintenance Due -->
+            {% if maintenance_alerts %}
+            <div class="alert-section">
+                <div class="section-header info">
+                    <h3 class="section-title">
+                        <i class="bi bi-calendar-check"></i>
+                        Maintenance Due
+                    </h3>
+                    <span class="section-count">{{ maintenance_alerts|length }}</span>
+                </div>
+                <div class="alert-list">
+                    {% for alert in maintenance_alerts %}
+                    <div class="alert-item">
+                        <div class="alert-priority priority-medium"></div>
+                        <div class="alert-content">
+                            <div class="alert-device">{{ alert.device.device_id }} - {{ alert.device.brand }} {{ alert.device.model }}</div>
+                            <div class="alert-details">{{ alert.maintenance_type }} maintenance due</div>
+                            <div class="alert-meta">
+                                <span><i class="bi bi-calendar me-1"></i>Due: {{ alert.due_date|date:"M d, Y" }}</span>
+                                <span><i class="bi bi-geo-alt me-1"></i>{{ alert.device.location|default:"No location" }}</span>
+                                <span><i class="bi bi-person me-1"></i>{{ alert.assigned_to|default:"Unassigned" }}</span>
+                            </div>
+                        </div>
+                        <div class="alert-actions">
+                            <a href="{% url 'devices:detail' alert.device.id %}" class="action-btn btn-view">
+                                <i class="bi bi-eye"></i>View
+                            </a>
+                            <a href="{% url 'maintenance:create' %}?device={{ alert.device.id }}" class="action-btn btn-complete">
+                                <i class="bi bi-check"></i>Schedule
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Assignment Issues -->
+            {% if assignment_alerts %}
+            <div class="alert-section">
+                <div class="section-header success">
+                    <h3 class="section-title">
+                        <i class="bi bi-person-exclamation"></i>
+                        Assignment Issues
+                    </h3>
+                    <span class="section-count">{{ assignment_alerts|length }}</span>
+                </div>
+                <div class="alert-list">
+                    {% for alert in assignment_alerts %}
+                    <div class="alert-item">
+                        <div class="alert-priority priority-low"></div>
+                        <div class="alert-content">
+                            <div class="alert-device">{{ alert.device.device_id }} - {{ alert.device.brand }} {{ alert.device.model }}</div>
+                            <div class="alert-details">{{ alert.issue_description }}</div>
+                            <div class="alert-meta">
+                                <span><i class="bi bi-calendar me-1"></i>{{ alert.created_at|date:"M d, Y" }}</span>
+                                <span><i class="bi bi-geo-alt me-1"></i>{{ alert.device.location|default:"No location" }}</span>
+                                <span><i class="bi bi-person me-1"></i>{{ alert.device.assigned_user|default:"Unassigned" }}</span>
+                            </div>
+                        </div>
+                        <div class="alert-actions">
+                            <a href="{% url 'devices:detail' alert.device.id %}" class="action-btn btn-view">
+                                <i class="bi bi-eye"></i>View
+                            </a>
+                            <a href="{% url 'assignments:edit' alert.assignment.id %}" class="action-btn btn-reschedule">
+                                <i class="bi bi-arrow-repeat"></i>Reassign
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Empty State -->
+            {% if not critical_alerts and not warranty_alerts and not maintenance_alerts and not assignment_alerts %}
+            <div class="alert-section">
+                <div class="empty-alerts">
+                    <i class="bi bi-check-circle"></i>
+                    <h3>No Active Alerts</h3>
+                    <p>All devices are operating normally. Great work maintaining the system!</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

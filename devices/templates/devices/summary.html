@@ -1,0 +1,622 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Device Summary - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Device Summary Page - Parliament Design System */
+.summary-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.summary-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.summary-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.summary-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card.total {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.stat-card.available {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.stat-card.assigned {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.stat-card.maintenance {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.stat-icon.total { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+.stat-icon.available { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.stat-icon.assigned { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+.stat-icon.maintenance { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.categories-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.section-header {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.section-title {
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-body {
+    padding: 1.5rem;
+}
+
+.category-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.category-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.category-item:hover {
+    background: rgba(241, 245, 249, 0.9);
+    border-color: rgba(99, 102, 241, 0.3);
+    transform: translateY(-1px);
+}
+
+.category-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.category-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: white;
+}
+
+.category-details h6 {
+    margin: 0;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.category-details small {
+    color: #64748b;
+}
+
+.category-count {
+    background: rgba(99, 102, 241, 0.1);
+    color: #4f46e5;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.recent-activity {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.activity-header {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.activity-list {
+    padding: 1.5rem;
+    display: grid;
+    gap: 1rem;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.activity-icon.created { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.activity-icon.assigned { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+.activity-icon.maintenance { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+
+.activity-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.activity-text {
+    color: #374151;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.activity-time {
+    color: #6b7280;
+    font-size: 0.75rem;
+}
+
+.chart-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.chart-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.chart-header {
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.chart-body {
+    padding: 1.5rem;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-placeholder {
+    width: 100%;
+    height: 100%;
+    background: rgba(248, 250, 252, 0.8);
+    border: 2px dashed rgba(203, 213, 225, 0.6);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-style: italic;
+}
+
+.actions-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.actions-title {
+    color: #1e293b;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.action-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: 1px solid;
+}
+
+.action-button.primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border-color: transparent;
+}
+
+.action-button.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.action-button.success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-color: transparent;
+}
+
+.action-button.success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.action-button.warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    border-color: transparent;
+}
+
+.action-button.warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.action-button.info {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+    border-color: transparent;
+}
+
+.action-button.info:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .actions-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .summary-container {
+        padding: 1rem 0;
+    }
+    
+    .summary-header {
+        padding: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="summary-container">
+    <div class="container">
+        <!-- Page Header -->
+        <div class="summary-header">
+            <h1 class="summary-title">
+                <i class="bi bi-graph-up"></i>
+                Device Summary
+            </h1>
+            <p class="summary-subtitle">Bangladesh Parliament Secretariat - Dhaka, Bangladesh</p>
+        </div>
+
+        <!-- Statistics Overview -->
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <div class="stat-icon total">
+                    <i class="bi bi-laptop"></i>
+                </div>
+                <div class="stat-number">{{ total_devices }}</div>
+                <div class="stat-label">Total Devices</div>
+            </div>
+            
+            <div class="stat-card available">
+                <div class="stat-icon available">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-number">{{ available_devices }}</div>
+                <div class="stat-label">Available Devices</div>
+            </div>
+            
+            <div class="stat-card assigned">
+                <div class="stat-icon assigned">
+                    <i class="bi bi-person-check"></i>
+                </div>
+                <div class="stat-number">{{ assigned_devices }}</div>
+                <div class="stat-label">Assigned Devices</div>
+            </div>
+            
+            <div class="stat-card maintenance">
+                <div class="stat-icon maintenance">
+                    <i class="bi bi-tools"></i>
+                </div>
+                <div class="stat-number">{{ maintenance_devices }}</div>
+                <div class="stat-label">In Maintenance</div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="summary-grid">
+            <!-- Device Categories -->
+            <div class="categories-section">
+                <div class="section-header">
+                    <h4 class="section-title">
+                        <i class="bi bi-collection"></i>
+                        Device Categories
+                    </h4>
+                    <a href="{% url 'devices:category_list' %}" class="btn btn-sm btn-light">
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="section-body">
+                    <div class="category-list">
+                        {% for category in categories %}
+                        <div class="category-item">
+                            <div class="category-info">
+                                <div class="category-icon">
+                                    <i class="bi bi-collection"></i>
+                                </div>
+                                <div class="category-details">
+                                    <h6>{{ category.name }}</h6>
+                                    <small>{{ category.subcategory_set.count }} subcategories</small>
+                                </div>
+                            </div>
+                            <div class="category-count">{{ category.device_count }} devices</div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-collection display-4 mb-3"></i>
+                            <p>No categories available</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="recent-activity">
+                <div class="activity-header">
+                    <i class="bi bi-clock-history"></i>
+                    <h4 class="section-title">Recent Activity</h4>
+                </div>
+                <div class="activity-list">
+                    {% for activity in recent_activities %}
+                    <div class="activity-item">
+                        <div class="activity-icon {{ activity.type }}">
+                            {% if activity.type == 'created' %}
+                                <i class="bi bi-plus"></i>
+                            {% elif activity.type == 'assigned' %}
+                                <i class="bi bi-person"></i>
+                            {% elif activity.type == 'maintenance' %}
+                                <i class="bi bi-tools"></i>
+                            {% endif %}
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-text">{{ activity.description }}</div>
+                            <div class="activity-time">{{ activity.timestamp|timesince }} ago</div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-clock-history display-4 mb-3"></i>
+                        <p>No recent activity</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="chart-section">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <i class="bi bi-pie-chart"></i>
+                    <h4>Device Status Distribution</h4>
+                </div>
+                <div class="chart-body">
+                    <div class="chart-placeholder">
+                        Device Status Chart
+                        <br><small>Chart implementation pending</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-header">
+                    <i class="bi bi-bar-chart"></i>
+                    <h4>Category Distribution</h4>
+                </div>
+                <div class="chart-body">
+                    <div class="chart-placeholder">
+                        Category Distribution Chart
+                        <br><small>Chart implementation pending</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="actions-section">
+            <h4 class="actions-title">
+                <i class="bi bi-lightning"></i>
+                Quick Actions
+            </h4>
+            <div class="actions-grid">
+                <a href="{% url 'devices:create' %}" class="action-button primary">
+                    <i class="bi bi-plus-circle"></i>
+                    Add New Device
+                </a>
+                
+                <a href="{% url 'devices:available' %}" class="action-button success">
+                    <i class="bi bi-check-circle"></i>
+                    View Available
+                </a>
+                
+                <a href="{% url 'assignments:create' %}" class="action-button warning">
+                    <i class="bi bi-person-plus"></i>
+                    Create Assignment
+                </a>
+                
+                <a href="{% url 'devices:reports' %}" class="action-button info">
+                    <i class="bi bi-file-earmark-text"></i>
+                    Generate Reports
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

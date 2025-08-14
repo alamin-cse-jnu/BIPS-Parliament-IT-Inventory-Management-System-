@@ -1,0 +1,596 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Warranty Report - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Warranty Report Styling - Parliament Design System */
+.warranty-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.warranty-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.warranty-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.warranty-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.warranty-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.warranty-stats {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.stats-header {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stats-header h4 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding: 1.5rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.stat-item.active {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.stat-item.expiring {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.stat-item.expired {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.stat-item.total {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.warranty-list {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.list-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.list-header h4 {
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.filter-controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.filter-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+.filter-btn.active {
+    background: white;
+    color: #3b82f6;
+    border-color: white;
+}
+
+.list-body {
+    padding: 1.5rem;
+}
+
+.warranty-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.warranty-table th {
+    background: rgba(248, 250, 252, 0.8);
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid rgba(203, 213, 225, 0.3);
+    font-size: 0.875rem;
+}
+
+.warranty-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+    color: #6b7280;
+}
+
+.warranty-table tr:hover {
+    background: rgba(248, 250, 252, 0.5);
+}
+
+.device-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.device-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+}
+
+.device-details h6 {
+    margin: 0;
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+}
+
+.device-details small {
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+.warranty-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.warranty-badge.manufacturer {
+    background: rgba(16, 185, 129, 0.1);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.warranty-badge.extended {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.warranty-badge.service {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.active {
+    background: rgba(16, 185, 129, 0.1);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-badge.expiring {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.status-badge.expired {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.actions-dropdown {
+    position: relative;
+}
+
+.actions-btn {
+    background: none;
+    border: none;
+    color: #6b7280;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.actions-btn:hover {
+    background: rgba(229, 231, 235, 0.5);
+    color: #374151;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #64748b;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.pagination-wrapper {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1rem;
+    margin-top: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.report-actions {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.btn-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .warranty-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .warranty-table {
+        font-size: 0.875rem;
+    }
+    
+    .warranty-table th,
+    .warranty-table td {
+        padding: 0.5rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .btn-group {
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="warranty-container">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="warranty-header">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h1 class="warranty-title">
+                        <i class="bi bi-shield-check"></i>
+                        Warranty Report
+                    </h1>
+                    <p class="warranty-subtitle">
+                        Comprehensive warranty tracking and status overview for Bangladesh Parliament Secretariat, Dhaka
+                    </p>
+                </div>
+                <div class="text-end text-muted">
+                    <small>Generated: {{ report_date|date:"M d, Y" }}</small>
+                    <br>
+                    <small>Location: Dhaka, Bangladesh</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Actions -->
+        <div class="report-actions">
+            <div class="action-buttons">
+                <div class="d-flex align-items-center gap-3">
+                    <h6 class="mb-0 text-muted">Export Options:</h6>
+                    <div class="btn-group">
+                        <a href="{% url 'devices:warranty_export_pdf' %}" class="btn btn-danger btn-sm">
+                            <i class="bi bi-file-pdf me-1"></i> PDF
+                        </a>
+                        <a href="{% url 'devices:warranty_export_excel' %}" class="btn btn-success btn-sm">
+                            <i class="bi bi-file-excel me-1"></i> Excel
+                        </a>
+                        <a href="{% url 'devices:warranty_export_csv' %}" class="btn btn-info btn-sm">
+                            <i class="bi bi-file-csv me-1"></i> CSV
+                        </a>
+                    </div>
+                </div>
+                <div class="text-muted">
+                    <small><i class="bi bi-info-circle me-1"></i>Last updated: {{ last_updated|timesince }} ago</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warranty Statistics and Overview -->
+        <div class="warranty-grid">
+            <!-- Statistics Card -->
+            <div class="warranty-stats">
+                <div class="stats-header">
+                    <h4><i class="bi bi-bar-chart me-2"></i>Warranty Statistics</h4>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-item active">
+                        <div class="stat-number">{{ stats.active_warranties }}</div>
+                        <div class="stat-label">Active Warranties</div>
+                    </div>
+                    <div class="stat-item expiring">
+                        <div class="stat-number">{{ stats.expiring_warranties }}</div>
+                        <div class="stat-label">Expiring Soon</div>
+                    </div>
+                    <div class="stat-item expired">
+                        <div class="stat-number">{{ stats.expired_warranties }}</div>
+                        <div class="stat-label">Expired</div>
+                    </div>
+                    <div class="stat-item total">
+                        <div class="stat-number">{{ stats.total_warranties }}</div>
+                        <div class="stat-label">Total Warranties</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warranty List -->
+            <div class="warranty-list">
+                <div class="list-header">
+                    <h4><i class="bi bi-list-ul"></i>Warranty Details</h4>
+                    <div class="filter-controls">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="active">Active</button>
+                        <button class="filter-btn" data-filter="expiring">Expiring</button>
+                        <button class="filter-btn" data-filter="expired">Expired</button>
+                    </div>
+                </div>
+                
+                <div class="list-body">
+                    {% if warranties %}
+                        <table class="warranty-table">
+                            <thead>
+                                <tr>
+                                    <th>Device</th>
+                                    <th>Warranty Type</th>
+                                    <th>Provider</th>
+                                    <th>End Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for warranty in warranties %}
+                                <tr data-status="{{ warranty.status }}">
+                                    <td>
+                                        <div class="device-info">
+                                            <div class="device-icon">
+                                                <i class="bi bi-laptop"></i>
+                                            </div>
+                                            <div class="device-details">
+                                                <h6>{{ warranty.device.device_id }}</h6>
+                                                <small>{{ warranty.device.model }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="warranty-badge {{ warranty.warranty_type|lower }}">
+                                            {{ warranty.get_warranty_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ warranty.provider }}</td>
+                                    <td>{{ warranty.end_date|date:"M d, Y" }}</td>
+                                    <td>
+                                        <span class="status-badge {{ warranty.status }}">
+                                            {{ warranty.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="actions-dropdown">
+                                            <button class="actions-btn" data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                <li><a class="dropdown-item" href="{% url 'devices:warranty_detail' warranty.pk %}">
+                                                    <i class="bi bi-eye me-2"></i>View Details
+                                                </a></li>
+                                                <li><a class="dropdown-item" href="{% url 'devices:warranty_edit' warranty.pk %}">
+                                                    <i class="bi bi-pencil me-2"></i>Edit
+                                                </a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-danger" href="{% url 'devices:warranty_delete' warranty.pk %}">
+                                                    <i class="bi bi-trash me-2"></i>Delete
+                                                </a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="bi bi-shield-x"></i>
+                            <h5>No Warranties Found</h5>
+                            <p>No warranty records match the current filter criteria.</p>
+                            <a href="{% url 'devices:warranty_create' %}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-1"></i> Add First Warranty
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="pagination-wrapper">
+            <nav aria-label="Warranty pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Filter functionality
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        // Update active button
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        const filter = this.dataset.filter;
+        const rows = document.querySelectorAll('.warranty-table tbody tr');
+        
+        rows.forEach(row => {
+            if (filter === 'all' || row.dataset.status === filter) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

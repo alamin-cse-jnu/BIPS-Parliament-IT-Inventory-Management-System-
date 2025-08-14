@@ -4,38 +4,248 @@
 {% block title %}QR Code - {{ device.name }} - Bangladesh Parliament Secretariat{% endblock %}
 
 {% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
 <style>
+/* Device QR Code Display - Parliament Design System */
 .qr-container {
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
     min-height: 100vh;
     padding: 2rem 0;
 }
 
-.qr-card {
+.qr-header {
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
     border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 8px 25px rgba(30, 58, 138, 0.15);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
 }
 
-.qr-image-container {
+.qr-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.qr-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.qr-main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.qr-display-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.qr-display-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.qr-display-header h4 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.qr-display-body {
+    padding: 2rem;
+    text-align: center;
+}
+
+.qr-code-container {
     background: white;
-    border: 2px solid #e5e7eb;
+    border: 1px solid rgba(203, 213, 225, 0.4);
     border-radius: 12px;
     padding: 2rem;
-    display: inline-block;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
 }
 
-.qr-image {
+.qr-code-image {
     max-width: 100%;
     height: auto;
     border-radius: 8px;
 }
 
-.btn-qr {
+.qr-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.qr-status {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.qr-status.active {
+    background: rgba(16, 185, 129, 0.1);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.qr-status.inactive {
+    background: rgba(156, 163, 175, 0.1);
+    color: #6b7280;
+    border: 1px solid rgba(156, 163, 175, 0.2);
+}
+
+.device-details {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.details-header {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.details-header h4 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.details-body {
+    padding: 1.5rem;
+}
+
+.detail-section {
+    margin-bottom: 1.5rem;
+}
+
+.detail-section:last-child {
+    margin-bottom: 0;
+}
+
+.section-title {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.detail-grid {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.5rem 0;
+}
+
+.detail-label {
+    font-weight: 500;
+    color: #374151;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+    margin-right: 1rem;
+}
+
+.detail-value {
+    color: #6b7280;
+    font-size: 0.875rem;
+    text-align: right;
+    word-break: break-word;
+}
+
+.detail-value.highlight {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge.available {
+    background: rgba(16, 185, 129, 0.1);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.badge.in-use {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.badge.maintenance {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.empty-qr-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #64748b;
+}
+
+.empty-qr-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.6;
+}
+
+.empty-qr-state h5 {
+    color: #374151;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.btn-success-gradient {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    color: white;
     padding: 0.75rem 1.5rem;
     border-radius: 10px;
     font-weight: 500;
@@ -44,31 +254,121 @@
     align-items: center;
     gap: 0.5rem;
     text-decoration: none;
-    border: 1px solid;
 }
 
-.btn-primary-qr {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    color: white;
-    border-color: #3b82f6;
-}
-
-.btn-success-qr {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-    border-color: #10b981;
-}
-
-.btn-qr:hover {
+.btn-success-gradient:hover {
     transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
     color: white;
     text-decoration: none;
 }
 
-.device-status-badge {
-    font-size: 0.9rem;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
+.btn-warning-gradient {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-warning-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+    color: white;
+}
+
+.btn-parliament {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.btn-parliament:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(30, 58, 138, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.qr-instructions {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.instructions-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    color: #1e293b;
+}
+
+.instructions-title {
+    font-weight: 600;
+    margin: 0;
+    font-size: 1.125rem;
+}
+
+.instructions-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 1rem;
+}
+
+.instructions-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.instructions-list li:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(59, 130, 246, 0.3);
+    transform: translateX(4px);
+}
+
+.instructions-list li i:first-child {
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+.instructions-list li span {
+    color: #374151;
+    font-size: 0.875rem;
+    line-height: 1.5;
 }
 </style>
 {% endblock %}
@@ -86,72 +386,175 @@
         </nav>
 
         <!-- Page Header -->
-        <div class="row mb-4">
-            <div class="col">
-                <h2 class="mb-0">
-                    <i class="bi bi-qr-code me-2 text-primary"></i>
-                    QR Code - {{ device.name }}
-                </h2>
-                <p class="text-muted mt-2">Device ID: {{ device.device_id }}</p>
-            </div>
+        <div class="qr-header">
+            <h1 class="qr-title">
+                <i class="bi bi-qr-code"></i>
+                Device QR Code
+            </h1>
+            <p class="qr-subtitle">
+                View and manage QR code for device {{ device.device_id }}
+            </p>
         </div>
 
-        <div class="row">
-            <!-- QR Code Display -->
-            <div class="col-lg-8">
-                <div class="qr-card">
-                    <div class="card-body text-center p-4">
-                        {% if has_qr_code and qr_code.qr_code %}
-                            <!-- Display QR Code -->
-                            <div class="mb-4">
-                                <div class="qr-image-container">
-                                    <img src="{{ qr_code.qr_code.url }}" 
-                                         alt="QR Code for {{ device.name }}" 
-                                         class="qr-image">
-                                </div>
-                            </div>
-                            
-                            <div class="d-flex gap-3 justify-content-center flex-wrap">
-                                <a href="{% url 'devices:qr_download' qr_code.pk %}" 
-                                   class="btn-qr btn-success-qr">
-                                    <i class="bi bi-download"></i>
-                                    Download QR Code
-                                </a>
-                                
+        {% if qr_code %}
+            <!-- Main Grid -->
+            <div class="qr-main-grid">
+                <!-- QR Code Display -->
+                <div class="qr-display-section">
+                    <div class="qr-display-header">
+                        <i class="bi bi-qr-code"></i>
+                        <h4>QR Code</h4>
+                    </div>
+                    <div class="qr-display-body">
+                        <div class="qr-status {% if qr_code.is_active %}active{% else %}inactive{% endif %}">
+                            <i class="bi bi-{% if qr_code.is_active %}check-circle{% else %}x-circle{% endif %}"></i>
+                            {% if qr_code.is_active %}Active{% else %}Inactive{% endif %}
+                        </div>
+                        
+                        <div class="qr-code-container">
+                            <img src="{{ qr_code.qr_code.url }}" alt="Device QR Code" class="qr-code-image">
+                        </div>
+                        
+                        <div class="qr-actions">
+                            <a href="{% url 'devices:qr_download' qr_code.pk %}" 
+                               class="btn btn-success-gradient">
+                                <i class="bi bi-download"></i>
+                                Download
+                            </a>
+                            {% if perms.devices.change_device %}
                                 <form method="post" action="{% url 'devices:qr_generate' device.pk %}" class="d-inline">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn-qr btn-primary-qr"
-                                            onclick="return confirm('This will replace the existing QR code. Continue?')">
-                                        <i class="bi bi-arrow-clockwise"></i>
-                                        Regenerate QR Code
+                                    <button type="submit" class="btn btn-warning-gradient" 
+                                            onclick="return confirm('Are you sure you want to regenerate this QR code? The current QR code will be deactivated.')">
+                                        <i class="bi bi-arrow-repeat"></i>
+                                        Regenerate
                                     </button>
                                 </form>
-                            </div>
+                            {% endif %}
+                        </div>
 
-                            <!-- QR Code Info -->
-                            <div class="mt-4 p-3 bg-light rounded">
-                                <small class="text-muted">
-                                    <strong>QR Code ID:</strong> {{ qr_code.qr_code_id }}<br>
-                                    <strong>Generated:</strong> {{ qr_code.created_at|date:"M d, Y H:i" }}<br>
-                                    <strong>Size:</strong> {{ qr_code.size }}x{{ qr_code.size }} pixels
-                                </small>
-                            </div>
-                        {% else %}
-                            <!-- No QR Code -->
-                            <div class="mb-4">
-                                <div class="qr-image-container">
-                                    <div class="text-center p-4">
-                                        <i class="bi bi-qr-code text-muted" style="font-size: 4rem;"></i>
-                                        <h5 class="text-muted mt-3">No QR Code Generated</h5>
-                                        <p class="text-muted">Generate a QR code for this device to enable easy scanning and identification.</p>
-                                    </div>
+                        <!-- QR Code Metadata -->
+                        <div class="detail-section mt-4">
+                            <div class="section-title">QR Code Information</div>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <span class="detail-label">Generated:</span>
+                                    <span class="detail-value">{{ qr_code.created_at|date:"F d, Y - g:i A" }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">QR Code ID:</span>
+                                    <span class="detail-value">{{ qr_code.qr_code_id }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Size:</span>
+                                    <span class="detail-value">{{ qr_code.size }}x{{ qr_code.size }} pixels</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Format:</span>
+                                    <span class="detail-value">{{ qr_code.format }}</span>
                                 </div>
                             </div>
-                            
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Device Information -->
+                <div class="device-details">
+                    <div class="details-header">
+                        <i class="bi bi-cpu"></i>
+                        <h4>Device Information</h4>
+                    </div>
+                    <div class="details-body">
+                        <div class="detail-section">
+                            <div class="section-title">Basic Information</div>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <span class="detail-label">Device ID:</span>
+                                    <span class="detail-value highlight">{{ device.device_id }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Name:</span>
+                                    <span class="detail-value">{{ device.name }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Category:</span>
+                                    <span class="detail-value">{{ device.subcategory.category.name }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Subcategory:</span>
+                                    <span class="detail-value">{{ device.subcategory.name }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Status:</span>
+                                    <span class="detail-value">
+                                        <span class="badge {{ device.status|lower }}">{{ device.get_status_display }}</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="detail-section">
+                            <div class="section-title">Device Details</div>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <span class="detail-label">Brand:</span>
+                                    <span class="detail-value">{{ device.brand|default:"N/A" }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Model:</span>
+                                    <span class="detail-value">{{ device.model|default:"N/A" }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Serial Number:</span>
+                                    <span class="detail-value">{{ device.serial_number|default:"N/A" }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Purchase Date:</span>
+                                    <span class="detail-value">{{ device.purchase_date|date:"F d, Y"|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="detail-section">
+                            <div class="section-title">Quick Actions</div>
+                            <div class="detail-grid">
+                                <a href="{% url 'devices:qr_bulk_generate' %}" class="btn btn-parliament mb-2">
+                                    <i class="bi bi-qr-code-scan"></i>
+                                    Bulk QR Generation
+                                </a>
+                                <a href="{% url 'devices:detail' device.pk %}" class="btn btn-parliament mb-2">
+                                    <i class="bi bi-eye"></i>
+                                    View Device Details
+                                </a>
+                                {% if perms.devices.change_device %}
+                                    <a href="{% url 'devices:update' device.pk %}" class="btn btn-parliament">
+                                        <i class="bi bi-pencil"></i>
+                                        Edit Device
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <!-- No QR Code State -->
+            <div class="device-details">
+                <div class="details-header">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <h4>No QR Code Available</h4>
+                </div>
+                <div class="details-body">
+                    <div class="empty-qr-state">
+                        <i class="bi bi-qr-code"></i>
+                        <h5>QR Code Not Generated</h5>
+                        <p>This device doesn't have a QR code yet. Generate one to enable quick scanning and tracking.</p>
+                        {% if perms.devices.change_device %}
                             <form method="post" action="{% url 'devices:qr_generate' device.pk %}">
                                 {% csrf_token %}
-                                <button type="submit" class="btn-qr btn-primary-qr">
-                                    <i class="bi bi-plus-circle"></i>
+                                <button type="submit" class="btn btn-success-gradient">
+                                    <i class="bi bi-qr-code"></i>
                                     Generate QR Code
                                 </button>
                             </form>
@@ -159,108 +562,61 @@
                     </div>
                 </div>
             </div>
+        {% endif %}
 
-            <!-- Device Information -->
-            <div class="col-lg-4">
-                <div class="qr-card">
-                    <div class="card-header bg-primary text-white">
-                        <h6 class="mb-0">
-                            <i class="bi bi-cpu me-2"></i>
-                            Device Information
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <strong>Device ID:</strong><br>
-                            <span class="font-monospace">{{ device.device_id }}</span>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <strong>Category:</strong><br>
-                            {{ device.subcategory.category.name }}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <strong>Subcategory:</strong><br>
-                            {{ device.subcategory.name }}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <strong>Status:</strong><br>
-                            <span class="badge device-status-badge {{ device.get_status_badge_class }}">
-                                {{ device.get_status_display }}
-                            </span>
-                        </div>
-                        
-                        {% if device.brand %}
-                        <div class="mb-3">
-                            <strong>Brand:</strong><br>
-                            {{ device.brand }}
-                        </div>
-                        {% endif %}
-                        
-                        {% if device.model %}
-                        <div class="mb-3">
-                            <strong>Model:</strong><br>
-                            {{ device.model }}
-                        </div>
-                        {% endif %}
-                        
-                        {% if device.serial_number %}
-                        <div class="mb-3">
-                            <strong>Serial Number:</strong><br>
-                            <span class="font-monospace">{{ device.serial_number }}</span>
-                        </div>
-                        {% endif %}
-                        
-                        {% if device.purchase_date %}
-                        <div class="mb-3">
-                            <strong>Purchase Date:</strong><br>
-                            {{ device.purchase_date|date:"M d, Y" }}
-                        </div>
-                        {% endif %}
-                        
-                        <div class="d-grid">
-                            <a href="{% url 'devices:detail' device.pk %}" 
-                               class="btn btn-outline-primary">
-                                <i class="bi bi-arrow-left me-1"></i>
-                                Back to Device
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- QR Code Usage Info -->
-                <div class="qr-card mt-3">
-                    <div class="card-header bg-info text-white">
-                        <h6 class="mb-0">
-                            <i class="bi bi-info-circle me-2"></i>
-                            QR Code Usage
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled mb-0 small">
-                            <li class="mb-2">
-                                <i class="bi bi-check text-success me-2"></i>
-                                Print and attach to physical device
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check text-success me-2"></i>
-                                Scan for quick device lookup
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check text-success me-2"></i>
-                                Mobile app integration
-                            </li>
-                            <li class="mb-0">
-                                <i class="bi bi-check text-success me-2"></i>
-                                Asset tracking and auditing
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+        <!-- QR Code Instructions -->
+        <div class="qr-instructions">
+            <div class="instructions-header">
+                <i class="bi bi-info-circle"></i>
+                <h5 class="instructions-title">How to use QR Code</h5>
             </div>
+            <ul class="instructions-list">
+                <li>
+                    <i class="bi bi-1-circle"></i>
+                    <span>Scan the QR code with any QR code scanner app on your mobile device</span>
+                </li>
+                <li>
+                    <i class="bi bi-2-circle"></i>
+                    <span>The QR code contains device details and direct link to this device page</span>
+                </li>
+                <li>
+                    <i class="bi bi-3-circle"></i>
+                    <span>Use for quick device verification and tracking during audits</span>
+                </li>
+                <li>
+                    <i class="bi bi-4-circle"></i>
+                    <span>Print and attach to physical devices for easy identification</span>
+                </li>
+                <li>
+                    <i class="bi bi-5-circle"></i>
+                    <span>Share with team members for collaborative asset management</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="text-center mt-4">
+            <a href="{% url 'devices:detail' device.pk %}" class="btn btn-parliament">
+                <i class="bi bi-arrow-left"></i>
+                Back to Device Details
+            </a>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add confirmation for regenerate action
+    const regenerateForm = document.querySelector('form[action*="qr_generate"]');
+    if (regenerateForm) {
+        regenerateForm.addEventListener('submit', function(e) {
+            if (!confirm('Are you sure you want to regenerate this QR code? The current QR code will be deactivated.')) {
+                e.preventDefault();
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

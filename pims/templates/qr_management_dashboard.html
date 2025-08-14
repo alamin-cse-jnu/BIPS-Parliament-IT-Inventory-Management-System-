@@ -1,0 +1,796 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}QR Code Management - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+/* QR Management Dashboard - Parliament Design System */
+.qr-management-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.dashboard-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 2rem;
+}
+
+.dashboard-subtitle {
+    color: #64748b;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.location-badge {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+/* Statistics Grid */
+.stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--stat-color, #1e3a8a);
+    border-radius: 16px 16px 0 0;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(30, 58, 138, 0.15);
+}
+
+.stat-card.devices::before { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+.stat-card.locations::before { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+.stat-card.assignments::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
+.stat-card.users::before { background: linear-gradient(90deg, #10b981, #059669); }
+
+.stat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+}
+
+.stat-icon.devices { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.stat-icon.locations { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.stat-icon.assignments { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.stat-icon.users { background: linear-gradient(135deg, #10b981, #059669); }
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.stat-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stat-active {
+    color: #059669;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.stat-inactive {
+    color: #ef4444;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* App Sections Grid */
+.app-sections-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.app-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.section-header {
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.section-header.devices {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.section-header.locations {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+}
+
+.section-header.assignments {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.section-title {
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.125rem;
+}
+
+.section-content {
+    padding: 1.5rem;
+}
+
+.action-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.action-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.action-item:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(59, 130, 246, 0.3);
+    transform: translateX(4px);
+}
+
+.action-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.action-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: white;
+    background: rgba(59, 130, 246, 0.8);
+}
+
+.action-text {
+    font-weight: 500;
+    color: #374151;
+}
+
+.action-btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+/* Bulk Operations Section */
+.bulk-operations {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+}
+
+.bulk-header {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.bulk-title {
+    font-weight: 600;
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.bulk-content {
+    padding: 2rem;
+}
+
+.bulk-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.bulk-action-card {
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.bulk-action-card:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(220, 38, 38, 0.3);
+    transform: translateY(-2px);
+}
+
+.bulk-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin: 0 auto 1rem;
+}
+
+.bulk-action-title {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.bulk-action-desc {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.btn-bulk {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-bulk:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(220, 38, 38, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+/* Recent Activity */
+.recent-activity {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.activity-header {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.activity-content {
+    padding: 1.5rem;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+    transition: all 0.3s ease;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-item:hover {
+    background: rgba(248, 250, 252, 0.8);
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #059669, #047857);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.activity-details {
+    flex: 1;
+}
+
+.activity-title {
+    font-weight: 500;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.activity-meta {
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+.activity-time {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="qr-management-container">
+    <div class="container-fluid">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">
+                <i class="bi bi-qr-code-scan"></i>
+                QR Code Management Dashboard
+            </h1>
+            <p class="dashboard-subtitle">
+                Central hub for managing QR codes across all system entities
+            </p>
+            <div class="location-badge">
+                <i class="bi bi-geo-alt me-1"></i>
+                Bangladesh Parliament Secretariat, Dhaka
+            </div>
+        </div>
+
+        <!-- Statistics Overview -->
+        <div class="stats-overview">
+            <div class="stat-card devices">
+                <div class="stat-header">
+                    <div class="stat-icon devices">
+                        <i class="bi bi-cpu"></i>
+                    </div>
+                    <div class="stat-number">{{ device_qr_stats.total|default:0 }}</div>
+                </div>
+                <div class="stat-label">Device QR Codes</div>
+                <div class="stat-details">
+                    <span class="stat-active">{{ device_qr_stats.active|default:0 }} Active</span>
+                    <span class="stat-inactive">{{ device_qr_stats.inactive|default:0 }} Inactive</span>
+                </div>
+            </div>
+
+            <div class="stat-card locations">
+                <div class="stat-header">
+                    <div class="stat-icon locations">
+                        <i class="bi bi-geo-alt"></i>
+                    </div>
+                    <div class="stat-number">{{ location_qr_stats.total|default:0 }}</div>
+                </div>
+                <div class="stat-label">Location QR Codes</div>
+                <div class="stat-details">
+                    <span class="stat-active">{{ location_qr_stats.active|default:0 }} Active</span>
+                    <span class="stat-inactive">{{ location_qr_stats.inactive|default:0 }} Inactive</span>
+                </div>
+            </div>
+
+            <div class="stat-card assignments">
+                <div class="stat-header">
+                    <div class="stat-icon assignments">
+                        <i class="bi bi-clipboard-check"></i>
+                    </div>
+                    <div class="stat-number">{{ assignment_qr_stats.total|default:0 }}</div>
+                </div>
+                <div class="stat-label">Assignment QR Codes</div>
+                <div class="stat-details">
+                    <span class="stat-active">{{ assignment_qr_stats.active|default:0 }} Active</span>
+                    <span class="stat-inactive">{{ assignment_qr_stats.inactive|default:0 }} Inactive</span>
+                </div>
+            </div>
+
+            <div class="stat-card users">
+                <div class="stat-header">
+                    <div class="stat-icon users">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="stat-number">{{ total_qr_codes|default:0 }}</div>
+                </div>
+                <div class="stat-label">Total QR Codes</div>
+                <div class="stat-details">
+                    <span class="stat-active">{{ total_active|default:0 }} Active</span>
+                    <span class="stat-inactive">{{ total_inactive|default:0 }} Inactive</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- App Sections Grid -->
+        <div class="app-sections-grid">
+            <!-- Devices Section -->
+            <div class="app-section">
+                <div class="section-header devices">
+                    <h3 class="section-title">
+                        <i class="bi bi-cpu"></i>
+                        Device QR Management
+                    </h3>
+                </div>
+                <div class="section-content">
+                    <div class="action-grid">
+                        <div class="action-item">
+                            <div class="action-info">
+                                <div class="action-icon">
+                                    <i class="bi bi-eye"></i>
+                                </div>
+                                <span class="action-text">View All Device QR Codes</span>
+                            </div>
+                            <a href="{% url 'devices:qr_list' %}" class="action-btn">
+                                <i class="bi bi-arrow-right"></i>
+                                View
+                            </a>
+                        </div>
+                        
+                        <div class="action-item">
+                            <div class="action-info">
+                                <div class="action-icon">
+                                    <i class="bi bi-plus-circle"></i>
+                                </div>
+                                <span class="action-text">Generate Device QR Codes</span>
+                            </div>
+                            <a href="{% url 'devices:qr_bulk_generate' %}" class="action-btn">
+                                <i class="bi bi-arrow-right"></i>
+                                Generate
+                            </a>
+                        </div>
+                        
+                        <div class="action-item">
+                            <div class="action-info">
+                                <div class="action-icon">
+                                    <i class="bi bi-download"></i>
+                                </div>
+                                <span class="action-text">Download Device QR Codes</span>
+                            </div>
+                            <a href="{% url 'devices:qr_bulk_download' %}" class="action-btn">
+                                <i class="bi bi-arrow-right"></i>
+                                Download
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Locations Section -->
+            <div class="app-section">
+                <div class="section-header locations">
+                    <h3 class="section-title">
+                        <i class="bi bi-geo-alt"></i>
+                        Location QR Management
+                    </h3>
+                </div>
+                <div class="section-content">
+                    <div class="action-grid">
+                        <div class="action-item">
+                            <div class="action-info">
+                                <div class="action-icon">
+                                    <i class="bi bi-eye"></i>
+                                </div>
+                                <span class="action-text">View All Location QR Codes</span>
+                            </div>
+                            <a href="{% url 'locations:list' %}" class="action-btn">
+                                <i class="bi bi-arrow-right"></i>
+                                View
+                            </a>
+                        </div>
+                        
+                        <div class="action-item">
+                            <div class="action-info">
+                                <div class="action-icon">
+                                    <i class="bi bi-plus-circle"></i>
+                                </div>
+                                <span class="action-text">Generate Location QR Codes</span>
+                            </div>
+                            <a href="{% url 'locations:bulk_qrcode_generate' %}" class="action-btn">
+                                <i class="bi bi-arrow-right"></i>
+                                Generate
+                            </a>
+                        </div>
+                        
+                        <div class="action-item">
+                            <div class="action-info">
+                                <div class="action-icon">
+                                    <i class="bi bi-download"></i>
+                                </div>
+                                <span class="action-text">Download Location QR Codes</span>
+                            </div>
+                            <a href="{% url 'locations:bulk_qrcode_download' %}" class="action-btn">
+                                <i class="bi bi-arrow-right"></i>
+                                Download
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignments Section -->
+            <div class="app-section">
+                <div class="section-header assignments">
+                    <h3 class="section-title">
+                        <i class="bi bi-clipboard-check"></i>
+                        Assignment QR Management
+                    </h3>
+                </div>
+                <div class="section-content">
+                    <div class="action-grid">
+                        <div class="action-item">
+                            <div class="action-info">
+                                <div class="action-icon">
+                                    <i class="bi bi-eye"></i>
+                                </div>
+                                <span class="action-text">View All Assignment QR Codes</span>
+                            </div>
+                            <a href="{% url 'assignments:list' %}" class="action-btn">
+                                <i class="bi bi-arrow-right"></i>
+                                View
+                            </a>
+                        </div>
+                        
+                        <div class="action-item">
+                            <div class="action-info">
+                                <div class="action-icon">
+                                    <i class="bi bi-plus-circle"></i>
+                                </div>
+                                <span class="action-text">Generate Assignment QR Codes</span>
+                            </div>
+                            <a href="{% url 'assignments:create' %}" class="action-btn">
+                                <i class="bi bi-arrow-right"></i>
+                                Generate
+                            </a>
+                        </div>
+                        
+                        <div class="action-item">
+                            <div class="action-info">
+                                <div class="action-icon">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                </div>
+                                <span class="action-text">Assignment Reports</span>
+                            </div>
+                            <a href="{% url 'assignments:reports' %}" class="action-btn">
+                                <i class="bi bi-arrow-right"></i>
+                                Reports
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bulk Operations Section -->
+        <div class="bulk-operations">
+            <div class="bulk-header">
+                <i class="bi bi-lightning-fill"></i>
+                <h3 class="bulk-title">Unified Bulk Operations</h3>
+            </div>
+            <div class="bulk-content">
+                <div class="bulk-actions-grid">
+                    <div class="bulk-action-card">
+                        <div class="bulk-icon">
+                            <i class="bi bi-qr-code-scan"></i>
+                        </div>
+                        <h4 class="bulk-action-title">Generate All QR Codes</h4>
+                        <p class="bulk-action-desc">Generate QR codes for all entities (devices, locations, assignments) in one operation</p>
+                        <a href="#" class="btn-bulk" onclick="return confirm('This will generate QR codes for all entities. This may take some time. Continue?')">
+                            <i class="bi bi-play-fill"></i>
+                            Start Generation
+                        </a>
+                    </div>
+                    
+                    <div class="bulk-action-card">
+                        <div class="bulk-icon">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </div>
+                        <h4 class="bulk-action-title">Regenerate Inactive QR Codes</h4>
+                        <p class="bulk-action-desc">Regenerate all inactive QR codes across the system to ensure full coverage</p>
+                        <a href="#" class="btn-bulk" onclick="return confirm('This will regenerate all inactive QR codes. Continue?')">
+                            <i class="bi bi-arrow-repeat"></i>
+                            Regenerate
+                        </a>
+                    </div>
+                    
+                    <div class="bulk-action-card">
+                        <div class="bulk-icon">
+                            <i class="bi bi-download"></i>
+                        </div>
+                        <h4 class="bulk-action-title">Download All QR Codes</h4>
+                        <p class="bulk-action-desc">Download a complete archive of all QR codes in the system as a ZIP file</p>
+                        <a href="#" class="btn-bulk">
+                            <i class="bi bi-download"></i>
+                            Download ZIP
+                        </a>
+                    </div>
+                    
+                    <div class="bulk-action-card">
+                        <div class="bulk-icon">
+                            <i class="bi bi-file-earmark-spreadsheet"></i>
+                        </div>
+                        <h4 class="bulk-action-title">Export QR Code Registry</h4>
+                        <p class="bulk-action-desc">Export a comprehensive registry of all QR codes with metadata to Excel</p>
+                        <a href="#" class="btn-bulk">
+                            <i class="bi bi-file-earmark-excel"></i>
+                            Export Registry
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="recent-activity">
+            <div class="activity-header">
+                <i class="bi bi-clock-history"></i>
+                <h3 class="bulk-title">Recent QR Code Activity</h3>
+            </div>
+            <div class="activity-content">
+                {% if recent_activities %}
+                    {% for activity in recent_activities %}
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="bi bi-qr-code"></i>
+                        </div>
+                        <div class="activity-details">
+                            <div class="activity-title">{{ activity.title }}</div>
+                            <div class="activity-meta">{{ activity.description }}</div>
+                        </div>
+                        <div class="activity-time">{{ activity.created_at|timesince }} ago</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="bi bi-info-circle"></i>
+                        </div>
+                        <div class="activity-details">
+                            <div class="activity-title">No recent activity</div>
+                            <div class="activity-meta">QR code activities will appear here when they occur</div>
+                        </div>
+                        <div class="activity-time">-</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh statistics every 30 seconds
+    setInterval(function() {
+        // Implement AJAX refresh of statistics if needed
+        console.log('Auto-refreshing QR statistics...');
+    }, 30000);
+    
+    // Add confirmation dialogs for bulk operations
+    const bulkActions = document.querySelectorAll('.btn-bulk');
+    bulkActions.forEach(btn => {
+        if (!btn.onclick) {
+            btn.addEventListener('click', function(e) {
+                if (!confirm('Are you sure you want to perform this bulk operation?')) {
+                    e.preventDefault();
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

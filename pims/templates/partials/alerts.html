@@ -1,0 +1,244 @@
+<!-- Alert Messages Component -->
+{% if messages %}
+<div class="alerts-container mb-4">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show glass-alert" 
+         role="alert" data-auto-dismiss="true">
+        <div class="d-flex align-items-start">
+            <!-- Alert Icon -->
+            <div class="alert-icon me-3">
+                {% if message.tags == 'success' %}
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                {% elif message.tags == 'error' or message.tags == 'danger' %}
+                    <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+                {% elif message.tags == 'warning' %}
+                    <i class="bi bi-exclamation-circle-fill text-warning"></i>
+                {% elif message.tags == 'info' %}
+                    <i class="bi bi-info-circle-fill text-info"></i>
+                {% else %}
+                    <i class="bi bi-bell-fill text-primary"></i>
+                {% endif %}
+            </div>
+            
+            <!-- Alert Content -->
+            <div class="alert-content flex-grow-1">
+                <div class="alert-message">{{ message }}</div>
+            </div>
+            
+            <!-- Dismiss Button -->
+            <button type="button" class="btn-close btn-close-white ms-2" 
+                    data-bs-dismiss="alert" aria-label="Close">
+            </button>
+        </div>
+        
+        <!-- Progress Bar for Auto-dismiss -->
+        <div class="alert-progress">
+            <div class="alert-progress-bar"></div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+/* Glass-morphism Alert Styles */
+.alerts-container {
+    position: relative;
+    z-index: 1040;
+}
+
+.glass-alert {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.glass-alert:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Alert Type Specific Backgrounds */
+.alert-success.glass-alert {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.alert-danger.glass-alert {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.alert-warning.glass-alert {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.alert-info.glass-alert {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.alert-primary.glass-alert {
+    background: rgba(30, 58, 138, 0.1);
+    border-color: rgba(30, 58, 138, 0.3);
+}
+
+/* Alert Icon */
+.alert-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+/* Alert Content */
+.alert-content {
+    color: #1f2937;
+    font-weight: 500;
+}
+
+.alert-message {
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* Close Button */
+.btn-close {
+    background-size: 1.2rem;
+    opacity: 0.7;
+    transition: opacity 0.15s ease-in-out;
+}
+
+.btn-close:hover {
+    opacity: 1;
+}
+
+/* Auto-dismiss Progress Bar */
+.alert-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+    border-radius: 0 0 16px 16px;
+}
+
+.alert-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0.8) 0%, 
+        rgba(255, 255, 255, 0.6) 100%);
+    width: 0%;
+    transition: width 5s linear;
+    border-radius: 0 0 16px 0;
+}
+
+/* Animation for auto-dismiss */
+.glass-alert[data-auto-dismiss="true"] .alert-progress-bar {
+    animation: progressCountdown 5s linear forwards;
+}
+
+@keyframes progressCountdown {
+    from { width: 100%; }
+    to { width: 0%; }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .glass-alert {
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        border-radius: 12px;
+    }
+    
+    .alert-icon {
+        font-size: 1.25rem;
+        margin-right: 0.75rem;
+    }
+    
+    .alert-message {
+        font-size: 0.9rem;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .glass-alert {
+        backdrop-filter: none;
+        background: rgba(255, 255, 255, 0.95) !important;
+        border-width: 2px;
+    }
+    
+    .alert-content {
+        color: #000 !important;
+        font-weight: 600;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .glass-alert {
+        transition: none;
+    }
+    
+    .glass-alert:hover {
+        transform: none;
+    }
+    
+    .alert-progress-bar {
+        transition: none;
+        animation: none;
+    }
+}
+
+/* Print styles */
+@media print {
+    .alerts-container {
+        display: none;
+    }
+}
+</style>
+
+<script>
+// Auto-dismiss alerts after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    const alerts = document.querySelectorAll('.glass-alert[data-auto-dismiss="true"]');
+    
+    alerts.forEach(alert => {
+        // Start progress bar animation
+        const progressBar = alert.querySelector('.alert-progress-bar');
+        if (progressBar) {
+            progressBar.style.width = '100%';
+            setTimeout(() => {
+                progressBar.style.width = '0%';
+            }, 100);
+        }
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            const alertInstance = bootstrap.Alert.getOrCreateInstance(alert);
+            if (alertInstance && alert.classList.contains('show')) {
+                alertInstance.close();
+            }
+        }, 5000);
+    });
+    
+    // Enhanced fade out animation
+    const alertElements = document.querySelectorAll('.glass-alert');
+    alertElements.forEach(alert => {
+        alert.addEventListener('closed.bs.alert', function() {
+            this.style.transform = 'translateX(100%)';
+            this.style.opacity = '0';
+        });
+    });
+});
+</script>
+{% endif %}

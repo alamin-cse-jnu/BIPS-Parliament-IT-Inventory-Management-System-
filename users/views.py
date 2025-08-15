@@ -63,7 +63,7 @@ class CustomPasswordResetView(PasswordResetView):
 class UserListView(LoginRequiredMixin, ListView):
     """Display list of all users with search and filtering."""
     model = CustomUser
-    template_name = 'users/list.html'
+    template_name = 'users/users_list.html'
     context_object_name = 'users'
     paginate_by = 20
     
@@ -122,7 +122,7 @@ class UserListView(LoginRequiredMixin, ListView):
 class UserDetailView(LoginRequiredMixin, DetailView):
     """Display detailed information about a user."""
     model = CustomUser
-    template_name = 'users/detail.html'
+    template_name = 'users/users_detail.html'
     context_object_name = 'user_obj'
     
     def get_context_data(self, **kwargs):
@@ -139,7 +139,7 @@ class UserCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     """Create a new user."""
     model = CustomUser
     form_class = CustomUserCreationForm
-    template_name = 'users/create.html'
+    template_name = 'users/users_create.html'
     permission_required = 'auth.add_user'
     success_url = reverse_lazy('users:list')
     
@@ -157,7 +157,7 @@ class UserUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     """Update an existing user."""
     model = CustomUser
     form_class = CustomUserChangeForm
-    template_name = 'users/edit.html'
+    template_name = 'users/users_edit.html'
     permission_required = 'auth.change_user'
     
     def get_success_url(self):
@@ -176,7 +176,7 @@ class UserUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
 class UserDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     """Delete a user."""
     model = CustomUser
-    template_name = 'users/delete.html'
+    template_name = 'users/users_delete.html'
     permission_required = 'auth.delete_user'
     success_url = reverse_lazy('users:list')
     
@@ -197,7 +197,7 @@ class UserRoleUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView
     """Update user roles and permissions."""
     model = CustomUser
     form_class = UserRoleForm
-    template_name = 'users/roles.html'
+    template_name = 'users/users_roles.html'
     permission_required = 'auth.change_user'
     
     def get_success_url(self):
@@ -216,7 +216,7 @@ class UserRoleUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView
 class UserPermissionView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
     """View user permissions."""
     model = CustomUser
-    template_name = 'users/permissions.html'
+    template_name = 'users/users_permissions.html'
     permission_required = 'auth.view_user'
     context_object_name = 'user_obj'
     
@@ -244,7 +244,7 @@ class UserPermissionView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
 class UserProfileView(LoginRequiredMixin, DetailView):
     """Display current user's profile."""
     model = CustomUser
-    template_name = 'users/profile.html'
+    template_name = 'users/users_profile.html'
     context_object_name = 'user_obj'
     
     def get_object(self):
@@ -256,7 +256,7 @@ class UserProfileEditView(LoginRequiredMixin, UpdateView):
     """Edit current user's profile."""
     model = CustomUser
     form_class = CustomUserChangeForm
-    template_name = 'users/profile_edit.html'
+    template_name = 'users/users_profile_edit.html'
     success_url = reverse_lazy('users:profile')
     
     def get_object(self):
@@ -276,7 +276,7 @@ class UserProfileEditView(LoginRequiredMixin, UpdateView):
 
 class UserPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
     """Change user password."""
-    template_name = 'users/password_change.html'
+    template_name = 'users/users_password_change.html'
     success_url = reverse_lazy('users:profile')
     
     def form_valid(self, form):
@@ -292,7 +292,7 @@ class UserPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
 
 class UserSearchView(LoginRequiredMixin, TemplateView):
     """Advanced user search page."""
-    template_name = 'users/search.html'
+    template_name = 'users/users_search.html'
     
     def get_context_data(self, **kwargs):
         """Add search form and results."""
@@ -365,7 +365,7 @@ class UserDeactivateView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
 class UserReportsView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
     """User analytics and reports."""
-    template_name = 'users/reports.html'
+    template_name = 'users/users_reports.html'
     permission_required = 'auth.view_user'
     
     def get_context_data(self, **kwargs):

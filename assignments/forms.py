@@ -528,7 +528,7 @@ class AssignmentReturnForm(forms.ModelForm):
         model = Assignment
         fields = [
             'actual_return_date', 'condition_at_return',
-            'return_notes', 'deposit_returned'
+            'return_notes'
         ]
         
         widgets = {
@@ -546,9 +546,6 @@ class AssignmentReturnForm(forms.ModelForm):
                 'rows': 4,
                 'placeholder': 'Notes about device return, condition, or any issues...'
             }),
-            'deposit_returned': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
-            })
         }
     
     def __init__(self, *args, **kwargs):

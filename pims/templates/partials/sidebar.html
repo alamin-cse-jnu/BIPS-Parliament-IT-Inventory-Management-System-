@@ -57,7 +57,7 @@
                         <a href="{% url 'devices:create' %}" class="nav-link text-white-75 py-1 px-3 d-block rounded small transition-hover">
                             <i class="bi bi-plus-circle me-2"></i>Add Device
                         </a>
-                        <a href="{% url 'devices:categories' %}" class="nav-link text-white-75 py-1 px-3 d-block rounded small transition-hover">
+                        <a href="{% url 'devices:category_list' %}" class="nav-link text-white-75 py-1 px-3 d-block rounded small transition-hover">
                             <i class="bi bi-tags me-2"></i>Categories
                         </a>
                         <a href="{% url 'devices:dashboard' %}" class="nav-link text-white-75 py-1 px-3 d-block rounded small transition-hover">
@@ -140,7 +140,7 @@
                 </div>
                 <div class="collapse" id="reportsMenu">
                     <div class="ms-4 mt-1">
-                        <a href="{% url 'devices:reports_dashboard' %}" class="nav-link text-white-75 py-1 px-3 d-block rounded small transition-hover">
+                        <a href="{% url 'devices:reports' %}" class="nav-link text-white-75 py-1 px-3 d-block rounded small transition-hover">
                             <i class="bi bi-bar-chart me-2"></i>Device Reports
                         </a>
                         <a href="{% url 'users:reports' %}" class="nav-link text-white-75 py-1 px-3 d-block rounded small transition-hover">
@@ -149,7 +149,7 @@
                         <a href="{% url 'assignments:reports' %}" class="nav-link text-white-75 py-1 px-3 d-block rounded small transition-hover">
                             <i class="bi bi-arrow-repeat me-2"></i>Assignment Reports
                         </a>
-                        <a href="{% url 'maintenance:reports' %}" class="nav-link text-white-75 py-1 px-3 d-block rounded small transition-hover">
+                        <a href="{% url 'maintenance:reports_home' %}" class="nav-link text-white-75 py-1 px-3 d-block rounded small transition-hover">
                             <i class="bi bi-tools me-2"></i>Maintenance Reports
                         </a>
                         <a href="#" class="nav-link text-white-75 py-1 px-3 d-block rounded small transition-hover">
@@ -184,7 +184,7 @@
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" href="{% url 'users:settings' %}">
+                        <a class="dropdown-item" href="{% url 'users:profile_edit' %}">
                             <i class="bi bi-gear me-2"></i>Settings
                         </a>
                     </li>

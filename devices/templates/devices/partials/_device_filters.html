@@ -93,7 +93,13 @@
                         {% if form.category.value %}
                             <span class="badge bg-success d-flex align-items-center">
                                 <i class="bi bi-tag me-1"></i>
-                                Category: {{ form.category.field.queryset|get_item:form.category.value }}
+                                {% if form.category.value %}
+                                    {% for category in form.category.field.queryset %}
+                                        {% if category.id|stringformat:"s" == form.category.value %}
+                                            Category: {{ category.name }}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
                                 <button type="button" class="btn-close btn-close-white ms-2 badge-close" 
                                         onclick="clearFilter('category')" aria-label="Clear category filter"></button>
                             </span>
@@ -120,7 +126,13 @@
                         {% if form.vendor.value %}
                             <span class="badge bg-secondary d-flex align-items-center">
                                 <i class="bi bi-building me-1"></i>
-                                Vendor: {{ form.vendor.field.queryset|get_item:form.vendor.value }}
+                                {% if form.vendor.value %}
+                                    {% for vendor in form.vendor.field.queryset %}
+                                        {% if vendor.id|stringformat:"s" == form.vendor.value %}
+                                            Vendor: {{ vendor.name }}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
                                 <button type="button" class="btn-close btn-close-white ms-2 badge-close" 
                                         onclick="clearFilter('vendor')" aria-label="Clear vendor filter"></button>
                             </span>
@@ -129,7 +141,13 @@
                         {% if form.location.value %}
                             <span class="badge bg-dark d-flex align-items-center">
                                 <i class="bi bi-geo-alt me-1"></i>
-                                Location: {{ form.location.field.queryset|get_item:form.location.value }}
+                                {% if form.location.value %}
+                                    {% for location in form.location.field.queryset %}
+                                        {% if location.id|stringformat:"s" == form.location.value %}
+                                            Location: {{ location.name }}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
                                 <button type="button" class="btn-close btn-close-white ms-2 badge-close" 
                                         onclick="clearFilter('location')" aria-label="Clear location filter"></button>
                             </span>

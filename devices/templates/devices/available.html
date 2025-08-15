@@ -34,10 +34,7 @@
                             <span class="visually-hidden">Toggle Dropdown</span>
                         </button>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'devices:bulk_import' %}">
-                                <i class="bi bi-upload me-2"></i>Bulk Import
-                            </a></li>
-                            <li><a class="dropdown-item" href="{% url 'devices:export' %}?status=AVAILABLE">
+                            <li><a class="dropdown-item" href="{% url 'devices:bulk_export' %}?status=AVAILABLE">
                                 <i class="bi bi-download me-2"></i>Export Available
                             </a></li>
                             <li><hr class="dropdown-divider"></li>

@@ -382,7 +382,7 @@
                     </p>
                 </div>
                 <div class="d-flex gap-2">
-                    {% if user.has_perm:'assignments.add_assignment' %}
+                    {% if perms.assignments.add_assignment %}
                         <a href="{% url 'assignments:create' %}" class="btn btn-primary">
                             <i class="bi bi-plus-circle me-2"></i>
                             New Assignment
@@ -596,7 +596,7 @@
                                         <i class="bi bi-eye"></i>
                                     </a>
                                     
-                                    {% if user.has_perm:'assignments.change_assignment' %}
+                                    {% if perms.assignments.change_assignment %}
                                         {% if assignment.status == 'ASSIGNED' %}
                                             <a href="{% url 'assignments:return' assignment.pk %}" 
                                                class="btn btn-sm btn-outline-success" title="Return Assignment">
@@ -625,7 +625,7 @@
                         <i class="bi bi-clipboard-x"></i>
                         <h4>No Assignments Found</h4>
                         <p>No assignments match your current filters. Try adjusting your search criteria or create a new assignment.</p>
-                        {% if user.has_perm:'assignments.add_assignment' %}
+                        {% if perms.assignments.add_assignment %}
                             <a href="{% url 'assignments:create' %}" class="btn btn-primary mt-3">
                                 <i class="bi bi-plus-circle me-2"></i>Create First Assignment
                             </a>

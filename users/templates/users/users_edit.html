@@ -348,7 +348,7 @@
                             <i class="bi bi-x-circle me-2"></i>
                             Cancel
                         </a>
-                        {% if user.has_perm:'auth.change_user' %}
+                        {% if perms.auth.change_user %}
                             <a href="{% url 'users:roles' object.pk %}" class="btn btn-outline-info">
                                 <i class="bi bi-shield-check me-2"></i>
                                 Manage Roles

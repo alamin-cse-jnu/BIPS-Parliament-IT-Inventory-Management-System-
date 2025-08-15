@@ -21,7 +21,7 @@
             <p class="text-muted mb-0">View permissions for {{ user_obj.get_display_name }}</p>
         </div>
         <div class="btn-group">
-            {% if user.has_perm:'auth.change_user' %}
+            {% if perms.auth.change_user %}
                 <a href="{% url 'users:roles' user_obj.pk %}" class="btn btn-parliament-primary">
                     <i class="bi bi-pencil me-2"></i>
                     Manage Roles

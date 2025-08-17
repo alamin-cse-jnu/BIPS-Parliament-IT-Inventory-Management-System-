@@ -1,0 +1,626 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Devices by Vendor Report - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Vendor Report Styling - Bangladesh Parliament Secretariat Design */
+.vendor-report-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.report-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.report-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.report-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.summary-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.summary-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin: 0 auto 1rem;
+    color: white;
+}
+
+.summary-icon.vendors { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); }
+.summary-icon.procurement { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); }
+.summary-icon.average { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+.summary-icon.top { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+
+.summary-number {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.summary-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.vendors-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.vendor-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vendor-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+.vendor-header {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    color: white;
+    padding: 1.5rem;
+    position: relative;
+}
+
+.vendor-rank {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.vendor-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.vendor-contact {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.vendor-body {
+    padding: 1.5rem;
+}
+
+.vendor-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.vendor-stat {
+    text-align: center;
+    padding: 0.75rem;
+    background: rgba(248, 250, 252, 0.8);
+    border-radius: 8px;
+    border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.vendor-stat-number {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.vendor-stat-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.vendor-stat.devices .vendor-stat-number { color: #3b82f6; }
+.vendor-stat.value .vendor-stat-number { color: #16a34a; }
+.vendor-stat.average .vendor-stat-number { color: #7c3aed; }
+.vendor-stat.categories .vendor-stat-number { color: #f59e0b; }
+
+.vendor-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.vendor-detail {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.vendor-detail-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.vendor-detail-value {
+    font-size: 0.875rem;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.performance-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.performance-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.performance-badge.excellent {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+
+.performance-badge.good {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+}
+
+.performance-badge.average {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+}
+
+.performance-badge.poor {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.top-vendor-badge {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.export-actions {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.export-title {
+    color: #1e293b;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.export-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.export-btn {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.export-btn:hover {
+    background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #64748b;
+}
+
+.empty-state i {
+    font-size: 5rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .vendor-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .vendor-details {
+        grid-template-columns: 1fr;
+    }
+    
+    .export-buttons {
+        flex-direction: column;
+    }
+    
+    .export-btn {
+        justify-content: center;
+    }
+    
+    .vendor-header {
+        padding: 1rem;
+    }
+    
+    .vendor-rank {
+        position: static;
+        margin-top: 0.5rem;
+        align-self: flex-start;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vendor-report-container">
+    <div class="container-fluid">
+        <!-- Report Header -->
+        <div class="report-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="report-title">
+                        <i class="bi bi-shop"></i>
+                        Devices by Vendor Report
+                    </h1>
+                    <p class="report-subtitle">{{ organization }} - {{ location }}</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="text-muted">
+                        <i class="bi bi-calendar3"></i>
+                        Generated: {{ now|date:"M d, Y H:i" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Statistics -->
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-icon vendors">
+                    <i class="bi bi-shop"></i>
+                </div>
+                <div class="summary-number">{{ summary.total_vendors|intcomma }}</div>
+                <div class="summary-label">Total Vendors</div>
+            </div>
+            
+            <div class="summary-card">
+                <div class="summary-icon procurement">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+                <div class="summary-number">{{ summary.total_procurement_value|floatformat:0|intcomma }}</div>
+                <div class="summary-label">Total Procurement (BDT)</div>
+            </div>
+            
+            <div class="summary-card">
+                <div class="summary-icon average">
+                    <i class="bi bi-bar-chart"></i>
+                </div>
+                <div class="summary-number">{{ summary.avg_order_value|floatformat:0|intcomma }}</div>
+                <div class="summary-label">Avg Order Value (BDT)</div>
+            </div>
+            
+            <div class="summary-card">
+                <div class="summary-icon top">
+                    <i class="bi bi-trophy"></i>
+                </div>
+                <div class="summary-number">{{ summary.top_vendor.vendor__name|truncatechars:15|default:"N/A" }}</div>
+                <div class="summary-label">Top Vendor</div>
+            </div>
+        </div>
+
+        <!-- Vendors Section -->
+        <div class="vendors-grid">
+            {% if vendor_data %}
+                {% for vendor in vendor_data %}
+                <div class="vendor-card">
+                    <div class="vendor-header">
+                        <div class="vendor-rank">#{{ forloop.counter }}</div>
+                        <div class="vendor-name">
+                            <i class="bi bi-building"></i>
+                            {{ vendor.vendor__name|default:"Unknown Vendor" }}
+                        </div>
+                        {% if vendor.vendor__contact_person %}
+                        <div class="vendor-contact">
+                            <i class="bi bi-person"></i>
+                            Contact: {{ vendor.vendor__contact_person }}
+                        </div>
+                        {% endif %}
+                        {% if vendor.vendor__phone %}
+                        <div class="vendor-contact">
+                            <i class="bi bi-telephone"></i>
+                            Phone: {{ vendor.vendor__phone }}
+                        </div>
+                        {% endif %}
+                        
+                        {% if forloop.counter == 1 %}
+                        <div class="top-vendor-badge">
+                            <i class="bi bi-star-fill"></i>
+                            Top Vendor
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="vendor-body">
+                        <!-- Vendor Statistics -->
+                        <div class="vendor-stats">
+                            <div class="vendor-stat devices">
+                                <div class="vendor-stat-number">{{ vendor.total_devices|intcomma }}</div>
+                                <div class="vendor-stat-label">Total Devices</div>
+                            </div>
+                            <div class="vendor-stat value">
+                                <div class="vendor-stat-number">{{ vendor.total_value|floatformat:0|intcomma }}</div>
+                                <div class="vendor-stat-label">Value (BDT)</div>
+                            </div>
+                            <div class="vendor-stat average">
+                                <div class="vendor-stat-number">{{ vendor.avg_device_price|floatformat:0|intcomma }}</div>
+                                <div class="vendor-stat-label">Avg Price (BDT)</div>
+                            </div>
+                            <div class="vendor-stat categories">
+                                <div class="vendor-stat-number">{{ vendor.device_categories }}</div>
+                                <div class="vendor-stat-label">Categories</div>
+                            </div>
+                        </div>
+
+                        <!-- Vendor Details -->
+                        <div class="vendor-details">
+                            <div class="vendor-detail">
+                                <div class="vendor-detail-label">Device Distribution</div>
+                                <div class="vendor-detail-value">
+                                    Available: {{ vendor.available_devices }}<br>
+                                    Assigned: {{ vendor.assigned_devices }}<br>
+                                    Maintenance: {{ vendor.maintenance_devices }}
+                                </div>
+                            </div>
+                            
+                            <div class="vendor-detail">
+                                <div class="vendor-detail-label">Performance</div>
+                                <div class="vendor-detail-value">
+                                    Maintenance Rate: {{ vendor.maintenance_rate }}%
+                                    <div class="performance-indicator">
+                                        {% if vendor.maintenance_rate <= 5 %}
+                                            <span class="performance-badge excellent">Excellent</span>
+                                        {% elif vendor.maintenance_rate <= 10 %}
+                                            <span class="performance-badge good">Good</span>
+                                        {% elif vendor.maintenance_rate <= 20 %}
+                                            <span class="performance-badge average">Average</span>
+                                        {% else %}
+                                            <span class="performance-badge poor">Poor</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="vendor-detail">
+                                <div class="vendor-detail-label">Latest Purchase</div>
+                                <div class="vendor-detail-value">
+                                    {% if vendor.latest_purchase %}
+                                        {{ vendor.latest_purchase|date:"M d, Y" }}
+                                    {% else %}
+                                        No recent purchases
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="vendor-detail">
+                                <div class="vendor-detail-label">Market Share</div>
+                                <div class="vendor-detail-value">
+                                    {% widthratio vendor.total_value summary.total_procurement_value 100 %}% of total procurement
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="vendor-card">
+                    <div class="empty-state">
+                        <i class="bi bi-shop"></i>
+                        <h4>No Vendor Data</h4>
+                        <p>No devices have been assigned to vendors yet.</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Export Actions -->
+        <div class="export-actions">
+            <h5 class="export-title">
+                <i class="bi bi-download"></i>
+                Export Vendor Report
+            </h5>
+            <div class="export-buttons">
+                <a href="{% url 'devices:export_excel' %}?report=vendor" class="export-btn">
+                    <i class="bi bi-file-earmark-excel"></i>
+                    Export to Excel
+                </a>
+                <a href="{% url 'devices:export_pdf' %}?report=vendor" class="export-btn">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    Export to PDF
+                </a>
+                <a href="{% url 'devices:export_csv' %}?report=vendor" class="export-btn">
+                    <i class="bi bi-filetype-csv"></i>
+                    Export to CSV
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Vendor Report JavaScript - Bangladesh Parliament Secretariat
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(tooltipTriggerEl => {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Add loading states to export buttons
+    document.querySelectorAll('.export-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            const originalClass = icon.className;
+            
+            icon.className = 'bi bi-arrow-clockwise';
+            icon.style.animation = 'spin 1s linear infinite';
+            
+            // Reset after a delay (simulating download start)
+            setTimeout(() => {
+                icon.className = originalClass;
+                icon.style.animation = '';
+            }, 2000);
+        });
+    });
+
+    // Vendor card hover effects
+    document.querySelectorAll('.vendor-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-4px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+    });
+
+    // Performance badge color coding
+    document.querySelectorAll('.performance-badge').forEach(badge => {
+        const text = badge.textContent.trim().toLowerCase();
+        badge.setAttribute('data-bs-toggle', 'tooltip');
+        
+        switch(text) {
+            case 'excellent':
+                badge.setAttribute('title', 'Maintenance rate ≤ 5% - Excellent vendor performance');
+                break;
+            case 'good':
+                badge.setAttribute('title', 'Maintenance rate ≤ 10% - Good vendor performance');
+                break;
+            case 'average':
+                badge.setAttribute('title', 'Maintenance rate ≤ 20% - Average vendor performance');
+                break;
+            case 'poor':
+                badge.setAttribute('title', 'Maintenance rate > 20% - Poor vendor performance');
+                break;
+        }
+    });
+
+    // Smooth scrolling for navigation
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+});
+
+// CSS animation for loading state
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

@@ -350,10 +350,6 @@ class Assignment(models.Model):
         if notes:
             self.return_notes = notes
         
-        # Handle deposit return
-        if self.security_deposit > 0:
-            self.deposit_returned = True
-        
         self.save()
         return True
     

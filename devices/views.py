@@ -29,7 +29,7 @@ from django.views.generic import (
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib import messages
-from django.db.models import Q, Count, Sum, Avg, F
+from django.db.models import Count, Sum, Avg, Q, F, Case, When, DecimalField, Max
 from django.http import JsonResponse, HttpResponse, Http404
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
@@ -38,7 +38,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.utils.decorators import method_decorator
 from django.db import transaction
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 import json
 import csv
 import io
@@ -65,6 +65,8 @@ from pims.utils.qr_code import (
 from vendors.models import Vendor
 from locations.models import Location
 from users.models import CustomUser
+from django.views.decorators.cache import cache_page
+import calendar
 
 
 # Mixins
@@ -73,54 +75,82 @@ class DevicePermissionMixin(PermissionRequiredMixin):
     permission_required = 'devices.view_device'
 
 
-# Dashboard Views
 class DeviceDashboardView(LoginRequiredMixin, TemplateView):
-    """Main dashboard for device management."""
+    """
+    Main dashboard for device management with real-time statistics.
+    """
     template_name = 'devices/dashboard.html'
+    
+    @method_decorator(cache_page(300))  # Cache for 5 minutes
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Device statistics
+        # Basic statistics
         total_devices = Device.objects.filter(is_active=True).count()
-        available_devices = Device.objects.filter(status='AVAILABLE').count()
-        assigned_devices = Device.objects.filter(status='ASSIGNED').count()
-        maintenance_devices = Device.objects.filter(status='MAINTENANCE').count()
         
-        # Category breakdown
-        category_stats = DeviceCategory.objects.annotate(
-            device_count=Count('subcategories__devices'),
-            available_count=Count('subcategories__devices', filter=Q(subcategories__devices__status='AVAILABLE'))
-        ).filter(is_active=True)
+        status_stats = Device.objects.filter(is_active=True).aggregate(
+            available=Count(Case(When(status='AVAILABLE', then=1))),
+            assigned=Count(Case(When(status='ASSIGNED', then=1))),
+            maintenance=Count(Case(When(status='MAINTENANCE', then=1))),
+            retired=Count(Case(When(status='RETIRED', then=1)))
+        )
         
-        # Recent devices
-        recent_devices = Device.objects.filter(is_active=True).order_by('-created_at')[:10]
+        # Category distribution
+        category_stats = (
+            Device.objects.filter(is_active=True)
+            .values('subcategory__category__name')
+            .annotate(count=Count('id'))
+            .order_by('-count')[:10]
+        )
+        
+        # Recent activities
+        recent_devices = Device.objects.filter(is_active=True).order_by('-created_at')[:5]
+        
+        # Value statistics
+        value_stats = Device.objects.filter(is_active=True).aggregate(
+            total_value=Sum('purchase_price', output_field=DecimalField()),
+            avg_value=Avg('purchase_price', output_field=DecimalField())
+        )
         
         # Warranty alerts
-        thirty_days_later = date.today() + timedelta(days=30)
-        expiring_warranties = Warranty.objects.filter(
-            end_date__range=[date.today(), thirty_days_later],
-            is_active=True
-        )[:5]
+        today = datetime.now().date()
+        warranty_alerts = Warranty.objects.filter(
+            device__is_active=True,
+            end_date__lte=today + timedelta(days=30),
+            end_date__gte=today
+        ).count()
         
-        # Top vendors by device count
-        top_vendors = Vendor.objects.annotate(
-            device_count=Count('devices')
-        ).filter(device_count__gt=0).order_by('-device_count')[:5]
+        # Monthly trends (last 6 months)
+        months_data = []
+        for i in range(6):
+            month_date = datetime.now().date().replace(day=1) - timedelta(days=30*i)
+            month_devices = Device.objects.filter(
+                created_at__year=month_date.year,
+                created_at__month=month_date.month,
+                is_active=True
+            ).count()
+            months_data.append({
+                'month': calendar.month_name[month_date.month],
+                'count': month_devices
+            })
         
         context.update({
             'total_devices': total_devices,
-            'available_devices': available_devices,
-            'assigned_devices': assigned_devices,
-            'maintenance_devices': maintenance_devices,
+            'status_stats': status_stats,
             'category_stats': category_stats,
             'recent_devices': recent_devices,
-            'expiring_warranties': expiring_warranties,
-            'top_vendors': top_vendors,
+            'value_stats': value_stats,
+            'warranty_alerts': warranty_alerts,
+            'months_data': list(reversed(months_data)),
+            'page_title': 'Device Management Dashboard',
+            'organization': 'Bangladesh Parliament Secretariat',
+            'location': 'Dhaka, Bangladesh'
         })
         
         return context
-
 
 # Device CRUD Views
 class DeviceListView(LoginRequiredMixin, ListView):
@@ -314,6 +344,211 @@ class DeviceDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
         messages.success(request, f'Device {device_id} deleted successfully!')
         return super().delete(request, *args, **kwargs)
 
+class DeviceSummaryView(LoginRequiredMixin, TemplateView):
+    """
+    Device summary with detailed breakdowns and analytics.
+    """
+    template_name = 'devices/summary.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Detailed status breakdown
+        devices = Device.objects.filter(is_active=True)
+        
+        status_breakdown = {}
+        for status, label in Device.STATUS_CHOICES:
+            count = devices.filter(status=status).count()
+            status_breakdown[status] = {
+                'label': label,
+                'count': count,
+                'percentage': round((count / devices.count() * 100) if devices.count() > 0 else 0, 1)
+            }
+        
+        # Condition breakdown
+        condition_breakdown = {}
+        for condition, label in Device.CONDITION_CHOICES:
+            count = devices.filter(condition=condition).count()
+            condition_breakdown[condition] = {
+                'label': label,
+                'count': count,
+                'percentage': round((count / devices.count() * 100) if devices.count() > 0 else 0, 1)
+            }
+        
+        # Category-wise analysis
+        category_analysis = (
+            devices.values('subcategory__category__name')
+            .annotate(
+                total=Count('id'),
+                available=Count(Case(When(status='AVAILABLE', then=1))),
+                assigned=Count(Case(When(status='ASSIGNED', then=1))),
+                maintenance=Count(Case(When(status='MAINTENANCE', then=1))),
+                total_value=Sum('purchase_price', output_field=DecimalField()),
+                avg_value=Avg('purchase_price', output_field=DecimalField())
+            )
+            .order_by('-total')
+        )
+        
+        # Vendor analysis
+        vendor_analysis = (
+            devices.values('vendor__name')
+            .annotate(
+                total_devices=Count('id'),
+                total_value=Sum('purchase_price', output_field=DecimalField()),
+                maintenance_count=Count(Case(When(status='MAINTENANCE', then=1)))
+            )
+            .order_by('-total_devices')[:10]
+        )
+        
+        # Age analysis
+        age_ranges = {
+            'new': devices.filter(purchase_date__gte=datetime.now().date() - timedelta(days=365)).count(),
+            'recent': devices.filter(
+                purchase_date__gte=datetime.now().date() - timedelta(days=365*2),
+                purchase_date__lt=datetime.now().date() - timedelta(days=365)
+            ).count(),
+            'mature': devices.filter(
+                purchase_date__gte=datetime.now().date() - timedelta(days=365*5),
+                purchase_date__lt=datetime.now().date() - timedelta(days=365*2)
+            ).count(),
+            'old': devices.filter(purchase_date__lt=datetime.now().date() - timedelta(days=365*5)).count()
+        }
+        
+        context.update({
+            'status_breakdown': status_breakdown,
+            'condition_breakdown': condition_breakdown,
+            'category_analysis': category_analysis,
+            'vendor_analysis': vendor_analysis,
+            'age_ranges': age_ranges,
+            'total_devices': devices.count(),
+            'page_title': 'Device Summary Report',
+            'organization': 'Bangladesh Parliament Secretariat',
+            'location': 'Dhaka, Bangladesh'
+        })
+        
+        return context
+
+
+class DeviceAlertsView(LoginRequiredMixin, TemplateView):
+    """
+    Device alerts and notifications dashboard for proactive management.
+    """
+    template_name = 'devices/alerts.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        today = datetime.now().date()
+        
+        # Warranty alerts
+        warranty_expiring_30 = Warranty.objects.filter(
+            device__is_active=True,
+            end_date__lte=today + timedelta(days=30),
+            end_date__gte=today
+        ).select_related('device')
+        
+        warranty_expired = Warranty.objects.filter(
+            device__is_active=True,
+            end_date__lt=today
+        ).select_related('device')
+        
+        # Maintenance alerts
+        overdue_maintenance = Device.objects.filter(
+            is_active=True,
+            status='MAINTENANCE',
+            updated_at__lt=timezone.now() - timedelta(days=30)
+        )
+        
+        # Device age alerts (devices older than 5 years)
+        aging_devices = Device.objects.filter(
+            is_active=True,
+            purchase_date__lt=today - timedelta(days=365*5)
+        )
+        
+        # Unassigned valuable devices (price > 50,000 BDT)
+        unassigned_valuable = Device.objects.filter(
+            is_active=True,
+            status='AVAILABLE',
+            purchase_price__gt=50000
+        )
+        
+        # Devices without location
+        devices_no_location = Device.objects.filter(
+            is_active=True,
+            current_location__isnull=True
+        )
+        
+        # Devices with incomplete data
+        incomplete_devices = Device.objects.filter(
+            is_active=True
+        ).filter(
+            Q(brand__isnull=True) | Q(brand='') |
+            Q(model__isnull=True) | Q(model='') |
+            Q(serial_number__isnull=True) | Q(serial_number='') |
+            Q(purchase_date__isnull=True) |
+            Q(purchase_price__isnull=True)
+        )
+        
+        # Alert summary
+        alert_counts = {
+            'warranty_expiring': warranty_expiring_30.count(),
+            'warranty_expired': warranty_expired.count(),
+            'overdue_maintenance': overdue_maintenance.count(),
+            'aging_devices': aging_devices.count(),
+            'unassigned_valuable': unassigned_valuable.count(),
+            'no_location': devices_no_location.count(),
+            'incomplete_data': incomplete_devices.count()
+        }
+        
+        total_alerts = sum(alert_counts.values())
+        
+        # Priority alerts (high impact)
+        priority_alerts = []
+        
+        if warranty_expired.count() > 0:
+            priority_alerts.append({
+                'type': 'danger',
+                'title': 'Expired Warranties',
+                'count': warranty_expired.count(),
+                'message': 'Devices with expired warranties need immediate attention',
+                'url': 'devices:warranty_expired'
+            })
+        
+        if warranty_expiring_30.count() > 0:
+            priority_alerts.append({
+                'type': 'warning', 
+                'title': 'Warranties Expiring Soon',
+                'count': warranty_expiring_30.count(),
+                'message': 'Warranties expiring within 30 days',
+                'url': 'devices:warranty_expiring'
+            })
+        
+        if unassigned_valuable.count() > 0:
+            priority_alerts.append({
+                'type': 'info',
+                'title': 'Unassigned Valuable Devices',
+                'count': unassigned_valuable.count(),
+                'message': 'High-value devices not currently assigned',
+                'url': 'devices:available'
+            })
+        
+        context.update({
+            'warranty_expiring_30': warranty_expiring_30,
+            'warranty_expired': warranty_expired,
+            'overdue_maintenance': overdue_maintenance,
+            'aging_devices': aging_devices,
+            'unassigned_valuable': unassigned_valuable,
+            'devices_no_location': devices_no_location,
+            'incomplete_devices': incomplete_devices,
+            'alert_counts': alert_counts,
+            'total_alerts': total_alerts,
+            'priority_alerts': priority_alerts,
+            'page_title': 'Device Alerts & Notifications',
+            'organization': 'Bangladesh Parliament Secretariat',
+            'location': 'Dhaka, Bangladesh'
+        })
+        
+        return context
 
 # Status-based Device Views
 class AvailableDevicesView(DeviceListView):
@@ -1211,6 +1446,549 @@ class CategoryReportView(LoginRequiredMixin, DetailView):
         context['subcategory_stats'] = subcategory_stats
         return context
 
+class LocationReportView(LoginRequiredMixin, TemplateView):
+    """
+    Device report by location for Bangladesh Parliament Secretariat.
+    Shows device distribution across different parliamentary buildings and offices.
+    """
+    template_name = 'devices/reports/location_report.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get device counts by location
+        location_data = (
+            Device.objects.filter(is_active=True)
+            .values('current_location__name', 'current_location__building__name')
+            .annotate(
+                total_devices=Count('id'),
+                available_devices=Count(Case(When(status='AVAILABLE', then=1))),
+                assigned_devices=Count(Case(When(status='ASSIGNED', then=1))),
+                maintenance_devices=Count(Case(When(status='MAINTENANCE', then=1))),
+                total_value=Sum('purchase_price', output_field=DecimalField())
+            )
+            .order_by('current_location__building__name', 'current_location__name')
+        )
+        
+        # Summary statistics
+        summary = {
+            'total_locations': location_data.count(),
+            'total_devices': sum(loc['total_devices'] for loc in location_data),
+            'total_value': sum(loc['total_value'] or 0 for loc in location_data),
+            'avg_devices_per_location': round(
+                sum(loc['total_devices'] for loc in location_data) / max(location_data.count(), 1), 2
+            )
+        }
+        
+        # Group by building for better visualization
+        buildings = {}
+        for loc in location_data:
+            building = loc['current_location__building__name'] or 'Unassigned'
+            if building not in buildings:
+                buildings[building] = {
+                    'name': building,
+                    'locations': [],
+                    'total_devices': 0,
+                    'total_value': 0
+                }
+            buildings[building]['locations'].append(loc)
+            buildings[building]['total_devices'] += loc['total_devices']
+            buildings[building]['total_value'] += loc['total_value'] or 0
+        
+        context.update({
+            'location_data': location_data,
+            'buildings': buildings.values(),
+            'summary': summary,
+            'page_title': 'Devices by Location Report',
+            'organization': 'Bangladesh Parliament Secretariat',
+            'location': 'Dhaka, Bangladesh'
+        })
+        
+        return context
+
+class VendorReportView(LoginRequiredMixin, TemplateView):
+    """
+    Device report by vendor showing procurement patterns and vendor performance.
+    """
+    template_name = 'devices/reports/vendor_report.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get device counts and values by vendor
+        vendor_data = (
+            Device.objects.filter(is_active=True)
+            .values('vendor__name', 'vendor__contact_person', 'vendor__phone')
+            .annotate(
+                total_devices=Count('id'),
+                total_value=Sum('purchase_price', output_field=DecimalField()),
+                avg_device_price=Avg('purchase_price'),
+                available_devices=Count(Case(When(status='AVAILABLE', then=1))),
+                assigned_devices=Count(Case(When(status='ASSIGNED', then=1))),
+                maintenance_devices=Count(Case(When(status='MAINTENANCE', then=1))),
+                latest_purchase=Max('purchase_date'),
+                device_categories=Count('subcategory__category', distinct=True)
+            )
+            .order_by('-total_value')
+        )
+        
+        # Summary statistics
+        summary = {
+            'total_vendors': vendor_data.count(),
+            'total_procurement_value': sum(v['total_value'] or 0 for v in vendor_data),
+            'avg_order_value': round(
+                sum(v['total_value'] or 0 for v in vendor_data) / max(vendor_data.count(), 1), 2
+            ),
+            'top_vendor': vendor_data.first() if vendor_data else None
+        }
+        
+        # Vendor performance metrics
+        for vendor in vendor_data:
+            if vendor['total_devices'] > 0:
+                vendor['maintenance_rate'] = round(
+                    (vendor['maintenance_devices'] / vendor['total_devices']) * 100, 1
+                )
+            else:
+                vendor['maintenance_rate'] = 0
+        
+        context.update({
+            'vendor_data': vendor_data,
+            'summary': summary,
+            'page_title': 'Devices by Vendor Report',
+            'organization': 'Bangladesh Parliament Secretariat',
+            'location': 'Dhaka, Bangladesh'
+        })
+        
+        return context
+
+
+class DepreciationReportView(LoginRequiredMixin, TemplateView):
+    """
+    Depreciation report showing asset depreciation and current values.
+    """
+    template_name = 'devices/reports/depreciation_report.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Calculate depreciation (assuming 5-year straight line for IT equipment)
+        devices = Device.objects.filter(is_active=True).select_related(
+            'subcategory__category', 'vendor'
+        )
+        
+        depreciation_data = []
+        total_original_value = 0
+        total_current_value = 0
+        
+        for device in devices:
+            if device.purchase_date and device.purchase_price:
+                age_years = (datetime.now().date() - device.purchase_date).days / 365.25
+                depreciation_years = min(age_years, 5)  # Max 5 years depreciation
+                annual_depreciation = device.purchase_price / 5
+                accumulated_depreciation = annual_depreciation * depreciation_years
+                current_value = max(device.purchase_price - accumulated_depreciation, 0)
+                
+                depreciation_data.append({
+                    'device': device,
+                    'age_years': round(age_years, 1),
+                    'original_value': device.purchase_price,
+                    'annual_depreciation': annual_depreciation,
+                    'accumulated_depreciation': accumulated_depreciation,
+                    'current_value': current_value,
+                    'depreciation_rate': round((accumulated_depreciation / device.purchase_price) * 100, 1)
+                })
+                
+                total_original_value += device.purchase_price
+                total_current_value += current_value
+        
+        # Summary
+        total_depreciation = total_original_value - total_current_value
+        overall_depreciation_rate = round(
+            (total_depreciation / total_original_value * 100) if total_original_value > 0 else 0, 1
+        )
+        
+        summary = {
+            'total_devices': len(depreciation_data),
+            'total_original_value': total_original_value,
+            'total_current_value': total_current_value,
+            'total_depreciation': total_depreciation,
+            'depreciation_rate': overall_depreciation_rate
+        }
+        
+        context.update({
+            'depreciation_data': depreciation_data,
+            'summary': summary,
+            'page_title': 'Asset Depreciation Report',
+            'organization': 'Bangladesh Parliament Secretariat',
+            'location': 'Dhaka, Bangladesh'
+        })
+        
+        return context
+
+
+class WarrantyReportView(LoginRequiredMixin, TemplateView):
+    """
+    Warranty summary report showing warranty status across all devices.
+    """
+    template_name = 'devices/reports/warranty_report.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get warranty data
+        today = datetime.now().date()
+        thirty_days = today + timedelta(days=30)
+        ninety_days = today + timedelta(days=90)
+        
+        warranties = Warranty.objects.filter(
+            device__is_active=True
+        ).select_related('device__subcategory__category', 'device__vendor')
+        
+        warranty_summary = {
+            'total_warranties': warranties.count(),
+            'active_warranties': warranties.filter(end_date__gte=today).count(),
+            'expired_warranties': warranties.filter(end_date__lt=today).count(),
+            'expiring_30_days': warranties.filter(
+                end_date__gte=today, end_date__lte=thirty_days
+            ).count(),
+            'expiring_90_days': warranties.filter(
+                end_date__gte=today, end_date__lte=ninety_days
+            ).count()
+        }
+        
+        # Warranty status breakdown
+        warranty_data = []
+        for warranty in warranties:
+            days_remaining = (warranty.end_date - today).days
+            
+            if days_remaining < 0:
+                status = 'expired'
+                status_class = 'danger'
+            elif days_remaining <= 30:
+                status = 'expiring_soon'
+                status_class = 'warning'
+            elif days_remaining <= 90:
+                status = 'expiring_90_days'
+                status_class = 'info'
+            else:
+                status = 'active'
+                status_class = 'success'
+            
+            warranty_data.append({
+                'warranty': warranty,
+                'days_remaining': days_remaining,
+                'status': status,
+                'status_class': status_class
+            })
+        
+        # Group by vendor for analysis
+        vendor_warranty_stats = (
+            warranties.values('device__vendor__name')
+            .annotate(
+                total=Count('id'),
+                active=Count(Case(When(end_date__gte=today, then=1))),
+                expired=Count(Case(When(end_date__lt=today, then=1)))
+            )
+            .order_by('-total')
+        )
+        
+        context.update({
+            'warranty_summary': warranty_summary,
+            'warranty_data': warranty_data,
+            'vendor_warranty_stats': vendor_warranty_stats,
+            'page_title': 'Warranty Summary Report',
+            'organization': 'Bangladesh Parliament Secretariat',
+            'location': 'Dhaka, Bangladesh'
+        })
+        
+        return context
+
+# Export Views
+class ExportDevicesExcelView(LoginRequiredMixin, View):
+    """
+    Export devices to Excel format with comprehensive data.
+    """
+    
+    def get(self, request):
+        try:
+            import openpyxl
+            from openpyxl.styles import Font, Alignment, PatternFill
+        except ImportError:
+            messages.error(request, 'Excel export requires openpyxl package.')
+            return redirect('devices:list')
+        
+        # Create workbook
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Devices Inventory"
+        
+        # Headers
+        headers = [
+            'Device ID', 'Category', 'Subcategory', 'Brand', 'Model',
+            'Serial Number', 'Status', 'Condition', 'Purchase Date',
+            'Purchase Price (BDT)', 'Vendor', 'Current Location', 'Building',
+            'Warranty End Date', 'Specifications'
+        ]
+        
+        # Style headers
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="1f2937", end_color="1f2937", fill_type="solid")
+        header_alignment = Alignment(horizontal="center", vertical="center")
+        
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+        
+        # Get devices data
+        devices = Device.objects.filter(is_active=True).select_related(
+            'subcategory__category', 'vendor', 'current_location__building'
+        ).prefetch_related('warranties')
+        
+        # Add data rows
+        for row, device in enumerate(devices, 2):
+            # Get latest warranty
+            latest_warranty = device.warranties.filter(is_active=True).order_by('-end_date').first()
+            
+            row_data = [
+                device.device_id,
+                device.subcategory.category.name,
+                device.subcategory.name,
+                device.brand,
+                device.model,
+                device.serial_number,
+                device.get_status_display(),
+                device.get_condition_display(),
+                device.purchase_date.strftime('%Y-%m-%d') if device.purchase_date else '',
+                device.purchase_price if device.purchase_price else '',
+                device.vendor.name if device.vendor else '',
+                device.current_location.name if device.current_location else '',
+                device.current_location.building.name if device.current_location and device.current_location.building else '',
+                latest_warranty.end_date.strftime('%Y-%m-%d') if latest_warranty else '',
+                json.dumps(device.specifications) if device.specifications else ''
+            ]
+            
+            for col, value in enumerate(row_data, 1):
+                ws.cell(row=row, column=col, value=value)
+        
+        # Auto-adjust column widths
+        for column in ws.columns:
+            max_length = 0
+            column_letter = column[0].column_letter
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)
+            ws.column_dimensions[column_letter].width = adjusted_width
+        
+        # Add summary sheet
+        summary_ws = wb.create_sheet("Summary")
+        
+        # Summary data
+        summary_data = [
+            ['Report Title', 'PIMS Device Inventory Report'],
+            ['Organization', 'Bangladesh Parliament Secretariat'],
+            ['Location', 'Dhaka, Bangladesh'],
+            ['Generated Date', timezone.now().strftime('%Y-%m-%d %H:%M:%S')],
+            ['Total Devices', devices.count()],
+            ['', ''],
+            ['Status Summary', ''],
+            ['Available', devices.filter(status='AVAILABLE').count()],
+            ['Assigned', devices.filter(status='ASSIGNED').count()],
+            ['Maintenance', devices.filter(status='MAINTENANCE').count()],
+            ['Retired', devices.filter(status='RETIRED').count()],
+        ]
+        
+        for row, (label, value) in enumerate(summary_data, 1):
+            summary_ws.cell(row=row, column=1, value=label).font = Font(bold=True)
+            summary_ws.cell(row=row, column=2, value=value)
+        
+        # Create response
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        filename = f'devices_inventory_{timezone.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        wb.save(response)
+        return response
+
+
+class ExportDevicesPDFView(LoginRequiredMixin, View):
+    """
+    Export devices to PDF format with parliamentary formatting.
+    """
+    
+    def get(self, request):
+        from reportlab.lib.pagesizes import A4, landscape
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        from reportlab.lib import colors
+        
+        response = HttpResponse(content_type='application/pdf')
+        filename = f'devices_inventory_{timezone.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        # Create PDF document
+        doc = SimpleDocTemplate(response, pagesize=landscape(A4), topMargin=0.5*inch)
+        elements = []
+        styles = getSampleStyleSheet()
+        
+        # Custom styles
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Title'],
+            fontSize=16,
+            textColor=colors.HexColor('#1f2937'),
+            spaceAfter=12,
+            alignment=1  # Center
+        )
+        
+        subtitle_style = ParagraphStyle(
+            'CustomSubtitle',
+            parent=styles['Normal'],
+            fontSize=10,
+            textColor=colors.HexColor('#6b7280'),
+            spaceAfter=20,
+            alignment=1  # Center
+        )
+        
+        # Header
+        elements.append(Paragraph("Bangladesh Parliament Secretariat", title_style))
+        elements.append(Paragraph("PIMS - Device Inventory Report", subtitle_style))
+        elements.append(Paragraph(f"Generated: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')} | Location: Dhaka, Bangladesh", subtitle_style))
+        elements.append(Spacer(1, 12))
+        
+        # Get devices data
+        devices = Device.objects.filter(is_active=True).select_related(
+            'subcategory__category', 'vendor', 'current_location'
+        )[:100]  # Limit for PDF
+        
+        # Create table data
+        table_data = [
+            ['Device ID', 'Category', 'Brand/Model', 'Status', 'Location', 'Purchase Date', 'Price (BDT)']
+        ]
+        
+        for device in devices:
+            table_data.append([
+                device.device_id,
+                device.subcategory.category.name,
+                f"{device.brand} {device.model}",
+                device.get_status_display(),
+                device.current_location.name if device.current_location else 'Unassigned',
+                device.purchase_date.strftime('%Y-%m-%d') if device.purchase_date else 'N/A',
+                f"{device.purchase_price:,.0f}" if device.purchase_price else 'N/A'
+            ])
+        
+        # Create table
+        table = Table(table_data, repeatRows=1)
+        table.setStyle(TableStyle([
+            # Header styling
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1f2937')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            
+            # Data styling
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 7),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
+            
+            # Grid
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb')),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        
+        elements.append(table)
+        
+        # Add summary statistics
+        summary_data = [
+            ['Summary Statistics', ''],
+            ['Total Devices', devices.count()],
+            ['Available', devices.filter(status='AVAILABLE').count()],
+            ['Assigned', devices.filter(status='ASSIGNED').count()],
+            ['In Maintenance', devices.filter(status='MAINTENANCE').count()],
+        ]
+        
+        elements.append(Spacer(1, 20))
+        elements.append(Paragraph("Summary", styles['Heading2']))
+        
+        summary_table = Table(summary_data)
+        summary_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1f2937')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb')),
+        ]))
+        
+        elements.append(summary_table)
+        
+        # Build PDF
+        doc.build(elements)
+        return response
+
+
+class ExportDevicesCSVView(LoginRequiredMixin, View):
+    """
+    Export devices to CSV format for data analysis.
+    """
+    
+    def get(self, request):
+        response = HttpResponse(content_type='text/csv')
+        filename = f'devices_inventory_{timezone.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        writer = csv.writer(response)
+        
+        # Headers
+        writer.writerow([
+            'Device ID', 'Category', 'Subcategory', 'Brand', 'Model',
+            'Serial Number', 'Status', 'Condition', 'Purchase Date',
+            'Purchase Price (BDT)', 'Vendor', 'Current Location', 'Building',
+            'Warranty End Date', 'Created Date', 'Last Updated', 'Specifications'
+        ])
+        
+        # Get devices data
+        devices = Device.objects.filter(is_active=True).select_related(
+            'subcategory__category', 'vendor', 'current_location__building'
+        ).prefetch_related('warranties')
+        
+        # Write data rows
+        for device in devices:
+            latest_warranty = device.warranties.filter(is_active=True).order_by('-end_date').first()
+            
+            writer.writerow([
+                device.device_id,
+                device.subcategory.category.name,
+                device.subcategory.name,
+                device.brand,
+                device.model,
+                device.serial_number,
+                device.get_status_display(),
+                device.get_condition_display(),
+                device.purchase_date.strftime('%Y-%m-%d') if device.purchase_date else '',
+                device.purchase_price if device.purchase_price else '',
+                device.vendor.name if device.vendor else '',
+                device.current_location.name if device.current_location else '',
+                device.current_location.building.name if device.current_location and device.current_location.building else '',
+                latest_warranty.end_date.strftime('%Y-%m-%d') if latest_warranty else '',
+                device.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                device.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+                json.dumps(device.specifications) if device.specifications else ''
+            ])
+        
+        return response
 
 # AJAX Endpoints
 @login_required

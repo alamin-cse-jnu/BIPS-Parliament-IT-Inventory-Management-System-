@@ -1,0 +1,914 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Device Depreciation Report - PIMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Device Depreciation Report Styling - Parliament Design System */
+.depreciation-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.report-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.report-title {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.report-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.depreciation-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.depreciation-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.depreciation-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+.depreciation-card.total-value {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.1));
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.depreciation-card.depreciated-value {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.depreciation-card.current-value {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.depreciation-card.annual-rate {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.card-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.card-icon.total { background: linear-gradient(135deg, #22c55e, #16a34a); }
+.card-icon.depreciated { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.card-icon.current { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.card-icon.rate { background: linear-gradient(135deg, #f59e0b, #d97706); }
+
+.card-trend {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.trend-up {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.trend-down {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+}
+
+.trend-stable {
+    background: rgba(156, 163, 175, 0.1);
+    color: #6b7280;
+}
+
+.card-amount {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.card-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.card-details {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.5rem;
+}
+
+.filters-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.filters-title {
+    color: #1e293b;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.filters-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.filter-input {
+    padding: 0.75rem;
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.filter-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background: white;
+}
+
+.btn-filter {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    height: fit-content;
+}
+
+.btn-filter:hover {
+    background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
+    transform: translateY(-1px);
+}
+
+.report-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.depreciation-chart {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.chart-header {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chart-title {
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.chart-body {
+    padding: 1.5rem;
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-placeholder {
+    width: 100%;
+    height: 100%;
+    background: rgba(248, 250, 252, 0.8);
+    border: 2px dashed rgba(203, 213, 225, 0.6);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-style: italic;
+}
+
+.category-breakdown {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.breakdown-header {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.breakdown-title {
+    margin: 0;
+    font-weight: 600;
+}
+
+.breakdown-body {
+    padding: 1.5rem;
+}
+
+.category-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.category-item:hover {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(99, 102, 241, 0.3);
+    transform: translateY(-1px);
+}
+
+.category-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.category-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: white;
+}
+
+.category-details h6 {
+    margin: 0;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.category-details small {
+    color: #64748b;
+}
+
+.category-values {
+    text-align: right;
+}
+
+.original-value {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.current-value {
+    color: #059669;
+    font-size: 0.875rem;
+}
+
+.depreciation-table {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.table-header {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.table-title {
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.table-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-export {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-export:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.table-body {
+    overflow-x: auto;
+}
+
+.depreciation-table-data {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.depreciation-table-data thead {
+    background: rgba(248, 250, 252, 0.8);
+}
+
+.depreciation-table-data th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+    font-size: 0.875rem;
+}
+
+.depreciation-table-data td {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.2);
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.depreciation-table-data tbody tr:hover {
+    background: rgba(248, 250, 252, 0.8);
+}
+
+.device-id {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.device-name {
+    color: #374151;
+}
+
+.device-category {
+    background: rgba(99, 102, 241, 0.1);
+    color: #4f46e5;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.value-original {
+    font-weight: 600;
+    color: #059669;
+}
+
+.value-current {
+    font-weight: 600;
+    color: #3b82f6;
+}
+
+.value-depreciated {
+    font-weight: 600;
+    color: #dc2626;
+}
+
+.depreciation-rate {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.pagination-wrapper {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1rem;
+    margin-top: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.summary-stats {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.stats-title {
+    color: #1e293b;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .depreciation-container {
+        padding: 1rem 0;
+    }
+    
+    .report-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .depreciation-overview {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .filters-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .table-body {
+        font-size: 0.75rem;
+    }
+    
+    .depreciation-table-data th,
+    .depreciation-table-data td {
+        padding: 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .depreciation-overview {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-body {
+        height: 250px;
+    }
+    
+    .report-header {
+        padding: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="depreciation-container">
+    <div class="container-fluid">
+        <!-- Report Header -->
+        <div class="report-header">
+            <h1 class="report-title">
+                <i class="bi bi-graph-down-arrow"></i>
+                Device Depreciation Report
+            </h1>
+            <p class="report-subtitle">Asset Depreciation Analysis - Bangladesh Parliament Secretariat, Dhaka</p>
+        </div>
+
+        <!-- Depreciation Overview Cards -->
+        <div class="depreciation-overview">
+            <div class="depreciation-card total-value">
+                <div class="card-header">
+                    <div class="card-icon total">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div class="card-trend trend-stable">Stable</div>
+                </div>
+                <div class="card-amount">৳{{ total_original_value|floatformat:0 }}</div>
+                <div class="card-label">Total Original Value</div>
+                <div class="card-details">Combined purchase value of all assets</div>
+            </div>
+            
+            <div class="depreciation-card depreciated-value">
+                <div class="card-header">
+                    <div class="card-icon depreciated">
+                        <i class="bi bi-arrow-down-circle"></i>
+                    </div>
+                    <div class="card-trend trend-up">+{{ depreciation_rate|floatformat:1 }}%</div>
+                </div>
+                <div class="card-amount">৳{{ total_depreciated_value|floatformat:0 }}</div>
+                <div class="card-label">Total Depreciated Value</div>
+                <div class="card-details">Accumulated depreciation to date</div>
+            </div>
+            
+            <div class="depreciation-card current-value">
+                <div class="card-header">
+                    <div class="card-icon current">
+                        <i class="bi bi-graph-up"></i>
+                    </div>
+                    <div class="card-trend trend-down">-{{ loss_percentage|floatformat:1 }}%</div>
+                </div>
+                <div class="card-amount">৳{{ total_current_value|floatformat:0 }}</div>
+                <div class="card-label">Current Book Value</div>
+                <div class="card-details">Current market valuation estimate</div>
+            </div>
+            
+            <div class="depreciation-card annual-rate">
+                <div class="card-header">
+                    <div class="card-icon rate">
+                        <i class="bi bi-percent"></i>
+                    </div>
+                    <div class="card-trend trend-stable">Average</div>
+                </div>
+                <div class="card-amount">{{ average_annual_rate|floatformat:1 }}%</div>
+                <div class="card-label">Annual Depreciation Rate</div>
+                <div class="card-details">Weighted average across all categories</div>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="filters-section">
+            <h4 class="filters-title">
+                <i class="bi bi-funnel"></i>
+                Report Filters
+            </h4>
+            <form method="get" action="">
+                <div class="filters-row">
+                    <div class="filter-group">
+                        <label class="filter-label">Date Range</label>
+                        <select name="date_range" class="filter-input">
+                            <option value="all" {% if request.GET.date_range == 'all' %}selected{% endif %}>All Time</option>
+                            <option value="current_year" {% if request.GET.date_range == 'current_year' %}selected{% endif %}>Current Year</option>
+                            <option value="last_year" {% if request.GET.date_range == 'last_year' %}selected{% endif %}>Last Year</option>
+                            <option value="last_3_years" {% if request.GET.date_range == 'last_3_years' %}selected{% endif %}>Last 3 Years</option>
+                            <option value="last_5_years" {% if request.GET.date_range == 'last_5_years' %}selected{% endif %}>Last 5 Years</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Device Category</label>
+                        <select name="category" class="filter-input">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:'s' %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Location</label>
+                        <select name="location" class="filter-input">
+                            <option value="">All Locations</option>
+                            {% for location in locations %}
+                            <option value="{{ location.id }}" {% if request.GET.location == location.id|stringformat:'s' %}selected{% endif %}>
+                                {{ location.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Depreciation Method</label>
+                        <select name="method" class="filter-input">
+                            <option value="straight_line" {% if request.GET.method == 'straight_line' %}selected{% endif %}>Straight Line</option>
+                            <option value="declining_balance" {% if request.GET.method == 'declining_balance' %}selected{% endif %}>Declining Balance</option>
+                            <option value="sum_of_years" {% if request.GET.method == 'sum_of_years' %}selected{% endif %}>Sum of Years</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <button type="submit" class="btn-filter">
+                            <i class="bi bi-search me-2"></i>Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Report Content Grid -->
+        <div class="report-grid">
+            <!-- Depreciation Chart -->
+            <div class="depreciation-chart">
+                <div class="chart-header">
+                    <h4 class="chart-title">
+                        <i class="bi bi-bar-chart-line"></i>
+                        Depreciation Trend Over Time
+                    </h4>
+                    <div class="chart-actions">
+                        <button class="btn-export">
+                            <i class="bi bi-download me-1"></i>Export Chart
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-body">
+                    <div class="chart-placeholder">
+                        Depreciation Timeline Chart
+                        <br><small>Shows value decline over asset lifecycle</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Breakdown -->
+            <div class="category-breakdown">
+                <div class="breakdown-header">
+                    <i class="bi bi-pie-chart"></i>
+                    <h4 class="breakdown-title">Category Breakdown</h4>
+                </div>
+                <div class="breakdown-body">
+                    <div class="category-list">
+                        {% for category in category_breakdown %}
+                        <div class="category-item">
+                            <div class="category-info">
+                                <div class="category-icon">
+                                    <i class="bi bi-collection"></i>
+                                </div>
+                                <div class="category-details">
+                                    <h6>{{ category.name }}</h6>
+                                    <small>{{ category.device_count }} devices</small>
+                                </div>
+                            </div>
+                            <div class="category-values">
+                                <div class="original-value">৳{{ category.original_value|floatformat:0 }}</div>
+                                <div class="current-value">৳{{ category.current_value|floatformat:0 }}</div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-collection display-4 mb-3"></i>
+                            <p>No category data available</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Statistics -->
+        <div class="summary-stats">
+            <h4 class="stats-title">
+                <i class="bi bi-calculator"></i>
+                Depreciation Summary Statistics
+            </h4>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value">{{ total_devices }}</div>
+                    <div class="stat-label">Total Assets</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ fully_depreciated_count }}</div>
+                    <div class="stat-label">Fully Depreciated</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ average_age|floatformat:1 }}</div>
+                    <div class="stat-label">Average Age (Years)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ newest_asset_age|floatformat:1 }}</div>
+                    <div class="stat-label">Newest Asset (Years)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ oldest_asset_age|floatformat:1 }}</div>
+                    <div class="stat-label">Oldest Asset (Years)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Depreciation Table -->
+        <div class="depreciation-table">
+            <div class="table-header">
+                <h4 class="table-title">
+                    <i class="bi bi-table"></i>
+                    Detailed Depreciation Schedule
+                </h4>
+                <div class="table-actions">
+                    <a href="?export=excel" class="btn-export">
+                        <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                    </a>
+                    <a href="?export=pdf" class="btn-export">
+                        <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                    </a>
+                    <a href="?export=csv" class="btn-export">
+                        <i class="bi bi-filetype-csv me-1"></i>CSV
+                    </a>
+                </div>
+            </div>
+            <div class="table-body">
+                <table class="depreciation-table-data">
+                    <thead>
+                        <tr>
+                            <th>Device ID</th>
+                            <th>Device Name</th>
+                            <th>Category</th>
+                            <th>Purchase Date</th>
+                            <th>Original Value</th>
+                            <th>Depreciated Value</th>
+                            <th>Current Value</th>
+                            <th>Annual Rate</th>
+                            <th>Remaining Life</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for device in depreciation_data %}
+                        <tr>
+                            <td>
+                                <span class="device-id">{{ device.device_id }}</span>
+                            </td>
+                            <td>
+                                <div class="device-name">{{ device.brand }} {{ device.model }}</div>
+                            </td>
+                            <td>
+                                <span class="device-category">{{ device.subcategory.category.name }}</span>
+                            </td>
+                            <td>{{ device.purchase_date|date:"M d, Y" }}</td>
+                            <td>
+                                <span class="value-original">৳{{ device.purchase_price|floatformat:0 }}</span>
+                            </td>
+                            <td>
+                                <span class="value-depreciated">৳{{ device.depreciated_value|floatformat:0 }}</span>
+                            </td>
+                            <td>
+                                <span class="value-current">৳{{ device.current_value|floatformat:0 }}</span>
+                            </td>
+                            <td>
+                                <span class="depreciation-rate">{{ device.annual_rate|floatformat:1 }}%</span>
+                            </td>
+                            <td>{{ device.remaining_life|floatformat:1 }} years</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">
+                                No depreciation data available for the selected criteria
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="pagination-wrapper">
+            <nav aria-label="Depreciation report pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

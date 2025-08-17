@@ -1,784 +1,831 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Bangladesh Parliament Secretariat - PIMS{% endblock %}
+{% block title %}Home - PIMS - Bangladesh Parliament Secretariat{% endblock %}
 
 {% block extra_css %}
-<style>    
-    /* Define high-contrast color variables */
-    :root {
-        --parliament-primary: #1e3a8a; /* Deep Blue */
-        --parliament-secondary: #059669; /* Emerald Green */
-        --parliament-accent: #dc2626; /* Red */
-        --parliament-dark: #111827; /* Dark Gray */
-        --parliament-neutral: #4b5563; /* Medium Gray */
-        --parliament-light: #f9fafb; /* Light Gray */
-    }
+<style>
+/* Home Page Styling - Flat Design */
+.home-container {
+    background-color: var(--bg-secondary);
+    {% if user.is_authenticated %}
+        padding: 2rem 0;
+    {% else %}
+        padding: 0;
+        margin-top: 0;
+    {% endif %}
+}
 
-    /* Hero Section - Enhanced contrast with white background */
-    .hero-section {
-        background: #ffffff;
-        color: var(--parliament-dark);
-        padding: 4rem 0;
-        margin-bottom: 3rem;
-        position: relative;
-        border-bottom: 4px solid var(--parliament-primary);
+{% if user.is_authenticated %}
+/* Welcome Section for Authenticated Users */
+.welcome-section {
+    background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-hover));
+    color: var(--text-white);
+    padding: 3rem 2rem;
+    border-radius: var(--radius-lg);
+    margin-bottom: 3rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.welcome-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 100%;
+    height: 200%;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+    background-size: 30px 30px;
+    animation: float 20s infinite linear;
+}
+
+@keyframes float {
+    0% { transform: translateX(0) translateY(0); }
+    100% { transform: translateX(-50px) translateY(-50px); }
+}
+
+.welcome-content {
+    position: relative;
+    z-index: 2;
+}
+
+.welcome-title {
+    font-size: 2rem;
+    font-weight: var(--font-weight-bold);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.welcome-message {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+    opacity: 0.95;
+}
+
+.welcome-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.welcome-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    font-weight: var(--font-weight-semibold);
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    border: 2px solid transparent;
+}
+
+.welcome-btn-light {
+    background-color: var(--bg-primary);
+    color: var(--primary-teal);
+    border-color: var(--bg-primary);
+}
+
+.welcome-btn-light:hover {
+    background-color: var(--bg-secondary);
+    color: var(--primary-teal-hover);
+    border-color: var(--bg-secondary);
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.welcome-btn-outline {
+    background-color: transparent;
+    color: var(--text-white);
+    border-color: rgba(255,255,255,0.7);
+}
+
+.welcome-btn-outline:hover {
+    background-color: rgba(255,255,255,0.2);
+    color: var(--text-white);
+    border-color: var(--text-white);
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+{% else %}
+/* Hero Section for Non-authenticated Users */
+.hero-section {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
+    color: var(--text-white);
+    padding: 5rem 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="0,0 100,30 100,100 0,70" fill="rgba(255,255,255,0.05)"/></svg>');
+    background-size: 100px 100px;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: var(--font-weight-bold);
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+}
+
+.hero-subtitle {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+    font-weight: var(--font-weight-medium);
+}
+
+.hero-description {
+    font-size: 1.1rem;
+    margin-bottom: 3rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+    opacity: 0.9;
+}
+
+.hero-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 2rem;
+    max-width: 800px;
+    margin: 0 auto 3rem;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hero-stat {
+    text-align: center;
+}
+
+.hero-stat-number {
+    font-size: 2.5rem;
+    font-weight: var(--font-weight-bold);
+    display: block;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.hero-stat-label {
+    font-size: 0.875rem;
+    font-weight: var(--font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.8;
+}
+{% endif %}
+
+/* System Modules Section */
+.modules-section {
+    margin-bottom: 4rem;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.section-subtitle {
+    color: var(--text-secondary);
+    font-size: 1.25rem;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+.modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.module-card {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.module-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--module-color, var(--primary-teal));
+}
+
+.module-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
+    text-decoration: none;
+    color: var(--text-primary);
+}
+
+.module-card.users { --module-color: var(--primary-teal); }
+.module-card.locations { --module-color: var(--primary-orange); }
+.module-card.devices { --module-color: var(--success); }
+.module-card.vendors { --module-color: var(--primary-red); }
+.module-card.assignments { --module-color: var(--warning); }
+.module-card.maintenance { --module-color: var(--primary-red); }
+
+.module-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.module-icon {
+    width: 70px;
+    height: 70px;
+    background-color: var(--module-color, var(--primary-teal));
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-white);
+    font-size: 1.75rem;
+    flex-shrink: 0;
+}
+
+.module-title {
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.module-description {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.module-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--module-color, var(--primary-teal));
+    font-weight: var(--font-weight-semibold);
+    font-size: 0.9rem;
+}
+
+.module-meta i {
+    font-size: 1rem;
+}
+
+/* System Overview Section */
+.overview-section {
+    background-color: var(--bg-tertiary);
+    padding: 4rem 0;
+    margin: 4rem 0;
+    border-radius: var(--radius-xl);
+}
+
+.overview-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.overview-stat-card {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    text-align: center;
+    transition: var(--transition);
+    box-shadow: var(--shadow-card);
+}
+
+.overview-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+.overview-icon {
+    width: 60px;
+    height: 60px;
+    background-color: var(--primary-teal);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+    color: var(--text-white);
+}
+
+.overview-number {
+    font-size: 2rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.overview-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: var(--font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+{% if not user.is_authenticated %}
+/* Call to Action for Non-authenticated Users */
+.cta-section {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 3rem;
+    text-align: center;
+    margin: 3rem auto;
+    max-width: 600px;
+    box-shadow: var(--shadow-card);
+}
+
+.cta-icon {
+    width: 80px;
+    height: 80px;
+    background-color: var(--primary-teal);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 2rem;
+    font-size: 2rem;
+    color: var(--text-white);
+}
+
+.cta-title {
+    font-size: 1.75rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.cta-message {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.cta-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.cta-btn {
+    padding: 0.75rem 2rem;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    font-weight: var(--font-weight-semibold);
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: 2px solid;
+}
+
+.cta-btn-primary {
+    background-color: var(--primary-teal);
+    color: var(--text-white);
+    border-color: var(--primary-teal);
+}
+
+.cta-btn-primary:hover {
+    background-color: var(--primary-teal-hover);
+    border-color: var(--primary-teal-hover);
+    color: var(--text-white);
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.cta-btn-outline {
+    background-color: transparent;
+    color: var(--primary-teal);
+    border-color: var(--primary-teal);
+}
+
+.cta-btn-outline:hover {
+    background-color: var(--primary-teal);
+    color: var(--text-white);
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+{% endif %}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .modules-grid {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
     }
     
-    .hero-content {
-        position: relative;
-        z-index: 2;
-        text-align: center;
-    }
-    
-    .hero-badge {
-        display: inline-block;
-        background: var(--parliament-primary);
-        color: #ffffff;
-        padding: 0.5rem 1.5rem;
-        border-radius: 50px;
-        font-size: 0.875rem;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
+    {% if not user.is_authenticated %}
     .hero-title {
-        font-size: 3.5rem;
-        font-weight: 800;
-        margin-bottom: 1rem;
-        color: var(--parliament-dark);
-        line-height: 1.2;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        font-size: 2.5rem;
     }
     
     .hero-subtitle {
-        font-size: 1.5rem;
-        color: var(--parliament-neutral);
-        margin-bottom: 0.75rem;
-        font-weight: 600;
-    }
-    
-    .hero-location {
-        font-size: 1.125rem;
-        color: var(--parliament-neutral);
-        margin-bottom: 3rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        font-weight: 500;
-    }
-    
-    .hero-location i {
-        color: var(--parliament-accent);
         font-size: 1.25rem;
     }
-    
-    .hero-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 2rem;
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 2rem;
-        background: #f8fafc;
-        border-radius: 20px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
-    }
-    
-    .hero-stat {
-        text-align: center;
-    }
-    
-    .hero-stat-number {
-        font-size: 2.5rem;
-        font-weight: 800;
-        color: var(--parliament-primary);
-        display: block;
-        line-height: 1;
-    }
-    
-    .hero-stat-label {
-        color: var(--parliament-neutral);
-        font-size: 0.875rem;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-top: 0.5rem;
-    }
-    
-    /* Welcome Section for Authenticated Users */
-    .welcome-section {
-        background: var(--parliament-primary);
-        color: #ffffff;
-        padding: 2.5rem;
-        border-radius: 16px;
-        margin-bottom: 3rem;
-        position: relative;
-    }
-    
-    .welcome-content {
-        position: relative;
-        z-index: 2;
-    }
-    
-    .welcome-title {
-        font-size: 1.75rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-    
-    .welcome-message {
-        font-size: 1.1rem;
-        margin-bottom: 2rem;
-        line-height: 1.6;
-        opacity: 0.95;
-    }
-    
-    .welcome-actions {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
-    
-    .welcome-btn {
-        padding: 1rem 2rem;
-        border-radius: 12px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.75rem;
-        font-size: 1rem;
-        border: 2px solid transparent;
-    }
-    
-    .welcome-btn-light {
-        background: #ffffff;
-        color: var(--parliament-primary);
-        border-color: #ffffff;
-    }
-    
-    .welcome-btn-light:hover {
-        background: #f3f4f6;
-        color: var(--parliament-primary);
-        border-color: #f3f4f6;
-        text-decoration: none;
-        transform: translateY(-2px);
-    }
-    
-    .welcome-btn-outline {
-        background: transparent;
-        color: #ffffff;
-        border-color: rgba(255,255,255,0.7);
-    }
-    
-    .welcome-btn-outline:hover {
-        background: rgba(255,255,255,0.2);
-        color: #ffffff;
-        border-color: #ffffff;
-        text-decoration: none;
-    }
-    
-    /* System Modules Section */
-    .modules-section {
-        margin-bottom: 4rem;
-    }
-    
-    .section-header {
-        text-align: center;
-        margin-bottom: 3rem;
+    {% endif %}
+}
+
+@media (max-width: 768px) {
+    .home-container {
+        padding: 1rem 0;
     }
     
     .section-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: var(--parliament-dark);
-        margin-bottom: 1rem;
+        font-size: 2rem;
     }
     
     .section-subtitle {
-        color: var(--parliament-neutral);
-        font-size: 1.25rem;
-        max-width: 600px;
-        margin: 0 auto;
-        line-height: 1.6;
+        font-size: 1.1rem;
     }
     
     .modules-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-        gap: 2rem;
-        max-width: 1200px;
-        margin: 0 auto;
+        grid-template-columns: 1fr;
+        gap: 1rem;
     }
     
     .module-card {
-        background: #ffffff;
-        border-radius: 20px;
-        padding: 2.5rem;
-        text-decoration: none;
-        color: var(--parliament-dark);
-        transition: all 0.4s ease;
-        border: 1px solid #e5e7eb;
-        position: relative;
-    }
-    
-    .module-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        text-decoration: none;
-        color: var(--parliament-dark);
+        padding: 1.5rem;
     }
     
     .module-header {
-        display: flex;
-        align-items: center;
-        gap: 1.5rem;
-        margin-bottom: 1.5rem;
+        gap: 1rem;
     }
     
     .module-icon {
-        width: 70px;
-        height: 70px;
-        background: var(--parliament-primary);
-        border-radius: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #ffffff;
-        font-size: 1.75rem;
-        flex-shrink: 0;
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
     }
     
     .module-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--parliament-dark);
-        margin: 0;
-    }
-    
-    .module-description {
-        color: var(--parliament-neutral);
-        font-size: 1rem;
-        line-height: 1.6;
-        margin-bottom: 1.5rem;
-    }
-    
-    .module-meta {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        color: var(--parliament-primary);
-        font-weight: 600;
-        font-size: 0.9rem;
-    }
-    
-    .module-meta i {
-        font-size: 1rem;
-    }
-    
-    /* System Overview Section */
-    .overview-section {
-        background: #f9fafb;
-        padding: 4rem 0;
-        margin: 4rem 0;
-        border-radius: 30px;
-    }
-    
-    .overview-content {
-        position: relative;
-        z-index: 2;
+        font-size: 1.25rem;
     }
     
     .overview-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 2rem;
-        max-width: 1000px;
-        margin: 0 auto;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
     }
     
-    .overview-stat-card {
-        background: #ffffff;
-        padding: 2rem;
-        border-radius: 16px;
-        text-align: center;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s ease;
-        border: 1px solid #e5e7eb;
+    {% if user.is_authenticated %}
+    .welcome-section {
+        padding: 2rem 1.5rem;
     }
     
-    .overview-stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    }
-    
-    .overview-icon {
-        width: 60px;
-        height: 60px;
-        background: var(--parliament-primary);
-        border-radius: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 1.5rem;
-        color: #ffffff;
+    .welcome-title {
         font-size: 1.5rem;
     }
     
-    .overview-number {
-        font-size: 2.25rem;
-        font-weight: 800;
-        color: var(--parliament-primary);
-        margin-bottom: 0.5rem;
-        display: block;
+    .welcome-message {
+        font-size: 1rem;
     }
     
-    .overview-label {
-        color: var(--parliament-neutral);
-        font-weight: 600;
-        font-size: 0.95rem;
-    }
-    
-    /* Call to Action for Non-authenticated Users */
-    .cta-section {
-        background: var(--parliament-primary);
-        color: #ffffff;
-        padding: 4rem 2rem;
-        border-radius: 24px;
-        text-align: center;
-        margin: 3rem 0;
-    }
-    
-    .cta-content {
-        position: relative;
-        z-index: 2;
-        max-width: 600px;
-        margin: 0 auto;
-    }
-    
-    .cta-icon {
-        width: 100px;
-        height: 100px;
-        background: rgba(255, 255, 255, 0.15);
-        border-radius: 20px;
-        display: flex;
+    .welcome-actions {
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
-        margin: 0 auto 2rem;
-        font-size: 2.5rem;
-        color: #ffffff;
+    }
+    {% else %}
+    .hero-section {
+        padding: 3rem 0;
     }
     
-    .cta-title {
-        font-size: 2.5rem;
-        font-weight: 800;
-        margin-bottom: 1rem;
+    .hero-title {
+        font-size: 2rem;
     }
     
-    .cta-message {
-        font-size: 1.25rem;
-        margin-bottom: 2.5rem;
-        line-height: 1.6;
+    .hero-subtitle {
+        font-size: 1.1rem;
+    }
+    
+    .hero-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        padding: 1.5rem;
+    }
+    
+    .hero-stat-number {
+        font-size: 2rem;
+    }
+    
+    .cta-section {
+        padding: 2rem;
+        margin: 2rem 1rem;
     }
     
     .cta-actions {
-        display: flex;
-        gap: 1.5rem;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-    
-    .cta-btn {
-        padding: 1.25rem 2.5rem;
-        border-radius: 12px;
-        text-decoration: none;
-        font-weight: 700;
-        font-size: 1.1rem;
-        transition: all 0.3s ease;
-        display: inline-flex;
+        flex-direction: column;
         align-items: center;
-        gap: 0.75rem;
-        border: 2px solid transparent;
+    }
+    {% endif %}
+}
+
+@media (max-width: 480px) {
+    .overview-grid {
+        grid-template-columns: 1fr;
     }
     
-    .cta-btn-light {
-        background: #ffffff;
-        color: var(--parliament-primary);
+    {% if not user.is_authenticated %}
+    .hero-stats {
+        grid-template-columns: 1fr;
     }
-    
-    .cta-btn-light:hover {
-        background: #f3f4f6;
-        color: var(--parliament-primary);
-        text-decoration: none;
-        transform: translateY(-3px);
-    }
-    
-    .cta-btn-outline {
-        background: transparent;
-        color: #ffffff;
-        border-color: rgba(255, 255, 255, 0.7);
-    }
-    
-    .cta-btn-outline:hover {
-        background: rgba(255, 255, 255, 0.2);
-        color: #ffffff;
-        border-color: #ffffff;
-        text-decoration: none;
-    }
-    
-    /* Responsive Design */
-    @media (max-width: 968px) {
-        .hero-title {
-            font-size: 3rem;
-        }
-        
-        .modules-grid {
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        }
-        
-        .hero-stats {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.5rem;
-        }
-    }
-    
-    @media (max-width: 768px) {
-        .hero-title {
-            font-size: 2.5rem;
-        }
-        
-        .hero-section {
-            padding: 3rem 0;
-        }
-        
-        .modules-grid {
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
-        }
-        
-        .module-card {
-            padding: 2rem;
-        }
-        
-        .overview-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-        
-        .welcome-actions,
-        .cta-actions {
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .welcome-btn,
-        .cta-btn {
-            width: 100%;
-            justify-content: center;
-            max-width: 300px;
-        }
-        
-        .hero-stats {
-            grid-template-columns: 1fr;
-            padding: 1.5rem;
-        }
-        
-        .section-title {
-            font-size: 2rem;
-        }
-        
-        .cta-title {
-            font-size: 2rem;
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .overview-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .hero-title {
-            font-size: 2rem;
-        }
-        
-        .hero-badge {
-            font-size: 0.75rem;
-            padding: 0.4rem 1rem;
-        }
-        
-        .module-header {
-            flex-direction: column;
-            text-align: center;
-        }
-        
-        .section-header {
-            margin-bottom: 2rem;
-        }
-    }
+    {% endif %}
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
-<section class="hero-section">
+<div class="home-container">
     <div class="container">
-        <div class="hero-content">
-            <div class="hero-badge">
-                <i class="bi bi-shield-check me-2"></i>
-                Parliament IT Inventory Management System
-            </div>
-            
-            <h1 class="hero-title">PIMS</h1>
-            
-            
-            <div class="hero-location">
-                <i class="bi bi-geo-alt"></i>
-                <span>Bangladesh Parliament Secretariat, Sher-E-Bangla Nagar, Dhaka, Bangladesh</span>
-            </div>
-            
-            <div class="hero-stats">
-                <div class="hero-stat">
-                    <span class="hero-stat-number" id="total-users">0</span>
-                    <div class="hero-stat-label">System Users</div>
-                </div>
-                <div class="hero-stat">
-                    <span class="hero-stat-number" id="total-devices">0</span>
-                    <div class="hero-stat-label">IT Assets</div>
-                </div>
-                <div class="hero-stat">
-                    <span class="hero-stat-number" id="total-locations">0</span>
-                    <div class="hero-stat-label">Locations</div>
-                </div>
-                <div class="hero-stat">
-                    <span class="hero-stat-number" id="active-assignments">0</span>
-                    <div class="hero-stat-label">Active Tasks</div>
+        {% if user.is_authenticated %}
+        <!-- Welcome Section for Authenticated Users -->
+        <div class="welcome-section">
+            <div class="welcome-content">
+                <h1 class="welcome-title">
+                    <i class="bi bi-house"></i>
+                    Welcome to PIMS, {{ user.get_full_name|default:user.username }}!
+                </h1>
+                <p class="welcome-message">
+                    Your comprehensive IT inventory management dashboard for Bangladesh Parliament Secretariat. 
+                    Monitor devices, track assignments, manage locations, and oversee maintenance activities all in one place.
+                </p>
+                <div class="welcome-actions">
+                    <a href="{% url 'dashboard' %}" class="welcome-btn welcome-btn-light">
+                        <i class="bi bi-speedometer2"></i>
+                        View Dashboard
+                    </a>
+                    <a href="{% url 'devices:create' %}" class="welcome-btn welcome-btn-outline">
+                        <i class="bi bi-plus-circle"></i>
+                        Add Device
+                    </a>
                 </div>
             </div>
         </div>
-    </div>
-</section>
+        {% else %}
+        <!-- Hero Section for Non-authenticated Users -->
+        <div class="hero-section">
+            <div class="container">
+                <div class="hero-content">
+                    <h1 class="hero-title">PIMS</h1>
+                    <h2 class="hero-subtitle">Parliament IT Inventory Management System</h2>
+                    <p class="hero-description">
+                        Comprehensive IT asset management solution for Bangladesh Parliament Secretariat. 
+                        Streamline device tracking, user assignments, maintenance scheduling, and inventory oversight.
+                    </p>
+                    
+                    <div class="hero-stats">
+                        <div class="hero-stat">
+                            <span class="hero-stat-number">1,000+</span>
+                            <div class="hero-stat-label">IT Devices</div>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="hero-stat-number">200+</span>
+                            <div class="hero-stat-label">Active Users</div>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="hero-stat-number">50+</span>
+                            <div class="hero-stat-label">Locations</div>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="hero-stat-number">24/7</span>
+                            <div class="hero-stat-label">System Monitoring</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
-{% if user.is_authenticated %}
-<!-- Welcome Section for Authenticated Users -->
-<div class="container">
-    <div class="welcome-section">
-        <div class="welcome-content">
-            <h3 class="welcome-title">
-                <i class="bi bi-person-circle"></i>
-                Welcome back, {{ user.get_full_name|default:user.username }}!
-            </h3>
-            <p class="welcome-message">
-                You're logged in as 
-                <strong>
-                {% if user.is_superuser %}
-                    System Administrator
-                {% elif user.is_staff %}
-                    Staff Member  
-                {% else %}
-                    User
-                {% endif %}
-                </strong>. Access your dashboard and manage the Bangladesh Parliament Secretariat's IT inventory efficiently from your secure workspace.
-            </p>
-            <div class="welcome-actions">
-                <a href="{% url 'locations:dashboard' %}" class="welcome-btn welcome-btn-light">
-                    <i class="bi bi-speedometer2"></i>
-                    Dashboard
+        <!-- System Modules Section -->
+        <section class="modules-section">
+            <div class="section-header">
+                <h2 class="section-title">System Modules</h2>
+                <p class="section-subtitle">Comprehensive tools for managing IT infrastructure and operations</p>
+            </div>
+            
+            <div class="modules-grid">
+                <a href="{% url 'users:list' %}" class="module-card users">
+                    <div class="module-header">
+                        <div class="module-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h3 class="module-title">User Management</h3>
+                    </div>
+                    <p class="module-description">
+                        Manage user accounts, roles, permissions, and access controls for secure system administration and personnel tracking.
+                    </p>
+                    <div class="module-meta">
+                        <i class="bi bi-shield-check"></i>
+                        <span>Role-based Access</span>
+                    </div>
                 </a>
-                <a href="{% url 'devices:list' %}" class="welcome-btn welcome-btn-outline">
-                    <i class="bi bi-laptop"></i>
-                    View Devices
+                
+                <a href="{% url 'locations:list' %}" class="module-card locations">
+                    <div class="module-header">
+                        <div class="module-icon">
+                            <i class="bi bi-geo-alt"></i>
+                        </div>
+                        <h3 class="module-title">Location Management</h3>
+                    </div>
+                    <p class="module-description">
+                        Organize and track physical locations including buildings, floors, rooms, and office spaces throughout the parliament complex.
+                    </p>
+                    <div class="module-meta">
+                        <i class="bi bi-building"></i>
+                        <span>Hierarchical Structure</span>
+                    </div>
+                </a>
+                
+                <a href="{% url 'devices:list' %}" class="module-card devices">
+                    <div class="module-header">
+                        <div class="module-icon">
+                            <i class="bi bi-laptop"></i>
+                        </div>
+                        <h3 class="module-title">Device Management</h3>
+                    </div>
+                    <p class="module-description">
+                        Comprehensive IT asset tracking with detailed categories, specifications, and warranty information for all equipment.
+                    </p>
+                    <div class="module-meta">
+                        <i class="bi bi-qr-code"></i>
+                        <span>QR Code Integration</span>
+                    </div>
+                </a>
+                
+                <a href="{% url 'vendors:list' %}" class="module-card vendors">
+                    <div class="module-header">
+                        <div class="module-icon">
+                            <i class="bi bi-shop"></i>
+                        </div>
+                        <h3 class="module-title">Vendor Management</h3>
+                    </div>
+                    <p class="module-description">
+                        Maintain comprehensive supplier information and procurement relationships for efficient vendor coordination.
+                    </p>
+                    <div class="module-meta">
+                        <i class="bi bi-handshake"></i>
+                        <span>Supplier Network</span>
+                    </div>
+                </a>
+                
+                <a href="{% url 'assignments:list' %}" class="module-card assignments">
+                    <div class="module-header">
+                        <div class="module-icon">
+                            <i class="bi bi-arrow-left-right"></i>
+                        </div>
+                        <h3 class="module-title">Assignment Tracking</h3>
+                    </div>
+                    <p class="module-description">
+                        Monitor and manage device assignments to users and locations with detailed status tracking and history.
+                    </p>
+                    <div class="module-meta">
+                        <i class="bi bi-calendar-check"></i>
+                        <span>Status Monitoring</span>
+                    </div>
+                </a>
+                
+                <a href="{% url 'maintenance:list' %}" class="module-card maintenance">
+                    <div class="module-header">
+                        <div class="module-icon">
+                            <i class="bi bi-wrench"></i>
+                        </div>
+                        <h3 class="module-title">Maintenance</h3>
+                    </div>
+                    <p class="module-description">
+                        Schedule and track device maintenance with automated alerts and comprehensive service history records.
+                    </p>
+                    <div class="module-meta">
+                        <i class="bi bi-clock"></i>
+                        <span>Automated Scheduling</span>
+                    </div>
                 </a>
             </div>
-        </div>
+        </section>
     </div>
-</div>
-{% endif %}
 
-<!-- System Modules Section -->
-<div class="container">
-    <section class="modules-section">
-        <div class="section-header">
-            <h2 class="section-title">System Modules</h2>
-            <p class="section-subtitle">
-                Comprehensive IT inventory management designed specifically for Bangladesh Parliament Secretariat operations
-            </p>
-        </div>
-        
-        <div class="modules-grid">
-            <a href="{% url 'users:list' %}" class="module-card">
-                <div class="module-header">
-                    <div class="module-icon">
-                        <i class="bi bi-people"></i>
+    <!-- System Overview Section -->
+    <section class="overview-section">
+        <div class="container">
+            <div class="overview-content">
+                <div class="section-header">
+                    <h2 class="section-title">System Overview</h2>
+                    <p class="section-subtitle">Real-time statistics and system health indicators</p>
+                </div>
+                
+                <div class="overview-grid">
+                    <div class="overview-stat-card">
+                        <div class="overview-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <span class="overview-number">{{ stats.total_users|default:"---" }}</span>
+                        <div class="overview-label">Active Users</div>
                     </div>
-                    <h3 class="module-title">User Management</h3>
-                </div>
-                <p class="module-description">
-                    Manage system users, roles, and permissions with secure access control for parliamentary staff and administrators.
-                </p>
-                <div class="module-meta">
-                    <i class="bi bi-person-badge"></i>
-                    <span>Role-based Access Control</span>
-                </div>
-            </a>
-            
-            <a href="{% url 'locations:list' %}" class="module-card">
-                <div class="module-header">
-                    <div class="module-icon">
-                        <i class="bi bi-geo-alt"></i>
+                    
+                    <div class="overview-stat-card">
+                        <div class="overview-icon">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <span class="overview-number">{{ stats.total_locations|default:"---" }}</span>
+                        <div class="overview-label">Locations</div>
                     </div>
-                    <h3 class="module-title">Location Management</h3>
-                </div>
-                <p class="module-description">
-                    Track and organize buildings, floors, rooms, and offices throughout the Parliament complex with precise geo-coordinates.
-                </p>
-                <div class="module-meta">
-                    <i class="bi bi-building"></i>
-                    <span>Hierarchical Structure</span>
-                </div>
-            </a>
-            
-            <a href="{% url 'devices:list' %}" class="module-card">
-                <div class="module-header">
-                    <div class="module-icon">
-                        <i class="bi bi-laptop"></i>
+                    
+                    <div class="overview-stat-card">
+                        <div class="overview-icon">
+                            <i class="bi bi-laptop"></i>
+                        </div>
+                        <span class="overview-number">{{ stats.total_devices|default:"---" }}</span>
+                        <div class="overview-label">IT Devices</div>
                     </div>
-                    <h3 class="module-title">Device Management</h3>
-                </div>
-                <p class="module-description">
-                    Comprehensive IT asset tracking with detailed categories, specifications, and warranty information for all equipment.
-                </p>
-                <div class="module-meta">
-                    <i class="bi bi-qr-code"></i>
-                    <span>QR Code Integration</span>
-                </div>
-            </a>
-            
-            <a href="{% url 'vendors:list' %}" class="module-card">
-                <div class="module-header">
-                    <div class="module-icon">
-                        <i class="bi bi-shop"></i>
+                    
+                    <div class="overview-stat-card">
+                        <div class="overview-icon">
+                            <i class="bi bi-shop"></i>
+                        </div>
+                        <span class="overview-number">{{ stats.total_vendors|default:"---" }}</span>
+                        <div class="overview-label">Vendors</div>
                     </div>
-                    <h3 class="module-title">Vendor Management</h3>
-                </div>
-                <p class="module-description">
-                    Maintain comprehensive supplier information and procurement relationships for efficient vendor coordination.
-                </p>
-                <div class="module-meta">
-                    <i class="bi bi-handshake"></i>
-                    <span>Supplier Network</span>
-                </div>
-            </a>
-            
-            <a href="{% url 'assignments:list' %}" class="module-card">
-                <div class="module-header">
-                    <div class="module-icon">
-                        <i class="bi bi-arrow-left-right"></i>
+                    
+                    <div class="overview-stat-card">
+                        <div class="overview-icon">
+                            <i class="bi bi-arrow-left-right"></i>
+                        </div>
+                        <span class="overview-number">{{ stats.active_assignments|default:"---" }}</span>
+                        <div class="overview-label">Assignments</div>
                     </div>
-                    <h3 class="module-title">Assignment Tracking</h3>
-                </div>
-                <p class="module-description">
-                    Monitor and manage device assignments to users and locations with detailed status tracking and history.
-                </p>
-                <div class="module-meta">
-                    <i class="bi bi-calendar-check"></i>
-                    <span>Status Monitoring</span>
-                </div>
-            </a>
-            
-            <a href="{% url 'maintenance:list' %}" class="module-card">
-                <div class="module-header">
-                    <div class="module-icon">
-                        <i class="bi bi-wrench"></i>
+                    
+                    <div class="overview-stat-card">
+                        <div class="overview-icon">
+                            <i class="bi bi-wrench"></i>
+                        </div>
+                        <span class="overview-number">{{ stats.pending_maintenance|default:"---" }}</span>
+                        <div class="overview-label">Maintenance</div>
                     </div>
-                    <h3 class="module-title">Maintenance</h3>
                 </div>
-                <p class="module-description">
-                    Schedule and track device maintenance with automated alerts and comprehensive service history records.
-                </p>
-                <div class="module-meta">
-                    <i class="bi bi-clock"></i>
-                    <span>Automated Scheduling</span>
-                </div>
-            </a>
+            </div>
         </div>
     </section>
-</div>
 
-<!-- System Overview Section -->
-<section class="overview-section">
+    {% if not user.is_authenticated %}
+    <!-- Call to Action for Non-authenticated Users -->
     <div class="container">
-        <div class="overview-content">
-            <div class="section-header">
-                <h2 class="section-title">System Overview</h2>
-                <p class="section-subtitle">Real-time statistics and system health indicators</p>
-            </div>
-            
-            <div class="overview-grid">
-                <div class="overview-stat-card">
-                    <div class="overview-icon">
-                        <i class="bi bi-people"></i>
-                    </div>
-                    <span class="overview-number">---</span>
-                    <div class="overview-label">Active Users</div>
-                </div>
-                
-                <div class="overview-stat-card">
-                    <div class="overview-icon">
-                        <i class="bi bi-building"></i>
-                    </div>
-                    <span class="overview-number">---</span>
-                    <div class="overview-label">Locations</div>
-                </div>
-                
-                <div class="overview-stat-card">
-                    <div class="overview-icon">
-                        <i class="bi bi-laptop"></i>
-                    </div>
-                    <span class="overview-number">---</span>
-                    <div class="overview-label">IT Devices</div>
-                </div>
-                
-                <div class="overview-stat-card">
-                    <div class="overview-icon">
-                        <i class="bi bi-shop"></i>
-                    </div>
-                    <span class="overview-number">---</span>
-                    <div class="overview-label">Vendors</div>
-                </div>
-                
-                <div class="overview-stat-card">
-                    <div class="overview-icon">
-                        <i class="bi bi-arrow-left-right"></i>
-                    </div>
-                    <span class="overview-number">---</span>
-                    <div class="overview-label">Assignments</div>
-                </div>
-                
-                <div class="overview-stat-card">
-                    <div class="overview-icon">
-                        <i class="bi bi-wrench"></i>
-                    </div>
-                    <span class="overview-number">---</span>
-                    <div class="overview-label">Maintenance</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-{% if not user.is_authenticated %}
-<!-- Call to Action for Non-authenticated Users -->
-<div class="container">
-    <div class="cta-section">
-        <div class="cta-content">
+        <div class="cta-section">
             <div class="cta-icon">
                 <i class="bi bi-shield-lock"></i>
             </div>
@@ -788,86 +835,150 @@
                 This system is restricted to authorized personnel only.
             </p>
             <div class="cta-actions">
-                <a href="{% url 'admin:login' %}" class="cta-btn cta-btn-light">
+                <a href="{% url 'admin:login' %}" class="cta-btn cta-btn-primary">
                     <i class="bi bi-box-arrow-in-right"></i>
-                    Staff Login
+                    Sign In
                 </a>
-                <a href="{% url 'admin:index' %}" class="cta-btn cta-btn-outline">
-                    <i class="bi bi-gear"></i>
-                    Administration
+                <a href="#" class="cta-btn cta-btn-outline">
+                    <i class="bi bi-question-circle"></i>
+                    Need Help?
                 </a>
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
-{% endif %}
+{% endblock %}
 
+{% block extra_js %}
 <script>
-// Animate statistics on page load
 document.addEventListener('DOMContentLoaded', function() {
-    const stats = [
-        { id: 'total-users', target: 0, duration: 1500 },
-        { id: 'total-devices', target: 0, duration: 1800 },
-        { id: 'total-locations', target: 0, duration: 1200 },
-        { id: 'active-assignments', target: 0, duration: 2000 }
-    ];
+    // Animate stat numbers on scroll
+    const observerOptions = {
+        threshold: 0.5,
+        rootMargin: '0px 0px -100px 0px'
+    };
     
-    stats.forEach(stat => {
-        const element = document.getElementById(stat.id);
-        if (element) {
-            animateNumber(element, stat.target, stat.duration);
-        }
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const statNumbers = entry.target.querySelectorAll('.overview-number, .hero-stat-number');
+                statNumbers.forEach(numberElement => {
+                    animateNumber(numberElement);
+                });
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+    
+    // Observe stat sections
+    const statSections = document.querySelectorAll('.overview-section, .hero-section');
+    statSections.forEach(section => {
+        observer.observe(section);
     });
     
-    function animateNumber(element, target, duration) {
-        const start = 0;
-        const increment = target / (duration / 16);
-        let current = start;
+    function animateNumber(element) {
+        const finalNumber = element.textContent.trim();
+        if (finalNumber === '---' || isNaN(parseInt(finalNumber.replace(/,/g, '')))) {
+            return;
+        }
         
-        const timer = setInterval(() => {
-            current += increment;
-            if (current >= target) {
-                current = target;
-                clearInterval(timer);
+        const number = parseInt(finalNumber.replace(/,/g, ''));
+        const duration = 1500;
+        const startTime = performance.now();
+        
+        function updateNumber(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Easing function
+            const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+            const currentNumber = Math.floor(number * easeOutCubic);
+            
+            element.textContent = currentNumber.toLocaleString();
+            
+            if (progress < 1) {
+                requestAnimationFrame(updateNumber);
+            } else {
+                element.textContent = finalNumber;
             }
-            element.textContent = Math.floor(current);
-        }, 16);
+        }
+        
+        requestAnimationFrame(updateNumber);
     }
     
-    // Add smooth scroll behavior for navigation links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
+    // Add hover effects to module cards
+    const moduleCards = document.querySelectorAll('.module-card');
+    moduleCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(-8px) scale(1)';
         });
     });
     
-    // Add loading state for module cards
-    document.querySelectorAll('.module-card').forEach(card => {
-        card.addEventListener('click', function(e) {
-            const icon = this.querySelector('.module-icon i');
-            if (icon) {
-                icon.className = 'bi bi-arrow-clockwise';
-                icon.style.animation = 'spin 1s linear infinite';
-            }
+    // Parallax effect for hero section (non-authenticated users)
+    const heroSection = document.querySelector('.hero-section');
+    if (heroSection) {
+        window.addEventListener('scroll', function() {
+            const scrolled = window.pageYOffset;
+            const rate = scrolled * -0.5;
+            heroSection.style.transform = `translate3d(0, ${rate}px, 0)`;
         });
-    });
+    }
     
-    // CSS animation for loading spinner
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+    // Welcome section animation (authenticated users)
+    const welcomeSection = document.querySelector('.welcome-section');
+    if (welcomeSection) {
+        // Add subtle animation to welcome content
+        const welcomeContent = welcomeSection.querySelector('.welcome-content');
+        if (welcomeContent) {
+            welcomeContent.style.animation = 'fadeInUp 0.8s ease-out';
         }
-    `;
-    document.head.appendChild(style);
+    }
+    
+    // Module cards staggered animation
+    moduleCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s ease-out';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, 100 * index);
+    });
 });
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+    
+    .overview-stat-card:hover .overview-icon {
+        animation: pulse 0.6s ease-in-out;
+    }
+`;
+document.head.appendChild(style);
 </script>
 {% endblock %}

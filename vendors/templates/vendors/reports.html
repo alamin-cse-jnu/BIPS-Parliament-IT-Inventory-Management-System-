@@ -364,7 +364,7 @@
                         </div>
                         <div class="progress mt-2" style="height: 4px;">
                             <div class="progress-bar bg-info" 
-                                 style="width: {{ dhaka_vendors|default:0|mul:100|div:total_vendors|default:0 }}%"></div>
+                                 style="width: {% widthratio dhaka_vendors total_vendors 100 %}%"></div>
                         </div>
                     </div>
                     
@@ -380,7 +380,7 @@
                         </div>
                         <div class="progress mt-2" style="height: 4px;">
                             <div class="progress-bar bg-warning" 
-                                 style="width: {{ international_vendors|default:0|mul:100|div:total_vendors|default:0 }}%"></div>
+                                 style="width: {% widthratio international_vendors total_vendors 100 %}%"></div>
                         </div>
                     </div>
                     
@@ -396,7 +396,7 @@
                         </div>
                         <div class="progress mt-2" style="height: 4px;">
                             <div class="progress-bar bg-success" 
-                                 style="width: {{ rated_vendors|default:0|mul:100|div:total_vendors|default:0 }}%"></div>
+                                 style="width: {% widthratio rated_vendors total_vendors 100 %}%"></div>
                         </div>
                     </div>
                 </div>

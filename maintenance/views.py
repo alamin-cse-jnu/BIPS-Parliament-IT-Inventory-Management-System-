@@ -2368,6 +2368,58 @@ class MaintenanceStatisticsView(LoginRequiredMixin, TemplateView):
         
         return context
 
+# ============================================================================
+# export_maintenance_simple_csv
+# ============================================================================
+
+def export_maintenance_simple_csv(request):
+    """
+    Simple CSV export for maintenance records.
+    Location: Bangladesh Parliament Secretariat IT Inventory Management System
+    """
+    from django.http import HttpResponse
+    from django.contrib.auth.decorators import login_required
+    from django.utils import timezone
+    import csv
+    from .models import Maintenance
+    
+    # Create HTTP response with CSV content type
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="maintenance_simple_{timezone.now().strftime("%Y%m%d")}.csv"'
+    
+    # Create CSV writer
+    writer = csv.writer(response)
+    
+    # Write simple header row (fewer columns for simplicity)
+    writer.writerow([
+        'Maintenance ID', 
+        'Device ID', 
+        'Type', 
+        'Status', 
+        'Start Date', 
+        'Expected End', 
+        'Cost'
+    ])
+    
+    # Get maintenance records with related device data
+    maintenance_records = Maintenance.objects.select_related('device').order_by('-start_date')
+    
+    # Write data rows
+    for maintenance in maintenance_records:
+        writer.writerow([
+            maintenance.maintenance_id,
+            maintenance.device.device_id if maintenance.device else '',
+            maintenance.get_maintenance_type_display(),
+            maintenance.get_status_display(),
+            maintenance.start_date.strftime('%Y-%m-%d') if maintenance.start_date else '',
+            maintenance.expected_end_date.strftime('%Y-%m-%d') if maintenance.expected_end_date else '',
+            maintenance.actual_cost or maintenance.estimated_cost or 0
+        ])
+    
+    return response
+
+# Add login requirement decorator if not applied in urls.py
+export_maintenance_simple_csv = login_required(export_maintenance_simple_csv)
 
 # ============================================================================
 # AJAX API Endpoints

@@ -1,0 +1,106 @@
+{% load static %}
+
+<!-- Footer -->
+<footer class="{% if user.is_authenticated %}footer-authenticated{% endif %} bg-light border-top mt-auto py-3">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center text-muted small">
+                    <img src="{% static 'images/bangladesh-parliament-logo.png' %}" 
+                         alt="Parliament Logo" 
+                         height="24" 
+                         width="24" 
+                         class="me-2"
+                         onerror="this.style.display='none'">
+                    <div>
+                        <div class="fw-semibold">
+                            Bangladesh Parliament Secretariat
+                        </div>
+                        <small class="text-muted">
+                            PIMS - Parliament IT Inventory Management System
+                        </small> <br>
+                        <small class="text-muted">
+                             Developed by <strong>Md. Al-Amin Hossain</strong>, Computer Programmer, BPS | 
+                            &copy; {% now "Y" %} All rights reserved.
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="text-muted small text-md-end">
+                    <div class="d-flex flex-column flex-md-row justify-content-md-end align-items-md-center gap-3">
+                        <span class="d-flex align-items-center">
+                            <i class="bi bi-geo-alt me-1 text-primary"></i>
+                            Dhaka, Bangladesh
+                        </span>
+                        <span class="d-flex align-items-center">
+                            <i class="bi bi-code-square me-1 text-primary"></i>
+                            Version {{ app_version|default:'1.0.0' }}
+                        </span>
+                        {% if user.is_authenticated %}
+                            <span class="d-flex align-items-center">
+                                <i class="bi bi-person me-1 text-primary"></i>
+                                {{ user.username }}
+                            </span>
+                        {% endif %}
+                        <span class="d-flex align-items-center">
+                            <i class="bi bi-shield-check me-1 text-success"></i>
+                            Secure System
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<style>
+/* Footer Styling - Flat Design */
+footer {
+    background-color: var(--bg-primary) !important;
+    border-top: 1px solid var(--border-light) !important;
+    margin-top: auto;
+}
+
+.footer-authenticated {
+    margin-left: 260px;
+    transition: var(--transition);
+}
+
+footer .text-muted {
+    color: var(--text-secondary) !important;
+}
+
+footer .fw-semibold {
+    color: var(--text-primary) !important;
+}
+
+footer .text-primary {
+    color: var(--primary-teal) !important;
+}
+
+footer .text-success {
+    color: var(--success) !important;
+}
+
+footer img {
+    border-radius: var(--radius-sm);
+    object-fit: contain;
+}
+
+@media (max-width: 1024px) {
+    .footer-authenticated {
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    footer .d-flex.gap-3 {
+        gap: 0.75rem !important;
+    }
+    
+    footer .small {
+        font-size: 0.8125rem !important;
+    }
+}
+</style>

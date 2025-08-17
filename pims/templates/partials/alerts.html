@@ -1,0 +1,362 @@
+<!-- Alert Messages Component -->
+{% if messages %}
+<div class="alerts-container mb-4">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show flat-alert" 
+         role="alert" data-auto-dismiss="true">
+        <div class="d-flex align-items-start">
+            <!-- Alert Icon -->
+            <div class="alert-icon me-3">
+                {% if message.tags == 'success' %}
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                {% elif message.tags == 'error' or message.tags == 'danger' %}
+                    <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+                {% elif message.tags == 'warning' %}
+                    <i class="bi bi-exclamation-circle-fill text-warning"></i>
+                {% elif message.tags == 'info' %}
+                    <i class="bi bi-info-circle-fill text-info"></i>
+                {% else %}
+                    <i class="bi bi-bell-fill text-primary"></i>
+                {% endif %}
+            </div>
+            
+            <!-- Alert Content -->
+            <div class="alert-content flex-grow-1">
+                <div class="alert-message">{{ message }}</div>
+            </div>
+            
+            <!-- Dismiss Button -->
+            <button type="button" class="btn-close ms-2" 
+                    data-bs-dismiss="alert" aria-label="Close">
+            </button>
+        </div>
+        
+        <!-- Progress Bar for Auto-dismiss -->
+        <div class="alert-progress">
+            <div class="alert-progress-bar"></div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+/* Flat Design Alert Styles */
+.alerts-container {
+    position: relative;
+    z-index: 1040;
+}
+
+.flat-alert {
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    margin-bottom: 1rem;
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition);
+    background-color: var(--bg-primary);
+}
+
+.flat-alert:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Alert Type Specific Styles */
+.alert-success.flat-alert {
+    background-color: var(--success-light);
+    border-color: var(--success);
+    border-left: 4px solid var(--success);
+}
+
+.alert-danger.flat-alert {
+    background-color: var(--error-light);
+    border-color: var(--error);
+    border-left: 4px solid var(--error);
+}
+
+.alert-warning.flat-alert {
+    background-color: var(--warning-light);
+    border-color: var(--warning);
+    border-left: 4px solid var(--warning);
+}
+
+.alert-info.flat-alert {
+    background-color: var(--info-light);
+    border-color: var(--info);
+    border-left: 4px solid var(--info);
+}
+
+.alert-primary.flat-alert {
+    background-color: var(--primary-teal-lighter);
+    border-color: var(--primary-teal);
+    border-left: 4px solid var(--primary-teal);
+}
+
+/* Alert Icon */
+.alert-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+.alert-icon .text-success {
+    color: var(--success) !important;
+}
+
+.alert-icon .text-danger {
+    color: var(--error) !important;
+}
+
+.alert-icon .text-warning {
+    color: var(--warning) !important;
+}
+
+.alert-icon .text-info {
+    color: var(--info) !important;
+}
+
+.alert-icon .text-primary {
+    color: var(--primary-teal) !important;
+}
+
+/* Alert Content */
+.alert-content {
+    color: var(--text-primary);
+    font-weight: var(--font-weight-medium);
+}
+
+.alert-message {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Close Button */
+.flat-alert .btn-close {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    opacity: 0.6;
+    transition: var(--transition-fast);
+}
+
+.flat-alert .btn-close:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Progress Bar for Auto-dismiss */
+.alert-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.alert-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-teal), var(--primary-orange));
+    width: 100%;
+    transition: width 5s linear;
+    transform-origin: left;
+}
+
+/* Alert Success Progress */
+.alert-success .alert-progress-bar {
+    background: linear-gradient(90deg, var(--success), #16a34a);
+}
+
+/* Alert Danger Progress */
+.alert-danger .alert-progress-bar {
+    background: linear-gradient(90deg, var(--error), var(--primary-red-hover));
+}
+
+/* Alert Warning Progress */
+.alert-warning .alert-progress-bar {
+    background: linear-gradient(90deg, var(--warning), var(--primary-orange-hover));
+}
+
+/* Alert Info Progress */
+.alert-info .alert-progress-bar {
+    background: linear-gradient(90deg, var(--info), var(--primary-teal-hover));
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .flat-alert {
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .alert-icon {
+        font-size: 1.25rem;
+        margin-right: 0.75rem;
+    }
+    
+    .alert-message {
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .flat-alert {
+        padding: 0.875rem;
+        border-radius: var(--radius-md);
+    }
+    
+    .alert-icon {
+        font-size: 1.125rem;
+        margin-right: 0.5rem;
+    }
+    
+    .alert-message {
+        font-size: 0.8125rem;
+    }
+}
+
+/* Animation for entrance */
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translate3d(0, -100%, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.flat-alert.show {
+    animation: slideInDown 0.3s ease-out;
+}
+
+/* Animation for exit */
+@keyframes slideOutUp {
+    from {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+    to {
+        opacity: 0;
+        transform: translate3d(0, -100%, 0);
+    }
+}
+
+.flat-alert.fade:not(.show) {
+    animation: slideOutUp 0.3s ease-in;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .flat-alert {
+        border-width: 2px;
+    }
+    
+    .alert-icon {
+        filter: contrast(1.2);
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .flat-alert {
+        transition: none;
+        animation: none;
+    }
+    
+    .flat-alert:hover {
+        transform: none;
+    }
+    
+    .alert-progress-bar {
+        transition: none;
+    }
+    
+    .btn-close:hover {
+        transform: none;
+    }
+}
+
+/* Print styles */
+@media print {
+    .alerts-container {
+        display: none;
+    }
+}
+
+/* Dark mode support (if implemented) */
+@media (prefers-color-scheme: dark) {
+    .flat-alert {
+        background-color: var(--gray-800);
+        border-color: var(--gray-600);
+        color: var(--gray-100);
+    }
+    
+    .alert-message {
+        color: var(--gray-100);
+    }
+}
+</style>
+
+<script>
+// Auto-dismiss alerts after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    const alerts = document.querySelectorAll('.flat-alert[data-auto-dismiss="true"]');
+    
+    alerts.forEach(alert => {
+        // Start progress bar animation
+        const progressBar = alert.querySelector('.alert-progress-bar');
+        if (progressBar) {
+            progressBar.style.width = '100%';
+            setTimeout(() => {
+                progressBar.style.width = '0%';
+            }, 100);
+        }
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            const alertInstance = bootstrap.Alert.getOrCreateInstance(alert);
+            if (alertInstance && alert.classList.contains('show')) {
+                alertInstance.close();
+            }
+        }, 5000);
+    });
+    
+    // Enhanced fade out animation
+    const alertElements = document.querySelectorAll('.flat-alert');
+    alertElements.forEach(alert => {
+        alert.addEventListener('closed.bs.alert', function() {
+            this.style.transform = 'translateY(-100%)';
+            this.style.opacity = '0';
+        });
+        
+        // Add click to dismiss functionality
+        alert.addEventListener('click', function(e) {
+            if (e.target === this || e.target.classList.contains('alert-content') || e.target.classList.contains('alert-message')) {
+                const alertInstance = bootstrap.Alert.getOrCreateInstance(this);
+                if (alertInstance) {
+                    alertInstance.close();
+                }
+            }
+        });
+    });
+    
+    // Keyboard accessibility
+    alertElements.forEach(alert => {
+        alert.setAttribute('tabindex', '0');
+        alert.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const alertInstance = bootstrap.Alert.getOrCreateInstance(this);
+                if (alertInstance) {
+                    alertInstance.close();
+                }
+            }
+        });
+    });
+});
+</script>
+{% endif %}

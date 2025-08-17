@@ -5,26 +5,25 @@
 
 {% block extra_css %}
 <style>
-/* Dashboard Specific Styling - Parliament Design System */
+/* Dashboard Specific Styling - Flat Design */
 .dashboard-container {
-    background: var(--bg-gradient-primary);
+    background-color: var(--bg-secondary);
     min-height: 100vh;
     padding: 2rem 0;
 }
 
 .dashboard-header {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-backdrop);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--border-radius-xl);
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
     padding: var(--spacing-xl);
     margin-bottom: var(--spacing-xl);
-    box-shadow: var(--glass-shadow);
+    box-shadow: var(--shadow-card);
 }
 
 .dashboard-title {
-    color: var(--parliament-primary);
-    font-weight: 700;
+    color: var(--text-primary);
+    font-weight: var(--font-weight-bold);
     margin-bottom: var(--spacing-sm);
     display: flex;
     align-items: center;
@@ -32,7 +31,7 @@
 }
 
 .dashboard-subtitle {
-    color: var(--parliament-neutral);
+    color: var(--text-secondary);
     margin-bottom: 0;
 }
 
@@ -44,12 +43,11 @@
 }
 
 .stat-card {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-backdrop);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--border-radius-xl);
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
     padding: var(--spacing-xl);
-    box-shadow: var(--glass-shadow);
+    box-shadow: var(--shadow-card);
     transition: var(--transition);
     position: relative;
     overflow: hidden;
@@ -62,19 +60,18 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: var(--stat-color, var(--parliament-primary));
-    border-radius: var(--border-radius-xl) var(--border-radius-xl) 0 0;
+    background: var(--stat-color, var(--primary-teal));
 }
 
 .stat-card:hover {
     transform: translateY(-4px);
-    box-shadow: var(--glass-shadow-hover);
+    box-shadow: var(--shadow-lg);
 }
 
-.stat-card.users { --stat-color: linear-gradient(90deg, #3b82f6, #2563eb); }
-.stat-card.devices { --stat-color: linear-gradient(90deg, #10b981, #059669); }
-.stat-card.locations { --stat-color: linear-gradient(90deg, #8b5cf6, #7c3aed); }
-.stat-card.assignments { --stat-color: linear-gradient(90deg, #f59e0b, #d97706); }
+.stat-card.users { --stat-color: var(--primary-teal); }
+.stat-card.devices { --stat-color: var(--success); }
+.stat-card.locations { --stat-color: var(--primary-orange); }
+.stat-card.assignments { --stat-color: var(--primary-red); }
 
 .stat-header {
     display: flex;
@@ -86,35 +83,37 @@
 .stat-icon {
     width: 60px;
     height: 60px;
-    border-radius: var(--border-radius-xl);
+    border-radius: var(--radius-xl);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
-    color: white;
-    background: var(--stat-color, var(--parliament-primary));
+    color: var(--text-white);
 }
 
-.stat-icon.users { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-.stat-icon.devices { background: linear-gradient(135deg, #10b981, #059669); }
-.stat-icon.locations { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
-.stat-icon.assignments { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.stat-icon.users { background-color: var(--primary-teal); }
+.stat-icon.devices { background-color: var(--success); }
+.stat-icon.locations { background-color: var(--primary-orange); }
+.stat-icon.assignments { background-color: var(--primary-red); }
 
 .stat-content {
-    text-align: left;
+    flex: 1;
 }
 
 .stat-number {
     font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--parliament-dark);
-    line-height: 1;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
     margin-bottom: var(--spacing-xs);
+    line-height: 1;
 }
 
 .stat-label {
-    color: var(--parliament-neutral);
-    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: var(--font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     margin-bottom: var(--spacing-xs);
 }
 
@@ -122,13 +121,17 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-xs);
-    font-size: 0.875rem;
-    font-weight: 500;
+    font-size: 0.75rem;
+    font-weight: var(--font-weight-medium);
 }
 
-.stat-change.positive { color: #059669; }
-.stat-change.negative { color: #dc2626; }
-.stat-change.neutral { color: var(--parliament-neutral); }
+.stat-change.positive {
+    color: var(--success);
+}
+
+.stat-change.negative {
+    color: var(--error);
+}
 
 .dashboard-grid {
     display: grid;
@@ -138,170 +141,166 @@
 }
 
 .activity-section {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-backdrop);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--border-radius-xl);
-    box-shadow: var(--glass-shadow);
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
     overflow: hidden;
+    box-shadow: var(--shadow-card);
 }
 
 .section-header {
-    padding: var(--spacing-xl);
-    border-bottom: 1px solid var(--glass-border);
+    background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-hover));
+    color: var(--text-white);
+    padding: var(--spacing-lg);
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: between;
 }
 
 .section-title {
-    font-weight: 600;
-    color: var(--parliament-dark);
+    font-size: 1.125rem;
+    font-weight: var(--font-weight-semibold);
     margin: 0;
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
 }
 
+.section-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
 .section-content {
-    padding: var(--spacing-xl);
+    padding: var(--spacing-lg);
 }
 
 .activity-item {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
+    border-bottom: 1px solid var(--border-light);
     padding: var(--spacing-md) 0;
-    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+    transition: var(--transition);
+}
+
+.activity-item:hover {
+    background-color: var(--bg-secondary);
+    margin: 0 calc(var(--spacing-lg) * -1);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-md);
 }
 
 .activity-item:last-child {
     border-bottom: none;
 }
 
+.activity-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: var(--spacing-md);
+    align-items: center;
+}
+
 .activity-icon {
     width: 40px;
     height: 40px;
-    border-radius: var(--border-radius);
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1rem;
-    color: white;
-    flex-shrink: 0;
+    color: var(--text-white);
 }
 
-.activity-icon.device { background: linear-gradient(135deg, #10b981, #059669); }
-.activity-icon.assignment { background: linear-gradient(135deg, #f59e0b, #d97706); }
-.activity-icon.maintenance { background: linear-gradient(135deg, #ef4444, #dc2626); }
-.activity-icon.user { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.activity-icon.device { background-color: var(--success); }
+.activity-icon.user { background-color: var(--primary-teal); }
+.activity-icon.assignment { background-color: var(--primary-orange); }
+.activity-icon.maintenance { background-color: var(--primary-red); }
 
-.activity-content {
+.activity-info {
     flex: 1;
 }
 
 .activity-title {
-    font-weight: 600;
-    color: var(--parliament-dark);
-    margin-bottom: var(--spacing-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
     font-size: 0.875rem;
 }
 
 .activity-meta {
-    color: var(--parliament-neutral);
+    color: var(--text-muted);
     font-size: 0.75rem;
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.activity-time {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    white-space: nowrap;
 }
 
 .quick-actions {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-backdrop);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--border-radius-xl);
-    box-shadow: var(--glass-shadow);
-    overflow: hidden;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-card);
+    margin-bottom: var(--spacing-lg);
 }
 
-.action-grid {
+.actions-grid {
     display: grid;
-    gap: var(--spacing-md);
-    padding: var(--spacing-xl);
+    gap: var(--spacing-sm);
 }
 
 .action-btn {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    text-decoration: none;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
-    padding: var(--spacing-lg);
-    background: var(--glass-bg-secondary);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--border-radius-lg);
-    text-decoration: none;
+    gap: var(--spacing-sm);
     transition: var(--transition);
-    color: var(--parliament-dark);
+    font-weight: var(--font-weight-medium);
 }
 
 .action-btn:hover {
+    background-color: var(--primary-teal);
+    color: var(--text-white);
+    text-decoration: none;
     transform: translateX(4px);
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: var(--shadow-md);
-    color: var(--parliament-primary);
-}
-
-.action-icon {
-    width: 35px;
-    height: 35px;
-    border-radius: var(--border-radius);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    color: white;
-    flex-shrink: 0;
-}
-
-.action-icon.add-device { background: linear-gradient(135deg, #10b981, #059669); }
-.action-icon.add-user { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-.action-icon.qr-bulk { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
-.action-icon.reports { background: linear-gradient(135deg, #f59e0b, #d97706); }
-
-.action-content {
-    flex: 1;
-}
-
-.action-title {
-    font-weight: 600;
-    margin-bottom: var(--spacing-xs);
-    font-size: 0.875rem;
-}
-
-.action-desc {
-    color: var(--parliament-neutral);
-    font-size: 0.75rem;
 }
 
 .chart-section {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-backdrop);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--border-radius-xl);
-    box-shadow: var(--glass-shadow);
+    grid-column: 1 / -1;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
     overflow: hidden;
+    box-shadow: var(--shadow-card);
+}
+
+.chart-content {
+    padding: var(--spacing-lg);
 }
 
 .chart-container {
-    height: 300px;
+    height: 400px;
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    border: 2px dashed var(--border-medium);
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--glass-bg-secondary);
-    margin: var(--spacing-xl);
-    border-radius: var(--border-radius-lg);
-    border: 2px dashed var(--glass-border);
 }
 
 .chart-placeholder {
     text-align: center;
-    color: var(--parliament-neutral);
+    color: var(--text-muted);
 }
 
 .chart-placeholder i {
@@ -312,11 +311,10 @@
 
 .alerts-section {
     grid-column: 1 / -1;
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-backdrop);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--border-radius-xl);
-    box-shadow: var(--glass-shadow);
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
     overflow: hidden;
 }
 
@@ -328,9 +326,9 @@
 }
 
 .alert-card {
-    background: var(--glass-bg-secondary);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--border-radius-lg);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
     padding: var(--spacing-lg);
     position: relative;
     overflow: hidden;
@@ -343,12 +341,12 @@
     left: 0;
     bottom: 0;
     width: 4px;
-    background: var(--alert-color, var(--parliament-accent));
+    background: var(--alert-color, var(--primary-red));
 }
 
-.alert-card.warning { --alert-color: #f59e0b; }
-.alert-card.danger { --alert-color: #ef4444; }
-.alert-card.info { --alert-color: #3b82f6; }
+.alert-card.warning { --alert-color: var(--primary-orange); }
+.alert-card.danger { --alert-color: var(--primary-red); }
+.alert-card.info { --alert-color: var(--primary-teal); }
 
 .alert-header {
     display: flex;
@@ -365,19 +363,19 @@
     align-items: center;
     justify-content: center;
     font-size: 0.75rem;
-    color: white;
-    background: var(--alert-color, var(--parliament-accent));
+    color: var(--text-white);
+    background: var(--alert-color, var(--primary-red));
 }
 
 .alert-title {
-    font-weight: 600;
-    color: var(--parliament-dark);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
     margin: 0;
     font-size: 0.875rem;
 }
 
 .alert-content {
-    color: var(--parliament-neutral);
+    color: var(--text-secondary);
     font-size: 0.875rem;
     line-height: 1.4;
 }
@@ -454,7 +452,7 @@
         <div class="stat-card users">
             <div class="stat-header">
                 <div class="stat-content">
-                    <div class="stat-number" id="users-count">247</div>
+                    <div class="stat-number" id="users-count">{{ stats.total_users|default:247 }}</div>
                     <div class="stat-label">Active Users</div>
                     <div class="stat-change positive">
                         <i class="bi bi-arrow-up"></i>
@@ -470,7 +468,7 @@
         <div class="stat-card devices">
             <div class="stat-header">
                 <div class="stat-content">
-                    <div class="stat-number" id="devices-count">1,856</div>
+                    <div class="stat-number" id="devices-count">{{ stats.total_devices|default:1856 }}</div>
                     <div class="stat-label">IT Devices</div>
                     <div class="stat-change positive">
                         <i class="bi bi-arrow-up"></i>
@@ -486,11 +484,11 @@
         <div class="stat-card locations">
             <div class="stat-header">
                 <div class="stat-content">
-                    <div class="stat-number" id="locations-count">128</div>
+                    <div class="stat-number" id="locations-count">{{ stats.total_locations|default:156 }}</div>
                     <div class="stat-label">Locations</div>
-                    <div class="stat-change neutral">
-                        <i class="bi bi-dash"></i>
-                        <span>No change</span>
+                    <div class="stat-change positive">
+                        <i class="bi bi-arrow-up"></i>
+                        <span>+8 this month</span>
                     </div>
                 </div>
                 <div class="stat-icon locations">
@@ -502,11 +500,11 @@
         <div class="stat-card assignments">
             <div class="stat-header">
                 <div class="stat-content">
-                    <div class="stat-number" id="assignments-count">892</div>
+                    <div class="stat-number" id="assignments-count">{{ stats.active_assignments|default:892 }}</div>
                     <div class="stat-label">Active Assignments</div>
-                    <div class="stat-change positive">
-                        <i class="bi bi-arrow-up"></i>
-                        <span>+23 this week</span>
+                    <div class="stat-change negative">
+                        <i class="bi bi-arrow-down"></i>
+                        <span>-23 this week</span>
                     </div>
                 </div>
                 <div class="stat-icon assignments">
@@ -516,116 +514,93 @@
         </div>
     </div>
 
-    <!-- Main Dashboard Grid -->
+    <!-- Dashboard Content Grid -->
     <div class="dashboard-grid">
         <!-- Recent Activity -->
         <div class="activity-section">
             <div class="section-header">
-                <h3 class="section-title">
-                    <i class="bi bi-activity"></i>
+                <h5 class="section-title">
+                    <i class="bi bi-clock-history"></i>
                     Recent Activity
-                </h3>
+                </h5>
+                <div class="section-actions">
+                    <a href="#" class="btn btn-sm btn-light">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                </div>
             </div>
             <div class="section-content">
+                {% for activity in recent_activities|slice:":10" %}
                 <div class="activity-item">
-                    <div class="activity-icon device">
-                        <i class="bi bi-laptop"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">New device added: Dell OptiPlex 7090</div>
-                        <div class="activity-meta">2 minutes ago • IT Admin</div>
+                    <div class="activity-row">
+                        <div class="activity-icon {{ activity.type }}">
+                            {% if activity.type == 'device' %}
+                                <i class="bi bi-laptop"></i>
+                            {% elif activity.type == 'user' %}
+                                <i class="bi bi-person"></i>
+                            {% elif activity.type == 'assignment' %}
+                                <i class="bi bi-arrow-left-right"></i>
+                            {% elif activity.type == 'maintenance' %}
+                                <i class="bi bi-tools"></i>
+                            {% else %}
+                                <i class="bi bi-circle"></i>
+                            {% endif %}
+                        </div>
+                        <div class="activity-info">
+                            <div class="activity-title">{{ activity.description }}</div>
+                            <div class="activity-meta">
+                                <span><i class="bi bi-person me-1"></i>{{ activity.user.get_full_name|default:activity.user.username }}</span>
+                                {% if activity.location %}
+                                    <span><i class="bi bi-geo-alt me-1"></i>{{ activity.location }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="activity-time">
+                            {{ activity.created_at|timesince }} ago
+                        </div>
                     </div>
                 </div>
-
-                <div class="activity-item">
-                    <div class="activity-icon assignment">
-                        <i class="bi bi-arrow-right"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Device assigned to Dr. Rahman (Finance)</div>
-                        <div class="activity-meta">15 minutes ago • Assignment Manager</div>
-                    </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-clock-history fs-1 mb-2 d-block opacity-50"></i>
+                    <p>No recent activity</p>
                 </div>
-
-                <div class="activity-item">
-                    <div class="activity-icon maintenance">
-                        <i class="bi bi-wrench"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Maintenance completed for Printer-HP-2840</div>
-                        <div class="activity-meta">1 hour ago • Maintenance Team</div>
-                    </div>
-                </div>
-
-                <div class="activity-item">
-                    <div class="activity-icon user">
-                        <i class="bi bi-person-plus"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">New user registered: Md. Karim (Secretary)</div>
-                        <div class="activity-meta">3 hours ago • User Admin</div>
-                    </div>
-                </div>
-
-                <div class="activity-item">
-                    <div class="activity-icon device">
-                        <i class="bi bi-qr-code"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Bulk QR codes generated for 25 devices</div>
-                        <div class="activity-meta">5 hours ago • System</div>
-                    </div>
-                </div>
+                {% endfor %}
             </div>
         </div>
 
         <!-- Quick Actions -->
         <div class="quick-actions">
-            <div class="section-header">
-                <h3 class="section-title">
-                    <i class="bi bi-lightning"></i>
+            <div class="section-header bg-transparent text-dark p-0 mb-3">
+                <h5 class="section-title">
+                    <i class="bi bi-lightning-charge"></i>
                     Quick Actions
-                </h3>
+                </h5>
             </div>
-            <div class="action-grid">
+            <div class="actions-grid">
                 <a href="{% url 'devices:create' %}" class="action-btn">
-                    <div class="action-icon add-device">
-                        <i class="bi bi-plus"></i>
-                    </div>
-                    <div class="action-content">
-                        <div class="action-title">Add New Device</div>
-                        <div class="action-desc">Register new IT equipment</div>
-                    </div>
+                    <i class="bi bi-plus-circle"></i>
+                    Add New Device
                 </a>
-
+                <a href="{% url 'assignments:create' %}" class="action-btn">
+                    <i class="bi bi-arrow-left-right"></i>
+                    Create Assignment
+                </a>
+                <a href="{% url 'maintenance:create' %}" class="action-btn">
+                    <i class="bi bi-tools"></i>
+                    Schedule Maintenance
+                </a>
                 <a href="{% url 'users:create' %}" class="action-btn">
-                    <div class="action-icon add-user">
-                        <i class="bi bi-person-plus"></i>
-                    </div>
-                    <div class="action-content">
-                        <div class="action-title">Add New User</div>
-                        <div class="action-desc">Create user account</div>
-                    </div>
-                </div>
-
-                <a href="{% url 'locations:bulk_qrcode_generate' %}" class="action-btn">
-                    <div class="action-icon qr-bulk">
-                        <i class="bi bi-qr-code-scan"></i>
-                    </div>
-                    <div class="action-content">
-                        <div class="action-title">Generate QR Codes</div>
-                        <div class="action-desc">Bulk QR code creation</div>
-                    </div>
+                    <i class="bi bi-person-plus"></i>
+                    Add User
                 </a>
-
-                <a href="{% url 'devices:reports' %}" class="action-btn">
-                    <div class="action-icon reports">
-                        <i class="bi bi-file-earmark-text"></i>
-                    </div>
-                    <div class="action-content">
-                        <div class="action-title">Generate Report</div>
-                        <div class="action-desc">System reports & analytics</div>
-                    </div>
+                <a href="{% url 'locations:create' %}" class="action-btn">
+                    <i class="bi bi-geo-alt"></i>
+                    Add Location
+                </a>
+                <a href="{% url 'reports:dashboard' %}" class="action-btn">
+                    <i class="bi bi-bar-chart"></i>
+                    View Reports
                 </a>
             </div>
         </div>
@@ -634,16 +609,43 @@
     <!-- Charts Section -->
     <div class="chart-section">
         <div class="section-header">
-            <h3 class="section-title">
-                <i class="bi bi-bar-chart"></i>
-                System Analytics
-            </h3>
-        </div>
-        <div class="chart-container">
-            <div class="chart-placeholder">
+            <h5 class="section-title">
                 <i class="bi bi-graph-up"></i>
-                <p>Device Assignment Trends</p>
-                <small>Chart visualization will be implemented with Chart.js</small>
+                System Analytics
+            </h5>
+            <div class="section-actions">
+                <button class="btn btn-sm btn-light" id="chartPeriod" data-bs-toggle="dropdown">
+                    Last 30 Days
+                    <i class="bi bi-chevron-down ms-1"></i>
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" data-period="7">Last 7 Days</a></li>
+                    <li><a class="dropdown-item" href="#" data-period="30">Last 30 Days</a></li>
+                    <li><a class="dropdown-item" href="#" data-period="90">Last 90 Days</a></li>
+                    <li><a class="dropdown-item" href="#" data-period="365">Last Year</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="chart-content">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="chart-container">
+                        <canvas id="deviceStatusChart"></canvas>
+                    </div>
+                    <div class="text-center mt-2">
+                        <h6 class="mb-0">Device Status Distribution</h6>
+                        <small class="text-muted">Current status of all devices</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="chart-container">
+                        <canvas id="maintenanceChart"></canvas>
+                    </div>
+                    <div class="text-center mt-2">
+                        <h6 class="mb-0">Maintenance Timeline</h6>
+                        <small class="text-muted">Completed vs scheduled maintenance</small>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -651,47 +653,70 @@
     <!-- System Alerts -->
     <div class="alerts-section">
         <div class="section-header">
-            <h3 class="section-title">
+            <h5 class="section-title">
                 <i class="bi bi-exclamation-triangle"></i>
-                System Alerts & Notifications
-            </h3>
+                System Alerts
+            </h5>
+            <div class="section-actions">
+                <a href="{% url 'alerts:list' %}" class="btn btn-sm btn-light">
+                    View All
+                </a>
+            </div>
         </div>
         <div class="alerts-grid">
-            <div class="alert-card warning">
+            {% for alert in system_alerts|slice:":6" %}
+            <div class="alert-card {{ alert.severity }}">
                 <div class="alert-header">
                     <div class="alert-icon">
-                        <i class="bi bi-exclamation"></i>
+                        {% if alert.severity == 'danger' %}
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                        {% elif alert.severity == 'warning' %}
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                        {% else %}
+                            <i class="bi bi-info-circle-fill"></i>
+                        {% endif %}
                     </div>
-                    <h4 class="alert-title">Maintenance Due</h4>
+                    <h6 class="alert-title">{{ alert.title }}</h6>
                 </div>
                 <div class="alert-content">
-                    12 devices require scheduled maintenance within the next 7 days.
+                    {{ alert.message|truncatechars:100 }}
                 </div>
             </div>
-
-            <div class="alert-card danger">
-                <div class="alert-header">
-                    <div class="alert-icon">
-                        <i class="bi bi-clock"></i>
-                    </div>
-                    <h4 class="alert-title">Overdue Assignments</h4>
-                </div>
-                <div class="alert-content">
-                    3 device assignments are overdue for return. Immediate action required.
-                </div>
-            </div>
-
+            {% empty %}
             <div class="alert-card info">
                 <div class="alert-header">
                     <div class="alert-icon">
-                        <i class="bi bi-info"></i>
+                        <i class="bi bi-check-circle-fill"></i>
                     </div>
-                    <h4 class="alert-title">QR Code Coverage</h4>
+                    <h6 class="alert-title">System Healthy</h6>
                 </div>
                 <div class="alert-content">
-                    87% of devices have QR codes generated. Generate codes for remaining 156 devices.
+                    All systems are operating normally. No critical alerts at this time.
                 </div>
             </div>
+            <div class="alert-card warning">
+                <div class="alert-header">
+                    <div class="alert-icon">
+                        <i class="bi bi-exclamation-circle-fill"></i>
+                    </div>
+                    <h6 class="alert-title">Maintenance Due</h6>
+                </div>
+                <div class="alert-content">
+                    5 devices are scheduled for maintenance in the next 7 days.
+                </div>
+            </div>
+            <div class="alert-card info">
+                <div class="alert-header">
+                    <div class="alert-icon">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </div>
+                    <h6 class="alert-title">Software Updates</h6>
+                </div>
+                <div class="alert-content">
+                    System updates are available for deployment during the next maintenance window.
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
 </div>
@@ -699,72 +724,121 @@
 
 {% block extra_js %}
 <script>
-// Dashboard JavaScript
 document.addEventListener('DOMContentLoaded', function() {
-    // Update last updated timestamp
-    updateTimestamp();
+    // Update last updated time
+    function updateLastUpdated() {
+        document.getElementById('last-updated').textContent = 'Just now';
+    }
     
-    // Animate statistics on load
-    animateStats();
+    // Update every 30 seconds
+    setInterval(updateLastUpdated, 30000);
     
-    // Auto-refresh every 5 minutes
-    setInterval(updateTimestamp, 300000);
-});
-
-function updateTimestamp() {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('en-BD', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-    });
-    document.getElementById('last-updated').textContent = timeString;
-}
-
-function animateStats() {
-    const statNumbers = document.querySelectorAll('.stat-number');
-    
-    statNumbers.forEach(stat => {
-        const finalValue = parseInt(stat.textContent.replace(/,/g, ''));
-        const increment = finalValue / 50;
-        let currentValue = 0;
-        
-        stat.textContent = '0';
-        
-        const timer = setInterval(() => {
-            currentValue += increment;
-            if (currentValue >= finalValue) {
-                currentValue = finalValue;
-                clearInterval(timer);
-            }
+    // Chart period selector
+    document.querySelectorAll('[data-period]').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const period = this.getAttribute('data-period');
+            const periodText = this.textContent;
             
-            stat.textContent = Math.floor(currentValue).toLocaleString();
-        }, 30);
+            document.getElementById('chartPeriod').innerHTML = 
+                periodText + ' <i class="bi bi-chevron-down ms-1"></i>';
+            
+            // Update charts based on period
+            console.log('Updating charts for period:', period);
+        });
     });
+    
+    // Initialize charts if Chart.js is available
+    if (typeof Chart !== 'undefined') {
+        initDashboardCharts();
+    }
+});
+
+function initDashboardCharts() {
+    // Device Status Chart
+    const deviceCtx = document.getElementById('deviceStatusChart');
+    if (deviceCtx) {
+        new Chart(deviceCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Available', 'Assigned', 'Maintenance', 'Retired'],
+                datasets: [{
+                    data: [{{ stats.devices_available|default:645 }}, {{ stats.devices_assigned|default:892 }}, {{ stats.devices_maintenance|default:156 }}, {{ stats.devices_retired|default:163 }}],
+                    backgroundColor: [
+                        '#14b8a6', // teal
+                        '#22c55e', // green
+                        '#f97316', // orange
+                        '#ef4444'  // red
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Maintenance Timeline Chart
+    const maintenanceCtx = document.getElementById('maintenanceChart');
+    if (maintenanceCtx) {
+        new Chart(maintenanceCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Completed',
+                    data: [12, 19, 15, 25, 22, 30],
+                    borderColor: '#14b8a6',
+                    backgroundColor: 'rgba(20, 184, 166, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Scheduled',
+                    data: [8, 15, 12, 18, 16, 24],
+                    borderColor: '#f97316',
+                    backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+    }
 }
-
-// Stat card hover effects
-document.querySelectorAll('.stat-card').forEach(card => {
-    card.addEventListener('mouseenter', function() {
-        this.style.transform = 'translateY(-4px) scale(1.02)';
-    });
-    
-    card.addEventListener('mouseleave', function() {
-        this.style.transform = 'translateY(-4px)';
-    });
-});
-
-// Action button effects
-document.querySelectorAll('.action-btn').forEach(btn => {
-    btn.addEventListener('mouseenter', function() {
-        const icon = this.querySelector('.action-icon');
-        icon.style.transform = 'rotate(5deg) scale(1.1)';
-    });
-    
-    btn.addEventListener('mouseleave', function() {
-        const icon = this.querySelector('.action-icon');
-        icon.style.transform = 'rotate(0deg) scale(1)';
-    });
-});
 </script>
 {% endblock %}

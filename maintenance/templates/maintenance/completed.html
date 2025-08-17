@@ -475,9 +475,22 @@
                     Completed Maintenance Records
                 </h5>
                 <div class="grid-actions">
-                    <a href="{% url 'maintenance:export_completed' %}" class="btn btn-light btn-sm">
-                        <i class="bi bi-download"></i> Export
-                    </a>
+                    <div class="dropdown">
+                        <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-download me-2"></i>Export
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'maintenance:export_excel' %}?status=completed">
+                                <i class="bi bi-file-earmark-excel me-2"></i>Excel
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'maintenance:export_pdf' %}?status=completed">
+                                <i class="bi bi-file-earmark-pdf me-2"></i>PDF
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'maintenance:export_csv' %}?status=completed">
+                                <i class="bi bi-file-earmark-text me-2"></i>CSV
+                            </a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
             

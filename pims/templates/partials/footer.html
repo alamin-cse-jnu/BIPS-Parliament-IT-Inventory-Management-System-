@@ -4,49 +4,25 @@
 <footer class="{% if user.is_authenticated %}footer-authenticated{% endif %} bg-light border-top mt-auto py-3">
     <div class="container-fluid">
         <div class="row align-items-center">
-            <div class="col-md-6">
+            <!-- Centered Parliament Information -->
+            <div class="col-md-12 d-flex justify-content-center">
                 <div class="d-flex align-items-center text-muted small">
                     <img src="{% static 'images/bangladesh-parliament-logo.png' %}" 
                          alt="Parliament Logo" 
-                         height="24" 
-                         width="24" 
+                         height="40" 
+                         width="40" 
                          class="me-2"
                          onerror="this.style.display='none'">
                     <div>
-                        <div class="fw-semibold">
-                            Bangladesh Parliament Secretariat
-                        </div>
                         <small class="text-muted">
                             PIMS - Parliament IT Inventory Management System
+                            <i class="bi bi-code-square me-1 text-primary"></i>
+                            Version {{ app_version|default:'1.0.2' }}
                         </small> <br>
                         <small class="text-muted">
                              Developed by <strong>Md. Al-Amin Hossain</strong>, Computer Programmer, BPS | 
                             &copy; {% now "Y" %} All rights reserved.
                         </small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="text-muted small text-md-end">
-                    <div class="d-flex flex-column flex-md-row justify-content-md-end align-items-md-center gap-3">
-                        <span class="d-flex align-items-center">
-                            <i class="bi bi-geo-alt me-1 text-primary"></i>
-                            Dhaka, Bangladesh
-                        </span>
-                        <span class="d-flex align-items-center">
-                            <i class="bi bi-code-square me-1 text-primary"></i>
-                            Version {{ app_version|default:'1.0.0' }}
-                        </span>
-                        {% if user.is_authenticated %}
-                            <span class="d-flex align-items-center">
-                                <i class="bi bi-person me-1 text-primary"></i>
-                                {{ user.username }}
-                            </span>
-                        {% endif %}
-                        <span class="d-flex align-items-center">
-                            <i class="bi bi-shield-check me-1 text-success"></i>
-                            Secure System
-                        </span>
                     </div>
                 </div>
             </div>
@@ -88,6 +64,13 @@ footer img {
     object-fit: contain;
 }
 
+/* Center the main footer content */
+footer .d-flex.justify-content-center {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Responsive adjustments */
 @media (max-width: 1024px) {
     .footer-authenticated {
         margin-left: 0;
@@ -101,6 +84,36 @@ footer img {
     
     footer .small {
         font-size: 0.8125rem !important;
+    }
+    
+    /* Stack items vertically on mobile */
+    footer .d-flex.flex-wrap {
+        flex-direction: column;
+        gap: 0.5rem !important;
+    }
+    
+    footer .d-flex.justify-content-center {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    footer img {
+        align-self: center;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    footer {
+        border-top-width: 2px !important;
+    }
+}
+
+/* Print styles */
+@media print {
+    footer {
+        display: none !important;
     }
 }
 </style>

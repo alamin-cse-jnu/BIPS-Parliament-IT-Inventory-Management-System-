@@ -11,6 +11,8 @@ from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate
 from .models import CustomUser
+from django.contrib.auth import authenticate
+from django.core.exceptions import ValidationError
 
 
 class CustomUserCreationForm(UserCreationForm):

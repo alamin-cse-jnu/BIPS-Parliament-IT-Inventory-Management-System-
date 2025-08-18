@@ -405,6 +405,10 @@ class UserLoginForm(forms.Form):
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
 
+    def __init__(self, request=None, *args, **kwargs):
+        self.request = request
+        super().__init__(*args, **kwargs)  
+
     def clean(self):
         """Authenticate user."""
         cleaned_data = super().clean()
@@ -435,6 +439,10 @@ class UserLoginForm(forms.Form):
             cleaned_data['user'] = user
         
         return cleaned_data
+    
+    def get_user(self):
+        """Return the authenticated user."""
+        return self.cleaned_data.get('user')
 
 
 class PasswordResetForm(forms.Form):

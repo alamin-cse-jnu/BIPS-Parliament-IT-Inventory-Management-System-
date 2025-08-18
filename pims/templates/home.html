@@ -5,9 +5,9 @@
 
 {% block extra_css %}
 <style>
-/* Home Page Styling - Flat Design */
+/* Home Page Styling - Flat Design System */
 .home-container {
-    background-color: var(--bg-secondary);
+    background-color: #f8fafc;
     {% if user.is_authenticated %}
         padding: 2rem 0;
     {% else %}
@@ -17,53 +17,36 @@
 }
 
 {% if user.is_authenticated %}
-/* Welcome Section for Authenticated Users */
+/* Welcome Section for Authenticated Users - Flat Design */
 .welcome-section {
-    background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-hover));
-    color: var(--text-white);
+    background: #0d9488;
+    color: #ffffff;
     padding: 3rem 2rem;
-    border-radius: var(--radius-lg);
+    border-radius: 12px;
     margin-bottom: 3rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.welcome-section::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 100%;
-    height: 200%;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
-    background-size: 30px 30px;
-    animation: float 20s infinite linear;
-}
-
-@keyframes float {
-    0% { transform: translateX(0) translateY(0); }
-    100% { transform: translateX(-50px) translateY(-50px); }
+    border: 1px solid #0f766e;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .welcome-content {
     position: relative;
-    z-index: 2;
 }
 
 .welcome-title {
     font-size: 2rem;
-    font-weight: var(--font-weight-bold);
+    font-weight: 700;
     margin-bottom: 1rem;
     display: flex;
     align-items: center;
     gap: 1rem;
+    color: #ffffff;
 }
 
 .welcome-message {
     font-size: 1.1rem;
     margin-bottom: 2rem;
     line-height: 1.6;
-    opacity: 0.95;
+    color: #f0fdfa;
 }
 
 .welcome-actions {
@@ -74,10 +57,10 @@
 
 .welcome-btn {
     padding: 0.75rem 1.5rem;
-    border-radius: var(--radius-md);
+    border-radius: 8px;
     text-decoration: none;
-    font-weight: var(--font-weight-semibold);
-    transition: var(--transition);
+    font-weight: 600;
+    transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
     gap: 0.75rem;
@@ -86,72 +69,59 @@
 }
 
 .welcome-btn-light {
-    background-color: var(--bg-primary);
-    color: var(--primary-teal);
-    border-color: var(--bg-primary);
+    background-color: #ffffff;
+    color: #0d9488;
+    border-color: #ffffff;
 }
 
 .welcome-btn-light:hover {
-    background-color: var(--bg-secondary);
-    color: var(--primary-teal-hover);
-    border-color: var(--bg-secondary);
+    background-color: #f0fdfa;
+    color: #0f766e;
+    border-color: #f0fdfa;
     text-decoration: none;
     transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .welcome-btn-outline {
     background-color: transparent;
-    color: var(--text-white);
+    color: #ffffff;
     border-color: rgba(255,255,255,0.7);
 }
 
 .welcome-btn-outline:hover {
     background-color: rgba(255,255,255,0.2);
-    color: var(--text-white);
-    border-color: var(--text-white);
+    color: #ffffff;
+    border-color: #ffffff;
     text-decoration: none;
     transform: translateY(-2px);
 }
 {% else %}
-/* Hero Section for Non-authenticated Users */
+/* Hero Section for Non-authenticated Users - Flat Design */
 .hero-section {
-    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
-    color: var(--text-white);
+    background: #0d9488;
+    color: #ffffff;
     padding: 5rem 0;
-    position: relative;
-    overflow: hidden;
-}
-
-.hero-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="0,0 100,30 100,100 0,70" fill="rgba(255,255,255,0.05)"/></svg>');
-    background-size: 100px 100px;
+    border-bottom: 4px solid #0f766e;
 }
 
 .hero-content {
-    position: relative;
-    z-index: 2;
     text-align: center;
 }
 
 .hero-title {
     font-size: 3.5rem;
-    font-weight: var(--font-weight-bold);
+    font-weight: 700;
     margin-bottom: 1.5rem;
     line-height: 1.2;
+    color: #ffffff;
 }
 
 .hero-subtitle {
     font-size: 1.5rem;
     margin-bottom: 2rem;
-    opacity: 0.9;
-    font-weight: var(--font-weight-medium);
+    color: #f0fdfa;
+    font-weight: 600;
 }
 
 .hero-description {
@@ -161,7 +131,7 @@
     margin-left: auto;
     margin-right: auto;
     line-height: 1.6;
-    opacity: 0.9;
+    color: #ccfbf1;
 }
 
 .hero-stats {
@@ -172,8 +142,8 @@
     margin: 0 auto 3rem;
     padding: 2rem;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-lg);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 .hero-stat {
@@ -182,22 +152,23 @@
 
 .hero-stat-number {
     font-size: 2.5rem;
-    font-weight: var(--font-weight-bold);
+    font-weight: 700;
     display: block;
     line-height: 1;
     margin-bottom: 0.5rem;
+    color: #ffffff;
 }
 
 .hero-stat-label {
     font-size: 0.875rem;
-    font-weight: var(--font-weight-medium);
+    font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    opacity: 0.8;
+    color: #ccfbf1;
 }
 {% endif %}
 
-/* System Modules Section */
+/* System Modules Section - Flat Design */
 .modules-section {
     margin-bottom: 4rem;
 }
@@ -209,13 +180,13 @@
 
 .section-title {
     font-size: 2.5rem;
-    font-weight: var(--font-weight-bold);
-    color: var(--text-primary);
+    font-weight: 700;
+    color: #1e293b;
     margin-bottom: 1rem;
 }
 
 .section-subtitle {
-    color: var(--text-secondary);
+    color: #64748b;
     font-size: 1.25rem;
     max-width: 600px;
     margin: 0 auto;
@@ -226,18 +197,17 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
     gap: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
+    width: 100%;
 }
 
 .module-card {
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-xl);
+    background-color: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
     padding: 2rem;
     text-decoration: none;
-    color: var(--text-primary);
-    transition: var(--transition);
+    color: #1e293b;
+    transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
 }
@@ -249,22 +219,23 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: var(--module-color, var(--primary-teal));
+    background: var(--module-color, #0d9488);
 }
 
 .module-card:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
     text-decoration: none;
-    color: var(--text-primary);
+    color: #1e293b;
+    border-color: var(--module-color, #0d9488);
 }
 
-.module-card.users { --module-color: var(--primary-teal); }
-.module-card.locations { --module-color: var(--primary-orange); }
-.module-card.devices { --module-color: var(--success); }
-.module-card.vendors { --module-color: var(--primary-red); }
-.module-card.assignments { --module-color: var(--warning); }
-.module-card.maintenance { --module-color: var(--primary-red); }
+.module-card.users { --module-color: #0d9488; }
+.module-card.locations { --module-color: #ea580c; }
+.module-card.devices { --module-color: #16a34a; }
+.module-card.vendors { --module-color: #dc2626; }
+.module-card.assignments { --module-color: #d97706; }
+.module-card.maintenance { --module-color: #dc2626; }
 
 .module-header {
     display: flex;
@@ -276,25 +247,26 @@
 .module-icon {
     width: 70px;
     height: 70px;
-    background-color: var(--module-color, var(--primary-teal));
-    border-radius: var(--radius-lg);
+    background-color: var(--module-color, #0d9488);
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-white);
+    color: #ffffff;
     font-size: 1.75rem;
     flex-shrink: 0;
+    border: 2px solid var(--module-color, #0d9488);
 }
 
 .module-title {
     font-size: 1.5rem;
-    font-weight: var(--font-weight-bold);
-    color: var(--text-primary);
+    font-weight: 700;
+    color: #1e293b;
     margin: 0;
 }
 
 .module-description {
-    color: var(--text-secondary);
+    color: #64748b;
     font-size: 1rem;
     line-height: 1.6;
     margin-bottom: 1.5rem;
@@ -304,8 +276,8 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    color: var(--module-color, var(--primary-teal));
-    font-weight: var(--font-weight-semibold);
+    color: var(--module-color, #0d9488);
+    font-weight: 600;
     font-size: 0.9rem;
 }
 
@@ -313,17 +285,17 @@
     font-size: 1rem;
 }
 
-/* System Overview Section */
+/* System Overview Section - Flat Design */
 .overview-section {
-    background-color: var(--bg-tertiary);
+    background-color: #f1f5f9;
     padding: 4rem 0;
     margin: 4rem 0;
-    border-radius: var(--radius-xl);
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
 }
 
 .overview-content {
-    max-width: 1200px;
-    margin: 0 auto;
+    width: 100%;
     padding: 0 2rem;
 }
 
@@ -335,84 +307,87 @@
 }
 
 .overview-stat-card {
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-lg);
+    background-color: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
     padding: 2rem;
     text-align: center;
-    transition: var(--transition);
-    box-shadow: var(--shadow-card);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .overview-stat-card:hover {
     transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    border-color: #0d9488;
 }
 
 .overview-icon {
     width: 60px;
     height: 60px;
-    background-color: var(--primary-teal);
-    border-radius: 50%;
+    background-color: #0d9488;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto 1rem;
     font-size: 1.5rem;
-    color: var(--text-white);
+    color: #ffffff;
+    border: 2px solid #0d9488;
 }
 
 .overview-number {
     font-size: 2rem;
-    font-weight: var(--font-weight-bold);
-    color: var(--text-primary);
+    font-weight: 700;
+    color: #1e293b;
     display: block;
     margin-bottom: 0.5rem;
 }
 
 .overview-label {
-    color: var(--text-secondary);
+    color: #64748b;
     font-size: 0.875rem;
-    font-weight: var(--font-weight-medium);
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 {% if not user.is_authenticated %}
-/* Call to Action for Non-authenticated Users */
+/* Call to Action for Non-authenticated Users - Flat Design */
 .cta-section {
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-lg);
+    background-color: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
     padding: 3rem;
     text-align: center;
     margin: 3rem auto;
     max-width: 600px;
-    box-shadow: var(--shadow-card);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .cta-icon {
     width: 80px;
     height: 80px;
-    background-color: var(--primary-teal);
-    border-radius: 50%;
+    background-color: #0d9488;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto 2rem;
     font-size: 2rem;
-    color: var(--text-white);
+    color: #ffffff;
+    border: 2px solid #0d9488;
 }
 
 .cta-title {
     font-size: 1.75rem;
-    font-weight: var(--font-weight-bold);
-    color: var(--text-primary);
+    font-weight: 700;
+    color: #1e293b;
     margin-bottom: 1rem;
 }
 
 .cta-message {
-    color: var(--text-secondary);
+    color: #64748b;
     font-size: 1rem;
     line-height: 1.6;
     margin-bottom: 2rem;
@@ -427,10 +402,10 @@
 
 .cta-btn {
     padding: 0.75rem 2rem;
-    border-radius: var(--radius-md);
+    border-radius: 8px;
     text-decoration: none;
-    font-weight: var(--font-weight-semibold);
-    transition: var(--transition);
+    font-weight: 600;
+    transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
     gap: 0.75rem;
@@ -438,29 +413,29 @@
 }
 
 .cta-btn-primary {
-    background-color: var(--primary-teal);
-    color: var(--text-white);
-    border-color: var(--primary-teal);
+    background-color: #0d9488;
+    color: #ffffff;
+    border-color: #0d9488;
 }
 
 .cta-btn-primary:hover {
-    background-color: var(--primary-teal-hover);
-    border-color: var(--primary-teal-hover);
-    color: var(--text-white);
+    background-color: #0f766e;
+    border-color: #0f766e;
+    color: #ffffff;
     text-decoration: none;
     transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .cta-btn-outline {
     background-color: transparent;
-    color: var(--primary-teal);
-    border-color: var(--primary-teal);
+    color: #0d9488;
+    border-color: #0d9488;
 }
 
 .cta-btn-outline:hover {
-    background-color: var(--primary-teal);
-    color: var(--text-white);
+    background-color: #0d9488;
+    color: #ffffff;
     text-decoration: none;
     transform: translateY(-2px);
 }
@@ -577,6 +552,39 @@
     {% endif %}
 }
 
+/* Large screen optimization for full width usage */
+@media (min-width: 1400px) {
+    .modules-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2.5rem;
+    }
+    
+    .overview-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 2.5rem;
+    }
+}
+
+@media (min-width: 1600px) {
+    .modules-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 3rem;
+    }
+    
+    .overview-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 3rem;
+    }
+    
+    .module-card {
+        padding: 2.5rem;
+    }
+    
+    .overview-stat-card {
+        padding: 2.5rem;
+    }
+}
+
 @media (max-width: 480px) {
     .overview-grid {
         grid-template-columns: 1fr;
@@ -587,6 +595,54 @@
         grid-template-columns: 1fr;
     }
     {% endif %}
+}
+
+/* High Contrast Support */
+@media (prefers-contrast: high) {
+    .module-card {
+        border-width: 3px;
+    }
+    
+    .overview-stat-card {
+        border-width: 3px;
+    }
+    
+    .welcome-section {
+        border-width: 2px;
+    }
+    
+    .hero-section {
+        border-bottom-width: 6px;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .module-card {
+        transition: none;
+    }
+    
+    .module-card:hover {
+        transform: none;
+    }
+    
+    .overview-stat-card {
+        transition: none;
+    }
+    
+    .overview-stat-card:hover {
+        transform: none;
+    }
+    
+    .welcome-btn,
+    .cta-btn {
+        transition: none;
+    }
+    
+    .welcome-btn:hover,
+    .cta-btn:hover {
+        transform: none;
+    }
 }
 </style>
 {% endblock %}
@@ -611,10 +667,6 @@
                         <i class="bi bi-speedometer2"></i>
                         View Dashboard
                     </a>
-                    <a href="{% url 'devices:create' %}" class="welcome-btn welcome-btn-outline">
-                        <i class="bi bi-plus-circle"></i>
-                        Add Device
-                    </a>
                 </div>
             </div>
         </div>
@@ -636,11 +688,11 @@
                             <div class="hero-stat-label">IT Devices</div>
                         </div>
                         <div class="hero-stat">
-                            <span class="hero-stat-number">200+</span>
+                            <span class="hero-stat-number">1200+</span>
                             <div class="hero-stat-label">Active Users</div>
                         </div>
                         <div class="hero-stat">
-                            <span class="hero-stat-number">50+</span>
+                            <span class="hero-stat-number">200+</span>
                             <div class="hero-stat-label">Locations</div>
                         </div>
                         <div class="hero-stat">
@@ -661,7 +713,7 @@
             </div>
             
             <div class="modules-grid">
-                <a href="{% url 'users:list' %}" class="module-card users">
+                <a href="#" class="module-card users">
                     <div class="module-header">
                         <div class="module-icon">
                             <i class="bi bi-people"></i>
@@ -677,7 +729,7 @@
                     </div>
                 </a>
                 
-                <a href="{% url 'locations:list' %}" class="module-card locations">
+                <a href="#" class="module-card locations">
                     <div class="module-header">
                         <div class="module-icon">
                             <i class="bi bi-geo-alt"></i>
@@ -693,7 +745,7 @@
                     </div>
                 </a>
                 
-                <a href="{% url 'devices:list' %}" class="module-card devices">
+                <a href="#" class="module-card devices">
                     <div class="module-header">
                         <div class="module-icon">
                             <i class="bi bi-laptop"></i>
@@ -709,7 +761,7 @@
                     </div>
                 </a>
                 
-                <a href="{% url 'vendors:list' %}" class="module-card vendors">
+                <a href="#" class="module-card vendors">
                     <div class="module-header">
                         <div class="module-icon">
                             <i class="bi bi-shop"></i>
@@ -725,7 +777,7 @@
                     </div>
                 </a>
                 
-                <a href="{% url 'assignments:list' %}" class="module-card assignments">
+                <a href="#" class="module-card assignments">
                     <div class="module-header">
                         <div class="module-icon">
                             <i class="bi bi-arrow-left-right"></i>
@@ -741,7 +793,7 @@
                     </div>
                 </a>
                 
-                <a href="{% url 'maintenance:list' %}" class="module-card maintenance">
+                <a href="#" class="module-card maintenance">
                     <div class="module-header">
                         <div class="module-icon">
                             <i class="bi bi-wrench"></i>
@@ -821,32 +873,6 @@
             </div>
         </div>
     </section>
-
-    {% if not user.is_authenticated %}
-    <!-- Call to Action for Non-authenticated Users -->
-    <div class="container">
-        <div class="cta-section">
-            <div class="cta-icon">
-                <i class="bi bi-shield-lock"></i>
-            </div>
-            <h3 class="cta-title">Secure Access Required</h3>
-            <p class="cta-message">
-                Please authenticate to access the Bangladesh Parliament Secretariat IT Inventory Management System. 
-                This system is restricted to authorized personnel only.
-            </p>
-            <div class="cta-actions">
-                <a href="{% url 'admin:login' %}" class="cta-btn cta-btn-primary">
-                    <i class="bi bi-box-arrow-in-right"></i>
-                    Sign In
-                </a>
-                <a href="#" class="cta-btn cta-btn-outline">
-                    <i class="bi bi-question-circle"></i>
-                    Need Help?
-                </a>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 </div>
 {% endblock %}
 
@@ -907,39 +933,8 @@ document.addEventListener('DOMContentLoaded', function() {
         requestAnimationFrame(updateNumber);
     }
     
-    // Add hover effects to module cards
-    const moduleCards = document.querySelectorAll('.module-card');
-    moduleCards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-8px) scale(1.02)';
-        });
-        
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(-8px) scale(1)';
-        });
-    });
-    
-    // Parallax effect for hero section (non-authenticated users)
-    const heroSection = document.querySelector('.hero-section');
-    if (heroSection) {
-        window.addEventListener('scroll', function() {
-            const scrolled = window.pageYOffset;
-            const rate = scrolled * -0.5;
-            heroSection.style.transform = `translate3d(0, ${rate}px, 0)`;
-        });
-    }
-    
-    // Welcome section animation (authenticated users)
-    const welcomeSection = document.querySelector('.welcome-section');
-    if (welcomeSection) {
-        // Add subtle animation to welcome content
-        const welcomeContent = welcomeSection.querySelector('.welcome-content');
-        if (welcomeContent) {
-            welcomeContent.style.animation = 'fadeInUp 0.8s ease-out';
-        }
-    }
-    
     // Module cards staggered animation
+    const moduleCards = document.querySelectorAll('.module-card');
     moduleCards.forEach((card, index) => {
         card.style.opacity = '0';
         card.style.transform = 'translateY(30px)';
@@ -950,35 +945,91 @@ document.addEventListener('DOMContentLoaded', function() {
             card.style.transform = 'translateY(0)';
         }, 100 * index);
     });
+    
+    // Overview stat cards staggered animation
+    const statCards = document.querySelectorAll('.overview-stat-card');
+    statCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.4s ease-out';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, 50 * index);
+    });
+    
+    // Add hover effect enhancement for module cards
+    moduleCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            const icon = this.querySelector('.module-icon');
+            if (icon) {
+                icon.style.transform = 'scale(1.1) rotate(5deg)';
+                icon.style.transition = 'transform 0.3s ease';
+            }
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            const icon = this.querySelector('.module-icon');
+            if (icon) {
+                icon.style.transform = 'scale(1) rotate(0deg)';
+            }
+        });
+    });
+    
+    // Welcome section entrance animation for authenticated users
+    const welcomeSection = document.querySelector('.welcome-section');
+    if (welcomeSection) {
+        welcomeSection.style.opacity = '0';
+        welcomeSection.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            welcomeSection.style.transition = 'all 0.8s ease-out';
+            welcomeSection.style.opacity = '1';
+            welcomeSection.style.transform = 'translateY(0)';
+        }, 200);
+    }
+    
+    // Hero section entrance animation for non-authenticated users
+    const heroContent = document.querySelector('.hero-content');
+    if (heroContent) {
+        heroContent.style.opacity = '0';
+        heroContent.style.transform = 'translateY(50px)';
+        
+        setTimeout(() => {
+            heroContent.style.transition = 'all 1s ease-out';
+            heroContent.style.opacity = '1';
+            heroContent.style.transform = 'translateY(0)';
+        }, 300);
+    }
+    
+    // Smooth scroll for any internal links (if added in future)
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+    
+    // Add focus management for accessibility
+    const interactiveElements = document.querySelectorAll('.module-card, .overview-stat-card, .welcome-btn, .cta-btn');
+    interactiveElements.forEach(element => {
+        element.addEventListener('focus', function() {
+            this.style.outline = '3px solid #0d9488';
+            this.style.outlineOffset = '2px';
+        });
+        
+        element.addEventListener('blur', function() {
+            this.style.outline = '';
+            this.style.outlineOffset = '';
+        });
+    });
 });
-
-// Add CSS animations
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    @keyframes pulse {
-        0%, 100% {
-            transform: scale(1);
-        }
-        50% {
-            transform: scale(1.05);
-        }
-    }
-    
-    .overview-stat-card:hover .overview-icon {
-        animation: pulse 0.6s ease-in-out;
-    }
-`;
-document.head.appendChild(style);
 </script>
 {% endblock %}

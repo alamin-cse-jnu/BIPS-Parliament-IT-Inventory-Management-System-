@@ -32,8 +32,9 @@ const PIMS = {
         console.log('PIMS initialized successfully');
     },
 
-    // ===== SIDEBAR FUNCTIONALITY =====
+    // ===== ENHANCED SIDEBAR FUNCTIONALITY =====
     initSidebar: function() {
+        // Original sidebar toggle functionality for mobile
         const sidebarToggle = document.getElementById('sidebarToggle');
         const sidebar = document.getElementById('sidebar');
         
@@ -73,8 +74,104 @@ const PIMS = {
             });
         }
 
+        // NEW: Initialize desktop sidebar collapse functionality
+        this.initDesktopSidebarCollapse();
+        
         // Initialize click-based submenu functionality
         this.initClickBasedMenus();
+        
+        // Initialize sidebar overlay for mobile
+        this.initSidebarOverlay();
+        
+        // Restore sidebar state
+        this.restoreSubmenuState();
+    },
+
+    // NEW: Desktop sidebar collapse functionality
+    initDesktopSidebarCollapse: function() {
+        const sidebarToggleDesktop = document.querySelector('.sidebar-toggle');
+        const sidebar = document.querySelector('.sidebar');
+        const contentArea = document.querySelector('.content-area');
+        
+        if (sidebarToggleDesktop && sidebar && contentArea) {
+            // Load saved sidebar state
+            const savedState = localStorage.getItem('pims_sidebar_collapsed');
+            if (savedState === 'true') {
+                sidebar.classList.add('collapsed');
+                contentArea.classList.add('sidebar-collapsed');
+            }
+            
+            sidebarToggleDesktop.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Toggle collapsed state
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                
+                if (isCollapsed) {
+                    // Expand sidebar
+                    sidebar.classList.remove('collapsed');
+                    contentArea.classList.remove('sidebar-collapsed');
+                    localStorage.setItem('pims_sidebar_collapsed', 'false');
+                } else {
+                    // Collapse sidebar
+                    sidebar.classList.add('collapsed');
+                    contentArea.classList.add('sidebar-collapsed');
+                    localStorage.setItem('pims_sidebar_collapsed', 'true');
+                }
+                
+                // Update tooltip
+                this.setAttribute('data-bs-original-title', 
+                    isCollapsed ? 'Collapse Sidebar' : 'Expand Sidebar');
+                
+                // Trigger layout recalculation for charts if they exist
+                setTimeout(() => {
+                    if (window.Chart) {
+                        Object.values(Chart.instances).forEach(chart => {
+                            chart.resize();
+                        });
+                    }
+                }, 300);
+            });
+        }
+    },
+
+    // Initialize sidebar overlay for mobile
+    initSidebarOverlay: function() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+        
+        if (sidebar && overlay) {
+            // Show overlay when sidebar is shown on mobile
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                        const hasSidebarShow = sidebar.classList.contains('show');
+                        const isMobile = window.innerWidth <= PIMS.config.sidebarBreakpoint;
+                        
+                        if (hasSidebarShow && isMobile) {
+                            overlay.classList.add('show');
+                        } else {
+                            overlay.classList.remove('show');
+                        }
+                    }
+                });
+            });
+            
+            observer.observe(sidebar, { attributes: true });
+            
+            // Close sidebar when clicking overlay
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('show');
+                this.classList.remove('show');
+                
+                const sidebarToggle = document.getElementById('sidebarToggle');
+                if (sidebarToggle) {
+                    sidebarToggle.setAttribute('aria-expanded', 'false');
+                    sidebar.setAttribute('aria-hidden', 'true');
+                }
+            });
+        }
     },
 
     // Handle click-based persistent sidebar submenus
@@ -110,54 +207,27 @@ const PIMS = {
                     
                     // Optional: Close other submenus (uncomment for accordion behavior)
                     /*
-                    document.querySelectorAll('.submenu.show').forEach(openSubmenu => {
-                        if (openSubmenu !== submenu) {
-                            openSubmenu.classList.remove('show');
-                            const otherToggleLink = openSubmenu.closest('.nav-item').querySelector('.nav-link-toggle');
-                            otherToggleLink.classList.remove('expanded');
-                            otherToggleLink.setAttribute('aria-expanded', 'false');
-                            openSubmenu.setAttribute('aria-hidden', 'true');
+                    document.querySelectorAll('.submenu.show').forEach(otherSubmenu => {
+                        if (otherSubmenu !== submenu) {
+                            otherSubmenu.classList.remove('show');
+                            const otherToggle = otherSubmenu.closest('.nav-item').querySelector('.nav-link-toggle');
+                            if (otherToggle) {
+                                otherToggle.classList.remove('expanded');
+                                otherToggle.setAttribute('aria-expanded', 'false');
+                                otherSubmenu.setAttribute('aria-hidden', 'true');
+                            }
                         }
                     });
                     */
+                    
+                    // Save current submenu state
+                    this.saveSubmenuState();
                 }
             });
-            
-            // Set initial ARIA attributes
-            const submenu = toggleLink.closest('.nav-item').querySelector('.submenu');
-            if (submenu) {
-                const isInitiallyOpen = submenu.classList.contains('show');
-                toggleLink.setAttribute('aria-expanded', isInitiallyOpen.toString());
-                submenu.setAttribute('aria-hidden', (!isInitiallyOpen).toString());
-            }
-        });
-        
-        // Initialize default state - set which submenus should be open by default
-        this.setDefaultSubmenuState();
-    },
-
-    // Set default submenu states
-    setDefaultSubmenuState: function() {
-        // Define which submenus should be open by default
-        const defaultOpenSubmenus = [
-            'devices', // devices submenu open by default
-            'assignments' // assignments submenu open by default
-        ];
-        
-        defaultOpenSubmenus.forEach(submenuName => {
-            const submenuElement = document.querySelector(`[data-submenu="${submenuName}"]`);
-            const toggleLink = document.querySelector(`[data-toggle="submenu"][href*="${submenuName}"]`);
-            
-            if (submenuElement && toggleLink) {
-                submenuElement.classList.add('show');
-                toggleLink.classList.add('expanded');
-                toggleLink.setAttribute('aria-expanded', 'true');
-                submenuElement.setAttribute('aria-hidden', 'false');
-            }
         });
     },
 
-    // Store submenu preferences in localStorage (optional)
+    // Save submenu state to localStorage
     saveSubmenuState: function() {
         const openSubmenus = [];
         document.querySelectorAll('.submenu.show').forEach(submenu => {
@@ -205,6 +275,27 @@ const PIMS = {
         }
     },
 
+    // Set default submenu state (optional)
+    setDefaultSubmenuState: function() {
+        // You can customize which submenus should be open by default
+        const defaultOpenMenus = []; // Add default menu hrefs here
+        
+        defaultOpenMenus.forEach(href => {
+            const toggleLink = document.querySelector(`[data-toggle="submenu"][href="${href}"]`);
+            if (toggleLink) {
+                const parentNavItem = toggleLink.closest('.nav-item');
+                const submenu = parentNavItem.querySelector('.submenu');
+                
+                if (submenu) {
+                    submenu.classList.add('show');
+                    toggleLink.classList.add('expanded');
+                    toggleLink.setAttribute('aria-expanded', 'true');
+                    submenu.setAttribute('aria-hidden', 'false');
+                }
+            }
+        });
+    },
+
     // ===== NAVIGATION FUNCTIONALITY =====
     initNavigation: function() {
         // Highlight active navigation
@@ -214,49 +305,47 @@ const PIMS = {
         this.initSmoothScrolling();
         
         // Dropdown menu enhancements
-        this.initDropdowns();
+        this.initDropdownEnhancements();
+        
+        // Breadcrumb automation
+        this.initBreadcrumbs();
     },
 
     // Highlight active navigation items
     highlightActiveNav: function() {
         const currentPath = window.location.pathname;
-        const navLinks = document.querySelectorAll('.sidebar .nav-link');
+        const navLinks = document.querySelectorAll('.sidebar .nav-link[href], .navbar .nav-link[href]');
         
+        // Remove existing active classes
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+        });
+        
+        // Find and mark active links
         navLinks.forEach(link => {
             const href = link.getAttribute('href');
-            
-            // Remove existing active classes
-            link.classList.remove('active');
-            
-            // Add active class for current page
-            if (href && (currentPath === href || 
-                       (href !== '/' && currentPath.startsWith(href)))) {
+            if (href && (currentPath === href || (href !== '/' && currentPath.startsWith(href)))) {
                 link.classList.add('active');
                 
-                // If it's a submenu item, expand parent menu
-                const parentSubmenu = link.closest('.submenu');
-                if (parentSubmenu) {
-                    parentSubmenu.classList.add('show');
-                    
-                    // Update parent toggle link
-                    const parentNavItem = parentSubmenu.closest('.nav-item');
-                    const toggleLink = parentNavItem.querySelector('.nav-link-toggle');
-                    const toggleIcon = toggleLink.querySelector('.toggle-icon');
-                    
-                    if (toggleLink) {
-                        toggleLink.classList.add('expanded');
-                        toggleLink.setAttribute('aria-expanded', 'true');
-                        parentSubmenu.setAttribute('aria-hidden', 'false');
+                // If it's in a submenu, ensure the submenu is shown
+                const submenu = link.closest('.submenu');
+                if (submenu) {
+                    submenu.classList.add('show');
+                    const parentToggle = submenu.closest('.nav-item').querySelector('.nav-link-toggle');
+                    if (parentToggle) {
+                        parentToggle.classList.add('expanded');
+                        parentToggle.setAttribute('aria-expanded', 'true');
+                        submenu.setAttribute('aria-hidden', 'false');
                     }
                 }
             }
         });
     },
 
-    // Smooth scrolling for anchor links
+    // Initialize smooth scrolling
     initSmoothScrolling: function() {
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
+            anchor.addEventListener('click', function(e) {
                 const target = document.querySelector(this.getAttribute('href'));
                 if (target) {
                     e.preventDefault();
@@ -269,115 +358,144 @@ const PIMS = {
         });
     },
 
-    // Enhanced dropdown functionality
-    initDropdowns: function() {
-        // Auto-close dropdowns when clicking outside
+    // Enhance dropdown menus
+    initDropdownEnhancements: function() {
+        // Close dropdowns when clicking outside
         document.addEventListener('click', function(e) {
-            const dropdowns = document.querySelectorAll('.dropdown-menu.show');
-            dropdowns.forEach(dropdown => {
-                if (!dropdown.closest('.dropdown').contains(e.target)) {
-                    const bsDropdown = bootstrap.Dropdown.getInstance(dropdown.previousElementSibling);
-                    if (bsDropdown) {
-                        bsDropdown.hide();
-                    }
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+            }
+        });
+
+        // Keyboard navigation for dropdowns
+        document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
+            toggle.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
                 }
             });
         });
     },
 
+    // Initialize breadcrumb automation
+    initBreadcrumbs: function() {
+        const breadcrumb = document.querySelector('.breadcrumb');
+        if (breadcrumb) {
+            // Add click handlers for breadcrumb items
+            breadcrumb.querySelectorAll('.breadcrumb-item a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // You can add custom breadcrumb click handling here
+                });
+            });
+        }
+    },
+
     // ===== ALERT SYSTEM =====
     initAlerts: function() {
-        // Auto-hide alerts after specified duration
-        const alerts = document.querySelectorAll('.alert[role="alert"]');
-        alerts.forEach(alert => {
-            // Skip alerts with data-persist attribute
-            if (!alert.hasAttribute('data-persist')) {
-                setTimeout(() => {
-                    if (alert.classList.contains('show') || alert.classList.contains('fade')) {
-                        const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                        bsAlert.close();
-                    } else {
-                        alert.style.transition = 'opacity 0.3s';
-                        alert.style.opacity = '0';
-                        setTimeout(() => alert.remove(), 300);
-                    }
-                }, this.config.alertDuration);
-            }
+        // Auto-dismiss alerts
+        document.querySelectorAll('.alert[data-auto-dismiss]').forEach(alert => {
+            const delay = parseInt(alert.dataset.autoDismiss) || this.config.alertDuration;
+            setTimeout(() => {
+                this.dismissAlert(alert);
+            }, delay);
         });
 
-        // Enhanced alert close functionality
+        // Manual alert dismissal
         document.querySelectorAll('.alert .btn-close').forEach(closeBtn => {
             closeBtn.addEventListener('click', function() {
                 const alert = this.closest('.alert');
-                const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                bsAlert.close();
+                PIMS.dismissAlert(alert);
             });
         });
     },
 
-    // Show dynamic alert
-    showAlert: function(message, type = 'info', persist = false) {
+    // Dismiss alert with animation
+    dismissAlert: function(alert) {
+        if (alert) {
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateY(-20px)';
+            setTimeout(() => {
+                alert.remove();
+            }, this.config.animationDuration);
+        }
+    },
+
+    // Show alert programmatically
+    showAlert: function(message, type = 'info', duration = null) {
         const alertContainer = document.getElementById('alert-container') || document.body;
         const alertId = 'alert-' + Date.now();
         
         const alertHTML = `
-            <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert" ${persist ? 'data-persist' : ''}>
-                <i class="bi bi-info-circle me-2"></i>
+            <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
                 ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <button type="button" class="btn-close" aria-label="Close"></button>
             </div>
         `;
         
         alertContainer.insertAdjacentHTML('afterbegin', alertHTML);
         
-        // Auto-hide if not persistent
-        if (!persist) {
+        const newAlert = document.getElementById(alertId);
+        
+        // Auto-dismiss if duration is specified
+        if (duration) {
             setTimeout(() => {
-                const alert = document.getElementById(alertId);
-                if (alert) {
-                    const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                    bsAlert.close();
-                }
-            }, this.config.alertDuration);
+                this.dismissAlert(newAlert);
+            }, duration);
         }
+        
+        // Add manual dismissal
+        const closeBtn = newAlert.querySelector('.btn-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                this.dismissAlert(newAlert);
+            });
+        }
+        
+        return newAlert;
     },
 
     // ===== TOOLTIP AND POPOVER INITIALIZATION =====
     initTooltips: function() {
         // Initialize Bootstrap tooltips
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl, {
-                delay: { show: 500, hide: 100 }
+        if (typeof bootstrap !== 'undefined') {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
             });
-        });
 
-        // Initialize Bootstrap popovers
-        const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-        popoverTriggerList.map(function (popoverTriggerEl) {
-            return new bootstrap.Popover(popoverTriggerEl);
-        });
+            // Initialize Bootstrap popovers
+            const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+            popoverTriggerList.map(function(popoverTriggerEl) {
+                return new bootstrap.Popover(popoverTriggerEl);
+            });
+        }
     },
 
     // ===== MODAL ENHANCEMENTS =====
     initModals: function() {
-        // Auto-focus first input in modals
+        // Modal keyboard navigation
         document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('shown.bs.modal', function() {
-                const firstInput = this.querySelector('input, select, textarea');
-                if (firstInput) {
-                    firstInput.focus();
+            modal.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const modalInstance = bootstrap.Modal.getInstance(this);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
                 }
             });
         });
 
-        // Confirmation modals
-        document.querySelectorAll('[data-confirm]').forEach(element => {
-            element.addEventListener('click', function(e) {
-                const message = this.getAttribute('data-confirm');
-                if (!confirm(message)) {
-                    e.preventDefault();
-                    return false;
+        // Auto-focus on modal open
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('shown.bs.modal', function() {
+                const autofocusElement = this.querySelector('[autofocus]') || 
+                                       this.querySelector('.btn-primary') || 
+                                       this.querySelector('input, select, textarea');
+                if (autofocusElement) {
+                    autofocusElement.focus();
                 }
             });
         });
@@ -385,109 +503,82 @@ const PIMS = {
 
     // ===== TABLE ENHANCEMENTS =====
     initTables: function() {
-        // Table sorting functionality
+        // Add table responsiveness
+        document.querySelectorAll('table:not(.table-responsive table)').forEach(table => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'table-responsive';
+            table.parentNode.insertBefore(wrapper, table);
+            wrapper.appendChild(table);
+        });
+
+        // Table sorting (basic implementation)
         this.initTableSorting();
         
-        // Table row selection
-        this.initTableSelection();
-        
-        // Responsive table enhancements
-        this.initResponsiveTables();
+        // Table search functionality
+        this.initTableSearch();
     },
 
-    // Table sorting
+    // Basic table sorting
     initTableSorting: function() {
-        document.querySelectorAll('th[data-sort]').forEach(header => {
+        document.querySelectorAll('th[data-sortable]').forEach(header => {
             header.style.cursor = 'pointer';
             header.addEventListener('click', function() {
                 const table = this.closest('table');
-                const column = this.getAttribute('data-sort');
-                const currentOrder = this.getAttribute('data-order') || 'asc';
+                const tbody = table.querySelector('tbody');
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                const column = Array.from(this.parentNode.children).indexOf(this);
+                const currentOrder = this.dataset.sortOrder || 'asc';
                 const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
                 
-                // Update header indicators
-                table.querySelectorAll('th[data-sort]').forEach(th => {
-                    th.removeAttribute('data-order');
-                    th.classList.remove('sorted-asc', 'sorted-desc');
+                rows.sort((a, b) => {
+                    const aVal = a.children[column].textContent.trim();
+                    const bVal = b.children[column].textContent.trim();
+                    
+                    if (newOrder === 'asc') {
+                        return aVal.localeCompare(bVal, undefined, { numeric: true });
+                    } else {
+                        return bVal.localeCompare(aVal, undefined, { numeric: true });
+                    }
                 });
                 
-                this.setAttribute('data-order', newOrder);
-                this.classList.add(`sorted-${newOrder}`);
-                
-                // Perform sorting (this would typically trigger a server request)
-                console.log(`Sorting by ${column} in ${newOrder} order`);
-            });
-        });
-    },
-
-    // Table row selection
-    initTableSelection: function() {
-        // Select all checkbox functionality
-        document.querySelectorAll('input[data-select-all]').forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                const targetCheckboxes = document.querySelectorAll(`input[${this.getAttribute('data-select-all')}]`);
-                targetCheckboxes.forEach(cb => {
-                    cb.checked = this.checked;
+                // Clear existing sort indicators
+                this.parentNode.querySelectorAll('th').forEach(th => {
+                    th.removeAttribute('data-sort-order');
+                    th.classList.remove('sort-asc', 'sort-desc');
                 });
                 
-                PIMS.updateBulkActions();
-            });
-        });
-
-        // Individual checkbox functionality
-        document.querySelectorAll('input[data-select-item]').forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                PIMS.updateBulkActions();
+                // Set new sort indicator
+                this.dataset.sortOrder = newOrder;
+                this.classList.add(`sort-${newOrder}`);
+                
+                // Reorder rows
+                rows.forEach(row => tbody.appendChild(row));
             });
         });
     },
 
-    // Update bulk action buttons based on selection
-    updateBulkActions: function() {
-        const selectedItems = document.querySelectorAll('input[data-select-item]:checked');
-        const bulkActions = document.querySelectorAll('.bulk-actions');
-        
-        bulkActions.forEach(actionGroup => {
-            actionGroup.style.display = selectedItems.length > 0 ? 'block' : 'none';
-        });
-        
-        // Update count displays
-        document.querySelectorAll('.selected-count').forEach(counter => {
-            counter.textContent = selectedItems.length;
-        });
-    },
-
-    // Responsive table enhancements
-    initResponsiveTables: function() {
-        document.querySelectorAll('.table-responsive').forEach(container => {
-            const table = container.querySelector('table');
+    // Table search functionality
+    initTableSearch: function() {
+        document.querySelectorAll('.table-search').forEach(searchInput => {
+            const table = document.querySelector(searchInput.dataset.table);
             if (table) {
-                // Add scroll indicators
-                this.addTableScrollIndicators(container);
+                searchInput.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    const rows = table.querySelectorAll('tbody tr');
+                    
+                    rows.forEach(row => {
+                        const text = row.textContent.toLowerCase();
+                        const shouldShow = text.includes(searchTerm);
+                        row.style.display = shouldShow ? '' : 'none';
+                    });
+                });
             }
         });
     },
 
-    // Add scroll indicators to tables
-    addTableScrollIndicators: function(container) {
-        const checkScroll = () => {
-            const isScrollable = container.scrollWidth > container.clientWidth;
-            const isAtStart = container.scrollLeft === 0;
-            const isAtEnd = container.scrollLeft >= container.scrollWidth - container.clientWidth - 1;
-            
-            container.classList.toggle('scrollable', isScrollable);
-            container.classList.toggle('scroll-start', isAtStart);
-            container.classList.toggle('scroll-end', isAtEnd);
-        };
-        
-        container.addEventListener('scroll', checkScroll);
-        window.addEventListener('resize', checkScroll);
-        checkScroll();
-    },
-
     // ===== FORM ENHANCEMENTS =====
     initForms: function() {
-        // Enhanced form validation
+        // Form validation enhancements
         this.initFormValidation();
         
         // Auto-save functionality
@@ -496,80 +587,70 @@ const PIMS = {
         // File upload enhancements
         this.initFileUploads();
         
-        // Search functionality
-        this.initSearchForms();
+        // Dynamic form fields
+        this.initDynamicFields();
     },
 
     // Enhanced form validation
     initFormValidation: function() {
-        document.querySelectorAll('form[data-validate]').forEach(form => {
+        document.querySelectorAll('form[novalidate]').forEach(form => {
             form.addEventListener('submit', function(e) {
                 if (!this.checkValidity()) {
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    // Focus first invalid field
+                    // Focus on first invalid field
                     const firstInvalid = this.querySelector(':invalid');
                     if (firstInvalid) {
                         firstInvalid.focus();
                     }
                 }
-                
                 this.classList.add('was-validated');
+            });
+        });
+
+        // Real-time validation feedback
+        document.querySelectorAll('input, select, textarea').forEach(field => {
+            field.addEventListener('blur', function() {
+                if (this.hasAttribute('required') || this.value) {
+                    this.classList.toggle('is-valid', this.checkValidity());
+                    this.classList.toggle('is-invalid', !this.checkValidity());
+                }
             });
         });
     },
 
     // Auto-save functionality
     initAutoSave: function() {
-        document.querySelectorAll('form[data-autosave]').forEach(form => {
-            const formId = form.id || 'form-' + Date.now();
+        const autoSaveForms = document.querySelectorAll('form[data-autosave]');
+        
+        autoSaveForms.forEach(form => {
+            const formData = new FormData(form);
             let saveTimeout;
             
             form.addEventListener('input', function() {
                 clearTimeout(saveTimeout);
                 saveTimeout = setTimeout(() => {
-                    PIMS.autoSaveForm(formId, form);
-                }, 2000);
+                    PIMS.autoSaveForm(form);
+                }, 2000); // Save after 2 seconds of inactivity
             });
-            
-            // Restore saved data on load
-            PIMS.restoreFormData(formId, form);
         });
     },
 
     // Auto-save form data
-    autoSaveForm: function(formId, form) {
+    autoSaveForm: function(form) {
         const formData = new FormData(form);
-        const data = {};
-        
-        for (let [key, value] of formData.entries()) {
-            data[key] = value;
-        }
+        const formId = form.id || 'unnamed-form';
         
         try {
-            localStorage.setItem(`pims_form_${formId}`, JSON.stringify(data));
-            PIMS.showAutoSaveIndicator();
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            localStorage.setItem(`autosave_${formId}`, JSON.stringify(data));
+            this.showAutoSaveIndicator();
         } catch (e) {
             console.log('Could not auto-save form data');
-        }
-    },
-
-    // Restore form data
-    restoreFormData: function(formId, form) {
-        try {
-            const savedData = localStorage.getItem(`pims_form_${formId}`);
-            if (savedData) {
-                const data = JSON.parse(savedData);
-                Object.keys(data).forEach(key => {
-                    const field = form.querySelector(`[name="${key}"]`);
-                    if (field && field.type !== 'file') {
-                        field.value = data[key];
-                    }
-                });
-            }
-        } catch (e) {
-            console.log('Could not restore form data');
         }
     },
 
@@ -628,7 +709,8 @@ const PIMS = {
         if (mimeType.includes('word')) return 'file-word';
         if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return 'file-excel';
         if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return 'file-ppt';
-        return 'file-earmark';
+        if (mimeType.includes('zip') || mimeType.includes('rar')) return 'file-zip';
+        return 'file-text';
     },
 
     // Format file size
@@ -640,51 +722,34 @@ const PIMS = {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     },
 
-    // Search form enhancements
-    initSearchForms: function() {
-        document.querySelectorAll('input[type="search"], .search-input').forEach(input => {
-            let searchTimeout;
-            
-            input.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                const query = this.value.trim();
-                
-                if (query.length >= 2 || query.length === 0) {
-                    searchTimeout = setTimeout(() => {
-                        PIMS.performSearch(query, this);
-                    }, PIMS.config.searchDelay);
+    // Dynamic form fields
+    initDynamicFields: function() {
+        // Add field buttons
+        document.querySelectorAll('[data-add-field]').forEach(button => {
+            button.addEventListener('click', function() {
+                const template = document.querySelector(this.dataset.addField);
+                if (template) {
+                    const clone = template.cloneNode(true);
+                    clone.style.display = '';
+                    template.parentNode.insertBefore(clone, template);
                 }
             });
         });
-    },
 
-    // Perform search
-    performSearch: function(query, input) {
-        const form = input.closest('form');
-        const resultsContainer = document.querySelector(input.getAttribute('data-results'));
-        
-        if (form && !input.hasAttribute('data-no-auto-submit')) {
-            form.submit();
-        }
-        
-        // Live search functionality can be added here
-        console.log('Searching for:', query);
+        // Remove field buttons
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('[data-remove-field]')) {
+                const field = e.target.closest(e.target.dataset.removeField);
+                if (field) {
+                    field.remove();
+                }
+            }
+        });
     },
 
     // ===== IMAGE HANDLING =====
     initImageHandling: function() {
-        // Lazy loading
-        this.initLazyLoading();
-        
-        // Image lightbox
-        this.initImageLightbox();
-        
-        // Image error handling
-        this.initImageErrorHandling();
-    },
-
-    // Lazy loading for images
-    initLazyLoading: function() {
+        // Lazy loading for images
         if ('IntersectionObserver' in window) {
             const imageObserver = new IntersectionObserver((entries, observer) => {
                 entries.forEach(entry => {
@@ -696,99 +761,45 @@ const PIMS = {
                     }
                 });
             });
-            
+
             document.querySelectorAll('img[data-src]').forEach(img => {
                 imageObserver.observe(img);
             });
         }
-    },
 
-    // Image lightbox functionality
-    initImageLightbox: function() {
-        document.querySelectorAll('[data-lightbox]').forEach(trigger => {
-            trigger.addEventListener('click', function(e) {
-                e.preventDefault();
-                const src = this.getAttribute('href') || this.getAttribute('data-src');
-                PIMS.showLightbox(src);
-            });
-        });
-    },
-
-    // Show image lightbox
-    showLightbox: function(src) {
-        const lightbox = document.createElement('div');
-        lightbox.className = 'lightbox position-fixed top-0 start-0 w-100 h-100';
-        lightbox.style.cssText = 'background: rgba(0,0,0,0.8); z-index: 9999; display: flex; align-items: center; justify-content: center;';
-        
-        lightbox.innerHTML = `
-            <div class="lightbox-content text-center">
-                <img src="${src}" class="img-fluid" style="max-height: 90vh; max-width: 90vw;">
-                <button class="btn btn-light position-absolute top-0 end-0 m-3" onclick="this.closest('.lightbox').remove()">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
-        `;
-        
-        lightbox.addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.remove();
-            }
-        });
-        
-        document.body.appendChild(lightbox);
-    },
-
-    // Image error handling
-    initImageErrorHandling: function() {
+        // Image error handling
         document.querySelectorAll('img').forEach(img => {
             img.addEventListener('error', function() {
-                if (!this.classList.contains('error-handled')) {
-                    this.src = '/static/images/placeholder.png'; // Fallback image
-                    this.classList.add('error-handled');
-                }
+                this.src = '/static/images/placeholder.png'; // Fallback image
+                this.classList.add('image-error');
             });
         });
     },
 
     // ===== CHART INITIALIZATION =====
     initCharts: function() {
-        // Initialize Chart.js charts
-        document.querySelectorAll('[data-chart]').forEach(canvas => {
-            const chartType = canvas.getAttribute('data-chart');
-            const chartData = JSON.parse(canvas.getAttribute('data-chart-data') || '{}');
+        // Initialize Chart.js charts if the library is available
+        if (typeof Chart !== 'undefined') {
+            // Set default Chart.js configuration
+            Chart.defaults.responsive = true;
+            Chart.defaults.maintainAspectRatio = false;
+            Chart.defaults.plugins.legend.display = true;
             
-            PIMS.createChart(canvas, chartType, chartData);
-        });
-    },
-
-    // Create Chart.js chart
-    createChart: function(canvas, type, data) {
-        if (typeof Chart === 'undefined') {
-            console.log('Chart.js not loaded');
-            return;
-        }
-        
-        const ctx = canvas.getContext('2d');
-        const config = {
-            type: type,
-            data: data,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
+            // Initialize charts with data attributes
+            document.querySelectorAll('canvas[data-chart]').forEach(canvas => {
+                try {
+                    const chartData = JSON.parse(canvas.dataset.chart);
+                    new Chart(canvas, chartData);
+                } catch (e) {
+                    console.error('Error initializing chart:', e);
                 }
-            }
-        };
-        
-        new Chart(ctx, config);
+            });
+        }
     },
 
     // ===== UTILITY FUNCTIONS =====
     
-    // Show loading overlay
+    // Loading overlay
     showLoading: function() {
         const overlay = document.getElementById('loadingOverlay');
         if (overlay) {
@@ -796,35 +807,11 @@ const PIMS = {
         }
     },
 
-    // Hide loading overlay
     hideLoading: function() {
         const overlay = document.getElementById('loadingOverlay');
         if (overlay) {
             overlay.classList.add('d-none');
         }
-    },
-
-    // Copy text to clipboard
-    copyToClipboard: function(text) {
-        if (navigator.clipboard) {
-            navigator.clipboard.writeText(text).then(() => {
-                PIMS.showAlert('Copied to clipboard!', 'success');
-            });
-        } else {
-            // Fallback for older browsers
-            const textArea = document.createElement('textarea');
-            textArea.value = text;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            PIMS.showAlert('Copied to clipboard!', 'success');
-        }
-    },
-
-    // Format number with commas
-    formatNumber: function(num) {
-        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     },
 
     // Debounce function
@@ -838,17 +825,336 @@ const PIMS = {
             clearTimeout(timeout);
             timeout = setTimeout(later, wait);
         };
+    },
+
+    // Throttle function
+    throttle: function(func, limit) {
+        let inThrottle;
+        return function() {
+            const args = arguments;
+            const context = this;
+            if (!inThrottle) {
+                func.apply(context, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        };
+    },
+
+    // Copy to clipboard
+    copyToClipboard: function(text) {
+        if (navigator.clipboard) {
+            return navigator.clipboard.writeText(text);
+        } else {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            return Promise.resolve();
+        }
+    },
+
+    // Format numbers
+    formatNumber: function(num, decimals = 0) {
+        return new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+        }).format(num);
+    },
+
+    // Format currency (Bangladesh Taka)
+    formatCurrency: function(amount) {
+        return new Intl.NumberFormat('en-BD', {
+            style: 'currency',
+            currency: 'BDT'
+        }).format(amount);
+    },
+
+    // Format dates
+    formatDate: function(date, options = {}) {
+        const defaultOptions = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        };
+        return new Intl.DateTimeFormat('en-BD', { ...defaultOptions, ...options }).format(new Date(date));
+    },
+
+    // Get relative time
+    getRelativeTime: function(date) {
+        const now = new Date();
+        const targetDate = new Date(date);
+        const diffTime = now - targetDate;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) return 'Today';
+        if (diffDays === 1) return 'Yesterday';
+        if (diffDays < 7) return `${diffDays} days ago`;
+        if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+        if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+        return `${Math.floor(diffDays / 365)} years ago`;
+    },
+
+    // Validate email
+    isValidEmail: function(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    },
+
+    // Validate phone number (Bangladesh format)
+    isValidPhone: function(phone) {
+        const phoneRegex = /^(\+88)?01[3-9]\d{8}$/;
+        return phoneRegex.test(phone.replace(/\s/g, ''));
+    },
+
+    // Local storage helpers
+    storage: {
+        set: function(key, value) {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+                return true;
+            } catch (e) {
+                console.error('Error saving to localStorage:', e);
+                return false;
+            }
+        },
+        
+        get: function(key, defaultValue = null) {
+            try {
+                const item = localStorage.getItem(key);
+                return item ? JSON.parse(item) : defaultValue;
+            } catch (e) {
+                console.error('Error reading from localStorage:', e);
+                return defaultValue;
+            }
+        },
+        
+        remove: function(key) {
+            try {
+                localStorage.removeItem(key);
+                return true;
+            } catch (e) {
+                console.error('Error removing from localStorage:', e);
+                return false;
+            }
+        },
+        
+        clear: function() {
+            try {
+                localStorage.clear();
+                return true;
+            } catch (e) {
+                console.error('Error clearing localStorage:', e);
+                return false;
+            }
+        }
+    },
+
+    // AJAX helpers
+    ajax: {
+        get: function(url, options = {}) {
+            return fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    ...options.headers
+                },
+                ...options
+            });
+        },
+        
+        post: function(url, data, options = {}) {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+            
+            return fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken,
+                    ...options.headers
+                },
+                body: data instanceof FormData ? data : JSON.stringify(data),
+                ...options
+            });
+        },
+        
+        put: function(url, data, options = {}) {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+            
+            return fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                body: JSON.stringify(data),
+                ...options
+            });
+        },
+        
+        delete: function(url, options = {}) {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+            
+            return fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken,
+                    ...options.headers
+                },
+                ...options
+            });
+        }
+    },
+
+    // Event helpers
+    on: function(selector, event, handler, options = {}) {
+        document.addEventListener(event, function(e) {
+            if (e.target.matches(selector)) {
+                handler.call(e.target, e);
+            }
+        }, options);
+    },
+
+    off: function(element, event, handler) {
+        if (element) {
+            element.removeEventListener(event, handler);
+        }
+    },
+
+    // Custom events
+    trigger: function(element, eventName, detail = {}) {
+        const event = new CustomEvent(eventName, {
+            detail: detail,
+            bubbles: true,
+            cancelable: true
+        });
+        element.dispatchEvent(event);
+    },
+
+    // Performance monitoring
+    performance: {
+        marks: {},
+        
+        mark: function(name) {
+            this.marks[name] = performance.now();
+        },
+        
+        measure: function(startMark, endMark = null) {
+            const start = this.marks[startMark];
+            const end = endMark ? this.marks[endMark] : performance.now();
+            return end - start;
+        },
+        
+        log: function(name, startMark, endMark = null) {
+            const duration = this.measure(startMark, endMark);
+            console.log(`${name}: ${duration.toFixed(2)}ms`);
+        }
+    },
+
+    // Error handling
+    handleError: function(error, context = '') {
+        console.error(`PIMS Error ${context ? `(${context})` : ''}:`, error);
+        
+        // Log to server if error reporting endpoint exists
+        if (window.PIMS_ERROR_ENDPOINT) {
+            this.ajax.post(window.PIMS_ERROR_ENDPOINT, {
+                error: error.message || error,
+                stack: error.stack,
+                context: context,
+                url: window.location.href,
+                userAgent: navigator.userAgent,
+                timestamp: new Date().toISOString()
+            }).catch(e => {
+                console.error('Failed to log error to server:', e);
+            });
+        }
+    },
+
+    // Keyboard shortcuts
+    shortcuts: {
+        bindings: {},
+        
+        bind: function(key, callback, options = {}) {
+            const { ctrl = false, shift = false, alt = false, meta = false } = options;
+            const binding = `${ctrl ? 'ctrl+' : ''}${shift ? 'shift+' : ''}${alt ? 'alt+' : ''}${meta ? 'meta+' : ''}${key.toLowerCase()}`;
+            
+            this.bindings[binding] = callback;
+        },
+        
+        init: function() {
+            document.addEventListener('keydown', (e) => {
+                const key = e.key.toLowerCase();
+                const binding = `${e.ctrlKey ? 'ctrl+' : ''}${e.shiftKey ? 'shift+' : ''}${e.altKey ? 'alt+' : ''}${e.metaKey ? 'meta+' : ''}${key}`;
+                
+                if (this.bindings[binding]) {
+                    e.preventDefault();
+                    this.bindings[binding](e);
+                }
+            });
+        }
+    },
+
+    // Initialize keyboard shortcuts
+    initKeyboardShortcuts: function() {
+        this.shortcuts.init();
+        
+        // Default shortcuts
+        this.shortcuts.bind('/', () => {
+            const searchInput = document.querySelector('input[type="search"], .table-search');
+            if (searchInput) {
+                searchInput.focus();
+            }
+        });
+        
+        this.shortcuts.bind('escape', () => {
+            // Close modals, dropdowns, etc.
+            document.querySelectorAll('.modal.show').forEach(modal => {
+                const modalInstance = bootstrap.Modal.getInstance(modal);
+                if (modalInstance) modalInstance.hide();
+            });
+            
+            document.querySelectorAll('.dropdown-menu.show').forEach(dropdown => {
+                dropdown.classList.remove('show');
+            });
+        });
+        
+        // Sidebar toggle shortcut
+        this.shortcuts.bind('s', () => {
+            const sidebarToggle = document.querySelector('.sidebar-toggle');
+            if (sidebarToggle) {
+                sidebarToggle.click();
+            }
+        }, { ctrl: true });
     }
 };
 
-// Global functions for backward compatibility
-window.showLoading = PIMS.showLoading;
-window.hideLoading = PIMS.hideLoading;
-window.copyToClipboard = PIMS.copyToClipboard;
-
-// Save submenu state on page unload (optional)
-window.addEventListener('beforeunload', () => {
-    if (PIMS.saveSubmenuState) {
-        PIMS.saveSubmenuState();
-    }
+// Initialize keyboard shortcuts after PIMS is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize shortcuts after main PIMS initialization
+    setTimeout(() => {
+        PIMS.initKeyboardShortcuts();
+    }, 100);
 });
+
+// Global error handler
+window.addEventListener('error', function(e) {
+    PIMS.handleError(e.error, 'Global Error Handler');
+});
+
+// Unhandled promise rejection handler
+window.addEventListener('unhandledrejection', function(e) {
+    PIMS.handleError(e.reason, 'Unhandled Promise Rejection');
+});
+
+// Expose PIMS globally for debugging and external use
+window.PIMS = PIMS;
+
+// Parliament IT Inventory Management System
+// Location: Dhaka, Bangladesh
+// Enhanced with collapsible sidebar and modern JavaScript features

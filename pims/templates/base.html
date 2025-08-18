@@ -39,268 +39,354 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
 </head>
 
-<body class="d-flex flex-column min-vh-100">
+<body>
     <!-- Skip to Content Link for Accessibility -->
     <a href="#main-content" class="visually-hidden-focusable btn btn-primary position-absolute" style="top: 10px; left: 10px; z-index: 9999;">
         Skip to main content
     </a>
 
-    <!-- Top Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-light">
-        <div class="container-fluid px-3">
-            <!-- Mobile Sidebar Toggle -->
-            <button class="btn btn-link d-lg-none p-1 me-2" 
-                    type="button" 
-                    id="sidebarToggle"
-                    aria-label="Toggle navigation menu"
-                    aria-expanded="false"
-                    aria-controls="sidebar">
-                <i class="bi bi-list fs-4 text-primary"></i>
-            </button>
-
-            <!-- Brand Logo -->
-            <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
-                <img src="{% static 'images/bangladesh-parliament-logo.png' %}" 
-                     alt="Bangladesh Parliament" 
-                     class="parliament-logo me-2"
-                     onerror="this.style.display='none'">
-                <div>
-                    <span class="fw-bold text-primary">PIMS</span>
-                    <small class="d-block text-muted d-none d-sm-block" style="font-size: 0.7rem; line-height: 1;">
-                        Parliament IT Inventory Mnagement System
-                    </small>
+    <!-- Main Layout Container -->
+    <div class="layout-container">
+        <!-- Sidebar Navigation -->
+        {% if user.is_authenticated %}
+            <aside class="sidebar" id="sidebar" aria-label="Navigation sidebar">
+                <!-- Sidebar Header with Logo and Toggle -->
+                <div class="sidebar-header">
+                    <a href="{% url 'home' %}" class="sidebar-logo">
+                        <img src="{% static 'images/bangladesh-parliament-logo.png' %}" alt="Bangladesh Parliament Logo" onerror="this.style.display='none'">
+                        <div class="nav-text">
+                            <h5>PIMS</h5>
+                            <small>Parliament IT Inventory</small>
+                        </div>
+                    </a>
+                    <!-- Desktop Sidebar Toggle Button -->
+                    <button class="sidebar-toggle d-none d-lg-flex" 
+                            type="button" 
+                            aria-label="Toggle sidebar"
+                            data-bs-toggle="tooltip" 
+                            data-bs-placement="right" 
+                            title="Collapse Sidebar">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
                 </div>
-            </a>
 
-            <!-- Location Badge -->
-            <div class="d-none d-md-flex align-items-center me-auto ms-3">
-                <span class="location-badge">
-                    <i class="bi bi-geo-alt-fill me-1"></i>
-                    Dhaka, Bangladesh
-                </span>
-            </div>
+                <!-- Sidebar Menu Content -->
+                {% include 'partials/sidebar.html' %}
+            </aside>
 
-            <!-- Right Side Navigation -->
-            <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
-                {% if user.is_authenticated %}
-                    <!-- Search -->
-                    <div class="nav-item me-2 d-none d-md-block">
-                        <form class="d-flex" method="GET" action="#" role="search">
-                            <div class="input-group input-group-sm">
-                                <input class="form-control" 
-                                       type="search" 
-                                       name="q"
-                                       placeholder="Search devices..."
-                                       aria-label="Search"
-                                       style="width: 200px;">
-                                <button class="btn btn-outline-primary" type="submit">
-                                    <i class="bi bi-search"></i>
-                                </button>
+            <!-- Mobile Sidebar Overlay -->
+            <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        {% endif %}
+
+        <!-- Content Area (Navbar + Main + Footer) -->
+        <div class="content-area {% if user.is_authenticated %}{% else %}w-100{% endif %}">
+            <!-- Top Navigation Bar -->
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container-fluid px-3">
+                    <!-- Mobile Sidebar Toggle -->
+                    {% if user.is_authenticated %}
+                        <button class="btn btn-link mobile-sidebar-toggle p-1 me-2" 
+                                type="button" 
+                                id="sidebarToggle"
+                                aria-label="Toggle navigation menu"
+                                aria-expanded="false"
+                                aria-controls="sidebar">
+                            <i class="bi bi-list fs-4"></i>
+                        </button>
+                    {% endif %}
+
+                    <!-- Navbar Brand (for non-authenticated users) -->
+                    {% if not user.is_authenticated %}
+                        <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+                            <img src="{% static 'images/parliament-logo.png' %}" alt="Bangladesh Parliament Logo" 
+                                 class="me-2" style="height: 32px;" onerror="this.style.display='none'">
+                            <div>
+                                <strong>PIMS</strong>
+                                <small class="d-block text-muted">Parliament IT Inventory</small>
                             </div>
-                        </form>
-                    </div>
-
-                    <!-- Notifications -->
-                    <div class="nav-item dropdown me-2">
-                        <a class="nav-link position-relative p-2" 
-                           href="#" 
-                           id="notificationsDropdown" 
-                           role="button" 
-                           data-bs-toggle="dropdown" 
-                           aria-expanded="false"
-                           aria-label="Notifications">
-                            <i class="bi bi-bell fs-5"></i>
-                            {% if notifications_count > 0 %}
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
-                                    {{ notifications_count|default:0 }}
-                                    <span class="visually-hidden">unread notifications</span>
-                                </span>
-                            {% endif %}
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-lg" style="width: 300px;">
-                            <li><h6 class="dropdown-header">Notifications</h6></li>
-                            {% if notifications %}
-                                {% for notification in notifications|slice:":5" %}
-                                    <li>
-                                        <a class="dropdown-item py-2" href="{{ notification.url|default:'#' }}">
+                    {% endif %}
+
+                    <!-- Navbar Content -->
+                    <div class="collapse navbar-collapse" id="navbarContent">
+                        <!-- Search Bar (for authenticated users) -->
+                        {% if user.is_authenticated %}
+                            <form class="d-flex ms-auto me-3" role="search">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-transparent border-end-0">
+                                        <i class="bi bi-search text-muted"></i>
+                                    </span>
+                                    <input class="form-control border-start-0 ps-0" 
+                                           type="search" 
+                                           placeholder="Search devices, locations..." 
+                                           aria-label="Search">
+                                </div>
+                            </form>
+                        {% endif %}
+
+                        <!-- Navbar Right Items -->
+                        <ul class="navbar-nav align-items-center">
+                            {% if user.is_authenticated %}
+                                <!-- Notifications -->
+                                <li class="nav-item dropdown me-2">
+                                    <a class="nav-link position-relative" 
+                                       href="#" 
+                                       role="button" 
+                                       data-bs-toggle="dropdown" 
+                                       aria-expanded="false">
+                                        <i class="bi bi-bell fs-5"></i>
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger small">
+                                            3
+                                            <span class="visually-hidden">unread notifications</span>
+                                        </span>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-end shadow" style="width: 300px;">
+                                        <div class="dropdown-header d-flex justify-content-between align-items-center">
+                                            <span class="fw-semibold">Notifications</span>
+                                            <a href="#" class="btn btn-sm btn-outline-primary">Mark all read</a>
+                                        </div>
+                                        <div class="dropdown-divider"></div>
+                                        <!-- Notification items would go here -->
+                                        <a class="dropdown-item py-3">
                                             <div class="d-flex">
-                                                <div class="flex-shrink-0 me-2">
-                                                    <i class="bi bi-{{ notification.icon|default:'info-circle' }} text-primary"></i>
+                                                <div class="flex-shrink-0">
+                                                    <div class="rounded-circle bg-info d-flex align-items-center justify-content-center" 
+                                                         style="width: 32px; height: 32px;">
+                                                        <i class="bi bi-info text-white small"></i>
+                                                    </div>
                                                 </div>
-                                                <div class="flex-grow-1">
-                                                    <div class="fw-medium">{{ notification.title }}</div>
-                                                    <div class="text-muted small">{{ notification.message|truncatechars:50 }}</div>
-                                                    <div class="text-muted small">{{ notification.created_at|timesince }} ago</div>
+                                                <div class="flex-grow-1 ms-3">
+                                                    <div class="fw-medium">System Update</div>
+                                                    <div class="text-muted small">New features available</div>
+                                                    <div class="text-muted small">2 hours ago</div>
                                                 </div>
                                             </div>
                                         </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                {% endfor %}
-                                <li>
-                                    <a class="dropdown-item text-center text-primary" href="{% url 'notifications:list' %}">
-                                        View all notifications
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item text-center py-2" href="#">
+                                            View all notifications
+                                        </a>
+                                    </div>
+                                </li>
+
+                                <!-- User Dropdown -->
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle d-flex align-items-center" 
+                                       href="#" 
+                                       role="button" 
+                                       data-bs-toggle="dropdown" 
+                                       aria-expanded="false">
+                                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2" 
+                                             style="width: 32px; height: 32px;">
+                                            <i class="bi bi-person text-white"></i>
+                                        </div>
+                                        <span class="d-none d-md-inline">{{ user.get_full_name|default:user.username }}</span>
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                                        <li class="dropdown-header">
+                                            <div class="fw-medium">{{ user.get_full_name|default:user.username }}</div>
+                                            <div class="text-muted small">{{ user.email }}</div>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'users:profile' %}">
+                                                <i class="bi bi-person me-2"></i>Profile
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'users:profile_edit' %}">
+                                                <i class="bi bi-gear me-2"></i>Profile Edit
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'home' %}">
+                                                <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item text-danger" href="{% url 'admin:logout' %}">
+                                                <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            {% else %}
+                                <!-- Unauthenticated User Links -->
+                                <li class="nav-item">
+                                    <a class="btn btn-outline-primary btn-sm" href="{% url 'users:login' %}">
+                                        <i class="bi bi-box-arrow-in-right me-1"></i>
+                                        Login
                                     </a>
                                 </li>
-                            {% else %}
-                                <li>
-                                    <span class="dropdown-item-text text-center text-muted py-3">
-                                        <i class="bi bi-bell-slash fs-4 d-block mb-2"></i>
-                                        No new notifications
-                                    </span>
-                                </li>
                             {% endif %}
                         </ul>
                     </div>
 
-                    <!-- User Profile -->
-                    <div class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" 
-                           href="#" 
-                           id="userDropdown" 
-                           role="button" 
-                           data-bs-toggle="dropdown" 
-                           aria-expanded="false">
-                            {% if user.profile.avatar %}
-                                <img src="{{ user.profile.avatar.url }}" 
-                                     alt="{{ user.get_full_name|default:user.username }}" 
-                                     class="rounded-circle me-2" 
-                                     width="32" 
-                                     height="32"
-                                     style="object-fit: cover;">
-                            {% else %}
-                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" 
-                                     style="width: 32px; height: 32px; font-size: 0.875rem;">
-                                    {{ user.first_name|first|default:user.username|first|upper }}
-                                </div>
-                            {% endif %}
-                            <span class="d-none d-sm-inline">{{ user.get_full_name|default:user.username }}</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-lg">
-                            <li><h6 class="dropdown-header">{{ user.get_full_name|default:user.username }}</h6></li>
-                            <li><small class="dropdown-item-text text-muted">{{ user.email }}</small></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="{% url 'users:profile' %}">
-                                    <i class="bi bi-person me-2"></i>Profile
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{% url 'dashboard' %}">
-                                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
-                                </a>
-                            </li>
-                           
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="{% url 'admin:logout' %}">
-                                    <i class="bi bi-box-arrow-right me-2"></i>Logout
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                {% else %}
-                    <!-- Unauthenticated User Links -->
-                    <div class="nav-item me-2">
-                        <a class="btn btn-outline-primary btn-sm" href="{% url 'users:login' %}">
-                            <i class="bi bi-box-arrow-in-right me-1"></i>
-                            Login
-                        </a>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Layout Container -->
-    <div class="d-flex flex-grow-1">
-        <!-- Sidebar Navigation -->
-        {% if user.is_authenticated %}
-            {% include 'partials/sidebar.html' %}
-        {% endif %}
-
-        <!-- Main Content Area -->
-        <main class="{% if user.is_authenticated %}main-content{% else %}container-fluid p-0{% endif %}" 
-              id="main-content" 
-              role="main">
-            
-            <!-- Breadcrumb Navigation -->
-            {% if user.is_authenticated %}
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class="col-12">
-                            <nav aria-label="breadcrumb" class="mt-3 mb-0">
-                                <ol class="breadcrumb mb-0">
-                                    <li class="breadcrumb-item">
-                                        <a href="{% url 'home' %}" class="text-decoration-none">
-                                            <i class="bi bi-house me-1"></i>Home
-                                        </a>
-                                    </li>
-                                    {% block breadcrumb_items %}
-                                        <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
-                                    {% endblock %}
-                                </ol>
-                            </nav>
-                        </div>
-                    </div>
+                    <!-- Mobile Menu Toggle -->
+                    <button class="navbar-toggler" 
+                            type="button" 
+                            data-bs-toggle="collapse" 
+                            data-bs-target="#navbarContent" 
+                            aria-controls="navbarContent" 
+                            aria-expanded="false" 
+                            aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
                 </div>
-            {% endif %}
+            </nav>
 
-            <!-- Page Messages -->
-            {% if messages %}
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class="col-12">
-                            {% for message in messages %}
-                                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show mt-3" role="alert">
-                                    <div class="d-flex align-items-center">
-                                        <div class="me-2">
-                                            {% if message.tags == 'error' or message.tags == 'danger' %}
-                                                <i class="bi bi-exclamation-triangle-fill"></i>
-                                            {% elif message.tags == 'warning' %}
-                                                <i class="bi bi-exclamation-circle-fill"></i>
-                                            {% elif message.tags == 'success' %}
-                                                <i class="bi bi-check-circle-fill"></i>
-                                            {% else %}
-                                                <i class="bi bi-info-circle-fill"></i>
-                                            {% endif %}
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            {{ message }}
-                                        </div>
-                                    </div>
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-            {% endif %}
-
-            <!-- Main Content Wrapper -->
-            <div class="content-wrapper">
-                {% block content %}
-                    <!-- Default content goes here -->
+            <!-- Main Content Area -->
+            <main class="main-content" id="main-content" role="main">
+                <!-- Breadcrumb Navigation -->
+                {% if user.is_authenticated %}
                     <div class="container-fluid">
                         <div class="row">
                             <div class="col-12">
-                                <div class="card">
-                                    <div class="card-body text-center py-5">
-                                        <i class="bi bi-gear text-muted" style="font-size: 3rem;"></i>
-                                        <h3 class="mt-3 text-muted">Content Area</h3>
-                                        <p class="text-muted">This page needs content implementation.</p>
+                                <nav aria-label="breadcrumb" class="mt-3 mb-0">
+                                    <ol class="breadcrumb mb-0">
+                                        <li class="breadcrumb-item">
+                                            <a href="{% url 'home' %}" class="text-decoration-none">
+                                                <i class="bi bi-house me-1"></i>Home
+                                            </a>
+                                        </li>
+                                        {% block breadcrumb_items %}
+                                            <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+                                        {% endblock %}
+                                    </ol>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Page Messages -->
+                {% if messages %}
+                    <div class="container-fluid mt-3" id="alert-container">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" 
+                                 role="alert" 
+                                 data-auto-dismiss="5000">
+                                <div class="d-flex align-items-center">
+                                    {% if message.tags == 'success' %}
+                                        <i class="bi bi-check-circle me-2"></i>
+                                    {% elif message.tags == 'error' or message.tags == 'danger' %}
+                                        <i class="bi bi-exclamation-circle me-2"></i>
+                                    {% elif message.tags == 'warning' %}
+                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                    {% else %}
+                                        <i class="bi bi-info-circle me-2"></i>
+                                    {% endif %}
+                                    <div class="flex-grow-1">{{ message }}</div>
+                                </div>
+                                <button type="button" 
+                                        class="btn-close" 
+                                        data-bs-dismiss="alert" 
+                                        aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Page Content -->
+                <div class="content-wrapper">
+                    {% if not user.is_authenticated %}
+                        <!-- Landing Page Content for Non-Authenticated Users -->
+                        <div class="container-fluid">
+                            <div class="row justify-content-center">
+                                <div class="col-12 col-lg-8">
+                                    <div class="parliament-header text-center">
+                                        <img src="{% static 'images/parliament-logo.png' %}" 
+                                             alt="Bangladesh Parliament Logo" 
+                                             class="parliament-logo mb-3"
+                                             onerror="this.style.display='none'">
+                                        <h1 class="h2 fw-bold mb-2">
+                                            Bangladesh Parliament Secretariat
+                                        </h1>
+                                        <h2 class="h4 mb-3">
+                                            IT Inventory Management System (PIMS)
+                                        </h2>
+                                        <p class="lead mb-4">
+                                            Comprehensive IT asset management for the Parliament of Bangladesh
+                                        </p>
+                                        <div class="location-badge d-inline-block mb-3">
+                                            <i class="bi bi-geo-alt me-1"></i>Dhaka, Bangladesh
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                {% endblock %}
-            </div>
-        </main>
-    </div>
+                    {% endif %}
 
-    <!-- Footer -->
-    {% include 'partials/footer.html' %}
+                    <!-- Main Content Block -->
+                    {% block content %}
+                        {% if user.is_authenticated %}
+                            <!-- Default Dashboard Content -->
+                            <div class="container-fluid">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h5 class="card-title mb-0">
+                                                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                                                </h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="card-text">
+                                                    Welcome to the Parliament IT Inventory Management System.
+                                                </p>
+                                                <div class="row g-3">
+                                                    <div class="col-md-3">
+                                                        <div class="card bg-primary text-white">
+                                                            <div class="card-body text-center">
+                                                                <i class="bi bi-laptop display-6 mb-2"></i>
+                                                                <h5>Devices</h5>
+                                                                <p class="mb-0">Manage IT Assets</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="card bg-success text-white">
+                                                            <div class="card-body text-center">
+                                                                <i class="bi bi-building display-6 mb-2"></i>
+                                                                <h5>Locations</h5>
+                                                                <p class="mb-0">Building Management</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="card bg-warning text-white">
+                                                            <div class="card-body text-center">
+                                                                <i class="bi bi-people display-6 mb-2"></i>
+                                                                <h5>Assignments</h5>
+                                                                <p class="mb-0">Device Assignments</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="card bg-info text-white">
+                                                            <div class="card-body text-center">
+                                                                <i class="bi bi-graph-up display-6 mb-2"></i>
+                                                                <h5>Reports</h5>
+                                                                <p class="mb-0">Analytics & Reports</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endblock %}
+                </div>
+            </main>
+
+            <!-- Footer -->
+            {% include 'partials/footer.html' %}
+        </div>
+    </div>
 
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="position-fixed top-0 start-0 w-100 h-100 d-none" 
@@ -313,6 +399,14 @@
                 <div class="text-muted">Please wait...</div>
             </div>
         </div>
+    </div>
+
+    <!-- Auto-save Indicator -->
+    <div id="autosave-indicator" 
+         class="position-fixed bottom-0 end-0 m-3 alert alert-success alert-sm" 
+         style="opacity: 0; transition: opacity 0.3s ease; z-index: 1055;">
+        <i class="bi bi-cloud-check me-1"></i>
+        Auto-saved
     </div>
 
     <!-- Bootstrap 5.3 JS Bundle -->
@@ -329,13 +423,14 @@
     <!-- Additional JS blocks for specific pages -->
     {% block extra_js %}{% endblock %}
     
-    <!-- Core Application JavaScript -->
+    <!-- Inline JavaScript for immediate functionality -->
     <script>
-        // Initialize app when DOM is loaded
+        // Immediate functionality before main PIMS initialization
         document.addEventListener('DOMContentLoaded', function() {
             // Mobile sidebar toggle functionality
             const sidebarToggle = document.getElementById('sidebarToggle');
             const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
             
             if (sidebarToggle && sidebar) {
                 sidebarToggle.addEventListener('click', function(e) {
@@ -346,6 +441,15 @@
                     const isOpen = sidebar.classList.contains('show');
                     this.setAttribute('aria-expanded', isOpen);
                     sidebar.setAttribute('aria-hidden', !isOpen);
+                    
+                    // Show/hide overlay on mobile
+                    if (sidebarOverlay && window.innerWidth <= 1024) {
+                        if (isOpen) {
+                            sidebarOverlay.classList.add('show');
+                        } else {
+                            sidebarOverlay.classList.remove('show');
+                        }
+                    }
                 });
                 
                 // Close sidebar on outside click (mobile)
@@ -357,127 +461,59 @@
                         sidebar.classList.remove('show');
                         sidebarToggle.setAttribute('aria-expanded', 'false');
                         sidebar.setAttribute('aria-hidden', 'true');
+                        if (sidebarOverlay) {
+                            sidebarOverlay.classList.remove('show');
+                        }
                     }
                 });
-
+                
                 // Handle window resize
                 window.addEventListener('resize', function() {
                     if (window.innerWidth > 1024) {
                         sidebar.classList.remove('show');
                         sidebarToggle.setAttribute('aria-expanded', 'false');
-                        sidebar.setAttribute('aria-hidden', 'false');
+                        if (sidebarOverlay) {
+                            sidebarOverlay.classList.remove('show');
+                        }
                     }
                 });
             }
             
-            // Auto-hide alerts after 5 seconds
-            setTimeout(function() {
-                const alerts = document.querySelectorAll('.alert[role="alert"]');
-                alerts.forEach(alert => {
-                    const alertInstance = bootstrap.Alert.getOrCreateInstance(alert);
-                    if (alertInstance) {
-                        alertInstance.close();
+            // Close sidebar with Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && sidebar && sidebar.classList.contains('show')) {
+                    sidebar.classList.remove('show');
+                    if (sidebarOverlay) {
+                        sidebarOverlay.classList.remove('show');
                     }
-                });
-            }, 5000);
+                    if (sidebarToggle) {
+                        sidebarToggle.focus();
+                    }
+                }
+            });
             
-            // Active navigation highlighting
+            // Set active states based on current URL
             const currentPath = window.location.pathname;
-            const navLinks = document.querySelectorAll('.sidebar .nav-link');
-            navLinks.forEach(link => {
-                if (link.getAttribute('href') === currentPath) {
+            const navLinks = document.querySelectorAll('.sidebar .nav-link[href]');
+            
+            navLinks.forEach(function(link) {
+                const href = link.getAttribute('href');
+                if (href && currentPath.startsWith(href) && href !== '/') {
                     link.classList.add('active');
-                } else {
-                    link.classList.remove('active');
-                }
-            });
-
-            // Loading overlay functions
-            window.showLoading = function() {
-                document.getElementById('loadingOverlay').classList.remove('d-none');
-            };
-
-            window.hideLoading = function() {
-                document.getElementById('loadingOverlay').classList.add('d-none');
-            };
-
-            // Form submission with loading
-            document.querySelectorAll('form[data-loading="true"]').forEach(form => {
-                form.addEventListener('submit', function() {
-                    showLoading();
-                });
-            });
-
-            // Initialize tooltips
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            const tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-
-            // Initialize popovers
-            const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-            const popoverList = popoverTriggerList.map(function(popoverTriggerEl) {
-                return new bootstrap.Popover(popoverTriggerEl);
-            });
-
-            // Service worker registration for PWA features
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/sw.js').catch(function(error) {
-                    console.log('ServiceWorker registration failed: ', error);
-                });
-            }
-        });
-
-        // Global error handler for AJAX requests
-        window.addEventListener('unhandledrejection', function(event) {
-            console.error('Unhandled promise rejection:', event.reason);
-            hideLoading();
-        });
-
-        // Performance monitoring
-        window.addEventListener('load', function() {
-            if ('performance' in window) {
-                setTimeout(function() {
-                    const perfData = performance.getEntriesByType('navigation')[0];
-                    if (perfData && perfData.loadEventEnd > 0) {
-                        console.log('Page load time:', perfData.loadEventEnd - perfData.fetchStart, 'ms');
-                    }
-                }, 0);
-            }
-        });
-    </script>
-
-    <!-- Django CSRF Token for AJAX -->
-    <script>
-        // Get CSRF token for AJAX requests
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
+                    
+                    // If it's a submenu item, also show the parent submenu
+                    const parentSubmenu = link.closest('.submenu');
+                    if (parentSubmenu) {
+                        parentSubmenu.classList.add('show');
+                        const parentToggle = parentSubmenu.closest('.nav-item').querySelector('.nav-link-toggle');
+                        if (parentToggle) {
+                            parentToggle.classList.add('expanded');
+                            parentToggle.setAttribute('aria-expanded', 'true');
+                        }
                     }
                 }
-            }
-            return cookieValue;
-        }
-        
-        const csrftoken = getCookie('csrftoken');
-        
-        // Set CSRF token for all AJAX requests
-        if (window.fetch) {
-            const originalFetch = window.fetch;
-            window.fetch = function(url, options = {}) {
-                if (options.method && options.method.toUpperCase() !== 'GET') {
-                    options.headers = options.headers || {};
-                    options.headers['X-CSRFToken'] = csrftoken;
-                }
-                return originalFetch(url, options);
-            };
-        }
+            });
+        });
     </script>
 </body>
 </html>

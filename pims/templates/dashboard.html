@@ -7,185 +7,198 @@
 <style>
 /* Dashboard Specific Styling - Flat Design */
 .dashboard-container {
-    background-color: var(--bg-secondary);
+    background-color: #f8fafc;
     min-height: 100vh;
-    padding: 2rem 0;
+    padding: 1.5rem 0;
 }
 
 .dashboard-header {
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-xl);
-    margin-bottom: var(--spacing-xl);
-    box-shadow: var(--shadow-card);
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .dashboard-title {
-    color: var(--text-primary);
-    font-weight: var(--font-weight-bold);
-    margin-bottom: var(--spacing-sm);
+    color: #1e293b;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
+    gap: 1rem;
+    font-size: 2rem;
 }
 
 .dashboard-subtitle {
-    color: var(--text-secondary);
+    color: #64748b;
     margin-bottom: 0;
+    font-size: 1.125rem;
 }
 
+/* Statistics Grid - Reference Design Inspired */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-xl);
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .stat-card {
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-xl);
-    box-shadow: var(--shadow-card);
-    transition: var(--transition);
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
-}
-
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: var(--stat-color, var(--primary-teal));
+    border: 1px solid #f1f5f9;
 }
 
 .stat-card:hover {
     transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-.stat-card.users { --stat-color: var(--primary-teal); }
-.stat-card.devices { --stat-color: var(--success); }
-.stat-card.locations { --stat-color: var(--primary-orange); }
-.stat-card.assignments { --stat-color: var(--primary-red); }
+/* Color scheme matching reference design */
+.stat-card.users {
+    background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+    color: white;
+}
+
+.stat-card.devices {
+    background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+    color: white;
+}
+
+.stat-card.locations {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: white;
+}
+
+.stat-card.assignments {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
 
 .stat-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: 1rem;
 }
 
 .stat-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: var(--radius-xl);
+    width: 70px;
+    height: 70px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
-    color: var(--text-white);
+    font-size: 2rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    backdrop-filter: blur(10px);
 }
-
-.stat-icon.users { background-color: var(--primary-teal); }
-.stat-icon.devices { background-color: var(--success); }
-.stat-icon.locations { background-color: var(--primary-orange); }
-.stat-icon.assignments { background-color: var(--primary-red); }
 
 .stat-content {
     flex: 1;
 }
 
 .stat-number {
-    font-size: 2.5rem;
-    font-weight: var(--font-weight-bold);
-    color: var(--text-primary);
-    margin-bottom: var(--spacing-xs);
+    font-size: 3rem;
+    font-weight: 800;
     line-height: 1;
+    margin-bottom: 0.5rem;
 }
 
 .stat-label {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    font-weight: var(--font-weight-medium);
+    font-size: 1rem;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: var(--spacing-xs);
+    margin-bottom: 0.75rem;
+    opacity: 0.9;
 }
 
 .stat-change {
     display: flex;
     align-items: center;
-    gap: var(--spacing-xs);
-    font-size: 0.75rem;
-    font-weight: var(--font-weight-medium);
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
 }
 
 .stat-change.positive {
-    color: var(--success);
+    background: rgba(16, 185, 129, 0.2);
 }
 
 .stat-change.negative {
-    color: var(--error);
+    background: rgba(239, 68, 68, 0.2);
 }
 
+/* Dashboard Grid Layout */
 .dashboard-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: var(--spacing-xl);
-    margin-bottom: var(--spacing-xl);
+    gap: 2rem;
+    margin-bottom: 2rem;
 }
 
+/* Activity Section */
 .activity-section {
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-lg);
+    background-color: #ffffff;
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: var(--shadow-card);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
 }
 
 .section-header {
-    background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-hover));
-    color: var(--text-white);
-    padding: var(--spacing-lg);
+    background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+    color: white;
+    padding: 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .section-title {
-    font-size: 1.125rem;
-    font-weight: var(--font-weight-semibold);
+    font-size: 1.25rem;
+    font-weight: 600;
     margin: 0;
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: 0.75rem;
 }
 
 .section-actions {
     display: flex;
-    gap: var(--spacing-xs);
+    gap: 0.5rem;
 }
 
 .section-content {
-    padding: var(--spacing-lg);
+    padding: 1.5rem;
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 .activity-item {
-    border-bottom: 1px solid var(--border-light);
-    padding: var(--spacing-md) 0;
-    transition: var(--transition);
+    border-bottom: 1px solid #f1f5f9;
+    padding: 1rem 0;
+    transition: all 0.3s ease;
 }
 
 .activity-item:hover {
-    background-color: var(--bg-secondary);
-    margin: 0 calc(var(--spacing-lg) * -1);
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-radius: var(--radius-md);
+    background-color: #f8fafc;
+    margin: 0 -1.5rem;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
 }
 
 .activity-item:last-child {
@@ -195,143 +208,169 @@
 .activity-row {
     display: grid;
     grid-template-columns: auto 1fr auto;
-    gap: var(--spacing-md);
+    gap: 1rem;
     align-items: center;
 }
 
 .activity-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-md);
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
-    color: var(--text-white);
+    font-size: 1.25rem;
+    color: white;
 }
 
-.activity-icon.device { background-color: var(--success); }
-.activity-icon.user { background-color: var(--primary-teal); }
-.activity-icon.assignment { background-color: var(--primary-orange); }
-.activity-icon.maintenance { background-color: var(--primary-red); }
+.activity-icon.device { background: linear-gradient(135deg, #10b981, #047857); }
+.activity-icon.user { background: linear-gradient(135deg, #14b8a6, #0f766e); }
+.activity-icon.assignment { background: linear-gradient(135deg, #f97316, #ea580c); }
+.activity-icon.maintenance { background: linear-gradient(135deg, #ef4444, #dc2626); }
 
 .activity-info {
     flex: 1;
 }
 
 .activity-title {
-    font-weight: var(--font-weight-semibold);
-    color: var(--text-primary);
+    font-weight: 600;
+    color: #1e293b;
     margin-bottom: 0.25rem;
-    font-size: 0.875rem;
+    font-size: 0.95rem;
 }
 
 .activity-meta {
-    color: var(--text-muted);
-    font-size: 0.75rem;
+    color: #64748b;
+    font-size: 0.8rem;
     display: flex;
-    gap: var(--spacing-sm);
+    gap: 1rem;
     flex-wrap: wrap;
 }
 
 .activity-time {
-    color: var(--text-muted);
-    font-size: 0.75rem;
+    color: #64748b;
+    font-size: 0.8rem;
     white-space: nowrap;
+    font-weight: 500;
 }
 
+/* Quick Actions */
 .quick-actions {
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
-    box-shadow: var(--shadow-card);
-    margin-bottom: var(--spacing-lg);
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+    margin-bottom: 1.5rem;
+}
+
+.quick-actions .section-header {
+    background: transparent;
+    color: #1e293b;
+    padding: 0;
+    margin-bottom: 1.5rem;
 }
 
 .actions-grid {
     display: grid;
-    gap: var(--spacing-sm);
+    gap: 0.75rem;
 }
 
 .action-btn {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-md);
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem;
     text-decoration: none;
-    color: var(--text-primary);
+    color: #1e293b;
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
-    transition: var(--transition);
-    font-weight: var(--font-weight-medium);
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+    font-weight: 500;
 }
 
 .action-btn:hover {
-    background-color: var(--primary-teal);
-    color: var(--text-white);
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    color: white;
     text-decoration: none;
     transform: translateX(4px);
+    border-color: #14b8a6;
 }
 
+.action-btn i {
+    font-size: 1.125rem;
+}
+
+/* Charts Section */
 .chart-section {
     grid-column: 1 / -1;
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-lg);
+    background-color: #ffffff;
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: var(--shadow-card);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+}
+
+.chart-section .section-header {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
 }
 
 .chart-content {
-    padding: var(--spacing-lg);
+    padding: 2rem;
 }
 
 .chart-container {
     height: 400px;
-    background-color: var(--bg-secondary);
-    border-radius: var(--radius-md);
-    border: 2px dashed var(--border-medium);
+    background-color: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #cbd5e1;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-bottom: 1rem;
 }
 
 .chart-placeholder {
     text-align: center;
-    color: var(--text-muted);
+    color: #64748b;
 }
 
 .chart-placeholder i {
     font-size: 3rem;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: 1rem;
     opacity: 0.5;
+    color: #f97316;
 }
 
+/* Alerts Section */
 .alerts-section {
     grid-column: 1 / -1;
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-card);
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     overflow: hidden;
+    border: 1px solid #f1f5f9;
+}
+
+.alerts-section .section-header {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
 }
 
 .alerts-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: var(--spacing-lg);
-    padding: var(--spacing-xl);
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
 }
 
 .alert-card {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-lg);
+    background-color: #f8fafc;
+    border-radius: 12px;
+    padding: 1.5rem;
     position: relative;
     overflow: hidden;
+    border: 1px solid #e2e8f0;
 }
 
 .alert-card::before {
@@ -341,52 +380,53 @@
     left: 0;
     bottom: 0;
     width: 4px;
-    background: var(--alert-color, var(--primary-red));
+    background: var(--alert-color, #ef4444);
 }
 
-.alert-card.warning { --alert-color: var(--primary-orange); }
-.alert-card.danger { --alert-color: var(--primary-red); }
-.alert-card.info { --alert-color: var(--primary-teal); }
+.alert-card.warning { --alert-color: #f97316; }
+.alert-card.danger { --alert-color: #ef4444; }
+.alert-card.info { --alert-color: #14b8a6; }
 
 .alert-header {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-md);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
 }
 
 .alert-icon {
-    width: 25px;
-    height: 25px;
-    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
-    color: var(--text-white);
-    background: var(--alert-color, var(--primary-red));
+    font-size: 0.875rem;
+    color: white;
+    background: var(--alert-color, #ef4444);
 }
 
 .alert-title {
-    font-weight: var(--font-weight-semibold);
-    color: var(--text-primary);
+    font-weight: 600;
+    color: #1e293b;
     margin: 0;
-    font-size: 0.875rem;
+    font-size: 1rem;
 }
 
 .alert-content {
-    color: var(--text-secondary);
+    color: #64748b;
     font-size: 0.875rem;
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
-@media (max-width: 1024px) {
+/* Responsive Design */
+@media (max-width: 1200px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
     }
     
     .stats-grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     }
 }
 
@@ -395,30 +435,134 @@
         padding: 1rem 0;
     }
     
-    .dashboard-header,
-    .activity-section,
-    .quick-actions,
-    .chart-section,
-    .alerts-section {
-        margin-left: 1rem;
-        margin-right: 1rem;
+    .dashboard-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .dashboard-title {
+        font-size: 1.5rem;
+    }
+    
+    .dashboard-subtitle {
+        font-size: 1rem;
     }
     
     .stats-grid {
         grid-template-columns: 1fr;
-        gap: var(--spacing-md);
+        gap: 1rem;
     }
     
     .stat-card {
-        padding: var(--spacing-lg);
+        padding: 1.5rem;
+    }
+    
+    .stat-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+    
+    .alerts-grid {
+        grid-template-columns: 1fr;
+        padding: 1.5rem;
+    }
+    
+    .section-content {
+        padding: 1rem;
+    }
+    
+    .chart-content {
+        padding: 1.5rem;
+    }
+    
+    .dashboard-grid {
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-header {
+        padding: 1rem;
+    }
+    
+    .stat-card {
+        padding: 1rem;
     }
     
     .stat-number {
         font-size: 2rem;
     }
     
-    .alerts-grid {
-        grid-template-columns: 1fr;
+    .activity-row {
+        grid-template-columns: auto 1fr;
+        gap: 0.75rem;
+    }
+    
+    .activity-time {
+        grid-column: 1 / -1;
+        margin-top: 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .section-header {
+        padding: 1rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .stat-card,
+    .activity-section,
+    .quick-actions,
+    .chart-section,
+    .alerts-section {
+        border-width: 2px;
+    }
+    
+    .activity-icon,
+    .alert-icon {
+        filter: contrast(1.2);
+    }
+}
+
+/* Print styles */
+@media print {
+    .dashboard-container {
+        background: white;
+        padding: 0;
+    }
+    
+    .stat-card,
+    .activity-section,
+    .quick-actions {
+        box-shadow: none;
+        border: 1px solid #ccc;
+        break-inside: avoid;
+        margin-bottom: 1rem;
+    }
+    
+    .section-header {
+        background: #f5f5f5 !important;
+        color: #000 !important;
+    }
+    
+    .chart-section,
+    .alerts-section {
+        display: none;
     }
 }
 </style>
@@ -459,7 +603,7 @@
                         <span>+12 this month</span>
                     </div>
                 </div>
-                <div class="stat-icon users">
+                <div class="stat-icon">
                     <i class="bi bi-people"></i>
                 </div>
             </div>
@@ -475,7 +619,7 @@
                         <span>+45 this month</span>
                     </div>
                 </div>
-                <div class="stat-icon devices">
+                <div class="stat-icon">
                     <i class="bi bi-laptop"></i>
                 </div>
             </div>
@@ -491,7 +635,7 @@
                         <span>+8 this month</span>
                     </div>
                 </div>
-                <div class="stat-icon locations">
+                <div class="stat-icon">
                     <i class="bi bi-geo-alt"></i>
                 </div>
             </div>
@@ -507,7 +651,7 @@
                         <span>-23 this week</span>
                     </div>
                 </div>
-                <div class="stat-icon assignments">
+                <div class="stat-icon">
                     <i class="bi bi-arrow-left-right"></i>
                 </div>
             </div>
@@ -571,7 +715,7 @@
 
         <!-- Quick Actions -->
         <div class="quick-actions">
-            <div class="section-header bg-transparent text-dark p-0 mb-3">
+            <div class="section-header">
                 <h5 class="section-title">
                     <i class="bi bi-lightning-charge"></i>
                     Quick Actions
@@ -598,7 +742,7 @@
                     <i class="bi bi-geo-alt"></i>
                     Add Location
                 </a>
-                <a href="{% url 'reports:dashboard' %}" class="action-btn">
+                <a href="#" class="action-btn">
                     <i class="bi bi-bar-chart"></i>
                     View Reports
                 </a>
@@ -630,20 +774,22 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="chart-container">
-                        <canvas id="deviceStatusChart"></canvas>
-                    </div>
-                    <div class="text-center mt-2">
-                        <h6 class="mb-0">Device Status Distribution</h6>
-                        <small class="text-muted">Current status of all devices</small>
+                        <canvas id="deviceStatusChart" width="400" height="200"></canvas>
+                        <div class="chart-placeholder">
+                            <i class="bi bi-pie-chart"></i>
+                            <h5>Device Status Distribution</h5>
+                            <p>Visual breakdown of device statuses</p>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="chart-container">
-                        <canvas id="maintenanceChart"></canvas>
-                    </div>
-                    <div class="text-center mt-2">
-                        <h6 class="mb-0">Maintenance Timeline</h6>
-                        <small class="text-muted">Completed vs scheduled maintenance</small>
+                        <canvas id="activityTrendChart" width="400" height="200"></canvas>
+                        <div class="chart-placeholder">
+                            <i class="bi bi-graph-up"></i>
+                            <h5>Activity Trends</h5>
+                            <p>System activity over time</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -658,187 +804,94 @@
                 System Alerts
             </h5>
             <div class="section-actions">
-                <a href="{% url 'alerts:list' %}" class="btn btn-sm btn-light">
-                    View All
-                </a>
+                <button class="btn btn-sm btn-light">
+                    <i class="bi bi-gear"></i>
+                </button>
             </div>
         </div>
         <div class="alerts-grid">
-            {% for alert in system_alerts|slice:":6" %}
-            <div class="alert-card {{ alert.severity }}">
-                <div class="alert-header">
-                    <div class="alert-icon">
-                        {% if alert.severity == 'danger' %}
-                            <i class="bi bi-exclamation-triangle-fill"></i>
-                        {% elif alert.severity == 'warning' %}
-                            <i class="bi bi-exclamation-circle-fill"></i>
-                        {% else %}
-                            <i class="bi bi-info-circle-fill"></i>
-                        {% endif %}
-                    </div>
-                    <h6 class="alert-title">{{ alert.title }}</h6>
-                </div>
-                <div class="alert-content">
-                    {{ alert.message|truncatechars:100 }}
-                </div>
-            </div>
-            {% empty %}
-            <div class="alert-card info">
-                <div class="alert-header">
-                    <div class="alert-icon">
-                        <i class="bi bi-check-circle-fill"></i>
-                    </div>
-                    <h6 class="alert-title">System Healthy</h6>
-                </div>
-                <div class="alert-content">
-                    All systems are operating normally. No critical alerts at this time.
-                </div>
-            </div>
             <div class="alert-card warning">
                 <div class="alert-header">
                     <div class="alert-icon">
-                        <i class="bi bi-exclamation-circle-fill"></i>
+                        <i class="bi bi-exclamation-triangle"></i>
                     </div>
                     <h6 class="alert-title">Maintenance Due</h6>
                 </div>
                 <div class="alert-content">
-                    5 devices are scheduled for maintenance in the next 7 days.
+                    15 devices require scheduled maintenance within the next 7 days. Review maintenance calendar for details.
                 </div>
             </div>
+            
+            <div class="alert-card danger">
+                <div class="alert-header">
+                    <div class="alert-icon">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                    <h6 class="alert-title">Overdue Returns</h6>
+                </div>
+                <div class="alert-content">
+                    8 device assignments are overdue for return. Please contact respective users for immediate action.
+                </div>
+            </div>
+            
             <div class="alert-card info">
                 <div class="alert-header">
                     <div class="alert-icon">
-                        <i class="bi bi-info-circle-fill"></i>
+                        <i class="bi bi-info-circle"></i>
                     </div>
-                    <h6 class="alert-title">Software Updates</h6>
+                    <h6 class="alert-title">System Update</h6>
                 </div>
                 <div class="alert-content">
-                    System updates are available for deployment during the next maintenance window.
+                    System backup completed successfully. Next scheduled backup: {{ next_backup_date|default:"August 25, 2025" }}.
                 </div>
             </div>
-            {% endfor %}
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
+// Auto-update timestamp
+function updateTimestamp() {
+    document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+}
+
+// Update every 30 seconds
+setInterval(updateTimestamp, 30000);
+
+// Chart period selector
 document.addEventListener('DOMContentLoaded', function() {
-    // Update last updated time
-    function updateLastUpdated() {
-        document.getElementById('last-updated').textContent = 'Just now';
-    }
+    const periodItems = document.querySelectorAll('[data-period]');
+    const periodButton = document.getElementById('chartPeriod');
     
-    // Update every 30 seconds
-    setInterval(updateLastUpdated, 30000);
-    
-    // Chart period selector
-    document.querySelectorAll('[data-period]').forEach(item => {
+    periodItems.forEach(item => {
         item.addEventListener('click', function(e) {
             e.preventDefault();
             const period = this.getAttribute('data-period');
-            const periodText = this.textContent;
+            const text = this.textContent;
+            periodButton.innerHTML = text + ' <i class="bi bi-chevron-down ms-1"></i>';
             
-            document.getElementById('chartPeriod').innerHTML = 
-                periodText + ' <i class="bi bi-chevron-down ms-1"></i>';
-            
-            // Update charts based on period
-            console.log('Updating charts for period:', period);
+            // Here you would typically reload chart data
+            console.log('Loading data for period:', period);
         });
     });
-    
-    // Initialize charts if Chart.js is available
-    if (typeof Chart !== 'undefined') {
-        initDashboardCharts();
-    }
 });
 
-function initDashboardCharts() {
-    // Device Status Chart
-    const deviceCtx = document.getElementById('deviceStatusChart');
-    if (deviceCtx) {
-        new Chart(deviceCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Available', 'Assigned', 'Maintenance', 'Retired'],
-                datasets: [{
-                    data: [{{ stats.devices_available|default:645 }}, {{ stats.devices_assigned|default:892 }}, {{ stats.devices_maintenance|default:156 }}, {{ stats.devices_retired|default:163 }}],
-                    backgroundColor: [
-                        '#14b8a6', // teal
-                        '#22c55e', // green
-                        '#f97316', // orange
-                        '#ef4444'  // red
-                    ],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            usePointStyle: true
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    // Maintenance Timeline Chart
-    const maintenanceCtx = document.getElementById('maintenanceChart');
-    if (maintenanceCtx) {
-        new Chart(maintenanceCtx, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                datasets: [{
-                    label: 'Completed',
-                    data: [12, 19, 15, 25, 22, 30],
-                    borderColor: '#14b8a6',
-                    backgroundColor: 'rgba(20, 184, 166, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }, {
-                    label: 'Scheduled',
-                    data: [8, 15, 12, 18, 16, 24],
-                    borderColor: '#f97316',
-                    backgroundColor: 'rgba(249, 115, 22, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.1)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.1)'
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true
-                        }
-                    }
-                }
-            }
-        });
-    }
-}
+// Stat cards animation
+document.addEventListener('DOMContentLoaded', function() {
+    const statCards = document.querySelectorAll('.stat-card');
+    
+    statCards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'all 0.6s ease';
+            
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100);
+        }, index * 150);
+    });
+});
 </script>
 {% endblock %}

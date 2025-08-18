@@ -7,36 +7,670 @@
     <li class="breadcrumb-item active">Users</li>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+/* Modern Users List Design - Parliament IT Management System */
+/* Location: Dhaka, Bangladesh - Flat Design with High Contrast */
+
+/* Root Variables */
+:root {
+    --primary-teal: #14b8a6;
+    --primary-teal-hover: #0f9488;
+    --primary-orange: #f97316;
+    --primary-red: #ef4444;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --border-light: #e2e8f0;
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Page Header Styling */
+.users-page-header {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #ffffff 100%);
+    border: 2px solid var(--border-light);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-card);
+}
+
+.page-title-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.page-title-info h1 {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.page-title-info .title-icon {
+    width: 50px;
+    height: 50px;
+    background: var(--primary-teal);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.page-subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.page-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.btn-parliament-primary {
+    background: var(--primary-teal);
+    border: 2px solid var(--primary-teal);
+    color: white;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-parliament-primary:hover {
+    background: var(--primary-teal-hover);
+    border-color: var(--primary-teal-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    color: white;
+}
+
+.btn-outline-secondary {
+    background: transparent;
+    border: 2px solid var(--border-light);
+    color: var(--text-secondary);
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-outline-secondary:hover {
+    background: var(--text-secondary);
+    border-color: var(--text-secondary);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Search and Filter Card */
+.search-filter-card {
+    background: var(--bg-primary);
+    border: 2px solid var(--border-light);
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+}
+
+.search-filter-header {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #ffffff 100%);
+    padding: 1.5rem 2rem;
+    border-bottom: 2px solid var(--border-light);
+}
+
+.search-filter-header h5 {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.search-filter-body {
+    padding: 2rem;
+}
+
+.form-label {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.form-control, .form-select {
+    border: 2px solid var(--border-light);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+    background: var(--bg-primary);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-teal);
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+    outline: none;
+}
+
+.search-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: end;
+}
+
+/* Users List Card */
+.users-list-card {
+    background: var(--bg-primary);
+    border: 2px solid var(--border-light);
+    border-radius: 16px;
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+}
+
+.users-list-header {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #ffffff 100%);
+    padding: 1.5rem 2rem;
+    border-bottom: 2px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.list-title {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.users-count {
+    background: var(--primary-teal);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Table Styling */
+.users-table {
+    margin: 0;
+    border: none;
+}
+
+.users-table th {
+    background: var(--bg-secondary);
+    border: none;
+    border-bottom: 2px solid var(--border-light);
+    color: var(--text-primary);
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.users-table td {
+    border: none;
+    border-bottom: 1px solid var(--border-light);
+    padding: 1.25rem 1.5rem;
+    vertical-align: middle;
+}
+
+.users-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.users-table tbody tr:hover {
+    background: var(--bg-secondary);
+    transform: translateY(-1px);
+}
+
+.user-info-cell {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 2px solid var(--border-light);
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-avatar-placeholder {
+    width: 50px;
+    height: 50px;
+    background: var(--primary-teal);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.user-details h6 {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+    font-size: 1rem;
+}
+
+.user-details small {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.employee-badge {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid var(--border-light);
+}
+
+.contact-info {
+    font-size: 0.85rem;
+}
+
+.contact-info div {
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.contact-info i {
+    width: 16px;
+    color: var(--primary-teal);
+}
+
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 2px solid;
+}
+
+.status-active {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.status-inactive {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+    border-color: rgba(107, 114, 128, 0.3);
+}
+
+.role-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.role-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.role-superuser {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.role-staff {
+    background: rgba(249, 115, 22, 0.1);
+    color: #ea580c;
+}
+
+.role-user {
+    background: rgba(20, 184, 166, 0.1);
+    color: #0d9488;
+}
+
+/* Actions Dropdown */
+.actions-dropdown {
+    position: relative;
+}
+
+.actions-dropdown .dropdown-toggle {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-light);
+    color: var(--text-primary);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.actions-dropdown .dropdown-toggle:hover {
+    background: var(--primary-teal);
+    border-color: var(--primary-teal);
+    color: white;
+}
+
+.dropdown-menu {
+    border: 2px solid var(--border-light);
+    border-radius: 12px;
+    box-shadow: var(--shadow-hover);
+    padding: 0.5rem 0;
+    position: absolute !important;
+    z-index: 9999 !important;
+    min-width: 200px;
+    max-width: 300px;
+    background: var(--bg-primary) !important;
+    transform: translateX(-50%) !important;
+    left: 50% !important;
+}
+
+.dropdown-menu.show {
+    display: block !important;
+}
+
+.dropdown-menu.dropup {
+    top: auto !important;
+    bottom: 100% !important;
+    margin-bottom: 0.5rem;
+}
+
+.dropdown-menu.dropdown {
+    top: 100% !important;
+    bottom: auto !important;
+    margin-top: 0.5rem;
+}
+
+.dropdown-item {
+    padding: 0.75rem 1.5rem;
+    color: var(--text-primary);
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    outline: none;
+}
+
+.dropdown-item.text-danger:hover,
+.dropdown-item.text-danger:focus {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--primary-red);
+}
+
+.dropdown-item.text-warning:hover,
+.dropdown-item.text-warning:focus {
+    background: rgba(249, 115, 22, 0.1);
+    color: var(--primary-orange);
+}
+
+.dropdown-item.text-success:hover,
+.dropdown-item.text-success:focus {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+}
+
+/* Table Responsive Adjustments */
+.users-table-responsive {
+    position: relative;
+    z-index: 1;
+}
+
+.users-table tbody tr {
+    position: relative;
+    z-index: 2;
+}
+
+.users-table tbody tr.dropdown-open {
+    z-index: 9998;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    color: var(--border-light);
+}
+
+.empty-state h5 {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+/* Pagination */
+.pagination-card {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #ffffff 100%);
+    border-top: 2px solid var(--border-light);
+    padding: 1.5rem 2rem;
+}
+
+.pagination {
+    margin: 0;
+    justify-content: center;
+}
+
+.page-link {
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    border: 2px solid var(--border-light);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin: 0 0.25rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.page-link:hover {
+    background: var(--primary-teal);
+    border-color: var(--primary-teal);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.page-item.active .page-link {
+    background: var(--primary-teal);
+    border-color: var(--primary-teal);
+    color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .page-title-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .page-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .users-table {
+        font-size: 0.9rem;
+    }
+    
+    .users-table th,
+    .users-table td {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .users-page-header,
+    .search-filter-body {
+        padding: 1.5rem;
+    }
+    
+    .page-title-info h1 {
+        font-size: 1.5rem;
+    }
+    
+    .page-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .search-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .users-table-responsive {
+        overflow-x: auto;
+    }
+    
+    .user-info-cell {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .contact-info div {
+        font-size: 0.8rem;
+    }
+    
+    .role-badges {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 576px) {
+    .users-page-header {
+        padding: 1rem;
+    }
+    
+    .search-filter-body {
+        padding: 1rem;
+    }
+    
+    .users-list-header {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .users-table th,
+    .users-table td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .user-avatar,
+    .user-avatar-placeholder {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .user-avatar-placeholder {
+        font-size: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-1">
-                <i class="bi bi-people me-2 text-primary"></i>
-                User Management
-            </h1>
-            <p class="text-muted mb-0">Manage users and their permissions in PIMS</p>
-        </div>
-        <div class="btn-group">
-            {% if perms.auth.add_user %}
-                <a href="{% url 'users:create' %}" class="btn btn-parliament-primary">
-                    <i class="bi bi-plus-circle me-2"></i>
-                    Add New User
-                </a>
-            {% endif %}
-            {% if perms.auth.view_user %}
-                <a href="{% url 'users:export' %}" class="btn btn-outline-secondary">
-                    <i class="bi bi-download me-2"></i>
-                    Export Users
-                </a>
-            {% endif %}
+    <div class="users-page-header">
+        <div class="page-title-section">
+            <div class="page-title-info">
+                <h1>
+                    <div class="title-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    User Management
+                </h1>
+                <p class="page-subtitle">Manage users and their permissions in PIMS - Dhaka, Bangladesh</p>
+            </div>
+            <div class="page-actions">
+                {% if perms.auth.add_user %}
+                    <a href="{% url 'users:create' %}" class="btn-parliament-primary">
+                        <i class="bi bi-plus-circle"></i>
+                        Add New User
+                    </a>
+                {% endif %}
+                {% if perms.auth.view_user %}
+                    <a href="{% url 'users:export' %}" class="btn-outline-secondary">
+                        <i class="bi bi-download"></i>
+                        Export Users
+                    </a>
+                {% endif %}
+            </div>
         </div>
     </div>
 
     <!-- Search and Filter Card -->
-    <div class="card mb-4">
-        <div class="card-body">
+    <div class="search-filter-card">
+        <div class="search-filter-header">
+            <h5>
+                <i class="bi bi-funnel"></i>
+                Search & Filter Users
+            </h5>
+        </div>
+        <div class="search-filter-body">
             <form method="get" class="row g-3">
                 <div class="col-md-3">
                     <label for="search" class="form-label">Search Users</label>
@@ -73,13 +707,13 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">&nbsp;</label>
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-parliament-primary">
-                            <i class="bi bi-search me-2"></i>
+                    <div class="search-actions">
+                        <button type="submit" class="btn-parliament-primary">
+                            <i class="bi bi-search"></i>
                             Search
                         </button>
-                        <a href="{% url 'users:list' %}" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-clockwise me-2"></i>
+                        <a href="{% url 'users:list' %}" class="btn-outline-secondary">
+                            <i class="bi bi-arrow-clockwise"></i>
                             Reset
                         </a>
                     </div>
@@ -89,121 +723,105 @@
     </div>
 
     <!-- Users List Card -->
-    <div class="card">
-        <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-list me-2"></i>
-                    Users List
-                </h5>
-                <small class="text-muted">
-                    Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} users
-                </small>
-            </div>
-        </div>
-        <div class="card-body p-0">
+    <div class="users-list-card">
+        <div class="users-list-header">
+            <h5 class="list-title">
+                <i class="bi bi-list-ul"></i>
+                User Directory
+            </h5>
             {% if users %}
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
+                <div class="users-count">{{ users|length }} Users</div>
+            {% endif %}
+        </div>
+
+        <div class="users-list-body">
+            {% if users %}
+                <div class="users-table-responsive">
+                    <table class="table users-table">
+                        <thead>
                             <tr>
-                                <th scope="col">
-                                    <div class="d-flex align-items-center">
-                                        <input type="checkbox" class="form-check-input me-2" id="selectAll">
-                                        User
-                                    </div>
-                                </th>
-                                <th scope="col">Employee ID</th>
-                                <th scope="col">Department</th>
-                                <th scope="col">Contact</th>
-                                <th scope="col">Role</th>
-                                <th scope="col">Status</th>
-                                <th scope="col">Last Login</th>
-                                <th scope="col" class="text-center">Actions</th>
+                                <th>User Information</th>
+                                <th>Employee ID</th>
+                                <th>Department</th>
+                                <th>Contact Details</th>
+                                <th>Status</th>
+                                <th>Roles</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for user_obj in users %}
                                 <tr>
                                     <td>
-                                        <div class="d-flex align-items-center">
-                                            <input type="checkbox" class="form-check-input me-3" name="selected_users" value="{{ user_obj.pk }}">
+                                        <div class="user-info-cell">
                                             {% if user_obj.profile_image %}
-                                                <img src="{{ user_obj.profile_image.url }}" alt="{{ user_obj.get_full_name }}" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                                <div class="user-avatar">
+                                                    <img src="{{ user_obj.profile_image.url }}" alt="{{ user_obj.get_full_name }}">
+                                                </div>
                                             {% else %}
-                                                <div class="bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px;">
+                                                <div class="user-avatar-placeholder">
                                                     <i class="bi bi-person"></i>
                                                 </div>
                                             {% endif %}
-                                            <div>
-                                                <h6 class="mb-0">{{ user_obj.get_full_name }}</h6>
-                                                <small class="text-muted">{{ user_obj.username }}</small>
+                                            <div class="user-details">
+                                                <h6>{{ user_obj.get_full_name }}</h6>
+                                                <small>{{ user_obj.username }}</small>
                                             </div>
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="badge bg-light text-dark">{{ user_obj.employee_id|default:"-" }}</span>
+                                        <span class="employee-badge">{{ user_obj.employee_id|default:"-" }}</span>
                                     </td>
                                     <td>{{ user_obj.department|default:"-" }}</td>
                                     <td>
-                                        {% if user_obj.email %}
-                                            <div>
-                                                <small class="text-muted">
-                                                    <i class="bi bi-envelope me-1"></i>
+                                        <div class="contact-info">
+                                            {% if user_obj.email %}
+                                                <div>
+                                                    <i class="bi bi-envelope"></i>
                                                     {{ user_obj.email }}
-                                                </small>
-                                            </div>
-                                        {% endif %}
-                                        {% if user_obj.phone %}
-                                            <div>
-                                                <small class="text-muted">
-                                                    <i class="bi bi-telephone me-1"></i>
+                                                </div>
+                                            {% endif %}
+                                            {% if user_obj.phone %}
+                                                <div>
+                                                    <i class="bi bi-telephone"></i>
                                                     {{ user_obj.phone }}
-                                                </small>
-                                            </div>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if user_obj.is_active %}
+                                            <span class="status-badge status-active">Active</span>
+                                        {% else %}
+                                            <span class="status-badge status-inactive">Inactive</span>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        {% if user_obj.is_superuser %}
-                                            <span class="badge bg-danger">Super Admin</span>
-                                        {% elif user_obj.is_staff %}
-                                            <span class="badge bg-warning">Staff</span>
-                                        {% else %}
-                                            <span class="badge bg-info">User</span>
-                                        {% endif %}
+                                        <div class="role-badges">
+                                            {% if user_obj.is_superuser %}
+                                                <span class="role-badge role-superuser">Super Admin</span>
+                                            {% elif user_obj.is_staff %}
+                                                <span class="role-badge role-staff">Staff</span>
+                                            {% else %}
+                                                <span class="role-badge role-user">User</span>
+                                            {% endif %}
+                                        </div>
                                     </td>
                                     <td>
-                                        {% if user_obj.is_active and user_obj.is_active_employee %}
-                                            <span class="badge bg-success">
-                                                <i class="bi bi-check-circle me-1"></i>
-                                                Active
-                                            </span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">
-                                                <i class="bi bi-x-circle me-1"></i>
-                                                Inactive
-                                            </span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if user_obj.last_login %}
-                                            <small class="text-muted">{{ user_obj.last_login|timesince }} ago</small>
-                                        {% else %}
-                                            <small class="text-muted">Never</small>
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="dropdown">
-                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                                <i class="bi bi-three-dots"></i>
+                                        <div class="actions-dropdown dropdown" data-user-id="{{ user_obj.pk }}">
+                                            <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="true">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                                Actions
                                             </button>
                                             <ul class="dropdown-menu">
-                                                <li>
-                                                    <a class="dropdown-item" href="{% url 'users:detail' user_obj.pk %}">
-                                                        <i class="bi bi-eye me-2"></i>
-                                                        View Details
-                                                    </a>
-                                                </li>
+                                                {% if perms.auth.view_user %}
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'users:detail' user_obj.pk %}">
+                                                            <i class="bi bi-eye me-2"></i>
+                                                            View Details
+                                                        </a>
+                                                    </li>
+                                                {% endif %}
                                                 {% if perms.auth.change_user %}
                                                     <li>
                                                         <a class="dropdown-item" href="{% url 'users:edit' user_obj.pk %}">
@@ -217,13 +835,15 @@
                                                             Manage Roles
                                                         </a>
                                                     </li>
+                                                {% endif %}
+                                                {% if perms.auth.change_user and user_obj != user %}
                                                     <li><hr class="dropdown-divider"></li>
                                                     {% if user_obj.is_active %}
                                                         <li>
-                                                            <form method="post" action="{% url 'users:deactivate' user_obj.pk %}" class="d-inline">
+                                                            <form method="post" action="{% url 'users:deactivate' user_obj.pk %}" style="display: inline; width: 100%;">
                                                                 {% csrf_token %}
                                                                 <button type="submit" class="dropdown-item text-warning" 
-                                                                        data-confirm="Are you sure you want to deactivate this user?"
+                                                                        data-confirm="Are you sure you want to deactivate {{ user_obj.get_full_name }}?"
                                                                         onclick="return confirm(this.getAttribute('data-confirm'));">
                                                                     <i class="bi bi-pause-circle me-2"></i>
                                                                     Deactivate
@@ -232,10 +852,10 @@
                                                         </li>
                                                     {% else %}
                                                         <li>
-                                                            <form method="post" action="{% url 'users:activate' user_obj.pk %}" class="d-inline">
+                                                            <form method="post" action="{% url 'users:activate' user_obj.pk %}" style="display: inline; width: 100%;">
                                                                 {% csrf_token %}
                                                                 <button type="submit" class="dropdown-item text-success" 
-                                                                        data-confirm="Are you sure you want to activate this user?"
+                                                                        data-confirm="Are you sure you want to activate {{ user_obj.get_full_name }}?"
                                                                         onclick="return confirm(this.getAttribute('data-confirm'));">
                                                                     <i class="bi bi-play-circle me-2"></i>
                                                                     Activate
@@ -262,10 +882,10 @@
                     </table>
                 </div>
             {% else %}
-                <div class="text-center py-5">
-                    <i class="bi bi-people text-muted" style="font-size: 4rem;"></i>
-                    <h5 class="mt-3">No Users Found</h5>
-                    <p class="text-muted">
+                <div class="empty-state">
+                    <i class="bi bi-people"></i>
+                    <h5>No Users Found</h5>
+                    <p>
                         {% if request.GET.search %}
                             No users match your search criteria. Try adjusting your filters.
                         {% else %}
@@ -273,8 +893,8 @@
                         {% endif %}
                     </p>
                     {% if perms.auth.add_user %}
-                        <a href="{% url 'users:create' %}" class="btn btn-parliament-primary">
-                            <i class="bi bi-plus-circle me-2"></i>
+                        <a href="{% url 'users:create' %}" class="btn-parliament-primary">
+                            <i class="bi bi-plus-circle"></i>
                             Add First User
                         </a>
                     {% endif %}
@@ -284,9 +904,9 @@
 
         <!-- Pagination -->
         {% if page_obj.has_other_pages %}
-            <div class="card-footer">
+            <div class="pagination-card">
                 <nav aria-label="Users pagination">
-                    <ul class="pagination justify-content-center mb-0">
+                    <ul class="pagination">
                         {% if page_obj.has_previous %}
                             <li class="page-item">
                                 <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.department %}department={{ request.GET.department }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.role %}role={{ request.GET.role }}&{% endif %}page=1">
@@ -329,107 +949,528 @@
             </div>
         {% endif %}
     </div>
-
-    <!-- Bulk Actions (Hidden by default) -->
-    <div id="bulkActions" class="card mt-3" style="display: none;">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <strong>Bulk Actions:</strong>
-                    <span id="selectedCount">0</span> users selected
-                </div>
-                <div class="btn-group">
-                    {% if perms.auth.change_user %}
-                        <button type="button" class="btn btn-outline-warning" onclick="bulkDeactivate()">
-                            <i class="bi bi-pause-circle me-2"></i>
-                            Deactivate Selected
-                        </button>
-                        <button type="button" class="btn btn-outline-success" onclick="bulkActivate()">
-                            <i class="bi bi-play-circle me-2"></i>
-                            Activate Selected
-                        </button>
-                    {% endif %}
-                    {% if perms.auth.delete_user %}
-                        <button type="button" class="btn btn-outline-danger" onclick="bulkDelete()">
-                            <i class="bi bi-trash me-2"></i>
-                            Delete Selected
-                        </button>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Select All functionality
-        const selectAllCheckbox = document.getElementById('selectAll');
-        const userCheckboxes = document.querySelectorAll('input[name="selected_users"]');
-        const bulkActionsCard = document.getElementById('bulkActions');
-        const selectedCountElement = document.getElementById('selectedCount');
+// PIMS Users List JavaScript - Dhaka, Bangladesh Parliament Secretariat
 
-        function updateBulkActions() {
-            const selectedCount = document.querySelectorAll('input[name="selected_users"]:checked').length;
-            selectedCountElement.textContent = selectedCount;
+// Utility Functions
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Search and Filter Functionality
+function initializeSearchAndFilter() {
+    const searchForm = document.querySelector('.search-filter-body form');
+    const searchInput = document.getElementById('search');
+    const departmentSelect = document.getElementById('department');
+    const statusSelect = document.getElementById('status');
+    const roleSelect = document.getElementById('role');
+    
+    function performClientSideFilter() {
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+        const departmentFilter = departmentSelect ? departmentSelect.value : '';
+        const statusFilter = statusSelect ? statusSelect.value : '';
+        const roleFilter = roleSelect ? roleSelect.value : '';
+        
+        const tableRows = document.querySelectorAll('.users-table tbody tr');
+        let visibleCount = 0;
+        
+        tableRows.forEach(row => {
+            let shouldShow = true;
             
-            if (selectedCount > 0) {
-                bulkActionsCard.style.display = 'block';
+            if (searchTerm.length >= 1) {
+                const userInfo = row.querySelector('.user-details');
+                const employeeId = row.querySelector('.employee-badge');
+                const department = row.cells[2];
+                const contactInfo = row.querySelector('.contact-info');
+                
+                const searchableText = [
+                    userInfo ? userInfo.textContent : '',
+                    employeeId ? employeeId.textContent : '',
+                    department ? department.textContent : '',
+                    contactInfo ? contactInfo.textContent : ''
+                ].join(' ').toLowerCase();
+                
+                shouldShow = shouldShow && searchableText.includes(searchTerm);
+            }
+            
+            if (departmentFilter) {
+                const departmentCell = row.cells[2];
+                const departmentText = departmentCell ? departmentCell.textContent.trim() : '';
+                shouldShow = shouldShow && departmentText === departmentFilter;
+            }
+            
+            if (statusFilter) {
+                const statusBadge = row.querySelector('.status-badge');
+                if (statusBadge) {
+                    const isActive = statusBadge.classList.contains('status-active');
+                    if (statusFilter === 'active') {
+                        shouldShow = shouldShow && isActive;
+                    } else if (statusFilter === 'inactive') {
+                        shouldShow = shouldShow && !isActive;
+                    }
+                }
+            }
+            
+            if (roleFilter) {
+                const roleBadge = row.querySelector('.role-badge');
+                if (roleBadge) {
+                    const roleText = roleBadge.textContent.toLowerCase().trim();
+                    let roleMatch = false;
+                    
+                    if (roleFilter === 'superuser' && roleText.includes('super admin')) {
+                        roleMatch = true;
+                    } else if (roleFilter === 'staff' && roleText.includes('staff')) {
+                        roleMatch = true;
+                    } else if (roleFilter === 'user' && roleText.includes('user') && !roleText.includes('super')) {
+                        roleMatch = true;
+                    }
+                    
+                    shouldShow = shouldShow && roleMatch;
+                }
+            }
+            
+            if (shouldShow) {
+                row.style.display = '';
+                row.style.opacity = '1';
+                row.style.transform = 'translateY(0)';
+                visibleCount++;
             } else {
-                bulkActionsCard.style.display = 'none';
+                row.style.opacity = '0';
+                row.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    if (row.style.opacity === '0') {
+                        row.style.display = 'none';
+                    }
+                }, 200);
+            }
+        });
+        
+        const usersCount = document.querySelector('.users-count');
+        if (usersCount) {
+            usersCount.textContent = `${visibleCount} Users`;
+        }
+        
+        updateEmptyState(visibleCount === 0);
+    }
+    
+    function updateEmptyState(isEmpty) {
+        const tableBody = document.querySelector('.users-table tbody');
+        const emptyState = document.querySelector('.empty-state');
+        
+        if (isEmpty && !emptyState) {
+            const emptyStateDiv = document.createElement('div');
+            emptyStateDiv.className = 'empty-state';
+            emptyStateDiv.innerHTML = `
+                <i class="bi bi-search"></i>
+                <h5>No Users Found</h5>
+                <p>No users match your current search and filter criteria. Try adjusting your filters.</p>
+            `;
+            
+            const tableContainer = document.querySelector('.users-table-responsive');
+            if (tableContainer) {
+                tableContainer.style.display = 'none';
+                tableContainer.parentNode.appendChild(emptyStateDiv);
+            }
+        } else if (!isEmpty) {
+            const existingEmptyState = document.querySelector('.empty-state');
+            if (existingEmptyState) {
+                existingEmptyState.remove();
+            }
+            
+            const tableContainer = document.querySelector('.users-table-responsive');
+            if (tableContainer) {
+                tableContainer.style.display = '';
             }
         }
-
-        selectAllCheckbox.addEventListener('change', function() {
-            userCheckboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
-            });
-            updateBulkActions();
-        });
-
-        userCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                updateBulkActions();
-                
-                // Update select all checkbox state
-                const checkedCount = document.querySelectorAll('input[name="selected_users"]:checked').length;
-                selectAllCheckbox.checked = checkedCount === userCheckboxes.length;
-                selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < userCheckboxes.length;
-            });
-        });
-
-        // Bulk action functions
-        window.bulkActivate = function() {
-            const selectedUsers = Array.from(document.querySelectorAll('input[name="selected_users"]:checked')).map(cb => cb.value);
-            if (selectedUsers.length === 0) return;
-            
-            if (confirm(`Are you sure you want to activate ${selectedUsers.length} selected users?`)) {
-                // Implement bulk activate functionality
-                console.log('Bulk activate:', selectedUsers);
-            }
-        };
-
-        window.bulkDeactivate = function() {
-            const selectedUsers = Array.from(document.querySelectorAll('input[name="selected_users"]:checked')).map(cb => cb.value);
-            if (selectedUsers.length === 0) return;
-            
-            if (confirm(`Are you sure you want to deactivate ${selectedUsers.length} selected users?`)) {
-                // Implement bulk deactivate functionality
-                console.log('Bulk deactivate:', selectedUsers);
-            }
-        };
-
-        window.bulkDelete = function() {
-            const selectedUsers = Array.from(document.querySelectorAll('input[name="selected_users"]:checked')).map(cb => cb.value);
-            if (selectedUsers.length === 0) return;
-            
-            if (confirm(`Are you sure you want to delete ${selectedUsers.length} selected users? This action cannot be undone.`)) {
-                // Implement bulk delete functionality
-                console.log('Bulk delete:', selectedUsers);
-            }
-        };
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', debounce(performClientSideFilter, 300));
+    }
+    
+    [departmentSelect, statusSelect, roleSelect].forEach(select => {
+        if (select) {
+            select.addEventListener('change', performClientSideFilter);
+        }
     });
+}
+
+// Dropdown Positioning
+function initializeDropdownPositioning() {
+    const dropdownToggleButtons = document.querySelectorAll('.actions-dropdown .dropdown-toggle');
+    
+    dropdownToggleButtons.forEach(toggleBtn => {
+        toggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            closeAllDropdowns();
+            
+            const dropdown = this.closest('.actions-dropdown');
+            const dropdownMenu = dropdown.querySelector('.dropdown-menu');
+            const row = dropdown.closest('tr');
+            
+            if (!dropdownMenu) return;
+            
+            row.classList.add('dropdown-open');
+            
+            const toggleRect = this.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            const menuHeight = 300;
+            const spaceBelow = viewportHeight - toggleRect.bottom;
+            const spaceAbove = toggleRect.top;
+            
+            dropdownMenu.classList.remove('dropup', 'dropdown');
+            
+            if (spaceBelow >= menuHeight || spaceBelow >= spaceAbove) {
+                dropdownMenu.classList.add('dropdown');
+            } else {
+                dropdownMenu.classList.add('dropup');
+            }
+            
+            dropdownMenu.classList.add('show');
+            this.setAttribute('aria-expanded', 'true');
+            
+            const firstItem = dropdownMenu.querySelector('.dropdown-item');
+            if (firstItem) {
+                firstItem.focus();
+            }
+        });
+        
+        toggleBtn.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.click();
+            }
+        });
+    });
+    
+    document.addEventListener('keydown', function(e) {
+        const openDropdown = document.querySelector('.dropdown-menu.show');
+        if (!openDropdown) return;
+        
+        const items = openDropdown.querySelectorAll('.dropdown-item');
+        const currentFocus = document.activeElement;
+        const currentIndex = Array.from(items).indexOf(currentFocus);
+        
+        switch(e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+                items[nextIndex].focus();
+                break;
+                
+            case 'ArrowUp':
+                e.preventDefault();
+                const prevIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+                items[prevIndex].focus();
+                break;
+                
+            case 'Escape':
+                e.preventDefault();
+                closeAllDropdowns();
+                break;
+                
+            case 'Tab':
+                closeAllDropdowns();
+                break;
+        }
+    });
+    
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.actions-dropdown')) {
+            closeAllDropdowns();
+        }
+    });
+    
+    window.addEventListener('scroll', closeAllDropdowns);
+    
+    function closeAllDropdowns() {
+        const openDropdowns = document.querySelectorAll('.dropdown-menu.show');
+        const openRows = document.querySelectorAll('.users-table tbody tr.dropdown-open');
+        
+        openDropdowns.forEach(menu => {
+            menu.classList.remove('show');
+            const toggle = menu.closest('.actions-dropdown').querySelector('.dropdown-toggle');
+            if (toggle) {
+                toggle.setAttribute('aria-expanded', 'false');
+                toggle.focus();
+            }
+        });
+        
+        openRows.forEach(row => {
+            row.classList.remove('dropdown-open');
+        });
+    }
+}
+
+// Main Initialization
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Initialize Search and Filter
+    initializeSearchAndFilter();
+    
+    // Initialize Dropdown Positioning
+    initializeDropdownPositioning();
+
+    // Auto-submit Search
+    const searchInput = document.getElementById('search');
+    let searchTimeout;
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (this.value.length >= 2 || this.value.length === 0) {
+                    this.form.submit();
+                }
+            }, 500);
+        });
+    }
+
+    // Auto-submit Filters
+    const filterSelects = document.querySelectorAll('select[name="department"], select[name="status"], select[name="role"]');
+    filterSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+
+    // Table Row Animations
+    const tableRows = document.querySelectorAll('.users-table tbody tr');
+    tableRows.forEach((row, index) => {
+        row.style.opacity = '0';
+        row.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            row.style.transition = 'all 0.3s ease';
+            row.style.opacity = '1';
+            row.style.transform = 'translateY(0)';
+        }, index * 50);
+    });
+
+    // Confirmation Dialogs
+    const confirmButtons = document.querySelectorAll('[data-confirm]');
+    confirmButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const message = this.getAttribute('data-confirm');
+            const actionType = this.textContent.trim().toLowerCase();
+            
+            let confirmClass = 'btn-primary';
+            if (actionType.includes('delete') || actionType.includes('remove')) {
+                confirmClass = 'btn-danger';
+            } else if (actionType.includes('deactivate')) {
+                confirmClass = 'btn-warning';
+            } else if (actionType.includes('activate')) {
+                confirmClass = 'btn-success';
+            }
+            
+            if (confirm(message)) {
+                if (this.tagName === 'BUTTON' && this.form) {
+                    this.form.submit();
+                } else if (this.tagName === 'A') {
+                    window.location.href = this.href;
+                }
+            }
+        });
+    });
+
+    // Search Highlighting
+    function highlightSearchTerms() {
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+        if (searchTerm.length >= 2) {
+            const textNodes = document.querySelectorAll('.user-details h6, .user-details small, .employee-badge');
+            textNodes.forEach(node => {
+                const text = node.textContent;
+                if (text.toLowerCase().includes(searchTerm)) {
+                    const regex = new RegExp(`(${searchTerm})`, 'gi');
+                    node.innerHTML = text.replace(regex, '<mark class="search-highlight">$1</mark>');
+                }
+            });
+        }
+    }
+
+    if (searchInput && searchInput.value) {
+        highlightSearchTerms();
+    }
+
+    // Keyboard Shortcuts
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.select();
+            }
+        }
+        
+        if (e.key === 'Escape' && document.activeElement === searchInput) {
+            searchInput.value = '';
+            searchInput.form.submit();
+        }
+    });
+
+    // Mobile Responsiveness
+    function checkMobileView() {
+        const isMobile = window.innerWidth <= 768;
+        const table = document.querySelector('.users-table');
+        
+        if (table) {
+            if (isMobile) {
+                table.classList.add('mobile-optimized');
+                convertTableToCards();
+            } else {
+                table.classList.remove('mobile-optimized');
+                restoreTableView();
+            }
+        }
+    }
+
+    function convertTableToCards() {
+        const tbody = document.querySelector('.users-table tbody');
+        if (tbody && !tbody.classList.contains('card-view')) {
+            tbody.classList.add('card-view');
+        }
+    }
+
+    function restoreTableView() {
+        const tbody = document.querySelector('.users-table tbody');
+        if (tbody) {
+            tbody.classList.remove('card-view');
+        }
+    }
+
+    checkMobileView();
+    window.addEventListener('resize', debounce(checkMobileView, 250));
+
+    // Form Loading States
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Searching...';
+                submitBtn.disabled = true;
+                
+                setTimeout(() => {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }, 3000);
+            }
+        });
+    }
+
+    // Accessibility Enhancements
+    function enhanceAccessibility() {
+        const actionButtons = document.querySelectorAll('.dropdown-toggle');
+        actionButtons.forEach((btn, index) => {
+            const userRow = btn.closest('tr');
+            const userName = userRow.querySelector('.user-details h6')?.textContent;
+            if (userName) {
+                btn.setAttribute('aria-label', `Actions for ${userName}`);
+            }
+        });
+
+        const roleBadges = document.querySelectorAll('.role-badge');
+        roleBadges.forEach(badge => {
+            const role = badge.textContent.trim();
+            badge.setAttribute('title', `User role: ${role}`);
+        });
+    }
+
+    enhanceAccessibility();
+
+    // Lazy Load Avatars
+    function lazyLoadAvatars() {
+        const avatars = document.querySelectorAll('.user-avatar img[data-src]');
+        if ('IntersectionObserver' in window && avatars.length > 0) {
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.src = img.dataset.src;
+                        img.removeAttribute('data-src');
+                        imageObserver.unobserve(img);
+                    }
+                });
+            });
+
+            avatars.forEach(img => imageObserver.observe(img));
+        }
+    }
+
+    lazyLoadAvatars();
+
+    console.log('PIMS Users List initialized successfully - Dhaka, Bangladesh Parliament Secretariat');
+});
+
+// Additional Styles
+const highlightStyle = document.createElement('style');
+highlightStyle.textContent = `
+    .search-highlight {
+        background: rgba(20, 184, 166, 0.2);
+        color: var(--primary-teal);
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+    
+    .mobile-optimized {
+        font-size: 0.85rem;
+    }
+    
+    .card-view tr {
+        display: block;
+        border: 2px solid var(--border-light);
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: var(--bg-primary);
+        box-shadow: var(--shadow-card);
+    }
+    
+    .card-view td {
+        display: block;
+        border: none;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .card-view td:last-child {
+        border-bottom: none;
+    }
+    
+    .card-view th {
+        display: none;
+    }
+    
+    .card-view td::before {
+        content: attr(data-label) ": ";
+        font-weight: 600;
+        color: var(--text-primary);
+        display: inline-block;
+        min-width: 120px;
+    }
+`;
+document.head.appendChild(highlightStyle);
 </script>
 {% endblock %}

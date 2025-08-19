@@ -446,6 +446,28 @@
     color: white;
 }
 
+/* Activate Action - Green */
+.action-btn.activate {
+    background: #22c55e;
+    color: white;
+}
+
+.action-btn.activate:hover {
+    background: #16a34a;
+    color: white;
+}
+
+/* Deactivate Action - Yellow/Orange */
+.action-btn.deactivate {
+    background: #eab308;
+    color: white;
+}
+
+.action-btn.deactivate:hover {
+    background: #ca8a04;
+    color: white;
+}
+
 /* Icon styling */
 .action-btn i {
     font-size: 1rem;
@@ -823,12 +845,15 @@
                                     </td>
                                     <td class="actions-cell">
                                         <div class="action-buttons">
+                                            <!-- View Details -->
                                             <a href="{% url 'users:detail' user_obj.pk %}" 
                                                class="action-btn view" 
                                                title="View Details" 
                                                data-bs-toggle="tooltip">
                                                 <i class="bi bi-eye"></i>
                                             </a>
+                                            
+                                            <!-- Edit User -->
                                             {% if perms.users.change_customuser %}
                                                 <a href="{% url 'users:edit' user_obj.pk %}" 
                                                    class="action-btn edit" 
@@ -837,6 +862,8 @@
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
                                             {% endif %}
+                                            
+                                            <!-- Manage Roles -->
                                             {% if perms.users.change_customuser %}
                                                 <a href="{% url 'users:roles' user_obj.pk %}" 
                                                    class="action-btn roles" 
@@ -845,12 +872,43 @@
                                                     <i class="bi bi-person-badge"></i>
                                                 </a>
                                             {% endif %}
+                                            
+                                            <!-- Activate/Deactivate Actions -->
+                                            {% if perms.users.change_customuser and user_obj != request.user %}
+                                                {% if user_obj.is_active and user_obj.is_active_employee %}
+                                                    <!-- Deactivate User -->
+                                                    <form method="post" action="{% url 'users:deactivate' user_obj.pk %}" style="display: inline;">
+                                                        {% csrf_token %}
+                                                        <button type="submit" 
+                                                                class="action-btn deactivate" 
+                                                                title="Deactivate User" 
+                                                                data-bs-toggle="tooltip"
+                                                                onclick="return confirm('Are you sure you want to deactivate {{ user_obj.get_full_name|escapejs }}? They will no longer be able to access the system.')">
+                                                            <i class="bi bi-pause-circle"></i>
+                                                        </button>
+                                                    </form>
+                                                {% else %}
+                                                    <!-- Activate User -->
+                                                    <form method="post" action="{% url 'users:activate' user_obj.pk %}" style="display: inline;">
+                                                        {% csrf_token %}
+                                                        <button type="submit" 
+                                                                class="action-btn activate" 
+                                                                title="Activate User" 
+                                                                data-bs-toggle="tooltip"
+                                                                onclick="return confirm('Are you sure you want to activate {{ user_obj.get_full_name|escapejs }}? They will regain access to the system.')">
+                                                            <i class="bi bi-play-circle"></i>
+                                                        </button>
+                                                    </form>
+                                                {% endif %}
+                                            {% endif %}
+                                            
+                                            <!-- Delete User -->
                                             {% if perms.users.delete_customuser and user_obj != request.user %}
                                                 <a href="{% url 'users:delete' user_obj.pk %}" 
                                                    class="action-btn delete" 
                                                    title="Delete User" 
                                                    data-bs-toggle="tooltip"
-                                                   onclick="return confirm('Are you sure you want to delete this user?')">
+                                                   onclick="return confirm('Are you sure you want to delete this user? This action cannot be undone.')">
                                                     <i class="bi bi-trash"></i>
                                                 </a>
                                             {% endif %}
@@ -1024,7 +1082,29 @@ document.addEventListener('DOMContentLoaded', function() {
     handleResponsiveTable();
     window.addEventListener('resize', handleResponsiveTable);
     
-    // Action button confirmation for delete
+    // Enhanced action button confirmations
+    const activateButtons = document.querySelectorAll('.action-btn.activate');
+    activateButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            const userName = this.closest('tr').querySelector('.user-details h6').textContent;
+            const confirmed = confirm(`Are you sure you want to activate user "${userName}"? They will regain access to the system.`);
+            if (!confirmed) {
+                e.preventDefault();
+            }
+        });
+    });
+    
+    const deactivateButtons = document.querySelectorAll('.action-btn.deactivate');
+    deactivateButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            const userName = this.closest('tr').querySelector('.user-details h6').textContent;
+            const confirmed = confirm(`Are you sure you want to deactivate user "${userName}"? They will no longer be able to access the system.`);
+            if (!confirmed) {
+                e.preventDefault();
+            }
+        });
+    });
+    
     const deleteButtons = document.querySelectorAll('.action-btn.delete');
     deleteButtons.forEach(button => {
         button.addEventListener('click', function(e) {
@@ -1108,7 +1188,26 @@ document.addEventListener('DOMContentLoaded', function() {
         printWindow.print();
     };
     
-    console.log('PIMS Users List initialized successfully');
+    // Success/Error message handling for activate/deactivate actions
+    const forms = document.querySelectorAll('form[action*="activate"], form[action*="deactivate"]');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const button = this.querySelector('button[type="submit"]');
+            if (button) {
+                const originalHTML = button.innerHTML;
+                button.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+                button.disabled = true;
+                
+                // Show loading state for a moment
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                    button.disabled = false;
+                }, 1000);
+            }
+        });
+    });
+    
+    console.log('PIMS Users List with Activate/Deactivate functionality initialized successfully');
 });
 </script>
 {% endblock %}

@@ -71,15 +71,13 @@ class UserListView(LoginRequiredMixin, ListView):
         """Filter users based on search parameters."""
         queryset = CustomUser.objects.select_related().prefetch_related('groups')
         
-        # Get search parameters
+        # Get search parameters from the form
         search = self.request.GET.get('search')
-        office = self.request.GET.get('office')
-        designation = self.request.GET.get('designation')
-        group = self.request.GET.get('group')
-        is_active = self.request.GET.get('is_active')
-        is_staff = self.request.GET.get('is_staff')
+        department = self.request.GET.get('department') 
+        status = self.request.GET.get('status')          
+        role = self.request.GET.get('role')              
         
-        # Apply filters
+        # Apply search filter
         if search:
             queryset = queryset.filter(
                 Q(first_name__icontains=search) |
@@ -89,24 +87,23 @@ class UserListView(LoginRequiredMixin, ListView):
                 Q(email__icontains=search)
             )
         
-        if office:
-            queryset = queryset.filter(office__icontains=office)
+        # Apply department filter (using office field)
+        if department:
+            queryset = queryset.filter(office__icontains=department)
             
-        if designation:
-            queryset = queryset.filter(designation__icontains=designation)
-            
-        if group:
-            queryset = queryset.filter(groups__id=group)
-            
-        if is_active == 'true':
+        # Apply status filter
+        if status == 'active':
             queryset = queryset.filter(is_active=True, is_active_employee=True)
-        elif is_active == 'false':
+        elif status == 'inactive':
             queryset = queryset.filter(Q(is_active=False) | Q(is_active_employee=False))
             
-        if is_staff == 'true':
-            queryset = queryset.filter(is_staff=True)
-        elif is_staff == 'false':
-            queryset = queryset.filter(is_staff=False)
+        # Apply role filter
+        if role == 'superuser':
+            queryset = queryset.filter(is_superuser=True)
+        elif role == 'staff':
+            queryset = queryset.filter(is_staff=True, is_superuser=False)
+        elif role == 'user':
+            queryset = queryset.filter(is_staff=False, is_superuser=False)
         
         return queryset.order_by('employee_id', 'last_name')
     
@@ -116,6 +113,13 @@ class UserListView(LoginRequiredMixin, ListView):
         context['search_form'] = UserSearchForm(self.request.GET)
         context['total_users'] = CustomUser.objects.count()
         context['active_users'] = CustomUser.get_active_employees().count()
+        
+        # Add current filter values for form persistence
+        context['current_search'] = self.request.GET.get('search', '')
+        context['current_department'] = self.request.GET.get('department', '')
+        context['current_status'] = self.request.GET.get('status', '')
+        context['current_role'] = self.request.GET.get('role', '')
+        
         return context
 
 

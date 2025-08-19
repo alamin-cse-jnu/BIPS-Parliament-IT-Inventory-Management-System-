@@ -98,7 +98,7 @@
                     <!-- Navbar Brand (for non-authenticated users) -->
                     {% if not user.is_authenticated %}
                         <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
-                            <img src="{% static 'images/parliament-logo.png' %}" alt="Bangladesh Parliament Logo" 
+                            <img src="{% static 'images/bangladesh-parliament-logo.png' %}" alt="Bangladesh Parliament Logo" 
                                  class="me-2" style="height: 32px;" onerror="this.style.display='none'">
                             <div>
                                 <strong>PIMS</strong>
@@ -290,34 +290,6 @@
 
                 <!-- Page Content -->
                 <div class="content-wrapper">
-                    {% if not user.is_authenticated %}
-                        <!-- Landing Page Content for Non-Authenticated Users -->
-                        <div class="container-fluid">
-                            <div class="row justify-content-center">
-                                <div class="col-12 col-lg-8">
-                                    <div class="parliament-header text-center">
-                                        <img src="{% static 'images/parliament-logo.png' %}" 
-                                             alt="Bangladesh Parliament Logo" 
-                                             class="parliament-logo mb-3"
-                                             onerror="this.style.display='none'">
-                                        <h1 class="h2 fw-bold mb-2">
-                                            Bangladesh Parliament Secretariat
-                                        </h1>
-                                        <h2 class="h4 mb-3">
-                                            IT Inventory Management System (PIMS)
-                                        </h2>
-                                        <p class="lead mb-4">
-                                            Comprehensive IT asset management for the Parliament of Bangladesh
-                                        </p>
-                                        <div class="location-badge d-inline-block mb-3">
-                                            <i class="bi bi-geo-alt me-1"></i>Dhaka, Bangladesh
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    {% endif %}
-
                     <!-- Main Content Block -->
                     {% block content %}
                         {% if user.is_authenticated %}

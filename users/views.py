@@ -177,20 +177,53 @@ class UserUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
         return response
 
 
-class UserDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
-    """Delete a user."""
-    model = CustomUser
-    template_name = 'users/users_delete.html'
+class UserDeleteView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """
+    Delete view with self-action protection.
+    Location: Dhaka, Bangladesh - Parliament IT Management System
+    """
     permission_required = 'auth.delete_user'
-    success_url = reverse_lazy('users:list')
     
-    def delete(self, request, *args, **kwargs):
-        """Handle user deletion."""
-        user = self.get_object()
-        user_name = user.get_display_name()
-        response = super().delete(request, *args, **kwargs)
-        messages.success(request, f'User {user_name} deleted successfully!')
-        return response
+    def get(self, request, pk):
+        """Display delete confirmation page with protection."""
+        user = get_object_or_404(CustomUser, pk=pk)
+        
+        # BACKEND PROTECTION: Prevent self-deletion
+        if user.username == request.user.username:
+            messages.error(
+                request, 
+                '⚠️ You cannot delete your own account. This would permanently remove your access.'
+            )
+            return redirect('users:list')
+        
+        # Render delete confirmation template
+        return render(request, 'users/users_delete.html', {'object': user})
+    
+    def post(self, request, pk):
+        """Handle user deletion with protection."""
+        try:
+            user = get_object_or_404(CustomUser, pk=pk)
+            
+            # BACKEND PROTECTION: Prevent self-deletion
+            if user.username == request.user.username:
+                messages.error(
+                    request, 
+                    '⚠️ You cannot delete your own account. This would permanently remove your access.'
+                )
+                return redirect('users:list')
+            
+            user_name = user.get_display_name()
+            user.delete()
+            
+            messages.success(
+                request, 
+                f'✅ User {user_name} has been deleted successfully!'
+            )
+            return redirect('users:list')
+            
+        except Exception as e:
+            messages.error(request, f'❌ Error deleting user: {str(e)}')
+            return redirect('users:list')
 
 
 # ============================================================================
@@ -335,33 +368,271 @@ def user_lookup_by_employee_id(request, employee_id):
 # ============================================================================
 
 class UserActivateView(LoginRequiredMixin, PermissionRequiredMixin, View):
-    """Activate a user."""
+    """
+    Activate a user account with self-action protection.
+    Location: Dhaka, Bangladesh - Parliament IT Management System
+    """
     permission_required = 'auth.change_user'
     
     def post(self, request, pk):
-        """Activate user."""
-        user = get_object_or_404(CustomUser, pk=pk)
-        user.is_active = True
-        user.is_active_employee = True
-        user.save()
-        
-        messages.success(request, f'User {user.get_display_name()} activated successfully!')
-        return redirect('users:detail', pk=pk)
+        """Activate the specified user with protection."""
+        try:
+            user = get_object_or_404(CustomUser, pk=pk)
+            
+            # BACKEND PROTECTION: Prevent self-activation
+            if user.username == request.user.username:
+                messages.error(
+                    request, 
+                    '⚠️ You cannot activate your own account. Your account is already active.'
+                )
+                return redirect('users:list')
+            
+            # Check if user is already active
+            if user.is_active:
+                messages.info(
+                    request, 
+                    f'User {user.get_display_name()} is already active.'
+                )
+            else:
+                # Activate user
+                user.is_active = True
+                if hasattr(user, 'is_active_employee'):
+                    user.is_active_employee = True
+                user.save()
+                
+                messages.success(
+                    request, 
+                    f'✅ User {user.get_display_name()} has been activated successfully! '
+                    f'They can now access the system.'
+                )
+            
+            # Redirect back to user list
+            return redirect('users:list')
+            
+        except Exception as e:
+            messages.error(request, f'❌ Error activating user: {str(e)}')
+            return redirect('users:list')
 
 
 class UserDeactivateView(LoginRequiredMixin, PermissionRequiredMixin, View):
-    """Deactivate a user."""
+    """
+    Deactivate a user account with self-action protection.
+    Location: Dhaka, Bangladesh - Parliament IT Management System
+    """
     permission_required = 'auth.change_user'
     
     def post(self, request, pk):
-        """Deactivate user."""
-        user = get_object_or_404(CustomUser, pk=pk)
-        user.is_active = False
-        user.is_active_employee = False
-        user.save()
+        """Deactivate the specified user with protection."""
+        try:
+            user = get_object_or_404(CustomUser, pk=pk)
+            
+            # BACKEND PROTECTION: Prevent self-deactivation
+            if user.username == request.user.username:
+                messages.error(
+                    request, 
+                    '⚠️ You cannot deactivate your own account. This would lock you out of the system.'
+                )
+                return redirect('users:list')
+            
+            # Check if user is already inactive
+            if not user.is_active:
+                messages.info(
+                    request, 
+                    f'User {user.get_display_name()} is already inactive.'
+                )
+            else:
+                # Deactivate user
+                user.is_active = False
+                if hasattr(user, 'is_active_employee'):
+                    user.is_active_employee = False
+                user.save()
+                
+                messages.success(
+                    request, 
+                    f'✅ User {user.get_display_name()} has been deactivated successfully! '
+                    f'They can no longer access the system.'
+                )
+            
+            # Redirect back to user list
+            return redirect('users:list')
+            
+        except Exception as e:
+            messages.error(request, f'❌ Error deactivating user: {str(e)}')
+            return redirect('users:list')
         
-        messages.success(request, f'User {user.get_display_name()} deactivated successfully!')
-        return redirect('users:detail', pk=pk)
+
+# ============================================================================
+# AJAX Status Management (Optional - for dynamic updates)
+# ============================================================================
+
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required, permission_required
+
+@login_required
+@permission_required('auth.change_user', raise_exception=True)
+def toggle_user_status_ajax(request, pk):
+    """
+    AJAX endpoint to toggle user active status with self-action protection.
+    """
+    if request.method == 'POST':
+        try:
+            user = get_object_or_404(CustomUser, pk=pk)
+            
+            # BACKEND PROTECTION: Prevent self-toggle
+            if user.username == request.user.username:
+                return JsonResponse({
+                    'success': False,
+                    'message': '⚠️ You cannot change your own account status.'
+                }, status=400)
+            
+            # Toggle status
+            user.is_active = not user.is_active
+            if hasattr(user, 'is_active_employee'):
+                user.is_active_employee = user.is_active
+            user.save()
+            
+            status_text = 'activated' if user.is_active else 'deactivated'
+            
+            return JsonResponse({
+                'success': True,
+                'is_active': user.is_active,
+                'message': f'✅ User {user.get_display_name()} has been {status_text} successfully!',
+                'username': user.username
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'❌ Error updating user status: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=405)
+
+# ============================================================================
+# Utility Functions
+# ============================================================================
+
+def check_self_action(request_user, target_user):
+    """
+    Utility function to check if user is trying to perform action on themselves.
+    Returns True if it's a self-action (should be prevented).
+    """
+    # Multiple checks for different scenarios
+    if hasattr(target_user, 'username') and hasattr(request_user, 'username'):
+        return target_user.username == request_user.username
+    
+    if hasattr(target_user, 'pk') and hasattr(request_user, 'pk'):
+        return str(target_user.pk) == str(request_user.pk)
+    
+    if hasattr(target_user, 'id') and hasattr(request_user, 'id'):
+        return target_user.id == request_user.id
+    
+    # Fallback: assume it's not a self-action if we can't determine
+    return False
+def get_user_display_name(user):
+    """
+    Get a user's display name safely.
+    """
+    if hasattr(user, 'get_display_name'):
+        return user.get_display_name()
+    elif hasattr(user, 'get_full_name') and user.get_full_name():
+        return user.get_full_name()
+    elif hasattr(user, 'username'):
+        return user.username
+    else:
+        return str(user)
+
+
+# ============================================================================
+# Bulk Status Management (Optional)
+# ============================================================================
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(permission_required('auth.change_user', raise_exception=True), name='dispatch')
+class BulkUserStatusView(View):
+    """
+    Handle bulk activation/deactivation of users.
+    Location: Dhaka, Bangladesh - Parliament IT Management System
+    """
+    
+    def post(self, request):
+        """Handle bulk status changes."""
+        try:
+            action = request.POST.get('action')
+            user_ids = request.POST.getlist('user_ids')
+            
+            if not action or not user_ids:
+                messages.error(request, 'Invalid bulk action request.')
+                return redirect('users:list')
+            
+            # Get users excluding current user
+            users = CustomUser.objects.filter(
+                id__in=user_ids
+            ).exclude(id=request.user.id)
+            
+            if action == 'activate':
+                # Bulk activate
+                updated_count = users.update(
+                    is_active=True,
+                    is_active_employee=True
+                )
+                messages.success(
+                    request, 
+                    f'{updated_count} user(s) have been activated successfully!'
+                )
+                
+            elif action == 'deactivate':
+                # Bulk deactivate
+                updated_count = users.update(
+                    is_active=False,
+                    is_active_employee=False
+                )
+                messages.success(
+                    request, 
+                    f'{updated_count} user(s) have been deactivated successfully!'
+                )
+            else:
+                messages.error(request, 'Invalid action specified.')
+            
+            return redirect('users:list')
+            
+        except Exception as e:
+            messages.error(request, f'Error performing bulk action: {str(e)}')
+            return redirect('users:list')
+
+# ============================================================================
+# Status Checking Utilities
+# ============================================================================
+
+def get_user_status_summary():
+    """
+    Get summary of user statuses for dashboard/reports.
+    Returns dictionary with counts.
+    """
+    try:
+        total_users = CustomUser.objects.count()
+        active_users = CustomUser.objects.filter(is_active=True).count()
+        inactive_users = total_users - active_users
+        staff_users = CustomUser.objects.filter(is_staff=True, is_active=True).count()
+        admin_users = CustomUser.objects.filter(is_superuser=True, is_active=True).count()
+        
+        return {
+            'total_users': total_users,
+            'active_users': active_users,
+            'inactive_users': inactive_users,
+            'staff_users': staff_users,
+            'admin_users': admin_users,
+            'activation_rate': round((active_users / total_users * 100), 2) if total_users > 0 else 0
+        }
+    except Exception:
+        return {
+            'total_users': 0,
+            'active_users': 0,
+            'inactive_users': 0,
+            'staff_users': 0,
+            'admin_users': 0,
+            'activation_rate': 0
+        }
 
 # ============================================================================
 # Reports and Export

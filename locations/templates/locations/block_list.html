@@ -1,326 +1,867 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Block Management - PIMS{% endblock %}
+{% block title %}Block Management - PIMS - Bangladesh Parliament Secretariat{% endblock %}
 
 {% block breadcrumb_items %}
     <li class="breadcrumb-item"><a href="{% url 'locations:dashboard' %}">Locations</a></li>
     <li class="breadcrumb-item active">Blocks</li>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+/* Block List Page Styling - Parliament Design System - Dhaka, Bangladesh */
+/* Flat Design with High Contrast - Teal, Orange, Red Color Scheme */
+
+.blocks-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.page-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.page-title {
+    color: #1e293b;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 2rem;
+}
+
+.page-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+    font-size: 1.125rem;
+}
+
+/* Statistics Cards - Following Dashboard Pattern */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(20, 184, 166, 0.15);
+    border-color: rgba(20, 184, 166, 0.3);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+    color: white;
+}
+
+/* Color scheme matching reference design */
+.stat-icon.total { background: linear-gradient(135deg, #14b8a6, #0f766e); }
+.stat-icon.active { background: linear-gradient(135deg, #10b981, #047857); }
+.stat-icon.inactive { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.stat-icon.locations { background: linear-gradient(135deg, #f97316, #ea580c); }
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Search and Filter Section */
+.search-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.search-header {
+    background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+    border-radius: 15px 15px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-form {
+    display: grid;
+    grid-template-columns: 2fr 1fr auto;
+    gap: 1rem;
+    align-items: end;
+}
+
+.form-control {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 0.925rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #14b8a6;
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+.btn {
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    border-color: #14b8a6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0f766e, #0d5d56);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(20, 184, 166, 0.3);
+}
+
+.btn-outline-secondary {
+    border-color: #64748b;
+    color: #64748b;
+}
+
+.btn-outline-secondary:hover {
+    background: #64748b;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Action Buttons Section */
+.action-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.add-button {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+    border: none;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.add-button:hover {
+    background: linear-gradient(135deg, #ea580c, #c2410c);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(249, 115, 22, 0.3);
+}
+
+/* Blocks List Section */
+.blocks-list-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.blocks-header {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.blocks-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.blocks-content {
+    padding: 0;
+}
+
+/* Block Grid Layout */
+.blocks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
+}
+
+.block-card {
+    background: white;
+    border: 2px solid #f1f5f9;
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.block-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    border-color: #14b8a6;
+}
+
+.block-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.block-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.block-info {
+    flex: 1;
+}
+
+.block-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.block-code {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.block-description {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.block-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.meta-item {
+    text-align: center;
+    padding: 0.75rem;
+    background: #f8fafc;
+    border-radius: 8px;
+}
+
+.meta-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.meta-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.block-status {
+    margin-bottom: 1rem;
+}
+
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-badge.active {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-badge.inactive {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.block-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.action-btn.view {
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    color: white;
+}
+
+.action-btn.view:hover {
+    background: linear-gradient(135deg, #0f766e, #0d5d56);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+
+.action-btn.edit {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+}
+
+.action-btn.edit:hover {
+    background: linear-gradient(135deg, #ea580c, #c2410c);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #64748b;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.5;
+    color: #14b8a6;
+}
+
+.empty-state h5 {
+    color: #1e293b;
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+/* Pagination */
+.pagination-wrapper {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.pagination {
+    margin: 0;
+    justify-content: center;
+}
+
+.page-link {
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    margin: 0 0.25rem;
+    padding: 0.75rem 1rem;
+    color: #64748b;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.page-link:hover {
+    background: #14b8a6;
+    border-color: #14b8a6;
+    color: white;
+}
+
+.page-item.active .page-link {
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    border-color: #14b8a6;
+    color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .blocks-container {
+        padding: 1rem 0;
+    }
+    
+    .page-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .filter-form {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .action-section {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .blocks-grid {
+        grid-template-columns: 1fr;
+        padding: 1.5rem;
+        gap: 1rem;
+    }
+    
+    .block-meta {
+        grid-template-columns: 1fr;
+    }
+    
+    .block-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-header {
+        padding: 1rem;
+    }
+    
+    .page-title {
+        font-size: 1.25rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .blocks-grid {
+        padding: 1rem;
+    }
+    
+    .block-card {
+        padding: 1rem;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .block-card,
+    .stat-card,
+    .search-section {
+        border-width: 3px;
+    }
+    
+    .block-icon,
+    .stat-icon {
+        filter: contrast(1.2);
+    }
+}
+
+/* Print styles */
+@media print {
+    .blocks-container {
+        background: white;
+        padding: 0;
+    }
+    
+    .block-card,
+    .stat-card {
+        box-shadow: none;
+        border: 1px solid #ccc;
+        break-inside: avoid;
+        margin-bottom: 1rem;
+    }
+    
+    .blocks-header,
+    .search-header {
+        background: #f5f5f5 !important;
+        color: #000 !important;
+    }
+    
+    .search-section {
+        display: none;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-1">
-                <i class="bi bi-grid me-2 text-primary"></i>
-                Block Management
-            </h1>
-            <p class="text-muted mb-0">Manage building blocks and sections</p>
-        </div>
-        <div class="btn-group">
-            <a href="{% url 'locations:block_create' %}" class="btn btn-primary">
-                <i class="bi bi-plus-circle me-2"></i>
-                Add New Block
-            </a>
-            <div class="btn-group">
-                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <i class="bi bi-three-dots me-2"></i>
-                    Actions
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="{% url 'locations:dashboard' %}">
-                        <i class="bi bi-house me-2"></i>Location Dashboard
-                    </a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="{% url 'locations:building_list' %}">
-                        <i class="bi bi-building me-2"></i>Manage Buildings
-                    </a></li>
-                    <li><a class="dropdown-item" href="{% url 'locations:floor_list' %}">
-                        <i class="bi bi-layers me-2"></i>Manage Floors
-                    </a></li>
-                    <li><a class="dropdown-item" href="{% url 'locations:room_list' %}">
-                        <i class="bi bi-door-open me-2"></i>Manage Rooms
-                    </a></li>
-                </ul>
+<div class="blocks-container">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="page-title">
+                        <i class="bi bi-grid"></i>
+                        Block Management
+                    </h1>
+                    <p class="page-subtitle">
+                        Manage building blocks and sections at Bangladesh Parliament Secretariat, Dhaka
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <div class="text-muted">
+                        <i class="bi bi-geo-alt me-1"></i>
+                        Dhaka, Bangladesh
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-1">Total Blocks</h6>
-                            <h3 class="mb-0">{{ total_blocks }}</h3>
-                        </div>
-                        <div class="bg-white bg-opacity-25 rounded-circle p-3">
-                            <i class="bi bi-grid fs-4"></i>
-                        </div>
-                    </div>
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon total">
+                    <i class="bi bi-grid"></i>
                 </div>
+                <div class="stat-number">{{ total_blocks|default:0 }}</div>
+                <div class="stat-label">Total Blocks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon active">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-number">{{ active_blocks|default:0 }}</div>
+                <div class="stat-label">Active Blocks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon inactive">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+                <div class="stat-number">{{ inactive_blocks|default:0 }}</div>
+                <div class="stat-label">Inactive Blocks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon locations">
+                    <i class="bi bi-pin-map"></i>
+                </div>
+                <div class="stat-number">{{ total_locations|default:0 }}</div>
+                <div class="stat-label">Locations</div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-1">Active Blocks</h6>
-                            <h3 class="mb-0">{{ active_blocks }}</h3>
-                        </div>
-                        <div class="bg-white bg-opacity-25 rounded-circle p-3">
-                            <i class="bi bi-check-circle fs-4"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-1">Inactive Blocks</h6>
-                            <h3 class="mb-0">{{ inactive_blocks }}</h3>
-                        </div>
-                        <div class="bg-white bg-opacity-25 rounded-circle p-3">
-                            <i class="bi bi-x-circle fs-4"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-1">Block Sections</h6>
-                            <h3 class="mb-0">{{ blocks.count }}</h3>
-                        </div>
-                        <div class="bg-white bg-opacity-25 rounded-circle p-3">
-                            <i class="bi bi-diagram-3 fs-4"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Search and Filter Section -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="get" class="row g-3 align-items-end">
-                <div class="col-md-4">
+        <!-- Search and Filter Section -->
+        <div class="search-section">
+            <div class="search-header">
+                <i class="bi bi-search"></i>
+                <h6 class="mb-0">Search & Filter Blocks</h6>
+            </div>
+            <form method="get" class="filter-form">
+                <div>
                     <label for="search" class="form-label">Search Blocks</label>
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="bi bi-search"></i>
-                        </span>
-                        <input type="text" class="form-control" id="search" name="search" 
-                               value="{{ search }}" placeholder="Search by name, code, or description...">
-                    </div>
+                    <input type="text" 
+                           class="form-control" 
+                           id="search" 
+                           name="search" 
+                           value="{{ search }}" 
+                           placeholder="Search by block name, code, or description...">
                 </div>
-                <div class="col-md-3">
+                <div>
                     <label for="status" class="form-label">Status Filter</label>
-                    <select class="form-select" id="status" name="status">
-                        <option value="">All Blocks</option>
+                    <select class="form-control" id="status" name="status">
+                        <option value="">All Statuses</option>
                         <option value="active" {% if status == 'active' %}selected{% endif %}>Active Only</option>
                         <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive Only</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <div class="btn-group w-100">
-                        <button type="submit" class="btn btn-outline-primary">
-                            <i class="bi bi-search me-2"></i>
-                            Search
-                        </button>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search me-1"></i>
+                        Search
+                    </button>
+                    {% if search or status %}
                         <a href="{% url 'locations:block_list' %}" class="btn btn-outline-secondary">
-                            <i class="bi bi-x-circle me-2"></i>
+                            <i class="bi bi-x-circle me-1"></i>
                             Clear
                         </a>
-                    </div>
+                    {% endif %}
                 </div>
             </form>
         </div>
-    </div>
 
-    <!-- Blocks List -->
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-                <i class="bi bi-list me-2"></i>
-                Blocks List
+        <!-- Action Section -->
+        <div class="action-section">
+            <div>
                 {% if search or status %}
-                    <small class="text-muted">(Filtered Results)</small>
+                    <small class="text-muted">
+                        <i class="bi bi-filter me-1"></i>
+                        Showing filtered results
+                    </small>
                 {% endif %}
-            </h5>
-            <div class="d-flex align-items-center">
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'locations:block_create' %}" class="btn add-button">
+                    <i class="bi bi-plus-circle"></i>
+                    Add New Block
+                </a>
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-three-dots"></i>
+                        More Actions
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'locations:dashboard' %}">
+                            <i class="bi bi-house me-2"></i>Location Dashboard
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'locations:building_list' %}">
+                            <i class="bi bi-building me-2"></i>Manage Buildings
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'locations:floor_list' %}">
+                            <i class="bi bi-layers me-2"></i>Manage Floors
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'locations:room_list' %}">
+                            <i class="bi bi-door-open me-2"></i>Manage Rooms
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blocks List -->
+        <div class="blocks-list-section">
+            <div class="blocks-header">
+                <h5 class="blocks-title">
+                    <i class="bi bi-list"></i>
+                    Blocks List
+                    {% if search or status %}
+                        <small class="opacity-75">(Filtered Results)</small>
+                    {% endif %}
+                </h5>
                 {% if is_paginated %}
-                    <small class="text-muted me-3">
+                    <small class="opacity-75">
                         Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} 
                         of {{ page_obj.paginator.count }} blocks
                     </small>
                 {% endif %}
             </div>
-        </div>
-        <div class="card-body p-0">
-            {% if blocks %}
-                <div class="table-responsive">
-                    <table class="table table-hover table-striped mb-0">
-                        <thead class="table-dark">
-                            <tr>
-                                <th scope="col">Block Code</th>
-                                <th scope="col">Block Name</th>
-                                <th scope="col">Description</th>
-                                <th scope="col">Status</th>
-                                <th scope="col">Related Locations</th>
-                                <th scope="col">Created</th>
-                                <th scope="col" class="text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for block in blocks %}
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="bg-info text-white rounded d-flex align-items-center justify-content-center me-3" 
-                                             style="width: 40px; height: 40px; font-size: 14px; font-weight: bold;">
-                                            {{ block.code }}
-                                        </div>
-                                        <div>
-                                            <div class="fw-medium">{{ block.code }}</div>
-                                            <small class="text-muted">Block Code</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="fw-medium">{{ block.name }}</div>
-                                </td>
-                                <td>
-                                    {% if block.description %}
-                                        <div class="text-truncate" style="max-width: 200px;" title="{{ block.description }}">
-                                            {{ block.description }}
-                                        </div>
-                                    {% else %}
-                                        <span class="text-muted fst-italic">No description</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if block.is_active %}
-                                        <span class="badge bg-success">
-                                            <i class="bi bi-check-circle me-1"></i>
-                                            Active
-                                        </span>
-                                    {% else %}
-                                        <span class="badge bg-danger">
-                                            <i class="bi bi-x-circle me-1"></i>
-                                            Inactive
-                                        </span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-geo-alt text-muted me-2"></i>
-                                        <span class="badge bg-light text-dark">
-                                            {{ block.location_set.count }} location{{ block.location_set.count|pluralize }}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="small">
-                                        <div>{{ block.created_at|date:"M d, Y" }}</div>
-                                        <small class="text-muted">{{ block.created_at|time:"g:i A" }}</small>
-                                    </div>
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="{% url 'locations:block_detail' block.pk %}" 
-                                           class="btn btn-outline-info" title="View Details">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        <a href="{% url 'locations:block_edit' block.pk %}" 
-                                           class="btn btn-outline-warning" title="Edit Block">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        <div class="btn-group btn-group-sm">
-                                            <button class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" 
-                                                    type="button" data-bs-toggle="dropdown">
-                                                <span class="visually-hidden">Toggle Dropdown</span>
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                <li>
-                                                    <form method="post" action="{% url 'locations:block_toggle_status' block.pk %}" class="d-inline">
-                                                        {% csrf_token %}
-                                                        <button type="submit" class="dropdown-item">
-                                                            {% if block.is_active %}
-                                                                <i class="bi bi-pause-circle text-warning me-2"></i>
-                                                                Deactivate
-                                                            {% else %}
-                                                                <i class="bi bi-play-circle text-success me-2"></i>
-                                                                Activate
-                                                            {% endif %}
-                                                        </button>
-                                                    </form>
-                                                </li>
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li>
-                                                    <a class="dropdown-item text-danger" 
-                                                       href="{% url 'locations:block_delete' block.pk %}">
-                                                        <i class="bi bi-trash me-2"></i>
-                                                        Delete Block
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="text-center py-5">
-                    <div class="mb-3">
-                        <i class="bi bi-grid display-1 text-muted"></i>
+            <div class="blocks-content">
+                {% if blocks %}
+                    <div class="blocks-grid">
+                        {% for block in blocks %}
+                        <div class="block-card">
+                            <div class="block-header">
+                                <div class="block-icon">
+                                    {{ block.code }}
+                                </div>
+                                <div class="block-info">
+                                    <div class="block-name">{{ block.name }}</div>
+                                    <div class="block-code">Block {{ block.code }}</div>
+                                </div>
+                            </div>
+                            
+                            {% if block.description %}
+                            <div class="block-description">
+                                {{ block.description|truncatewords:15 }}
+                            </div>
+                            {% endif %}
+
+                            <div class="block-meta">
+                                <div class="meta-item">
+                                    <div class="meta-number">{{ block.locations_count|default:0 }}</div>
+                                    <div class="meta-label">Locations</div>
+                                </div>
+                                <div class="meta-item">
+                                    <div class="meta-number">{{ block.created_at|date:"M d" }}</div>
+                                    <div class="meta-label">Created</div>
+                                </div>
+                            </div>
+
+                            <div class="block-status">
+                                {% if block.is_active %}
+                                    <span class="status-badge active">
+                                        <i class="bi bi-check-circle me-1"></i>
+                                        Active
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge inactive">
+                                        <i class="bi bi-x-circle me-1"></i>
+                                        Inactive
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            <div class="block-actions">
+                                <a href="{% url 'locations:block_detail' block.pk %}" class="action-btn view">
+                                    <i class="bi bi-eye me-1"></i>
+                                    View Details
+                                </a>
+                                <a href="{% url 'locations:block_edit' block.pk %}" class="action-btn edit">
+                                    <i class="bi bi-pencil me-1"></i>
+                                    Edit
+                                </a>
+                            </div>
+
+                            <!-- Additional Actions Dropdown -->
+                            <div class="mt-2">
+                                <div class="btn-group w-100">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-gear me-1"></i>
+                                        More Actions
+                                    </button>
+                                    <ul class="dropdown-menu w-100">
+                                        <li>
+                                            <form method="post" action="{% url 'locations:block_toggle_status' block.pk %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="dropdown-item">
+                                                    {% if block.is_active %}
+                                                        <i class="bi bi-pause-circle text-warning me-2"></i>
+                                                        Deactivate
+                                                    {% else %}
+                                                        <i class="bi bi-play-circle text-success me-2"></i>
+                                                        Activate
+                                                    {% endif %}
+                                                </button>
+                                            </form>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item text-danger" 
+                                               href="{% url 'locations:block_delete' block.pk %}">
+                                                <i class="bi bi-trash me-2"></i>
+                                                Delete Block
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
-                    <h5 class="text-muted">No Blocks Found</h5>
-                    <p class="text-muted mb-4">
-                        {% if search or status %}
-                            No blocks match your current search criteria.
-                            <br>Try adjusting your filters or search terms.
-                        {% else %}
-                            There are no blocks in the system yet.
-                            <br>Create your first block to get started.
-                        {% endif %}
-                    </p>
-                    <div class="d-flex justify-content-center gap-2">
-                        {% if search or status %}
-                            <a href="{% url 'locations:block_list' %}" class="btn btn-outline-secondary">
-                                <i class="bi bi-x-circle me-2"></i>
-                                Clear Filters
+                {% else %}
+                    <div class="empty-state">
+                        <div class="mb-3">
+                            <i class="bi bi-grid"></i>
+                        </div>
+                        <h5>No Blocks Found</h5>
+                        <p>
+                            {% if search or status %}
+                                No blocks match your current search criteria.<br>
+                                Try adjusting your filters or search terms.
+                            {% else %}
+                                There are no blocks in the system yet.<br>
+                                Create your first block to get started with location management.
+                            {% endif %}
+                        </p>
+                        <div class="d-flex justify-content-center gap-2">
+                            {% if search or status %}
+                                <a href="{% url 'locations:block_list' %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle me-2"></i>
+                                    Clear Filters
+                                </a>
+                            {% endif %}
+                            <a href="{% url 'locations:block_create' %}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                Add First Block
                             </a>
-                        {% endif %}
-                        <a href="{% url 'locations:block_create' %}" class="btn btn-primary">
-                            <i class="bi bi-plus-circle me-2"></i>
-                            Add First Block
-                        </a>
+                        </div>
                     </div>
-                </div>
-            {% endif %}
+                {% endif %}
+            </div>
         </div>
 
         <!-- Pagination -->
         {% if is_paginated %}
-        <div class="card-footer">
+        <div class="pagination-wrapper">
             <nav aria-label="Block pagination">
-                <ul class="pagination pagination-sm justify-content-center mb-0">
+                <ul class="pagination">
                     {% if page_obj.has_previous %}
                         <li class="page-item">
                             <a class="page-link" href="?{% if search %}search={{ search }}&{% endif %}{% if status %}status={{ status }}&{% endif %}page=1">
@@ -365,204 +906,169 @@
     </div>
 </div>
 
-<style>
-.table-hover tbody tr:hover {
-    background-color: rgba(0, 123, 255, 0.05);
-}
-
-.badge {
-    font-size: 0.75rem;
-}
-
-.btn-group-sm .btn {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-}
-
-.dropdown-menu .dropdown-item {
-    font-size: 0.875rem;
-}
-
-.card-header h5 {
-    color: #495057;
-}
-
-.pagination-sm .page-link {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-}
-
-.text-truncate {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.fw-medium {
-    font-weight: 500;
-}
-
-.bg-opacity-25 {
-    background-color: rgba(255, 255, 255, 0.25) !important;
-}
-
-.card {
-    border: 1px solid rgba(0, 0, 0, 0.125);
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-}
-
-.card:hover {
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-}
-
-.table th {
-    font-weight: 600;
-    border-bottom: 2px solid #dee2e6;
-}
-
-.badge.bg-light {
-    border: 1px solid #dee2e6;
-}
-
-.btn-outline-info:hover {
-    color: #fff;
-    background-color: #0dcaf0;
-    border-color: #0dcaf0;
-}
-
-.btn-outline-warning:hover {
-    color: #000;
-    background-color: #ffc107;
-    border-color: #ffc107;
-}
-
-.dropdown-item:hover {
-    background-color: rgba(0, 123, 255, 0.1);
-}
-
-.display-1 {
-    font-size: 4rem;
-    font-weight: 300;
-    line-height: 1.2;
-}
-</style>
-
+<!-- JavaScript for Enhanced Functionality -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Auto-submit search form on status change
+    // Auto-submit search form on Enter key
+    const searchInput = document.getElementById('search');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                this.closest('form').submit();
+            }
+        });
+    }
+
+    // Auto-submit form when status filter changes
     const statusSelect = document.getElementById('status');
     if (statusSelect) {
         statusSelect.addEventListener('change', function() {
-            this.form.submit();
+            this.closest('form').submit();
         });
     }
-    
-    // Confirm status toggle actions
-    const statusToggleForms = document.querySelectorAll('form[action*="toggle-status"]');
-    statusToggleForms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-            const blockName = this.closest('tr').querySelector('.fw-medium').textContent;
-            const action = this.querySelector('button').textContent.trim().toLowerCase();
-            
-            if (!confirm(`Are you sure you want to ${action} the block "${blockName}"?`)) {
+
+    // Confirmation for delete actions
+    const deleteLinks = document.querySelectorAll('a[href*="delete"]');
+    deleteLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            if (!confirm('Are you sure you want to delete this block? This action cannot be undone.')) {
                 e.preventDefault();
             }
         });
     });
-    
-    // Enhanced search functionality
-    const searchInput = document.getElementById('search');
-    if (searchInput) {
-        let searchTimeout;
-        
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            
-            // Auto-submit after 1 second of inactivity
-            searchTimeout = setTimeout(() => {
-                if (this.value.length >= 2 || this.value.length === 0) {
-                    this.form.submit();
-                }
-            }, 1000);
-        });
-        
-        // Clear search on Escape
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                this.value = '';
-                this.form.submit();
+
+    // Confirmation for status toggle
+    const toggleForms = document.querySelectorAll('form[action*="toggle_status"]');
+    toggleForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const button = this.querySelector('button[type="submit"]');
+            const action = button.textContent.trim().toLowerCase();
+            if (!confirm(`Are you sure you want to ${action} this block?`)) {
+                e.preventDefault();
             }
         });
-    }
-    
-    // Tooltip initialization for truncated text
-    const truncatedElements = document.querySelectorAll('[title]');
-    if (truncatedElements.length > 0 && typeof bootstrap !== 'undefined') {
-        truncatedElements.forEach(element => {
-            new bootstrap.Tooltip(element);
-        });
-    }
-    
-    // Add loading states to action buttons
-    const actionButtons = document.querySelectorAll('.btn-group-sm .btn');
+    });
+
+    // Add loading state to buttons
+    const actionButtons = document.querySelectorAll('button[type="submit"], .btn');
     actionButtons.forEach(button => {
         button.addEventListener('click', function() {
-            if (this.getAttribute('href')) {
-                const originalContent = this.innerHTML;
-                this.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+            if (this.type === 'submit') {
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="bi bi-arrow-repeat spin me-1"></i>Loading...';
+                this.disabled = true;
                 
-                // Restore original content if navigation fails
+                // Re-enable after 3 seconds as fallback
                 setTimeout(() => {
-                    this.innerHTML = originalContent;
+                    this.innerHTML = originalText;
+                    this.disabled = false;
                 }, 3000);
             }
         });
     });
-    
-    // Keyboard shortcuts
+
+    // Add CSS animation for spinning loader
+    const style = document.createElement('style');
+    style.textContent = `
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Update last updated time
+    function updateLastUpdated() {
+        const lastUpdatedElement = document.getElementById('last-updated');
+        if (lastUpdatedElement) {
+            const now = new Date();
+            lastUpdatedElement.textContent = now.toLocaleString('en-BD', {
+                timeZone: 'Asia/Dhaka',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    }
+
+    // Initial update and set interval for every minute
+    updateLastUpdated();
+    setInterval(updateLastUpdated, 60000);
+
+    // Add smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+
+    // Add keyboard navigation support
     document.addEventListener('keydown', function(e) {
-        // Ctrl/Cmd + K to focus search
+        // Ctrl/Cmd + K for quick search focus
         if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
             e.preventDefault();
-            searchInput?.focus();
-        }
-        
-        // Ctrl/Cmd + N for new block
-        if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-            e.preventDefault();
-            window.location.href = '{% url "locations:block_create" %}';
-        }
-    });
-    
-    // Statistics animation on page load
-    const statCards = document.querySelectorAll('.card h3');
-    statCards.forEach((card, index) => {
-        const finalValue = parseInt(card.textContent);
-        card.textContent = '0';
-        
-        setTimeout(() => {
-            animateValue(card, 0, finalValue, 1000);
-        }, index * 200);
-    });
-    
-    function animateValue(element, start, end, duration) {
-        const range = end - start;
-        const startTime = performance.now();
-        
-        function update(currentTime) {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const current = Math.floor(start + (range * progress));
-            
-            element.textContent = current;
-            
-            if (progress < 1) {
-                requestAnimationFrame(update);
+            const searchInput = document.getElementById('search');
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.select();
             }
         }
         
-        requestAnimationFrame(update);
-    }
+        // Escape to clear search
+        if (e.key === 'Escape') {
+            const searchInput = document.getElementById('search');
+            if (searchInput && searchInput === document.activeElement) {
+                searchInput.value = '';
+                searchInput.blur();
+            }
+        }
+    });
+
+    // Add visual feedback for card interactions
+    const blockCards = document.querySelectorAll('.block-card');
+    blockCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-4px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+
+    // Add accessibility improvements
+    const dropdownToggles = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+    dropdownToggles.forEach(toggle => {
+        toggle.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.click();
+            }
+        });
+    });
+
+    // Add breadcrumb navigation enhancement
+    const breadcrumbItems = document.querySelectorAll('.breadcrumb-item a');
+    breadcrumbItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            // Add loading state for navigation
+            this.innerHTML = '<i class="bi bi-arrow-repeat spin me-1"></i>' + this.textContent;
+        });
+    });
+
+    console.log('Block List page initialized successfully - PIMS Dhaka, Bangladesh');
 });
 </script>
 {% endblock %}

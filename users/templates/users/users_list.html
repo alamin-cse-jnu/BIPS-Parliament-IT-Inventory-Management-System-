@@ -773,9 +773,9 @@
                                     <!-- User Information -->
                                     <td>
                                         <div class="user-info-cell">
-                                            {% if user_obj.profile_picture %}
+                                            {% if user_obj.profile_image %}
                                                 <div class="user-avatar">
-                                                    <img src="{{ user_obj.profile_picture.url }}" alt="{{ user_obj.get_display_name }}">
+                                                    <img src="{{ user_obj.profile_image.url }}" alt="{{ user_obj.get_full_name }}">
                                                 </div>
                                             {% else %}
                                                 <div class="user-avatar-placeholder">
@@ -783,7 +783,7 @@
                                                 </div>
                                             {% endif %}
                                             <div class="user-details">
-                                                <h6>{{ user_obj.get_display_name }}</h6>
+                                                 <h6>{{ user_obj.get_full_name }}</h6>
                                                 <small>{{ user_obj.username }}</small>
                                             </div>
                                         </div>
@@ -793,7 +793,7 @@
                                      <td>
                                         <div class="user-details">
                                                 {% if user_obj.employee_id %}
-                                                    <div class="employee-badge">{{ user_obj.employee_id }}</div>
+                                                    <div class="employee-badge">{{ user_obj.employee_id|default:"-" }}</div>
                                                 {% endif %}
                                             </div>
                                      </td>

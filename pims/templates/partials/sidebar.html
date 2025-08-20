@@ -35,10 +35,6 @@
                     <i class="bi bi-person-plus"></i>
                     <span class="nav-text">Add User</span>
                 </a>
-                <a href="/admin/auth/group/" class="nav-link">
-                    <i class="bi bi-shield-check"></i>
-                    <span class="nav-text">Roles & Permissions</span>
-                </a>
                 <a href="{% url 'users:search' %}?status=active" class="nav-link">
                     <i class="bi bi-person-check"></i>
                     <span class="nav-text">Active Users</span>
@@ -61,10 +57,6 @@
                     <i class="bi bi-list-ul"></i>
                     <span class="nav-text">All Locations</span>
                 </a>
-                <a href="{% url 'locations:create' %}" class="nav-link">
-                    <i class="bi bi-plus-circle"></i>
-                    <span class="nav-text">Add Location</span>
-                </a>
                 <a href="{% url 'locations:building_list' %}" class="nav-link">
                     <i class="bi bi-building"></i>
                     <span class="nav-text">Buildings</span>
@@ -73,17 +65,17 @@
                     <i class="bi bi-layers"></i>
                     <span class="nav-text">Floors</span>
                 </a>
+                <a href="{% url 'locations:block_list' %}" class="nav-link">
+                    <i class="bi bi-layers"></i>
+                    <span class="nav-text">Blocks</span>
+                </a>
                 <a href="{% url 'locations:room_list' %}" class="nav-link">
                     <i class="bi bi-door-open"></i>
                     <span class="nav-text">Rooms</span>
                 </a>
-                <a href="{% url 'locations:import' %}" class="nav-link">
-                    <i class="bi bi-upload"></i>
-                    <span class="nav-text">Import CSV</span>
-                </a>
-                <a href="{% url 'locations:export_all' %}" class="nav-link">
-                    <i class="bi bi-download"></i>
-                    <span class="nav-text">Export Excel</span>
+                <a href="{% url 'locations:office_list' %}" class="nav-link">
+                    <i class="bi bi-door-open"></i>
+                    <span class="nav-text">Offices</span>
                 </a>
             </div>
         </div>
@@ -111,25 +103,31 @@
                     <i class="bi bi-tags"></i>
                     <span class="nav-text">Categories</span>
                 </a>
-                <a href="{% url 'devices:search' %}?status=active" class="nav-link">
-                    <i class="bi bi-check-circle"></i>
-                    <span class="nav-text">Active Devices</span>
+            </div>
+        </div>
+
+        <!-- Vendor Management -->
+        <div class="nav-item">
+            <a href="{% url 'vendors:list' %}" 
+               class="nav-link nav-link-toggle" 
+               data-toggle="submenu"
+               aria-expanded="false">
+                <i class="bi bi-laptop"></i>
+                <span class="nav-text">Vendors</span>
+                <i class="bi bi-chevron-down toggle-icon"></i>
+            </a>
+            <div class="submenu" aria-hidden="true">
+                <a href="{% url 'vendors:list' %}" class="nav-link">
+                    <i class="bi bi-list-ul"></i>
+                    <span class="nav-text">All Vendors</span>
                 </a>
-                <a href="{% url 'devices:search' %}?status=maintenance" class="nav-link">
-                    <i class="bi bi-tools"></i>
-                    <span class="nav-text">Under Maintenance</span>
+                <a href="{% url 'vendors:create' %}" class="nav-link">
+                    <i class="bi bi-plus-circle"></i>
+                    <span class="nav-text">Add Vendor</span>
                 </a>
-                <a href="{% url 'devices:search' %}?status=retired" class="nav-link">
-                    <i class="bi bi-archive"></i>
-                    <span class="nav-text">Retired</span>
-                </a>
-                <a href="{% url 'devices:bulk_update' %}" class="nav-link">
-                    <i class="bi bi-upload"></i>
-                    <span class="nav-text">Bulk Update</span>
-                </a>
-                <a href="{% url 'devices:export_excel' %}" class="nav-link">
-                    <i class="bi bi-download"></i>
-                    <span class="nav-text">Export Excel</span>
+                <a href="{% url 'vendors:summary' %}" class="nav-link">
+                    <i class="bi bi-tags"></i>
+                    <span class="nav-text">Summary</span>
                 </a>
             </div>
         </div>

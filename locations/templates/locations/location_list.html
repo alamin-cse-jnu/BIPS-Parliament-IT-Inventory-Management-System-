@@ -1,763 +1,970 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Locations Management - PIMS{% endblock %}
-
-{% block breadcrumb_items %}
-    <li class="breadcrumb-item active">Locations</li>
-{% endblock %}
+{% block title %}Location Management - PIMS - Bangladesh Parliament Secretariat{% endblock %}
 
 {% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 <style>
-    .locations-header {
-        background: linear-gradient(135deg, var(--parliament-primary), #1e40af);
-        color: white;
-        padding: var(--spacing-xl);
-        border-radius: var(--border-radius-lg);
-        margin-bottom: var(--spacing-lg);
-        position: relative;
-        overflow: hidden;
+/* Modern Location List Design - Parliament IT Management System */
+/* Location: Dhaka, Bangladesh - Flat Design with High Contrast */
+
+:root {
+    --primary-teal: #14b8a6;
+    --primary-teal-hover: #0f9488;
+    --primary-orange: #f97316;
+    --primary-red: #ef4444;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --border-light: #e2e8f0;
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: var(--bg-secondary);
+}
+
+/* Page Container */
+.locations-page-container {
+    padding: 2rem 0;
+    min-height: 100vh;
+}
+
+/* Header Section */
+.locations-header {
+    background: var(--bg-primary);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border-light);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.page-title {
+    color: var(--text-primary);
+    font-weight: 700;
+    margin: 0;
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.page-title i {
+    color: var(--primary-teal);
+    background: rgba(20, 184, 166, 0.1);
+    padding: 0.75rem;
+    border-radius: 12px;
+    font-size: 1.5rem;
+}
+
+.page-subtitle {
+    color: var(--text-secondary);
+    margin: 0.5rem 0 0 0;
+    font-size: 1.125rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.btn-modern {
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-hover));
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-outline {
+    background: var(--bg-primary);
+    color: var(--primary-teal);
+    border: 2px solid var(--primary-teal);
+}
+
+.btn-outline:hover {
+    background: var(--primary-teal);
+    color: white;
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+/* Search Section */
+.search-section {
+    background: var(--bg-primary);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border-light);
+}
+
+.search-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.search-title {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.search-icon {
+    color: var(--primary-orange);
+    background: rgba(249, 115, 22, 0.1);
+    padding: 0.5rem;
+    border-radius: 8px;
+    font-size: 1.125rem;
+}
+
+.search-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    align-items: end;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-label {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.form-control {
+    padding: 0.875rem;
+    border: 2px solid var(--border-light);
+    border-radius: 12px;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    background: var(--bg-secondary);
+}
+
+.form-control:focus {
+    border-color: var(--primary-teal);
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+    outline: none;
+    background: var(--bg-primary);
+}
+
+.btn-search {
+    background: linear-gradient(135deg, var(--primary-orange), #ea580c);
+    color: white;
+    border: none;
+    padding: 0.875rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.875rem;
+}
+
+.btn-search:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Locations Table Section */
+.locations-table-section {
+    background: var(--bg-primary);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border-light);
+    margin-bottom: 2rem;
+}
+
+.table-header {
+    background: linear-gradient(135deg, var(--text-primary), #334155);
+    color: white;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.table-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.table-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.btn-table-action {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-table-action:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+/* Modern Table Design */
+.modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.modern-table thead th {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    text-align: left;
+    border-bottom: 2px solid var(--border-light);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.modern-table tbody tr {
+    transition: all 0.3s ease;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.modern-table tbody tr:hover {
+    background: rgba(20, 184, 166, 0.03);
+    transform: scale(1.01);
+}
+
+.modern-table tbody td {
+    padding: 1.25rem 1.5rem;
+    vertical-align: middle;
+}
+
+/* Location Code Styling */
+.location-code {
+    background: var(--primary-teal);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Location Name */
+.location-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.location-address {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Component Tags */
+.component-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.component-tag {
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.component-tag.building {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.component-tag.floor {
+    background: rgba(16, 185, 129, 0.1);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.component-tag.block {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.component-tag.room {
+    background: rgba(139, 92, 246, 0.1);
+    color: #7c3aed;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.component-tag.office {
+    background: rgba(236, 72, 153, 0.1);
+    color: #be185d;
+    border: 1px solid rgba(236, 72, 153, 0.2);
+}
+
+/* Coordinates Badge */
+.coordinates-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.coordinates-yes {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.coordinates-no {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Status Badge */
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-active {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.status-inactive {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Modern Actions Column */
+.actions-cell {
+    padding: 1.25rem 1.5rem !important;
+    text-align: center;
+    white-space: nowrap;
+    min-width: 180px;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.action-btn:active {
+    transform: translateY(0);
+}
+
+/* View Action - Teal */
+.action-btn.view {
+    background: var(--primary-teal);
+    color: white;
+}
+
+.action-btn.view:hover {
+    background: var(--primary-teal-hover);
+    color: white;
+}
+
+/* Edit Action - Orange */
+.action-btn.edit {
+    background: var(--primary-orange);
+    color: white;
+}
+
+.action-btn.edit:hover {
+    background: #ea580c;
+    color: white;
+}
+
+/* Delete Action - Red */
+.action-btn.delete {
+    background: var(--primary-red);
+    color: white;
+}
+
+.action-btn.delete:hover {
+    background: #dc2626;
+    color: white;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    color: var(--primary-teal);
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.empty-state p {
+    font-size: 1.125rem;
+    margin-bottom: 2rem;
+}
+
+/* Pagination */
+.pagination-wrapper {
+    background: var(--bg-primary);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border-light);
+}
+
+.pagination {
+    display: inline-flex;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pagination li a,
+.pagination li span {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+}
+
+.pagination li a:hover {
+    background: var(--primary-teal);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.pagination .active span {
+    background: var(--primary-teal);
+    color: white;
+    border-color: var(--primary-teal);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .locations-page-container {
+        padding: 1rem 0;
     }
     
-    .locations-header::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: 100px;
-        background: linear-gradient(45deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
-    }
-    
-    .locations-title {
-        font-size: 2.25rem;
-        font-weight: 700;
-        margin-bottom: var(--spacing-sm);
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-md);
-    }
-    
-    .locations-subtitle {
-        opacity: 0.9;
-        font-size: 1.125rem;
-        margin: 0;
-    }
-    
-    .locations-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: var(--spacing-lg);
-        margin-bottom: var(--spacing-lg);
-    }
-    
-    .stat-card {
-        background: white;
-        border-radius: var(--border-radius-lg);
-        box-shadow: var(--shadow);
-        padding: var(--spacing-lg);
+    .header-content {
+        flex-direction: column;
+        align-items: stretch;
         text-align: center;
-        border-left: 4px solid var(--parliament-primary);
-        transition: all 0.3s ease;
     }
     
-    .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-lg);
-    }
-    
-    .stat-number {
-        font-size: 2rem;
-        font-weight: 700;
-        color: var(--parliament-primary);
-        margin-bottom: var(--spacing-xs);
-        display: block;
-    }
-    
-    .stat-label {
-        font-size: 0.875rem;
-        color: var(--parliament-neutral);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 500;
-    }
-    
-    .component-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: var(--spacing-md);
-        margin-bottom: var(--spacing-lg);
-    }
-    
-    .component-card {
-        background: white;
-        border-radius: var(--border-radius);
-        box-shadow: var(--shadow-sm);
-        padding: var(--spacing-md);
-        text-align: center;
-        border-top: 3px solid var(--parliament-primary);
-    }
-    
-    .component-number {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: var(--parliament-primary);
-        margin-bottom: var(--spacing-xs);
-    }
-    
-    .component-label {
-        font-size: 0.75rem;
-        color: var(--parliament-neutral);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 500;
-    }
-    
-    .search-filter-card {
-        background: white;
-        border-radius: var(--border-radius-lg);
-        box-shadow: var(--shadow);
-        padding: var(--spacing-lg);
-        margin-bottom: var(--spacing-lg);
-    }
-    
-    .search-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: var(--spacing-lg);
-    }
-    
-    .search-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: var(--parliament-dark);
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-sm);
-    }
-    
-    .filter-row {
-        display: grid;
-        grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
-        gap: var(--spacing-md);
-        align-items: end;
-    }
-    
-    .locations-table-container {
-        background: white;
-        border-radius: var(--border-radius-lg);
-        box-shadow: var(--shadow);
-        overflow: hidden;
+    .search-form {
+        grid-template-columns: 1fr;
     }
     
     .table-header {
-        background-color: #f8f9fa;
-        padding: var(--spacing-lg);
-        border-bottom: 1px solid #e5e7eb;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
     }
     
-    .table-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: var(--parliament-dark);
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-sm);
+    .modern-table {
+        font-size: 0.8rem;
     }
     
-    .table-actions {
-        display: flex;
-        gap: var(--spacing-sm);
+    .modern-table thead th,
+    .modern-table tbody td {
+        padding: 0.75rem 1rem;
     }
     
-    .table th {
-        background-color: #f8f9fa;
-        border-bottom: 2px solid #e5e7eb;
-        color: var(--parliament-dark);
-        font-weight: 600;
-        padding: var(--spacing-md);
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.5px;
-        white-space: nowrap;
-    }
-    
-    .table td {
-        padding: var(--spacing-md);
-        vertical-align: middle;
-        border-bottom: 1px solid #f3f4f6;
-    }
-    
-    .table tbody tr:hover {
-        background-color: #f9fafb;
-    }
-    
-    .location-code {
-        font-family: 'Monaco', 'Consolas', monospace;
-        background-color: #f3f4f6;
-        padding: 0.25rem 0.5rem;
-        border-radius: var(--border-radius);
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: var(--parliament-primary);
-    }
-    
-    .location-name {
-        font-weight: 600;
-        color: var(--parliament-dark);
-    }
-    
-    .location-address {
-        color: var(--parliament-neutral);
-        font-size: 0.875rem;
-        max-width: 200px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    
-    .component-tag {
-        display: inline-block;
-        background-color: #e5e7eb;
-        color: var(--parliament-dark);
-        padding: 0.25rem 0.5rem;
-        border-radius: var(--border-radius);
-        font-size: 0.75rem;
-        font-weight: 500;
-        margin: 0.125rem;
-    }
-    
-    .component-tag.building {
-        background-color: #dbeafe;
-        color: #1e40af;
-    }
-    
-    .component-tag.floor {
-        background-color: #dcfce7;
-        color: #166534;
-    }
-    
-    .component-tag.block {
-        background-color: #fef3c7;
-        color: #92400e;
-    }
-    
-    .component-tag.room {
-        background-color: #fce7f3;
-        color: #be185d;
-    }
-    
-    .component-tag.office {
-        background-color: #f3e8ff;
-        color: #7c2d12;
-    }
-    
-    .coordinates-badge {
-        font-size: 0.75rem;
-        font-weight: 500;
-        padding: 0.375rem 0.75rem;
-        border-radius: var(--border-radius-full);
-    }
-    
-    .coordinates-yes {
-        background-color: #d1fae5;
-        color: #065f46;
-    }
-    
-    .coordinates-no {
-        background-color: #fee2e2;
-        color: #991b1b;
-    }
-    
-    .status-badge {
-        font-size: 0.75rem;
-        font-weight: 500;
-        padding: 0.375rem 0.75rem;
-        border-radius: var(--border-radius-full);
-    }
-    
-    .status-active {
-        background-color: #d1fae5;
-        color: #065f46;
-    }
-    
-    .status-inactive {
-        background-color: #fee2e2;
-        color: #991b1b;
+    .component-tags {
+        flex-direction: column;
+        align-items: flex-start;
     }
     
     .action-buttons {
-        display: flex;
-        gap: var(--spacing-xs);
+        flex-direction: column;
+        gap: 0.25rem;
     }
     
-    .btn-action {
-        padding: 0.375rem;
-        border-radius: var(--border-radius);
-        border: 1px solid #e5e7eb;
-        background: white;
-        color: var(--parliament-neutral);
-        text-decoration: none;
-        transition: all 0.2s ease;
+    .location-address {
+        max-width: none;
+        white-space: normal;
     }
-    
-    .btn-action:hover {
-        background-color: var(--parliament-primary);
-        color: white;
-        border-color: var(--parliament-primary);
-    }
-    
-    .table-footer {
-        background-color: #f8f9fa;
-        padding: var(--spacing-lg);
-        border-top: 1px solid #e5e7eb;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    .table-info {
-        color: var(--parliament-neutral);
-        font-size: 0.875rem;
-    }
-    
-    .pagination-container {
-        display: flex;
-        justify-content: center;
-    }
-    
-    .empty-state {
-        text-align: center;
-        padding: var(--spacing-xl) var(--spacing-lg);
-        background: white;
-        border-radius: var(--border-radius-lg);
-        box-shadow: var(--shadow);
-    }
-    
-    .empty-state-icon {
-        font-size: 4rem;
-        color: #e5e7eb;
-        margin-bottom: var(--spacing-lg);
-    }
-    
-    .empty-state-title {
+}
+
+@media (max-width: 480px) {
+    .page-title {
         font-size: 1.5rem;
-        font-weight: 600;
-        color: var(--parliament-dark);
-        margin-bottom: var(--spacing-md);
     }
     
-    .empty-state-description {
-        color: var(--parliament-neutral);
-        margin-bottom: var(--spacing-lg);
+    .locations-header,
+    .search-section,
+    .locations-table-section {
+        padding: 1rem;
+        margin-bottom: 1rem;
     }
     
-    @media (max-width: 768px) {
-        .locations-title {
-            font-size: 1.75rem;
-        }
-        
-        .locations-stats {
-            grid-template-columns: repeat(2, 1fr);
-        }
-        
-        .component-stats {
-            grid-template-columns: repeat(3, 1fr);
-        }
-        
-        .filter-row {
-            grid-template-columns: 1fr;
-        }
-        
-        .table-header {
-            flex-direction: column;
-            gap: var(--spacing-md);
-            align-items: flex-start;
-        }
-        
-        .table-actions {
-            width: 100%;
-            justify-content: center;
-        }
-        
-        .table-footer {
-            flex-direction: column;
-            gap: var(--spacing-md);
-            text-align: center;
-        }
-        
-        .action-buttons {
-            flex-direction: column;
-        }
+    .modern-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
     }
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <!-- Locations Header -->
-    <div class="locations-header">
-        <h1 class="locations-title">
-            <i class="bi bi-geo-alt-fill"></i>
-            Locations Management
-        </h1>
-        <p class="locations-subtitle">
-            Comprehensive location management for Bangladesh Parliament Secretariat
-        </p>
-    </div>
-
-    <!-- Location Statistics -->
-    <div class="locations-stats">
-        <div class="stat-card">
-            <span class="stat-number">{{ total_locations }}</span>
-            <div class="stat-label">Total Locations</div>
-        </div>
-        <div class="stat-card">
-            <span class="stat-number">{{ active_locations }}</span>
-            <div class="stat-label">Active Locations</div>
-        </div>
-        <div class="stat-card">
-            <span class="stat-number">{{ inactive_locations }}</span>
-            <div class="stat-label">Inactive Locations</div>
-        </div>
-        <div class="stat-card">
-            <span class="stat-number">{{ locations_with_coordinates }}</span>
-            <div class="stat-label">With GPS Coordinates</div>
-        </div>
-    </div>
-
-    <!-- Component Statistics -->
-    <div class="component-stats">
-        <div class="component-card">
-            <div class="component-number">{{ component_counts.buildings }}</div>
-            <div class="component-label">Buildings</div>
-        </div>
-        <div class="component-card">
-            <div class="component-number">{{ component_counts.floors }}</div>
-            <div class="component-label">Floors</div>
-        </div>
-        <div class="component-card">
-            <div class="component-number">{{ component_counts.blocks }}</div>
-            <div class="component-label">Blocks</div>
-        </div>
-        <div class="component-card">
-            <div class="component-number">{{ component_counts.rooms }}</div>
-            <div class="component-label">Rooms</div>
-        </div>
-        <div class="component-card">
-            <div class="component-number">{{ component_counts.offices }}</div>
-            <div class="component-label">Offices</div>
-        </div>
-    </div>
-
-    <!-- Search and Filter -->
-    <div class="search-filter-card">
-        <div class="search-header">
-            <h3 class="search-title">
-                <i class="bi bi-funnel"></i>
-                Search & Filter Locations
-            </h3>
-            <div class="btn-group">
-                <a href="{% url 'locations:create' %}" class="btn btn-parliament-primary">
-                    <i class="bi bi-plus-circle me-2"></i>
-                    Add Location
-                </a>
-                <div class="btn-group">
-                    <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                        <i class="bi bi-download me-2"></i>
-                        Export
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{% url 'locations:export' %}?format=csv">
-                            <i class="bi bi-file-earmark-text me-2"></i>CSV Export
-                        </a></li>
-                        <li><a class="dropdown-item" href="{% url 'locations:export' %}?format=excel">
-                            <i class="bi bi-file-earmark-excel me-2"></i>Excel Export
-                        </a></li>
-                        <li><a class="dropdown-item" href="{% url 'locations:export' %}?format=pdf">
-                            <i class="bi bi-file-earmark-pdf me-2"></i>PDF Report
-                        </a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
+    <div class="locations-page-container">
         
-        <form method="get" id="searchForm">
-            <div class="filter-row">
+        <!-- Header Section -->
+        <div class="locations-header">
+            <div class="header-content">
                 <div>
-                    {{ search_form.search.label_tag }}
-                    {{ search_form.search }}
+                    <h1 class="page-title">
+                        <i class="bi bi-geo-alt"></i>
+                        Location Management
+                    </h1>
+                    <p class="page-subtitle">Manage and track all locations in the Parliament system</p>
                 </div>
-                <div>
-                    {{ search_form.building.label_tag }}
-                    {{ search_form.building }}
-                </div>
-                <div>
-                    {{ search_form.floor.label_tag }}
-                    {{ search_form.floor }}
-                </div>
-                <div>
-                    {{ search_form.has_coordinates.label_tag }}
-                    {{ search_form.has_coordinates }}
-                </div>
-                <div>
-                    {{ search_form.is_active.label_tag }}
-                    {{ search_form.is_active }}
-                </div>
-                <div>
-                    <label>&nbsp;</label>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-parliament-primary">
-                            <i class="bi bi-search me-2"></i>
-                            Search
-                        </button>
-                    </div>
+                <div class="header-actions">
+                    <a href="{% url 'locations:create' %}" class="btn-modern btn-primary">
+                        <i class="bi bi-plus-circle"></i>
+                        Add Location
+                    </a>
+                    <a href="{% url 'locations:export' %}" class="btn-modern btn-outline">
+                        <i class="bi bi-download"></i>
+                        Export
+                    </a>
                 </div>
             </div>
-        </form>
-    </div>
+        </div>
 
-    <!-- Locations Table -->
-    {% if locations %}
-        <div class="locations-table-container">
-            <div class="table-header">
-                <h3 class="table-title">
-                    <i class="bi bi-list-ul"></i>
-                    Location Listings
-                </h3>
-                <div class="table-actions">
-                    <a href="{% url 'locations:map' %}" class="btn btn-outline-info">
-                        <i class="bi bi-map me-2"></i>
-                        Map View
-                    </a>
-                    <a href="{% url 'locations:hierarchy' %}" class="btn btn-outline-secondary">
-                        <i class="bi bi-diagram-3 me-2"></i>
-                        Hierarchy
-                    </a>
-                </div>
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="search-header">
+                <i class="search-icon bi bi-search"></i>
+                <h2 class="search-title">Search & Filter Locations</h2>
             </div>
             
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>Code</th>
-                            <th>Name</th>
-                            <th>Address</th>
-                            <th>Components</th>
-                            <th>Coordinates</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for location in locations %}
-                            <tr>
-                                <td>
-                                    <span class="location-code">{{ location.location_code }}</span>
-                                </td>
-                                <td>
-                                    <div class="location-name">{{ location.name }}</div>
-                                </td>
-                                <td>
-                                    <div class="location-address" title="{{ location.address }}">
-                                        {{ location.address|default:"No address specified" }}
-                                    </div>
-                                </td>
-                                <td>
-                                    {% if location.building %}
-                                        <span class="component-tag building">{{ location.building.code }}</span>
-                                    {% endif %}
-                                    {% if location.floor %}
-                                        <span class="component-tag floor">F{{ location.floor.floor_number }}</span>
-                                    {% endif %}
-                                    {% if location.block %}
-                                        <span class="component-tag block">{{ location.block.block_code }}</span>
-                                    {% endif %}
-                                    {% if location.room %}
-                                        <span class="component-tag room">{{ location.room.room_number }}</span>
-                                    {% endif %}
-                                    {% if location.office %}
-                                        <span class="component-tag office">{{ location.office.office_code }}</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if location.latitude and location.longitude %}
-                                        <span class="coordinates-badge coordinates-yes">
-                                            <i class="bi bi-geo-alt-fill me-1"></i>
-                                            Available
-                                        </span>
-                                    {% else %}
-                                        <span class="coordinates-badge coordinates-no">
-                                            <i class="bi bi-geo-alt me-1"></i>
-                                            Missing
-                                        </span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <span class="status-badge {% if location.is_active %}status-active{% else %}status-inactive{% endif %}">
-                                        {% if location.is_active %}
-                                            <i class="bi bi-check-circle me-1"></i>Active
-                                        {% else %}
-                                            <i class="bi bi-x-circle me-1"></i>Inactive
-                                        {% endif %}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <a href="{% url 'locations:detail' location.pk %}" 
-                                           class="btn-action" title="View Details">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        <a href="{% url 'locations:edit' location.pk %}" 
-                                           class="btn-action" title="Edit Location">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        {% if not location.latitude or not location.longitude %}
-                                            <a href="{% url 'locations:coordinates' location.pk %}" 
-                                               class="btn-action" title="Add Coordinates">
-                                                <i class="bi bi-geo-alt"></i>
-                                            </a>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            
-            <div class="table-footer">
-                <div class="table-info">
-                    Showing {{ locations|length }} of {{ page_obj.paginator.count }} locations
+            <form method="get" class="search-form">
+                <div class="form-group">
+                    <label class="form-label">Location Code</label>
+                    <input type="text" name="code" class="form-control" placeholder="Enter location code..." value="{{ request.GET.code }}">
                 </div>
                 
-                <!-- Pagination -->
-                {% if is_paginated %}
-                    <div class="pagination-container">
-                        <nav aria-label="Location pagination">
-                            <ul class="pagination pagination-sm mb-0">
-                                {% if page_obj.has_previous %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?{{ request.GET.urlencode }}&page=1">
-                                            <i class="bi bi-chevron-double-left"></i>
-                                        </a>
-                                    </li>
-                                    <li class="page-item">
-                                        <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}">
-                                            <i class="bi bi-chevron-left"></i>
-                                        </a>
-                                    </li>
-                                {% endif %}
-                                
-                                {% for num in page_obj.paginator.page_range %}
-                                    {% if page_obj.number == num %}
-                                        <li class="page-item active">
-                                            <span class="page-link">{{ num }}</span>
-                                        </li>
-                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                                        <li class="page-item">
-                                            <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ num }}">{{ num }}</a>
-                                        </li>
-                                    {% endif %}
-                                {% endfor %}
-                                
-                                {% if page_obj.has_next %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}">
-                                            <i class="bi bi-chevron-right"></i>
-                                        </a>
-                                    </li>
-                                    <li class="page-item">
-                                        <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.paginator.num_pages }}">
-                                            <i class="bi bi-chevron-double-right"></i>
-                                        </a>
-                                    </li>
-                                {% endif %}
-                            </ul>
-                        </nav>
-                    </div>
-                {% endif %}
-            </div>
+                <div class="form-group">
+                    <label class="form-label">Location Name</label>
+                    <input type="text" name="name" class="form-control" placeholder="Enter location name..." value="{{ request.GET.name }}">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Building</label>
+                    <select name="building" class="form-control">
+                        <option value="">All Buildings</option>
+                        {% for building in buildings %}
+                            <option value="{{ building.id }}" {% if request.GET.building == building.id|stringformat:"s" %}selected{% endif %}>
+                                {{ building.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-control">
+                        <option value="">All Status</option>
+                        <option value="active" {% if request.GET.status == "active" %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if request.GET.status == "inactive" %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn-search">
+                        <i class="bi bi-search me-2"></i>
+                        Search
+                    </button>
+                </div>
+            </form>
         </div>
-    {% else %}
-        <!-- Empty State -->
-        <div class="empty-state">
-            <div class="empty-state-icon">
-                <i class="bi bi-geo-alt-slash"></i>
-            </div>
-            <h3 class="empty-state-title">No Locations Found</h3>
-            <p class="empty-state-description">
-                {% if search_form.search.value or search_form.building.value %}
-                    No locations match your search criteria. Try adjusting your filters or search terms.
-                {% else %}
-                    There are currently no locations in the system. Start by adding your first location.
-                {% endif %}
-            </p>
-            <div>
-                <a href="{% url 'locations:create' %}" class="btn btn-parliament-primary">
-                    <i class="bi bi-plus-circle me-2"></i>
-                    Add First Location
-                </a>
-                {% if search_form.search.value or search_form.building.value %}
-                    <a href="{% url 'locations:list' %}" class="btn btn-outline-secondary ms-2">
-                        <i class="bi bi-arrow-clockwise me-2"></i>
-                        Clear Filters
-                    </a>
-                {% endif %}
-            </div>
-        </div>
-    {% endif %}
-</div>
-{% endblock %}
 
-{% block extra_js %}
+        <!-- Locations Table -->
+        {% if locations %}
+            <div class="locations-table-section">
+                <div class="table-header">
+                    <h3 class="table-title">
+                        <i class="bi bi-list-ul"></i>
+                        Location Listings
+                    </h3>
+                    <div class="table-actions">
+                        <a href="{% url 'locations:map' %}" class="btn-table-action">
+                            <i class="bi bi-map"></i>
+                            Map View
+                        </a>
+                        <a href="{% url 'locations:hierarchy' %}" class="btn-table-action">
+                            <i class="bi bi-diagram-3"></i>
+                            Hierarchy
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th>Address</th>
+                                <th>Components</th>
+                                <th>Coordinates</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for location in locations %}
+                                <tr>
+                                    <td>
+                                        <span class="location-code">{{ location.location_code }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="location-name">{{ location.name }}</div>
+                                        <div class="location-address" title="{{ location.address }}">
+                                            {{ location.address|default:"No address specified" }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="location-address">
+                                            {{ location.address|default:"No address specified" }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="component-tags">
+                                            {% if location.building %}
+                                                <span class="component-tag building">{{ location.building.code }}</span>
+                                            {% endif %}
+                                            {% if location.floor %}
+                                                <span class="component-tag floor">F{{ location.floor.floor_number }}</span>
+                                            {% endif %}
+                                            {% if location.block %}
+                                                <span class="component-tag block">{{ location.block.block_code }}</span>
+                                            {% endif %}
+                                            {% if location.room %}
+                                                <span class="component-tag room">{{ location.room.room_number }}</span>
+                                            {% endif %}
+                                            {% if location.office %}
+                                                <span class="component-tag office">{{ location.office.office_code }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if location.latitude and location.longitude %}
+                                            <span class="coordinates-badge coordinates-yes">
+                                                <i class="bi bi-geo-alt-fill"></i>
+                                                Available
+                                            </span>
+                                        {% else %}
+                                            <span class="coordinates-badge coordinates-no">
+                                                <i class="bi bi-geo-alt"></i>
+                                                Missing
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="status-badge {% if location.is_active %}status-active{% else %}status-inactive{% endif %}">
+                                            {% if location.is_active %}
+                                                <i class="bi bi-check-circle"></i>
+                                                Active
+                                            {% else %}
+                                                <i class="bi bi-x-circle"></i>
+                                                Inactive
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td class="actions-cell">
+                                        <div class="action-buttons">
+                                            <a href="{% url 'locations:detail' location.pk %}" class="action-btn view" title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{% url 'locations:edit' location.pk %}" class="action-btn edit" title="Edit Location">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a href="{% url 'locations:delete' location.pk %}" class="action-btn delete" title="Delete Location">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            {% if locations.has_other_pages %}
+                <div class="pagination-wrapper">
+                    <nav aria-label="Location pagination">
+                        <ul class="pagination">
+                            {% if locations.has_previous %}
+                                <li><a href="?{% if request.GET.code %}code={{ request.GET.code }}&{% endif %}{% if request.GET.name %}name={{ request.GET.name }}&{% endif %}{% if request.GET.building %}building={{ request.GET.building }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}page=1">
+                                    <i class="bi bi-chevron-double-left"></i>
+                                </a></li>
+                                <li><a href="?{% if request.GET.code %}code={{ request.GET.code }}&{% endif %}{% if request.GET.name %}name={{ request.GET.name }}&{% endif %}{% if request.GET.building %}building={{ request.GET.building }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}page={{ locations.previous_page_number }}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a></li>
+                            {% endif %}
+
+                            {% for num in locations.paginator.page_range %}
+                                {% if num == locations.number %}
+                                    <li class="active"><span>{{ num }}</span></li>
+                                {% elif num > locations.number|add:'-3' and num < locations.number|add:'3' %}
+                                    <li><a href="?{% if request.GET.code %}code={{ request.GET.code }}&{% endif %}{% if request.GET.name %}name={{ request.GET.name }}&{% endif %}{% if request.GET.building %}building={{ request.GET.building }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}page={{ num }}">{{ num }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if locations.has_next %}
+                                <li><a href="?{% if request.GET.code %}code={{ request.GET.code }}&{% endif %}{% if request.GET.name %}name={{ request.GET.name }}&{% endif %}{% if request.GET.building %}building={{ request.GET.building }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}page={{ locations.next_page_number }}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a></li>
+                                <li><a href="?{% if request.GET.code %}code={{ request.GET.code }}&{% endif %}{% if request.GET.name %}name={{ request.GET.name }}&{% endif %}{% if request.GET.building %}building={{ request.GET.building }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}page={{ locations.paginator.num_pages }}">
+                                    <i class="bi bi-chevron-double-right"></i>
+                                </a></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+            {% endif %}
+
+        {% else %}
+            <!-- Empty State -->
+            <div class="locations-table-section">
+                <div class="empty-state">
+                    <i class="bi bi-geo-alt"></i>
+                    <h3>No Locations Found</h3>
+                    <p>No locations match your current search criteria. Try adjusting your filters or create a new location.</p>
+                    <a href="{% url 'locations:create' %}" class="btn-modern btn-primary">
+                        <i class="bi bi-plus-circle"></i>
+                        Create New Location
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Auto-submit search form when filters change
-        const searchForm = document.getElementById('searchForm');
-        const filterInputs = searchForm.querySelectorAll('select:not([name="search"])');
-        
-        filterInputs.forEach(input => {
-            input.addEventListener('change', function() {
-                searchForm.submit();
-            });
+// Enhanced search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit search form on input change (debounced)
+    const searchInputs = document.querySelectorAll('.search-form input, .search-form select');
+    let searchTimeout;
+    
+    searchInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                // Auto-submit could be enabled here if desired
+                // this.form.submit();
+            }, 500);
+        });
+    });
+    
+    // Smooth scroll to table after search
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('name') || urlParams.has('code') || urlParams.has('building') || urlParams.has('status')) {
+        document.querySelector('.locations-table-section')?.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+        });
+    }
+    
+    // Add loading state to search button
+    const searchForm = document.querySelector('.search-form');
+    const searchButton = document.querySelector('.btn-search');
+    
+    if (searchForm && searchButton) {
+        searchForm.addEventListener('submit', function() {
+            searchButton.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Searching...';
+            searchButton.disabled = true;
+        });
+    }
+    
+    // Enhance table interactions
+    const tableRows = document.querySelectorAll('.modern-table tbody tr');
+    tableRows.forEach(row => {
+        row.addEventListener('click', function(e) {
+            // Don't trigger on action button clicks
+            if (!e.target.closest('.action-btn')) {
+                const viewLink = this.querySelector('.action-btn.view');
+                if (viewLink) {
+                    window.location.href = viewLink.href;
+                }
+            }
         });
         
-        // Search input with debounce
-        const searchInput = searchForm.querySelector('input[name="search"]');
-        let searchTimeout;
-        
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    // Optional: Auto-submit after typing stops
-                    // searchForm.submit();
-                }, 500);
-            });
-        }
-        
-        // Component tag tooltips
-        const componentTags = document.querySelectorAll('.component-tag');
-        componentTags.forEach(tag => {
-            tag.setAttribute('data-bs-toggle', 'tooltip');
-            tag.setAttribute('data-bs-placement', 'top');
-        });
-        
-        // Initialize Bootstrap tooltips
-        if (typeof bootstrap !== 'undefined') {
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
+        // Add cursor pointer for clickable rows
+        row.style.cursor = 'pointer';
+    });
+    
+    // Tooltip functionality for truncated text
+    const addressElements = document.querySelectorAll('.location-address');
+    addressElements.forEach(element => {
+        if (element.scrollWidth > element.clientWidth) {
+            element.style.cursor = 'help';
         }
     });
+});
+
+// Confirm delete actions
+function confirmDelete(event, locationName) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    if (confirm(`Are you sure you want to delete the location "${locationName}"? This action cannot be undone.`)) {
+        window.location.href = event.target.closest('a').href;
+    }
+}
+
+// Add delete confirmation to delete buttons
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteButtons = document.querySelectorAll('.action-btn.delete');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            const row = this.closest('tr');
+            const locationName = row.querySelector('.location-name').textContent.trim();
+            confirmDelete(e, locationName);
+        });
+    });
+});
 </script>
 {% endblock %}

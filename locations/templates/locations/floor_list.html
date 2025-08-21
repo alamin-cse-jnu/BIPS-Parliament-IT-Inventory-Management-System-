@@ -1,176 +1,780 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Floor Management - PIMS{% endblock %}
+{% block title %}Floors List - PIMS - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Floor List Styling - Parliament Design System - Dhaka, Bangladesh */
+.floors-container {
+    background-color: #f8fafc;
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.floors-header {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.floors-title {
+    color: #1e293b;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 2rem;
+}
+
+.floors-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+    font-size: 1.125rem;
+}
+
+/* Statistics Grid - Reference Design Inspired */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #f1f5f9;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Color scheme matching reference design */
+.stat-card.total {
+    background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+    color: white;
+}
+
+.stat-card.active {
+    background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+    color: white;
+}
+
+.stat-card.inactive {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: white;
+}
+
+.stat-card.levels {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.stat-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.stat-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    backdrop-filter: blur(10px);
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    opacity: 0.9;
+}
+
+.stat-change {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+}
+
+/* Search and Filter Controls */
+.controls-section {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+}
+
+.controls-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.controls-title {
+    color: #1e293b;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.add-floor-btn {
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.add-floor-btn:hover {
+    background: linear-gradient(135deg, #0f766e, #14b8a6);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(20, 184, 166, 0.3);
+}
+
+.search-filters {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 1rem;
+    align-items: end;
+}
+
+.form-group {
+    margin-bottom: 0;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.form-control {
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 0.75rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #14b8a6;
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+.btn-search {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-search:hover {
+    background: linear-gradient(135deg, #ea580c, #f97316);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(249, 115, 22, 0.3);
+}
+
+/* Floors Table Section */
+.floors-table-section {
+    background-color: #ffffff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+}
+
+.table-header {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: between;
+    align-items: center;
+}
+
+.table-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.table-meta {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+}
+
+.table-responsive {
+    margin: 0;
+}
+
+.floors-table {
+    margin: 0;
+    border: none;
+}
+
+.floors-table thead th {
+    background-color: #f8fafc;
+    color: #374151;
+    font-weight: 600;
+    padding: 1rem;
+    border: none;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.floors-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: all 0.3s ease;
+}
+
+.floors-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.floors-table tbody td {
+    padding: 1.25rem 1rem;
+    vertical-align: middle;
+    border: none;
+}
+
+/* Floor Level Display */
+.floor-level-display {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.floor-number-badge {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: white;
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+}
+
+.floor-level-info {
+    flex: 1;
+}
+
+.floor-level-title {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.floor-level-meta {
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-badge.active {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.status-badge.inactive {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+/* Related Locations */
+.related-locations {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.location-count {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.view-locations-btn {
+    color: #14b8a6;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.view-locations-btn:hover {
+    color: #0f766e;
+    text-decoration: underline;
+}
+
+/* Action Buttons */
+.floor-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    padding: 0.5rem;
+    border-radius: 8px;
+    border: none;
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 0.875rem;
+}
+
+.action-btn.view {
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+}
+
+.action-btn.edit {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+.action-btn.delete {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.action-btn:hover {
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #64748b;
+}
+
+.empty-state-icon {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 2rem;
+}
+
+.empty-state-icon i {
+    font-size: 3rem;
+    color: #94a3b8;
+}
+
+.empty-state-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 1rem;
+}
+
+.empty-state-message {
+    font-size: 1.125rem;
+    margin-bottom: 2rem;
+}
+
+/* Pagination */
+.pagination-section {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+}
+
+.pagination {
+    margin: 0;
+    justify-content: center;
+}
+
+.page-link {
+    border: 1px solid #e5e7eb;
+    color: #6b7280;
+    padding: 0.75rem 1rem;
+    border-radius: 0;
+    transition: all 0.3s ease;
+}
+
+.page-item:first-child .page-link,
+.page-item:last-child .page-link {
+    border-radius: 12px;
+}
+
+.page-link:hover {
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    color: white;
+    border-color: #14b8a6;
+}
+
+.page-item.active .page-link {
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    border-color: #14b8a6;
+    color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .floors-container {
+        padding: 1rem 0;
+    }
+
+    .floors-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .floors-title {
+        font-size: 1.5rem;
+    }
+
+    .floors-subtitle {
+        font-size: 1rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .stat-card {
+        padding: 1.5rem;
+    }
+
+    .stat-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+
+    .search-filters {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .controls-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .floors-table {
+        font-size: 0.875rem;
+    }
+
+    .floor-level-display {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .floor-number-badge {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+
+    .floor-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .floors-header {
+        padding: 1rem;
+    }
+
+    .stat-card {
+        padding: 1rem;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+    }
+
+    .floors-table thead {
+        display: none;
+    }
+
+    .floors-table tbody tr {
+        display: block;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        padding: 1rem;
+    }
+
+    .floors-table tbody td {
+        display: block;
+        padding: 0.5rem 0;
+        border: none;
+        text-align: left;
+    }
+
+    .floors-table tbody td:before {
+        content: attr(data-label) ": ";
+        font-weight: 600;
+        color: #374151;
+    }
+}
+</style>
+{% endblock %}
 
 {% block breadcrumb_items %}
-    <li class="breadcrumb-item"><a href="{% url 'locations:dashboard' %}">Locations</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:list' %}">Locations</a></li>
     <li class="breadcrumb-item active">Floors</li>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-1">
-                <i class="bi bi-layers me-2 text-primary"></i>
-                Floor Management
-            </h1>
-            <p class="text-muted mb-0">Manage building floors and levels</p>
-        </div>
-        <div class="btn-group">
-            <a href="{% url 'locations:floor_create' %}" class="btn btn-primary">
-                <i class="bi bi-plus-circle me-2"></i>
-                Add New Floor
-            </a>
-            <div class="btn-group">
-                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <i class="bi bi-three-dots me-2"></i>
-                    Actions
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="{% url 'locations:dashboard' %}">
-                        <i class="bi bi-house me-2"></i>Location Dashboard
-                    </a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="{% url 'locations:building_list' %}">
-                        <i class="bi bi-building me-2"></i>Manage Buildings
-                    </a></li>
-                    <li><a class="dropdown-item" href="{% url 'locations:block_list' %}">
-                        <i class="bi bi-grid me-2"></i>Manage Blocks
-                    </a></li>
-                </ul>
+<div class="floors-container">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="floors-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="floors-title">
+                        <i class="bi bi-layers"></i>
+                        Floors Management
+                        {% if search or status %}
+                            <small class="text-muted">(Filtered Results)</small>
+                        {% endif %}
+                    </h1>
+                    <p class="floors-subtitle">
+                        Manage and monitor all floor levels across parliament buildings in Dhaka, Bangladesh
+                    </p>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-1">Total Floors</h6>
-                            <h3 class="mb-0">{{ total_floors }}</h3>
+        <!-- Statistics Overview -->
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <div class="stat-header">
+                    <div class="stat-content">
+                        <div class="stat-number">{{ total_floors }}</div>
+                        <div class="stat-label">Total Floors</div>
+                        <div class="stat-change">
+                            <i class="bi bi-building"></i>
+                            All levels
                         </div>
-                        <div class="bg-white bg-opacity-25 rounded-circle p-3">
-                            <i class="bi bi-layers fs-4"></i>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-layers"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card active">
+                <div class="stat-header">
+                    <div class="stat-content">
+                        <div class="stat-number">{{ active_floors }}</div>
+                        <div class="stat-label">Active Floors</div>
+                        <div class="stat-change positive">
+                            <i class="bi bi-check-circle"></i>
+                            Operational
                         </div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card inactive">
+                <div class="stat-header">
+                    <div class="stat-content">
+                        <div class="stat-number">{{ inactive_floors }}</div>
+                        <div class="stat-label">Inactive Floors</div>
+                        <div class="stat-change">
+                            <i class="bi bi-x-circle"></i>
+                            Under maintenance
+                        </div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card levels">
+                <div class="stat-header">
+                    <div class="stat-content">
+                        <div class="stat-number">{{ floors.count }}</div>
+                        <div class="stat-label">Floor Levels</div>
+                        <div class="stat-change">
+                            <i class="bi bi-diagram-3"></i>
+                            Total levels
+                        </div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-diagram-3"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-1">Active Floors</h6>
-                            <h3 class="mb-0">{{ active_floors }}</h3>
-                        </div>
-                        <div class="bg-white bg-opacity-25 rounded-circle p-3">
-                            <i class="bi bi-check-circle fs-4"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-1">Inactive Floors</h6>
-                            <h3 class="mb-0">{{ inactive_floors }}</h3>
-                        </div>
-                        <div class="bg-white bg-opacity-25 rounded-circle p-3">
-                            <i class="bi bi-x-circle fs-4"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-1">Floor Levels</h6>
-                            <h3 class="mb-0">{{ floors.count }}</h3>
-                        </div>
-                        <div class="bg-white bg-opacity-25 rounded-circle p-3">
-                            <i class="bi bi-bar-chart fs-4"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Search and Filter Section -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="get" class="row g-3 align-items-end">
-                <div class="col-md-4">
-                    <label for="search" class="form-label">Search Floors</label>
-                    <div class="input-group">
-                        <span class="input-group-text">
+        <!-- Search and Filter Controls -->
+        <div class="controls-section">
+            <div class="controls-header">
+                <h3 class="controls-title">
+                    <i class="bi bi-funnel"></i>
+                    Search & Filter
+                </h3>
+                <a href="{% url 'locations:floor_create' %}" class="add-floor-btn">
+                    <i class="bi bi-plus-lg"></i>
+                    Add New Floor
+                </a>
+            </div>
+            
+            <form method="get" class="search-form">
+                <div class="search-filters">
+                    <div class="form-group">
+                        <label for="search" class="form-label">Search Floors</label>
+                        <input 
+                            type="text" 
+                            id="search" 
+                            name="search" 
+                            class="form-control" 
+                            placeholder="Search by floor name or description..." 
+                            value="{{ search }}"
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="status" class="form-label">Status Filter</label>
+                        <select id="status" name="status" class="form-control">
+                            <option value="">All Statuses</option>
+                            <option value="active" {% if status == 'active' %}selected{% endif %}>Active Only</option>
+                            <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive Only</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" class="btn-search">
                             <i class="bi bi-search"></i>
-                        </span>
-                        <input type="text" class="form-control" id="search" name="search" 
-                               value="{{ search }}" placeholder="Search by name or description...">
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <label for="status" class="form-label">Status Filter</label>
-                    <select class="form-select" id="status" name="status">
-                        <option value="">All Floors</option>
-                        <option value="active" {% if status == 'active' %}selected{% endif %}>Active Only</option>
-                        <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive Only</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <div class="btn-group w-100">
-                        <button type="submit" class="btn btn-outline-primary">
-                            <i class="bi bi-search me-2"></i>
                             Search
                         </button>
-                        <a href="{% url 'locations:floor_list' %}" class="btn btn-outline-secondary">
-                            <i class="bi bi-x-circle me-2"></i>
-                            Clear
-                        </a>
                     </div>
                 </div>
             </form>
         </div>
-    </div>
 
-    <!-- Floors List -->
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-                <i class="bi bi-list me-2"></i>
-                Floors List
-                {% if search or status %}
-                    <small class="text-muted">(Filtered Results)</small>
-                {% endif %}
-            </h5>
-            <div class="d-flex align-items-center">
+        <!-- Floors Table -->
+        <div class="floors-table-section">
+            <div class="table-header">
+                <h3 class="table-title">
+                    <i class="bi bi-list"></i>
+                    Floors List
+                </h3>
                 {% if is_paginated %}
-                    <small class="text-muted me-3">
+                    <div class="table-meta">
                         Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} 
                         of {{ page_obj.paginator.count }} floors
-                    </small>
+                    </div>
                 {% endif %}
             </div>
-        </div>
-        <div class="card-body p-0">
+            
             {% if floors %}
                 <div class="table-responsive">
-                    <table class="table table-hover table-striped mb-0">
-                        <thead class="table-dark">
+                    <table class="table floors-table">
+                        <thead>
                             <tr>
                                 <th scope="col">Floor Level</th>
                                 <th scope="col">Floor Name</th>
@@ -184,105 +788,89 @@
                         <tbody>
                             {% for floor in floors %}
                             <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
-                                             style="width: 35px; height: 35px; font-size: 14px; font-weight: bold;">
+                                <td data-label="Floor Level">
+                                    <div class="floor-level-display">
+                                        <div class="floor-number-badge">
                                             {{ floor.floor_number }}
                                         </div>
-                                        <div>
-                                            <div class="fw-medium">Level {{ floor.floor_number }}</div>
-                                            <small class="text-muted">
-                                                {% if floor.floor_number < 0 %}
-                                                    Basement Level
-                                                {% elif floor.floor_number == 0 %}
+                                        <div class="floor-level-info">
+                                            <div class="floor-level-title">Level {{ floor.floor_number }}</div>
+                                            <div class="floor-level-meta">
+                                                {% if floor.floor_number == 0 %}
                                                     Ground Level
+                                                {% elif floor.floor_number > 0 %}
+                                                    Upper Floor
                                                 {% else %}
-                                                    Upper Level
+                                                    {% if floor.floor_number == -1 %}
+                                                        Basement
+                                                    {% else %}
+                                                        Sub-basement
+                                                    {% endif %}
                                                 {% endif %}
-                                            </small>
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
-                                <td>
-                                    <div class="fw-medium">{{ floor.name }}</div>
+                                
+                                <td data-label="Floor Name">
+                                    <div class="fw-medium text-primary">{{ floor.name }}</div>
                                 </td>
-                                <td>
-                                    {% if floor.description %}
-                                        <div class="text-truncate" style="max-width: 200px;" title="{{ floor.description }}">
-                                            {{ floor.description }}
-                                        </div>
-                                    {% else %}
-                                        <span class="text-muted fst-italic">No description</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if floor.is_active %}
-                                        <span class="badge bg-success">
-                                            <i class="bi bi-check-circle me-1"></i>
-                                            Active
-                                        </span>
-                                    {% else %}
-                                        <span class="badge bg-danger">
-                                            <i class="bi bi-x-circle me-1"></i>
-                                            Inactive
-                                        </span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-geo-alt text-muted me-2"></i>
-                                        <span class="badge bg-light text-dark">
-                                            {{ floor.location_set.count }} location{{ floor.location_set.count|pluralize }}
-                                        </span>
+                                
+                                <td data-label="Description">
+                                    <div class="text-muted">
+                                        {{ floor.description|default:"No description provided"|truncatewords:8 }}
                                     </div>
                                 </td>
-                                <td>
-                                    <div class="small">
+                                
+                                <td data-label="Status">
+                                    <span class="status-badge {% if floor.is_active %}active{% else %}inactive{% endif %}">
+                                        {% if floor.is_active %}
+                                            <i class="bi bi-check-circle me-1"></i>Active
+                                        {% else %}
+                                            <i class="bi bi-x-circle me-1"></i>Inactive
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                
+                                <td data-label="Related Locations">
+                                    <div class="related-locations">
+                                        <span class="location-count">
+                                            {{ floor.location_set.count }}
+                                        </span>
+                                        {% if floor.location_set.count > 0 %}
+                                            <a href="{% url 'locations:location_list' %}?floor={{ floor.pk }}" class="view-locations-btn">
+                                                View Locations
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">No locations</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                
+                                <td data-label="Created">
+                                    <div class="text-muted">
                                         <div>{{ floor.created_at|date:"M d, Y" }}</div>
-                                        <small class="text-muted">{{ floor.created_at|time:"g:i A" }}</small>
+                                        <small>{{ floor.created_at|time:"g:i A" }}</small>
                                     </div>
                                 </td>
-                                <td class="text-center">
-                                    <div class="btn-group btn-group-sm">
+                                
+                                <td data-label="Actions">
+                                    <div class="floor-actions">
                                         <a href="{% url 'locations:floor_detail' floor.pk %}" 
-                                           class="btn btn-outline-info" title="View Details">
+                                           class="action-btn view" 
+                                           title="View Details">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <a href="{% url 'locations:floor_edit' floor.pk %}" 
-                                           class="btn btn-outline-warning" title="Edit Floor">
+                                        <a href="{% url 'locations:floor_update' floor.pk %}" 
+                                           class="action-btn edit" 
+                                           title="Edit Floor">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <div class="btn-group btn-group-sm">
-                                            <button class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" 
-                                                    type="button" data-bs-toggle="dropdown">
-                                                <span class="visually-hidden">Toggle Dropdown</span>
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                <li>
-                                                    <form method="post" action="{% url 'locations:floor_toggle_status' floor.pk %}" class="d-inline">
-                                                        {% csrf_token %}
-                                                        <button type="submit" class="dropdown-item">
-                                                            {% if floor.is_active %}
-                                                                <i class="bi bi-pause-circle text-warning me-2"></i>
-                                                                Deactivate
-                                                            {% else %}
-                                                                <i class="bi bi-play-circle text-success me-2"></i>
-                                                                Activate
-                                                            {% endif %}
-                                                        </button>
-                                                    </form>
-                                                </li>
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li>
-                                                    <a class="dropdown-item text-danger" 
-                                                       href="{% url 'locations:floor_delete' floor.pk %}">
-                                                        <i class="bi bi-trash me-2"></i>
-                                                        Delete Floor
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
+                                        <a href="{% url 'locations:floor_delete' floor.pk %}" 
+                                           class="action-btn delete" 
+                                           title="Delete Floor">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>
@@ -291,41 +879,31 @@
                     </table>
                 </div>
             {% else %}
-                <div class="text-center py-5">
-                    <div class="mb-3">
-                        <i class="bi bi-layers display-1 text-muted"></i>
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="bi bi-layers"></i>
                     </div>
-                    <h5 class="text-muted">No Floors Found</h5>
-                    <p class="text-muted mb-4">
+                    <h3 class="empty-state-title">No Floors Found</h3>
+                    <p class="empty-state-message">
                         {% if search or status %}
-                            No floors match your current search criteria.
-                            <br>Try adjusting your filters or search terms.
+                            No floors match your current search criteria. Try adjusting your filters or search terms.
                         {% else %}
-                            There are no floors in the system yet.
-                            <br>Create your first floor to get started.
+                            No floors have been added to the system yet. Start by creating your first floor.
                         {% endif %}
                     </p>
-                    <div class="d-flex justify-content-center gap-2">
-                        {% if search or status %}
-                            <a href="{% url 'locations:floor_list' %}" class="btn btn-outline-secondary">
-                                <i class="bi bi-x-circle me-2"></i>
-                                Clear Filters
-                            </a>
-                        {% endif %}
-                        <a href="{% url 'locations:floor_create' %}" class="btn btn-primary">
-                            <i class="bi bi-plus-circle me-2"></i>
-                            Add First Floor
-                        </a>
-                    </div>
+                    <a href="{% url 'locations:floor_create' %}" class="add-floor-btn">
+                        <i class="bi bi-plus-lg"></i>
+                        Add First Floor
+                    </a>
                 </div>
             {% endif %}
         </div>
 
         <!-- Pagination -->
         {% if is_paginated %}
-        <div class="card-footer">
+        <div class="pagination-section">
             <nav aria-label="Floor pagination">
-                <ul class="pagination pagination-sm justify-content-center mb-0">
+                <ul class="pagination">
                     {% if page_obj.has_previous %}
                         <li class="page-item">
                             <a class="page-link" href="?{% if search %}search={{ search }}&{% endif %}{% if status %}status={{ status }}&{% endif %}page=1">
@@ -370,37 +948,176 @@
     </div>
 </div>
 
-<style>
-.table-hover tbody tr:hover {
-    background-color: rgba(0, 123, 255, 0.05);
-}
+<script>
+// Enhanced Floor List Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit search form with debounce
+    const searchInput = document.getElementById('search');
+    const statusSelect = document.getElementById('status');
+    let searchTimeout;
 
-.badge {
-    font-size: 0.75rem;
-}
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                this.form.submit();
+            }, 500);
+        });
+    }
 
-.btn-group-sm .btn {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-}
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function() {
+            this.form.submit();
+        });
+    }
 
-.dropdown-menu .dropdown-item {
-    font-size: 0.875rem;
-}
+    // Confirm delete action
+    const deleteButtons = document.querySelectorAll('.action-btn.delete');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            if (!confirm('Are you sure you want to delete this floor? This action cannot be undone.')) {
+                e.preventDefault();
+            }
+        });
+    });
 
-.card-header h5 {
-    color: #495057;
-}
+    // Add loading states for action buttons
+    const actionButtons = document.querySelectorAll('.action-btn');
+    actionButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            this.style.opacity = '0.7';
+            this.style.pointerEvents = 'none';
+        });
+    });
 
-.pagination-sm .page-link {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-}
+    // Enhance table responsiveness
+    function makeTableResponsive() {
+        const table = document.querySelector('.floors-table');
+        if (table && window.innerWidth <= 768) {
+            const headers = table.querySelectorAll('thead th');
+            const cells = table.querySelectorAll('tbody td');
+            
+            cells.forEach((cell, index) => {
+                const headerIndex = index % headers.length;
+                const headerText = headers[headerIndex]?.textContent?.trim();
+                if (headerText) {
+                    cell.setAttribute('data-label', headerText);
+                }
+            });
+        }
+    }
 
-.text-truncate {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    makeTableResponsive();
+    window.addEventListener('resize', makeTableResponsive);
+
+    // Add smooth scroll for anchor links
+    const anchorLinks = document.querySelectorAll('a[href^="#"]');
+    anchorLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+
+    // Add keyboard navigation for accessibility
+    document.addEventListener('keydown', function(e) {
+        // Focus search on Ctrl+F or Cmd+F
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+            e.preventDefault();
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.select();
+            }
+        }
+        
+        // Quick add floor with Ctrl+N or Cmd+N
+        if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+            e.preventDefault();
+            const addButton = document.querySelector('.add-floor-btn');
+            if (addButton) {
+                window.location.href = addButton.href;
+            }
+        }
+    });
+
+    // Enhanced visual feedback for interactions
+    const interactiveElements = document.querySelectorAll('.stat-card, .action-btn, .add-floor-btn, .btn-search');
+    interactiveElements.forEach(element => {
+        element.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        element.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+
+    // Add progressive loading for better performance
+    const lazyImages = document.querySelectorAll('img[data-src]');
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src;
+                img.classList.remove('lazy');
+                imageObserver.unobserve(img);
+            }
+        });
+    });
+
+    lazyImages.forEach(img => imageObserver.observe(img));
+
+    // Add print styles handling
+    window.addEventListener('beforeprint', function() {
+        document.body.classList.add('printing');
+    });
+
+    window.addEventListener('afterprint', function() {
+        document.body.classList.remove('printing');
+    });
+});
+
+// Print-specific CSS
+const printStyles = `
+@media print {
+    .printing .floors-container {
+        background: white !important;
+        padding: 0 !important;
+    }
+    
+    .printing .stat-card {
+        background: white !important;
+        border: 1px solid #ccc !important;
+        break-inside: avoid;
+    }
+    
+    .printing .floors-table-section {
+        break-inside: avoid;
+    }
+    
+    .printing .action-btn {
+        display: none !important;
+    }
+    
+    .printing .controls-section {
+        display: none !important;
+    }
+    
+    .printing .pagination-section {
+        display: none !important;
+    }
 }
-</style>
+`;
+
+// Inject print styles
+const printStyleSheet = document.createElement('style');
+printStyleSheet.textContent = printStyles;
+document.head.appendChild(printStyleSheet);
+</script>
 {% endblock %}

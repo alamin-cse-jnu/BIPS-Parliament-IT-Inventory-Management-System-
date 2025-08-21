@@ -17,7 +17,7 @@ from django.contrib.auth import login
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 import json
-
+from django.utils import timezone
 from .models import CustomUser
 from .forms import (
     CustomUserCreationForm, CustomUserChangeForm, UserRoleForm,
@@ -130,12 +130,61 @@ class UserDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'user_obj'
     
     def get_context_data(self, **kwargs):
-        """Add additional context data."""
+        """Add additional context data with enhanced assignment information."""
         context = super().get_context_data(**kwargs)
         user = self.object
+        
+        # Basic user information
         context['assigned_devices_count'] = user.get_assigned_devices_count()
         context['user_groups'] = user.groups.all()
         context['user_permissions'] = user.user_permissions.all()
+        
+        # Enhanced assignment context
+        try:
+            from assignments.models import Assignment
+            
+            # Get active assignments
+            active_assignments = Assignment.objects.filter(
+                assigned_to=user,
+                is_active=True,
+                status='ASSIGNED'
+            ).select_related('device', 'assigned_location').order_by('-assigned_date')
+            
+            # Get assignment history (last 10)
+            assignment_history = Assignment.objects.filter(
+                assigned_to=user
+            ).select_related('device', 'assigned_location').order_by('-assigned_date')[:10]
+            
+            # Assignment statistics
+            total_assignments = Assignment.objects.filter(assigned_to=user).count()
+            returned_assignments = Assignment.objects.filter(
+                assigned_to=user, 
+                status='RETURNED'
+            ).count()
+            overdue_assignments = Assignment.objects.filter(
+                assigned_to=user,
+                status='ASSIGNED',
+                expected_return_date__lt=timezone.now().date()
+            ).count()
+            
+            context.update({
+                'active_assignments': active_assignments,
+                'assignment_history': assignment_history,
+                'total_assignments': total_assignments,
+                'returned_assignments': returned_assignments,
+                'overdue_assignments': overdue_assignments,
+            })
+            
+        except ImportError:
+            # Graceful fallback if assignments app not available
+            context.update({
+                'active_assignments': [],
+                'assignment_history': [],
+                'total_assignments': 0,
+                'returned_assignments': 0,
+                'overdue_assignments': 0,
+            })
+        
         return context
 
 

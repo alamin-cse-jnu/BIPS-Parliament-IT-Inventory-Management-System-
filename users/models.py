@@ -149,7 +149,7 @@ class CustomUser(AbstractUser):
         try:
             from assignments.models import Assignment
             return Assignment.objects.filter(
-                assigned_to_user=self,
+                assigned_to=self,
                 is_active=True
             ).count()
         except ImportError:

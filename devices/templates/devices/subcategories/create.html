@@ -1,247 +1,535 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Create Subcategory{% endblock %}
+{% block title %}Create Device Subcategory - PIMS - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'devices:list' %}">Devices</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'devices:subcategory_list' %}">Subcategories</a></li>
+    <li class="breadcrumb-item active">Create New</li>
+{% endblock %}
 
 {% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 <style>
-.gradient-bg {
-    background: linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.9) 100%);
-    min-height: 100vh;
+/* Device Subcategory Create Form - Parliament Design System */
+/* Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh */
+/* Flat Design with High Contrast - Teal, Orange, Red Color Scheme */
+
+:root {
+    --primary-teal: #14b8a6;
+    --primary-teal-hover: #0f9488;
+    --primary-orange: #f97316;
+    --primary-red: #ef4444;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --border-light: #e2e8f0;
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
 }
 
-.form-card {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+/* Main Container */
+.create-container {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+/* Page Header */
+.page-header {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-card);
+}
+
+.page-title {
+    color: var(--text-primary);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 2rem;
+}
+
+.page-subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 0;
+    font-size: 1.125rem;
+}
+
+.breadcrumb-nav {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 1rem;
+}
+
+.breadcrumb-nav .breadcrumb {
+    background: rgba(20, 184, 166, 0.1);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    margin: 0;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: '›';
+    color: var(--primary-teal);
+    font-weight: bold;
+}
+
+.breadcrumb-item a {
+    color: var(--primary-teal);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.breadcrumb-item.active {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Form Container */
+.form-container {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
 }
 
 .form-header {
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
     color: white;
-    border-radius: 16px 16px 0 0;
-    padding: 1.5rem;
-}
-
-.form-control, .form-select {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(99, 102, 241, 0.2);
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-.form-control:focus, .form-select:focus {
-    background: rgba(255, 255, 255, 1);
-    border-color: #6366f1;
-    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.1);
-}
-
-.form-label {
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 0.5rem;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    border: none;
-    border-radius: 8px;
-    padding: 0.75rem 1.5rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.btn-primary:hover {
-    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-}
-
-.btn-outline-secondary {
-    border: 1px solid #6b7280;
-    color: #6b7280;
-    border-radius: 8px;
-    padding: 0.75rem 1.5rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.btn-outline-secondary:hover {
-    background: #6b7280;
-    border-color: #6b7280;
-    color: white;
-}
-
-.preview-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
-    border: 1px solid rgba(99, 102, 241, 0.1);
-    border-radius: 12px;
-    padding: 1.5rem;
-    transition: all 0.3s ease;
-    position: sticky;
-    top: 20px;
-}
-
-.preview-card:hover {
-    border-color: rgba(99, 102, 241, 0.3);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.1);
-}
-
-.category-icon {
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
+    padding: 1.5rem 2rem;
     display: flex;
     align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
+    gap: 0.75rem;
 }
 
-.help-text {
-    font-size: 0.875rem;
-    color: #6b7280;
-    margin-top: 0.25rem;
+.form-body {
+    padding: 2rem;
 }
 
+/* Field Groups */
 .field-group {
-    background: rgba(249, 250, 251, 0.8);
-    border-radius: 12px;
+    margin-bottom: 2rem;
     padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    border: 1px solid rgba(99, 102, 241, 0.1);
+    background: rgba(248, 250, 252, 0.6);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
 }
 
 .field-group-title {
-    font-weight: 700;
-    color: #374151;
-    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    font-size: 1.125rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--primary-teal);
+}
+
+.field-group-title i {
+    color: var(--primary-teal);
+    font-size: 1.25rem;
+}
+
+/* Form Fields */
+.form-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
+.form-label .text-danger {
+    color: var(--primary-red);
+}
+
+.form-control, .form-select {
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: var(--bg-primary);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-teal);
+    box-shadow: 0 0 0 0.2rem rgba(20, 184, 166, 0.25);
+    outline: none;
+}
+
+.form-control.is-invalid, .form-select.is-invalid {
+    border-color: var(--primary-red);
+}
+
+.invalid-feedback {
+    color: var(--primary-red);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.help-text {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    line-height: 1.4;
+}
+
+/* Preview Card */
+.preview-container {
+    position: sticky;
+    top: 2rem;
+}
+
+.preview-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    box-shadow: var(--shadow-card);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.preview-header {
+    background: linear-gradient(135deg, var(--primary-orange) 0%, #ea580c 100%);
+    color: white;
+    padding: 1rem;
+    margin: -2rem -2rem 1.5rem -2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 600;
+}
+
+.category-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-hover));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 2rem;
+    color: white;
+    box-shadow: var(--shadow-card);
+}
+
+.preview-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
 .code-preview {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
-    border: 1px solid rgba(99, 102, 241, 0.2);
-    border-radius: 8px;
-    padding: 0.75rem;
+    background: rgba(20, 184, 166, 0.1);
+    color: var(--primary-teal);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
     font-family: 'Courier New', monospace;
     font-weight: 600;
-    color: #4f46e5;
-    text-align: center;
+    margin-bottom: 1rem;
+    display: inline-block;
+}
+
+.preview-description {
+    color: var(--text-secondary);
+    line-height: 1.5;
     margin-bottom: 1rem;
 }
 
+.badge {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin: 0.25rem;
+}
+
+.badge.bg-primary {
+    background: var(--primary-teal) !important;
+}
+
+.badge.bg-success {
+    background: var(--success) !important;
+}
+
+.badge.bg-secondary {
+    background: var(--text-secondary) !important;
+}
+
+/* Examples Section */
 .examples-section {
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(255, 255, 255, 0.9) 100%);
-    border: 1px solid rgba(34, 197, 94, 0.2);
-    border-radius: 12px;
-    padding: 1.25rem;
-    margin-top: 1.5rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+}
+
+.examples-header {
+    background: linear-gradient(135deg, var(--success) 0%, #047857 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+}
+
+.examples-body {
+    padding: 1.5rem;
 }
 
 .example-item {
-    background: rgba(255, 255, 255, 0.7);
-    border-radius: 8px;
-    padding: 0.75rem;
-    margin-bottom: 0.75rem;
-    border: 1px solid rgba(34, 197, 94, 0.2);
+    background: rgba(16, 185, 129, 0.05);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    margin-bottom: 1rem;
 }
 
 .example-item:last-child {
     margin-bottom: 0;
 }
 
-.breadcrumb-item a {
-    color: #6366f1;
+.example-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.example-desc {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.example-code {
+    background: var(--text-primary);
+    color: #10b981;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+}
+
+/* Form Actions */
+.form-actions {
+    background: rgba(248, 250, 252, 0.8);
+    border-top: 1px solid var(--border-light);
+    padding: 1.5rem 2rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     text-decoration: none;
 }
 
-.breadcrumb-item a:hover {
-    text-decoration: underline;
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.btn-outline-secondary {
+    background: transparent;
+    border: 2px solid var(--border-light);
+    color: var(--text-secondary);
+}
+
+.btn-outline-secondary:hover {
+    background: var(--text-secondary);
+    color: white;
+    text-decoration: none;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .main-row {
+        flex-direction: column;
+    }
+    
+    .preview-container {
+        position: static;
+        margin-top: 2rem;
+    }
 }
 
 @media (max-width: 768px) {
-    .form-header {
-        padding: 1rem;
+    .create-container {
+        padding: 1rem 0;
     }
     
-    .preview-card {
-        position: static;
-        margin-top: 1.5rem;
-        padding: 1rem;
+    .page-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .form-body {
+        padding: 1.5rem;
     }
     
     .field-group {
         padding: 1rem;
     }
     
+    .form-actions {
+        padding: 1rem 1.5rem;
+        flex-direction: column;
+    }
+    
+    .preview-card {
+        padding: 1.5rem;
+    }
+    
     .category-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 1.25rem;
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+}
+
+/* Animation for smooth interactions */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.form-container, .preview-card, .examples-section {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Focus and accessibility improvements */
+.form-control:focus-visible,
+.form-select:focus-visible,
+.btn:focus-visible {
+    outline: 2px solid var(--primary-teal);
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .form-container,
+    .preview-card,
+    .examples-section {
+        border-width: 2px;
+    }
+    
+    .btn-primary {
+        border: 2px solid var(--primary-teal-hover);
     }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="gradient-bg">
-    <div class="container py-4">
-        <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb" class="mb-4">
+<div class="create-container">
+    <div class="container-fluid">
+        <!-- Breadcrumb Navigation -->
+        <nav class="breadcrumb-nav" aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item">
-                    <a href="{% url 'dashboard' %}">
-                        <i class="bi bi-house me-1"></i>Dashboard
-                    </a>
-                </li>
-                <li class="breadcrumb-item">
-                    <a href="{% url 'devices:category_list' %}">Device Categories</a>
-                </li>
-                <li class="breadcrumb-item">
-                    <a href="{% url 'devices:subcategory_list' %}">Subcategories</a>
-                </li>
-                <li class="breadcrumb-item active">Create</li>
+                {% for item in breadcrumb_items %}
+                    {% if not forloop.last %}
+                        <li class="breadcrumb-item">
+                            <a href="{{ item.url }}">{{ item.title }}</a>
+                        </li>
+                    {% else %}
+                        <li class="breadcrumb-item active" aria-current="page">{{ item.title }}</li>
+                    {% endif %}
+                {% endfor %}
             </ol>
         </nav>
 
         <!-- Page Header -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <h2 class="h3 mb-1">Create Device Subcategory</h2>
-                        <p class="text-muted mb-0">Add a new subcategory to organize device types</p>
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="page-title">
+                        <i class="bi bi-plus-circle"></i>
+                        Create Device Subcategory
+                    </h1>
+                    <p class="page-subtitle">
+                        Add a new subcategory to organize device types within the Bangladesh Parliament IT inventory system
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <div class="text-muted">
+                        <i class="bi bi-geo-alt me-1"></i>
+                        <strong>Location:</strong> Dhaka, Bangladesh
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row">
+        <!-- Main Content Row -->
+        <div class="row main-row">
             <!-- Create Form -->
             <div class="col-lg-8">
-                <div class="form-card">
+                <div class="form-container">
                     <div class="form-header">
-                        <h5 class="mb-0">
-                            <i class="bi bi-plus-circle me-2"></i>
-                            Subcategory Information
-                        </h5>
+                        <i class="bi bi-plus-circle"></i>
+                        <span>Subcategory Information</span>
                     </div>
-                    <div class="card-body p-4">
-                        <form method="post" novalidate>
+                    
+                    <div class="form-body">
+                        <form method="post" novalidate id="subcategoryForm">
                             {% csrf_token %}
                             
                             <!-- Basic Information -->
                             <div class="field-group">
                                 <div class="field-group-title">
-                                    <i class="bi bi-info-circle text-primary"></i>
+                                    <i class="bi bi-info-circle"></i>
                                     Basic Information
                                 </div>
                                 
@@ -271,49 +559,67 @@
                                                 <div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>
                                             {% endif %}
                                             <div class="help-text">
-                                                Enter a descriptive name for this subcategory
+                                                Enter a clear, descriptive name for this subcategory
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="mb-3">
                                             <label for="{{ form.code.id_for_label }}" class="form-label">
-                                                Subcategory Code <span class="text-danger">*</span>
+                                                Code <span class="text-danger">*</span>
                                             </label>
                                             {{ form.code }}
                                             {% if form.code.errors %}
                                                 <div class="invalid-feedback d-block">{{ form.code.errors.0 }}</div>
                                             {% endif %}
                                             <div class="help-text">
-                                                Short code for identification
+                                                Unique identifier (e.g., LAP, DES, SRV)
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <div class="mb-3">
-                                    <label for="{{ form.description.id_for_label }}" class="form-label">
-                                        Description
-                                    </label>
-                                    {{ form.description }}
-                                    {% if form.description.errors %}
-                                        <div class="invalid-feedback d-block">{{ form.description.errors.0 }}</div>
-                                    {% endif %}
-                                    <div class="help-text">
-                                        Detailed description of this subcategory and its purpose
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="mb-3">
+                                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                                Description
+                                            </label>
+                                            {{ form.description }}
+                                            {% if form.description.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.description.errors.0 }}</div>
+                                            {% endif %}
+                                            <div class="help-text">
+                                                Detailed description of what devices belong in this subcategory
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Settings -->
+                            <!-- Display & Organization -->
                             <div class="field-group">
                                 <div class="field-group-title">
-                                    <i class="bi bi-gear text-primary"></i>
-                                    Settings
+                                    <i class="bi bi-palette"></i>
+                                    Display & Organization
                                 </div>
                                 
                                 <div class="row">
                                     <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.icon.id_for_label }}" class="form-label">
+                                                Icon
+                                            </label>
+                                            {{ form.icon }}
+                                            {% if form.icon.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.icon.errors.0 }}</div>
+                                            {% endif %}
+                                            <div class="help-text">
+                                                Bootstrap icon class (e.g., bi-laptop, bi-desktop)
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
                                         <div class="mb-3">
                                             <label for="{{ form.sort_order.id_for_label }}" class="form-label">
                                                 Sort Order
@@ -323,57 +629,65 @@
                                                 <div class="invalid-feedback d-block">{{ form.sort_order.errors.0 }}</div>
                                             {% endif %}
                                             <div class="help-text">
-                                                Display order within category (0-999)
+                                                Display order (lower numbers first)
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-3">
                                         <div class="mb-3">
-                                            <label class="form-label d-block">Status</label>
-                                            <div class="form-check form-switch">
+                                            <label class="form-label">&nbsp;</label>
+                                            <div class="form-check">
                                                 {{ form.is_active }}
-                                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
-                                                    Active Subcategory
+                                                <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
+                                                    Active Status
                                                 </label>
+                                                {% if form.is_active.errors %}
+                                                    <div class="invalid-feedback d-block">{{ form.is_active.errors.0 }}</div>
+                                                {% endif %}
                                             </div>
-                                            {% if form.is_active.errors %}
-                                                <div class="invalid-feedback d-block">{{ form.is_active.errors.0 }}</div>
-                                            {% endif %}
                                             <div class="help-text">
-                                                Enable to make this subcategory available for use
+                                                Enable this subcategory for use
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Form Actions -->
-                            <div class="d-flex gap-2 justify-content-end">
-                                <a href="{% url 'devices:subcategory_list' %}" class="btn btn-outline-secondary">
-                                    <i class="bi bi-x-circle me-1"></i>
-                                    Cancel
-                                </a>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-check-circle me-1"></i>
-                                    Create Subcategory
-                                </button>
-                            </div>
                         </form>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <a href="{% url 'devices:subcategory_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i>
+                            Cancel
+                        </a>
+                        <button type="submit" form="subcategoryForm" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i>
+                            Create Subcategory
+                        </button>
                     </div>
                 </div>
             </div>
 
             <!-- Preview and Help -->
             <div class="col-lg-4">
-                <!-- Live Preview -->
-                <div class="preview-card">
-                    <div class="text-center">
-                        <div class="category-icon mx-auto" id="iconPreview">
+                <div class="preview-container">
+                    <!-- Live Preview -->
+                    <div class="preview-card">
+                        <div class="preview-header">
+                            <i class="bi bi-eye"></i>
+                            Live Preview
+                        </div>
+                        
+                        <div class="category-icon" id="iconPreview">
                             <i class="bi-laptop" id="previewIcon"></i>
                         </div>
-                        <h6 class="mb-2" id="previewName">Subcategory Name</h6>
+                        
+                        <h6 class="preview-name" id="previewName">Subcategory Name</h6>
+                        
                         <div class="code-preview" id="previewCode">CATEGORY-CODE</div>
-                        <p class="text-muted small mb-3" id="previewDescription">
+                        
+                        <p class="preview-description" id="previewDescription">
                             Subcategory description will appear here
                         </p>
                         
@@ -390,52 +704,31 @@
                             <span class="badge bg-secondary">Sort: <span id="sortPreview">0</span></span>
                         </div>
                     </div>
-                </div>
 
-                <!-- Examples -->
-                <div class="examples-section">
-                    <h6 class="text-success mb-3">
-                        <i class="bi bi-lightbulb me-2"></i>
-                        Examples
-                    </h6>
-                    
-                    <div class="example-item">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>Laptops</strong>
-                                <div class="small text-muted">Code: LAP</div>
-                            </div>
-                            <span class="badge bg-primary">Computers</span>
+                    <!-- Examples -->
+                    <div class="examples-section">
+                        <div class="examples-header">
+                            <i class="bi bi-lightbulb"></i>
+                            Examples
                         </div>
-                    </div>
-                    
-                    <div class="example-item">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>Network Switches</strong>
-                                <div class="small text-muted">Code: NSW</div>
+                        <div class="examples-body">
+                            <div class="example-item">
+                                <div class="example-title">Laptops</div>
+                                <div class="example-desc">Portable computing devices</div>
+                                <div class="example-code">LAP</div>
                             </div>
-                            <span class="badge bg-primary">Network</span>
-                        </div>
-                    </div>
-                    
-                    <div class="example-item">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>RAM Memory</strong>
-                                <div class="small text-muted">Code: RAM</div>
+                            
+                            <div class="example-item">
+                                <div class="example-title">Desktop Computers</div>
+                                <div class="example-desc">Fixed workstation computers</div>
+                                <div class="example-code">DES</div>
                             </div>
-                            <span class="badge bg-primary">Components</span>
-                        </div>
-                    </div>
-                    
-                    <div class="example-item">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>External HDD</strong>
-                                <div class="small text-muted">Code: EHDD</div>
+                            
+                            <div class="example-item">
+                                <div class="example-title">Servers</div>
+                                <div class="example-desc">Network and data servers</div>
+                                <div class="example-code">SRV</div>
                             </div>
-                            <span class="badge bg-primary">Storage</span>
                         </div>
                     </div>
                 </div>
@@ -447,14 +740,10 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Form elements
-    const categoryField = document.getElementById('{{ form.category.id_for_label }}');
-    const nameField = document.getElementById('{{ form.name.id_for_label }}');
-    const codeField = document.getElementById('{{ form.code.id_for_label }}');
-    const descriptionField = document.getElementById('{{ form.description.id_for_label }}');
-    const sortOrderField = document.getElementById('{{ form.sort_order.id_for_label }}');
-    const isActiveField = document.getElementById('{{ form.is_active.id_for_label }}');
+// Live Preview Functionality for Device Subcategory Creation
+// Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
+(function() {
+    'use strict';
     
     // Preview elements
     const previewName = document.getElementById('previewName');
@@ -465,130 +754,390 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusBadge = document.getElementById('statusBadge');
     const sortPreview = document.getElementById('sortPreview');
     
-    // Category data for icons
-    const categoryData = {
-        {% for category in form.category.queryset %}
-        '{{ category.id }}': {
-            'name': '{{ category.name|escapejs }}',
-            'code': '{{ category.code|escapejs }}',
-            'icon': '{{ category.icon_class|default:"bi-laptop"|escapejs }}'
-        },
-        {% endfor %}
-    };
+    // Form fields
+    const nameField = document.querySelector('input[name="name"]');
+    const codeField = document.querySelector('input[name="code"]');
+    const descriptionField = document.querySelector('textarea[name="description"]');
+    const iconField = document.querySelector('input[name="icon"]');
+    const categoryField = document.querySelector('select[name="category"]');
+    const isActiveField = document.querySelector('input[name="is_active"]');
+    const sortOrderField = document.querySelector('input[name="sort_order"]');
     
-    // Update preview functions
-    function updateCategoryPreview() {
-        const categoryId = categoryField.value;
-        if (categoryId && categoryData[categoryId]) {
-            const category = categoryData[categoryId];
-            previewCategoryBadge.textContent = category.name;
-            previewIcon.className = category.icon;
-            updateCodePreview();
+    // Update preview function
+    function updatePreview() {
+        // Update name
+        if (nameField?.value.trim()) {
+            previewName.textContent = nameField.value.trim();
         } else {
-            previewCategoryBadge.textContent = 'Select Category';
-            previewIcon.className = 'bi-laptop';
+            previewName.textContent = 'Subcategory Name';
         }
-    }
-    
-    function updateNamePreview() {
-        previewName.textContent = nameField.value || 'Subcategory Name';
-    }
-    
-    function updateCodePreview() {
-        const categoryId = categoryField.value;
-        const subcategoryCode = codeField.value;
         
-        if (categoryId && categoryData[categoryId] && subcategoryCode) {
-            const categoryCode = categoryData[categoryId].code;
-            previewCode.textContent = `${categoryCode}-${subcategoryCode.toUpperCase()}`;
-        } else if (subcategoryCode) {
-            previewCode.textContent = `CATEGORY-${subcategoryCode.toUpperCase()}`;
+        // Update code
+        if (codeField?.value.trim()) {
+            previewCode.textContent = codeField.value.trim().toUpperCase();
         } else {
             previewCode.textContent = 'CATEGORY-CODE';
         }
-    }
-    
-    function updateDescriptionPreview() {
-        previewDescription.textContent = descriptionField.value || 'Subcategory description will appear here';
-    }
-    
-    function updateSortPreview() {
-        sortPreview.textContent = sortOrderField.value || '0';
-    }
-    
-    function updateStatusPreview() {
-        if (isActiveField.checked) {
-            statusBadge.className = 'badge bg-success';
-            statusBadge.textContent = 'Active';
+        
+        // Update description
+        if (descriptionField?.value.trim()) {
+            previewDescription.textContent = descriptionField.value.trim();
         } else {
-            statusBadge.className = 'badge bg-secondary';
+            previewDescription.textContent = 'Subcategory description will appear here';
+        }
+        
+        // Update icon
+        if (iconField?.value.trim()) {
+            const iconClass = iconField.value.trim();
+            // Remove any existing icon classes and add the new one
+            previewIcon.className = '';
+            previewIcon.classList.add(iconClass.startsWith('bi-') ? iconClass : 'bi-' + iconClass);
+        } else {
+            previewIcon.className = 'bi-laptop';
+        }
+        
+        // Update category badge
+        if (categoryField?.selectedOptions[0]?.text) {
+            previewCategoryBadge.textContent = categoryField.selectedOptions[0].text;
+        } else {
+            previewCategoryBadge.textContent = 'Select Category';
+        }
+        
+        // Update status badge
+        if (isActiveField?.checked) {
+            statusBadge.textContent = 'Active';
+            statusBadge.className = 'badge bg-success';
+        } else {
             statusBadge.textContent = 'Inactive';
+            statusBadge.className = 'badge bg-secondary';
+        }
+        
+        // Update sort order
+        if (sortOrderField?.value) {
+            sortPreview.textContent = sortOrderField.value;
+        } else {
+            sortPreview.textContent = '0';
         }
     }
     
-    // Event listeners
-    categoryField?.addEventListener('change', updateCategoryPreview);
-    nameField?.addEventListener('input', updateNamePreview);
-    codeField?.addEventListener('input', function() {
-        this.value = this.value.toUpperCase();
-        updateCodePreview();
-    });
-    descriptionField?.addEventListener('input', updateDescriptionPreview);
-    sortOrderField?.addEventListener('input', updateSortPreview);
-    isActiveField?.addEventListener('change', updateStatusPreview);
-    
-    // Auto-focus first field
-    if (categoryField) {
-        categoryField.focus();
-    }
-    
-    // Form validation feedback
-    const form = document.querySelector('form');
-    const submitBtn = document.querySelector('button[type="submit"]');
-    
-    form?.addEventListener('submit', function() {
-        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Creating...';
-        submitBtn.disabled = true;
-    });
-    
-    // Code suggestions based on name
-    nameField?.addEventListener('input', function() {
-        const name = this.value.trim();
-        if (name && !codeField.value) {
-            // Generate suggested code from name
-            let suggestedCode = name
-                .toUpperCase()
-                .replace(/[^A-Z0-9\s]/g, '')
-                .split(' ')
-                .map(word => word.charAt(0))
-                .join('')
-                .substring(0, 5);
+    // Auto-generate code from name
+    function generateCodeFromName() {
+        if (nameField?.value && !codeField?.value) {
+            const name = nameField.value.trim();
+            let code = '';
             
-            // If too short, use first few letters
-            if (suggestedCode.length < 3) {
-                suggestedCode = name.substring(0, 5).toUpperCase().replace(/[^A-Z0-9]/g, '');
+            // Extract first letters of each word
+            const words = name.split(/\s+/);
+            if (words.length === 1) {
+                // Single word - take first 3 characters
+                code = words[0].substring(0, 3).toUpperCase();
+            } else {
+                // Multiple words - take first letter of each word
+                code = words.map(word => word.charAt(0)).join('').toUpperCase();
+                // Limit to 4 characters
+                code = code.substring(0, 4);
             }
             
-            codeField.value = suggestedCode;
-            updateCodePreview();
+            codeField.value = code;
+            updatePreview();
+        }
+    }
+    
+    // Add event listeners
+    if (nameField) {
+        nameField.addEventListener('input', updatePreview);
+        nameField.addEventListener('blur', generateCodeFromName);
+    }
+    
+    if (codeField) {
+        codeField.addEventListener('input', updatePreview);
+    }
+    
+    if (descriptionField) {
+        descriptionField.addEventListener('input', updatePreview);
+    }
+    
+    if (iconField) {
+        iconField.addEventListener('input', updatePreview);
+    }
+    
+    if (categoryField) {
+        categoryField.addEventListener('change', updatePreview);
+    }
+    
+    if (isActiveField) {
+        isActiveField.addEventListener('change', updatePreview);
+    }
+    
+    if (sortOrderField) {
+        sortOrderField.addEventListener('input', updatePreview);
+    }
+    
+    // Form validation enhancements
+    const form = document.getElementById('subcategoryForm');
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            
+            // Clear previous validation states
+            const fields = form.querySelectorAll('.form-control, .form-select');
+            fields.forEach(field => {
+                field.classList.remove('is-invalid');
+                const feedback = field.parentElement.querySelector('.invalid-feedback');
+                if (feedback && !feedback.classList.contains('d-block')) {
+                    feedback.style.display = 'none';
+                }
+            });
+            
+            // Validate required fields
+            const requiredFields = form.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                    
+                    // Show or create error message
+                    let feedback = field.parentElement.querySelector('.invalid-feedback');
+                    if (!feedback) {
+                        feedback = document.createElement('div');
+                        feedback.className = 'invalid-feedback';
+                        field.parentElement.appendChild(feedback);
+                    }
+                    feedback.textContent = 'This field is required.';
+                    feedback.style.display = 'block';
+                }
+            });
+            
+            // Validate code format (alphanumeric, 2-6 characters)
+            if (codeField?.value) {
+                const codePattern = /^[A-Z0-9]{2,6}$/;
+                if (!codePattern.test(codeField.value.trim())) {
+                    codeField.classList.add('is-invalid');
+                    isValid = false;
+                    
+                    let feedback = codeField.parentElement.querySelector('.invalid-feedback');
+                    if (!feedback) {
+                        feedback = document.createElement('div');
+                        feedback.className = 'invalid-feedback';
+                        codeField.parentElement.appendChild(feedback);
+                    }
+                    feedback.textContent = 'Code must be 2-6 uppercase letters/numbers only.';
+                    feedback.style.display = 'block';
+                }
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                
+                // Scroll to first error
+                const firstError = form.querySelector('.is-invalid');
+                if (firstError) {
+                    firstError.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
+                    firstError.focus();
+                }
+                
+                // Show error notification
+                showNotification('Please correct the errors below before submitting.', 'error');
+            }
+        });
+    }
+    
+    // Icon suggestions
+    const iconSuggestions = [
+        'bi-laptop', 'bi-pc-display', 'bi-server', 'bi-phone', 'bi-tablet',
+        'bi-printer', 'bi-projector', 'bi-camera', 'bi-headphones',
+        'bi-keyboard', 'bi-mouse', 'bi-display', 'bi-cpu', 'bi-memory',
+        'bi-hdd', 'bi-usb-drive', 'bi-router', 'bi-wifi'
+    ];
+    
+    // Add icon autocomplete functionality
+    if (iconField) {
+        const iconDatalist = document.createElement('datalist');
+        iconDatalist.id = 'iconSuggestions';
+        iconSuggestions.forEach(icon => {
+            const option = document.createElement('option');
+            option.value = icon;
+            iconDatalist.appendChild(option);
+        });
+        iconField.setAttribute('list', 'iconSuggestions');
+        iconField.parentElement.appendChild(iconDatalist);
+    }
+    
+    // Notification system
+    function showNotification(message, type = 'info') {
+        // Remove existing notifications
+        const existing = document.querySelector('.notification-toast');
+        if (existing) {
+            existing.remove();
+        }
+        
+        const toast = document.createElement('div');
+        toast.className = `notification-toast alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        `;
+        
+        toast.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.remove();
+            }
+        }, 5000);
+    }
+    
+    // Initialize preview on page load
+    updatePreview();
+    
+    // Code field uppercase transformation
+    if (codeField) {
+        codeField.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+    
+    // Real-time icon preview in field
+    if (iconField) {
+        const iconPreviewInField = document.createElement('i');
+        iconPreviewInField.style.cssText = `
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-teal);
+            pointer-events: none;
+            z-index: 5;
+        `;
+        
+        iconField.parentElement.style.position = 'relative';
+        iconField.parentElement.appendChild(iconPreviewInField);
+        iconField.style.paddingRight = '40px';
+        
+        function updateIconPreviewInField() {
+            const iconClass = iconField.value.trim();
+            if (iconClass) {
+                iconPreviewInField.className = iconClass.startsWith('bi-') ? iconClass : 'bi-' + iconClass;
+                iconPreviewInField.style.display = 'block';
+            } else {
+                iconPreviewInField.style.display = 'none';
+            }
+        }
+        
+        iconField.addEventListener('input', updateIconPreviewInField);
+        updateIconPreviewInField();
+    }
+    
+    // Enhanced form field animations
+    const formControls = document.querySelectorAll('.form-control, .form-select');
+    formControls.forEach(control => {
+        control.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'scale(1.02)';
+            this.parentElement.style.transition = 'transform 0.2s ease';
+        });
+        
+        control.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'scale(1)';
+        });
+    });
+    
+    // Category field enhancement
+    if (categoryField) {
+        categoryField.addEventListener('change', function() {
+            if (this.value) {
+                // Simulate loading subcategory count or other related data
+                const categoryText = this.selectedOptions[0].text;
+                console.log(`Selected category: ${categoryText}`);
+                
+                // You could add an API call here to get category-specific information
+                // For example: fetchCategoryInfo(this.value);
+            }
+        });
+    }
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + S to save
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            const submitBtn = document.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.click();
+            }
+        }
+        
+        // Escape to cancel
+        if (e.key === 'Escape') {
+            const cancelBtn = document.querySelector('.btn-outline-secondary');
+            if (cancelBtn && confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
+                window.location.href = cancelBtn.href;
+            }
         }
     });
     
-    // Initialize previews
-    updateCategoryPreview();
-    updateNamePreview();
-    updateCodePreview();
-    updateDescriptionPreview();
-    updateSortPreview();
-    updateStatusPreview();
-    
-    // Handle pre-selected category from URL parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    const categoryParam = urlParams.get('category');
-    if (categoryParam && categoryField) {
-        categoryField.value = categoryParam;
-        updateCategoryPreview();
+    // Save draft functionality (using localStorage)
+    function saveDraft() {
+        const formData = new FormData(form);
+        const draftData = {};
+        for (let [key, value] of formData.entries()) {
+            draftData[key] = value;
+        }
+        localStorage.setItem('subcategory_draft', JSON.stringify(draftData));
     }
-});
+    
+    function loadDraft() {
+        const draft = localStorage.getItem('subcategory_draft');
+        if (draft) {
+            try {
+                const draftData = JSON.parse(draft);
+                Object.keys(draftData).forEach(key => {
+                    const field = form.querySelector(`[name="${key}"]`);
+                    if (field) {
+                        if (field.type === 'checkbox') {
+                            field.checked = draftData[key] === 'on';
+                        } else {
+                            field.value = draftData[key];
+                        }
+                    }
+                });
+                updatePreview();
+                showNotification('Draft data restored.', 'info');
+            } catch (e) {
+                console.error('Error loading draft:', e);
+            }
+        }
+    }
+    
+    // Auto-save draft every 30 seconds
+    if (form) {
+        setInterval(saveDraft, 30000);
+        
+        // Load draft on page load if form is empty
+        const isEmpty = !nameField?.value && !codeField?.value && !descriptionField?.value;
+        if (isEmpty) {
+            loadDraft();
+        }
+        
+        // Clear draft on successful submission
+        form.addEventListener('submit', function() {
+            localStorage.removeItem('subcategory_draft');
+        });
+    }
+    
+})();
 </script>
 {% endblock %}

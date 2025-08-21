@@ -1,356 +1,538 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Create Device Category - PIMS Bangladesh Parliament Secretariat{% endblock %}
+{% block title %}Create Device Category - PIMS - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item">
+        <a href="{% url 'devices:list' %}">
+            <i class="bi bi-laptop me-1"></i>
+            Devices
+        </a>
+    </li>
+    <li class="breadcrumb-item">
+        <a href="{% url 'devices:category_list' %}">
+            <i class="bi bi-grid-3x3-gap me-1"></i>
+            Categories
+        </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">
+        Create Category
+    </li>
+{% endblock %}
 
 {% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 <style>
-/* Device Category Create Styling - Bangladesh Parliament Secretariat PIMS */
+/* Category Create Form - Parliament Design System */
+/* Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh */
+/* Flat Design with High Contrast - Teal, Orange, Red Color Scheme */
+
+:root {
+    --primary-teal: #14b8a6;
+    --primary-teal-hover: #0f9488;
+    --primary-orange: #f97316;
+    --primary-red: #ef4444;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --border-light: #e2e8f0;
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+}
+
+/* Main Container */
 .create-container {
-    background: linear-gradient(135deg, rgba(239, 246, 255, 0.8) 0%, rgba(243, 244, 246, 0.8) 100%);
-    min-height: calc(100vh - 120px);
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #e2e8f0 100%);
+    min-height: 100vh;
     padding: 2rem 0;
 }
 
-.create-header {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(203, 213, 225, 0.3);
+/* Page Header */
+.page-header {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
     border-radius: 16px;
     padding: 2rem;
     margin-bottom: 2rem;
-    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.08);
+    box-shadow: var(--shadow-card);
 }
 
-.glass-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(203, 213, 225, 0.3);
+.page-title {
+    color: var(--text-primary);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 2rem;
+}
+
+.page-subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 0;
+    font-size: 1.125rem;
+}
+
+.breadcrumb-nav {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 1rem;
+}
+
+.breadcrumb-nav .breadcrumb {
+    background: rgba(20, 184, 166, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin: 0;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: '›';
+    color: var(--primary-teal);
+    font-weight: bold;
+}
+
+.breadcrumb-item a {
+    color: var(--primary-teal);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.breadcrumb-item.active {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Main Form Container */
+.form-container {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
     border-radius: 16px;
-    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.08);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
 }
 
-.card-header-glass {
-    background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%);
-    border-radius: 16px 16px 0 0;
-    padding: 1.5rem;
-    border-bottom: 1px solid rgba(203, 213, 225, 0.2);
+.form-header {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
+    color: white;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
+.form-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.form-body {
+    padding: 2rem;
+}
+
+/* Form Sections */
 .form-section {
     margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-light);
 }
 
+.form-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-title i {
+    color: var(--primary-teal);
+}
+
+/* Form Fields */
 .form-label {
     font-weight: 600;
-    color: #374151;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-label i {
+    color: var(--primary-teal);
+    font-size: 0.875rem;
+}
+
+.form-control, .form-select {
+    border: 2px solid var(--border-light);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background-color: var(--bg-primary);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-teal);
+    box-shadow: 0 0 0 0.25rem rgba(20, 184, 166, 0.1);
+    outline: none;
+}
+
+.form-control:hover, .form-select:hover {
+    border-color: var(--primary-teal);
+}
+
+/* Help Text */
+.help-text {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.help-text i {
+    color: var(--primary-orange);
+    font-size: 0.75rem;
+}
+
+/* Error Handling */
+.invalid-feedback {
+    display: block !important;
+    color: var(--danger);
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+.form-control.is-invalid, .form-select.is-invalid {
+    border-color: var(--danger);
+}
+
+/* Checkbox Styling */
+.form-check {
+    padding: 1rem;
+    background: rgba(20, 184, 166, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(20, 184, 166, 0.1);
+}
+
+.form-check-input {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: 0.75rem;
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-teal);
+    border-color: var(--primary-teal);
+}
+
+.form-check-label {
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+/* Action Buttons */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-light);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
+    border: none;
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    background: linear-gradient(135deg, var(--primary-teal-hover) 0%, #0d7c72 100%);
+}
+
+.btn-secondary {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-light);
+    color: var(--text-secondary);
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.btn-secondary:hover {
+    border-color: var(--primary-teal);
+    color: var(--primary-teal);
+    background: rgba(20, 184, 166, 0.05);
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+/* Loading State */
+.btn-loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+    position: relative;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    margin: auto;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Icon Examples */
+.icon-examples {
+    background: rgba(249, 115, 22, 0.05);
+    border: 1px solid rgba(249, 115, 22, 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.icon-examples-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--primary-orange);
     margin-bottom: 0.75rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.form-label .required {
-    color: #ef4444;
-    font-size: 1.1rem;
-}
-
-.form-control,
-.form-select {
-    background: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(203, 213, 225, 0.4);
-    border-radius: 10px;
-    padding: 0.875rem 1rem;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-}
-
-.form-control:focus,
-.form-select:focus {
-    background: rgba(255, 255, 255, 0.95);
-    border-color: #6366f1;
-    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.1);
-    outline: none;
-}
-
-.form-control:hover,
-.form-select:hover {
-    border-color: rgba(99, 102, 241, 0.3);
-}
-
-.form-text {
-    color: #64748b;
-    font-size: 0.8rem;
-    margin-top: 0.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.form-text .bi {
-    color: #6366f1;
-}
-
-.invalid-feedback {
-    color: #ef4444;
-    font-size: 0.875rem;
-    margin-top: 0.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.invalid-feedback::before {
-    content: "\F62A";
-    font-family: "Bootstrap Icons";
-    color: #ef4444;
-}
-
-.preview-section {
-    background: linear-gradient(135deg, rgba(241, 245, 249, 0.6) 0%, rgba(226, 232, 240, 0.6) 100%);
-    border: 1px solid rgba(203, 213, 225, 0.3);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-top: 1.5rem;
-}
-
-.category-preview {
-    text-align: center;
-    padding: 2rem;
-}
-
-.preview-icon {
-    width: 80px;
-    height: 80px;
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.5rem;
-    color: white;
-    margin: 0 auto 1.5rem;
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    transition: all 0.3s ease;
-}
-
-.preview-name {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 0.5rem;
-}
-
-.preview-code {
-    display: inline-block;
-    background: rgba(241, 245, 249, 0.8);
-    border: 1px solid rgba(203, 213, 225, 0.3);
-    border-radius: 8px;
-    padding: 0.375rem 0.75rem;
-    font-size: 0.875rem;
-    color: #64748b;
-    font-weight: 500;
-    margin-bottom: 1rem;
-}
-
-.preview-description {
-    color: #64748b;
-    font-size: 0.9rem;
-    line-height: 1.5;
-}
-
-.icon-selector {
+.icon-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-    gap: 0.75rem;
-    margin-top: 1rem;
-}
-
-.icon-option {
-    width: 60px;
-    height: 60px;
-    border: 2px solid rgba(203, 213, 225, 0.3);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    color: #64748b;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    background: rgba(248, 250, 252, 0.8);
-}
-
-.icon-option:hover {
-    border-color: #6366f1;
-    color: #6366f1;
-    background: rgba(99, 102, 241, 0.1);
-    transform: translateY(-2px);
-}
-
-.icon-option.selected {
-    border-color: #6366f1;
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    color: white;
-}
-
-.action-buttons {
-    background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%);
-    border-radius: 0 0 16px 16px;
-    padding: 1.5rem;
-    border-top: 1px solid rgba(203, 213, 225, 0.2);
-}
-
-.btn-submit {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    border: none;
-    border-radius: 10px;
-    padding: 0.875rem 2rem;
-    font-weight: 600;
-    color: white;
-    transition: all 0.3s ease;
-}
-
-.btn-submit:hover {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
-    color: white;
-}
-
-.btn-cancel {
-    background: linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.9) 100%);
-    border: 1px solid rgba(203, 213, 225, 0.5);
-    border-radius: 10px;
-    padding: 0.875rem 2rem;
-    font-weight: 600;
-    color: #475569;
-    transition: all 0.3s ease;
-    text-decoration: none;
-}
-
-.btn-cancel:hover {
-    background: linear-gradient(135deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.9) 100%);
-    border-color: rgba(148, 163, 184, 0.5);
-    transform: translateY(-1px);
-    color: #334155;
-    text-decoration: none;
-}
-
-.help-section {
-    background: linear-gradient(135deg, rgba(219, 234, 254, 0.3) 0%, rgba(196, 221, 253, 0.3) 100%);
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-top: 1.5rem;
-}
-
-.help-title {
-    color: #1e40af;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 0.5rem;
 }
 
-.help-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+.icon-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    padding: 0.25rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.help-list li {
-    color: #1e3a8a;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+.icon-item:hover {
+    background: rgba(249, 115, 22, 0.1);
+    color: var(--primary-orange);
+}
+
+.icon-item i {
+    color: var(--primary-orange);
+    width: 16px;
+    text-align: center;
+}
+
+/* Sidebar */
+.sidebar-info {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: var(--shadow-card);
+    height: fit-content;
+}
+
+.sidebar-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
     gap: 0.75rem;
 }
 
-.help-list li:last-child {
+.info-item {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.info-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
     border-bottom: none;
 }
 
-.help-list .bi {
-    color: #3b82f6;
-    font-size: 1rem;
+.info-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.info-text {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.5;
 }
 
 /* Responsive Design */
-@media (max-width: 1200px) {
-    .create-content {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
-}
-
 @media (max-width: 768px) {
     .create-container {
         padding: 1rem 0;
     }
-    
-    .create-header {
+
+    .page-header {
         padding: 1.5rem;
         margin-bottom: 1.5rem;
     }
-    
-    .glass-card {
-        margin-bottom: 1rem;
-    }
-    
-    .icon-selector {
-        grid-template-columns: repeat(6, 1fr);
-    }
-    
-    .icon-option {
-        width: 50px;
-        height: 50px;
-        font-size: 1.25rem;
-    }
-    
-    .action-buttons .d-flex {
+
+    .page-title {
+        font-size: 1.5rem;
         flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .form-header {
+        padding: 1.5rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .form-body {
+        padding: 1.5rem;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
         gap: 1rem;
     }
-    
-    .btn-submit,
-    .btn-cancel {
+
+    .btn-primary, .btn-secondary {
         width: 100%;
-        text-align: center;
+        justify-content: center;
+    }
+
+    .icon-grid {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    }
+
+    .sidebar-info {
+        margin-top: 2rem;
+        padding: 1.5rem;
     }
 }
 
-/* Animation */
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
+@media (max-width: 480px) {
+    .page-header {
+        padding: 1rem;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+
+    .form-header {
+        padding: 1rem;
+    }
+
+    .form-body {
+        padding: 1rem;
+    }
+
+    .icon-grid {
+        grid-template-columns: 1fr 1fr;
     }
 }
 
-.glass-card {
-    animation: slideIn 0.5s ease-out;
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .form-container,
+    .page-header,
+    .sidebar-info {
+        border-width: 2px;
+    }
+
+    .form-control,
+    .form-select {
+        border-width: 2px;
+    }
+}
+
+/* Print styles */
+@media print {
+    .create-container {
+        background: white;
+        padding: 0;
+    }
+
+    .page-header,
+    .form-container,
+    .sidebar-info {
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+
+    .form-header {
+        background: #f5f5f5 !important;
+        color: #000 !important;
+    }
+
+    .form-actions {
+        display: none;
+    }
 }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="create-container">
-    <div class="container">
-        <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb" class="mb-4">
+    <div class="container-fluid">
+        <!-- Breadcrumb Navigation -->
+        <nav class="breadcrumb-nav" aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item">
-                    <a href="{% url 'dashboard:index' %}">
-                        <i class="bi bi-house-door me-1"></i>
-                        Dashboard
-                    </a>
-                </li>
                 <li class="breadcrumb-item">
                     <a href="{% url 'devices:list' %}">
                         <i class="bi bi-laptop me-1"></i>
@@ -369,261 +551,261 @@
             </ol>
         </nav>
 
-        <!-- Header -->
-        <div class="create-header">
+        <!-- Page Header -->
+        <div class="page-header">
             <div class="row align-items-center">
                 <div class="col-lg-8">
-                    <h2 class="text-dark mb-2">
-                        <i class="bi bi-plus-circle me-2"></i>
+                    <h1 class="page-title">
+                        <i class="bi bi-plus-circle"></i>
                         Create Device Category
-                    </h2>
-                    <p class="text-muted mb-0">
+                    </h1>
+                    <p class="page-subtitle">
                         Add a new device category to organize your IT inventory for Bangladesh Parliament Secretariat
                     </p>
                 </div>
                 <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                    <a href="{% url 'devices:category_list' %}" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left me-1"></i>
+                    <a href="{% url 'devices:category_list' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i>
                         Back to Categories
                     </a>
                 </div>
             </div>
         </div>
 
-        <!-- Create Form -->
+        <!-- Main Content -->
         <div class="row">
+            <!-- Create Form -->
             <div class="col-lg-8">
-                <div class="glass-card">
-                    <div class="card-header-glass">
-                        <h5 class="mb-0 text-dark">
-                            <i class="bi bi-info-circle me-2"></i>
-                            Category Information
-                        </h5>
+                <div class="form-container">
+                    <div class="form-header">
+                        <i class="bi bi-info-circle"></i>
+                        <h2 class="form-title">Category Information</h2>
                     </div>
                     
-                    <form method="post" id="categoryForm">
-                        {% csrf_token %}
-                        
-                        <div class="p-4">
-                            <!-- Basic Information -->
+                    <div class="form-body">
+                        <form method="post" id="categoryForm" novalidate>
+                            {% csrf_token %}
+                            
+                            <!-- Basic Information Section -->
                             <div class="form-section">
+                                <h3 class="section-title">
+                                    <i class="bi bi-info-circle"></i>
+                                    Basic Information
+                                </h3>
+                                
                                 <div class="row">
                                     <div class="col-md-8">
-                                        <label for="{{ form.name.id_for_label }}" class="form-label">
-                                            <i class="bi bi-tag"></i>
-                                            Category Name
-                                            <span class="required">*</span>
-                                        </label>
-                                        {{ form.name }}
-                                        {% if form.name.errors %}
-                                            <div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>
-                                        {% endif %}
-                                        <div class="form-text">
-                                            <i class="bi bi-info-circle"></i>
-                                            Enter a descriptive name for this device category
+                                        <div class="mb-3">
+                                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                                <i class="bi bi-tag"></i>
+                                                Category Name <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.name }}
+                                            {% if form.name.errors %}
+                                                <div class="invalid-feedback">{{ form.name.errors.0 }}</div>
+                                            {% endif %}
+                                            <div class="help-text">
+                                                <i class="bi bi-info-circle"></i>
+                                                Enter a descriptive name for this category (e.g., Computers, Storage)
+                                            </div>
                                         </div>
                                     </div>
-                                    
                                     <div class="col-md-4">
-                                        <label for="{{ form.code.id_for_label }}" class="form-label">
-                                            <i class="bi bi-hash"></i>
-                                            Category Code
-                                            <span class="required">*</span>
-                                        </label>
-                                        {{ form.code }}
-                                        {% if form.code.errors %}
-                                            <div class="invalid-feedback d-block">{{ form.code.errors.0 }}</div>
-                                        {% endif %}
-                                        <div class="form-text">
-                                            <i class="bi bi-info-circle"></i>
-                                            Short code (e.g., COMP, NET)
+                                        <div class="mb-3">
+                                            <label for="{{ form.code.id_for_label }}" class="form-label">
+                                                <i class="bi bi-hash"></i>
+                                                Category Code <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.code }}
+                                            {% if form.code.errors %}
+                                                <div class="invalid-feedback">{{ form.code.errors.0 }}</div>
+                                            {% endif %}
+                                            <div class="help-text">
+                                                <i class="bi bi-info-circle"></i>
+                                                Short code (e.g., COMP, STOR)
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Description -->
-                            <div class="form-section">
-                                <label for="{{ form.description.id_for_label }}" class="form-label">
-                                    <i class="bi bi-file-text"></i>
-                                    Description
-                                </label>
-                                {{ form.description }}
-                                {% if form.description.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.description.errors.0 }}</div>
-                                {% endif %}
-                                <div class="form-text">
-                                    <i class="bi bi-info-circle"></i>
-                                    Provide a detailed description of this category and what devices it includes
+                                <div class="mb-3">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">
+                                        <i class="bi bi-file-text"></i>
+                                        Description
+                                    </label>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                        <div class="invalid-feedback">{{ form.description.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="help-text">
+                                        <i class="bi bi-info-circle"></i>
+                                        Provide a detailed description of this category and its purpose
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Icon Selection -->
+                            <!-- Visual Settings Section -->
                             <div class="form-section">
-                                <label for="{{ form.icon_class.id_for_label }}" class="form-label">
+                                <h3 class="section-title">
                                     <i class="bi bi-palette"></i>
-                                    Category Icon
-                                </label>
-                                {{ form.icon_class }}
-                                {% if form.icon_class.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.icon_class.errors.0 }}</div>
-                                {% endif %}
-                                <div class="form-text">
-                                    <i class="bi bi-info-circle"></i>
-                                    Choose an icon that represents this category (Bootstrap Icons)
-                                </div>
+                                    Visual Settings
+                                </h3>
                                 
-                                <!-- Icon Selector -->
-                                <div class="icon-selector">
-                                    <div class="icon-option" data-icon="bi-laptop">
-                                        <i class="bi bi-laptop"></i>
-                                    </div>
-                                    <div class="icon-option" data-icon="bi-pc-display">
-                                        <i class="bi bi-pc-display"></i>
-                                    </div>
-                                    <div class="icon-option" data-icon="bi-router">
-                                        <i class="bi bi-router"></i>
-                                    </div>
-                                    <div class="icon-option" data-icon="bi-printer">
-                                        <i class="bi bi-printer"></i>
-                                    </div>
-                                    <div class="icon-option" data-icon="bi-phone">
-                                        <i class="bi bi-phone"></i>
-                                    </div>
-                                    <div class="icon-option" data-icon="bi-hdd">
-                                        <i class="bi bi-hdd"></i>
-                                    </div>
-                                    <div class="icon-option" data-icon="bi-cpu">
-                                        <i class="bi bi-cpu"></i>
-                                    </div>
-                                    <div class="icon-option" data-icon="bi-memory">
-                                        <i class="bi bi-memory"></i>
-                                    </div>
-                                    <div class="icon-option" data-icon="bi-usb-symbol">
-                                        <i class="bi bi-usb-symbol"></i>
-                                    </div>
-                                    <div class="icon-option" data-icon="bi-mouse">
-                                        <i class="bi bi-mouse"></i>
-                                    </div>
-                                    <div class="icon-option" data-icon="bi-keyboard">
-                                        <i class="bi bi-keyboard"></i>
-                                    </div>
-                                    <div class="icon-option" data-icon="bi-webcam">
-                                        <i class="bi bi-webcam"></i>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Settings -->
-                            <div class="form-section">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <label for="{{ form.sort_order.id_for_label }}" class="form-label">
-                                            <i class="bi bi-sort-numeric-up"></i>
-                                            Sort Order
-                                        </label>
-                                        {{ form.sort_order }}
-                                        {% if form.sort_order.errors %}
-                                            <div class="invalid-feedback d-block">{{ form.sort_order.errors.0 }}</div>
-                                        {% endif %}
-                                        <div class="form-text">
-                                            <i class="bi bi-info-circle"></i>
-                                            Lower numbers appear first in lists
+                                        <div class="mb-3">
+                                            <label for="{{ form.icon_class.id_for_label }}" class="form-label">
+                                                <i class="bi bi-star"></i>
+                                                Icon Class
+                                            </label>
+                                            {{ form.icon_class }}
+                                            {% if form.icon_class.errors %}
+                                                <div class="invalid-feedback">{{ form.icon_class.errors.0 }}</div>
+                                            {% endif %}
+                                            <div class="help-text">
+                                                <i class="bi bi-info-circle"></i>
+                                                Bootstrap icon class (e.g., bi-laptop, bi-router)
+                                            </div>
+                                        </div>
+
+                                        <!-- Icon Examples -->
+                                        <div class="icon-examples">
+                                            <div class="icon-examples-title">
+                                                <i class="bi bi-lightbulb"></i>
+                                                Common Icons
+                                            </div>
+                                            <div class="icon-grid">
+                                                <div class="icon-item" data-icon="bi-laptop">
+                                                    <i class="bi bi-laptop"></i>
+                                                    <span>bi-laptop</span>
+                                                </div>
+                                                <div class="icon-item" data-icon="bi-router">
+                                                    <i class="bi bi-router"></i>
+                                                    <span>bi-router</span>
+                                                </div>
+                                                <div class="icon-item" data-icon="bi-hdd">
+                                                    <i class="bi bi-hdd"></i>
+                                                    <span>bi-hdd</span>
+                                                </div>
+                                                <div class="icon-item" data-icon="bi-printer">
+                                                    <i class="bi bi-printer"></i>
+                                                    <span>bi-printer</span>
+                                                </div>
+                                                <div class="icon-item" data-icon="bi-phone">
+                                                    <i class="bi bi-phone"></i>
+                                                    <span>bi-phone</span>
+                                                </div>
+                                                <div class="icon-item" data-icon="bi-display">
+                                                    <i class="bi bi-display"></i>
+                                                    <span>bi-display</span>
+                                                </div>
+                                                <div class="icon-item" data-icon="bi-usb-symbol">
+                                                    <i class="bi bi-usb-symbol"></i>
+                                                    <span>bi-usb-symbol</span>
+                                                </div>
+                                                <div class="icon-item" data-icon="bi-cpu">
+                                                    <i class="bi bi-cpu"></i>
+                                                    <span>bi-cpu</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    
                                     <div class="col-md-6">
-                                        <label class="form-label">
-                                            <i class="bi bi-toggle-on"></i>
-                                            Status
-                                        </label>
-                                        <div class="form-check">
-                                            {{ form.is_active }}
-                                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
-                                                Active Category
+                                        <div class="mb-3">
+                                            <label for="{{ form.sort_order.id_for_label }}" class="form-label">
+                                                <i class="bi bi-sort-numeric-up"></i>
+                                                Sort Order
                                             </label>
-                                        </div>
-                                        {% if form.is_active.errors %}
-                                            <div class="invalid-feedback d-block">{{ form.is_active.errors.0 }}</div>
-                                        {% endif %}
-                                        <div class="form-text">
-                                            <i class="bi bi-info-circle"></i>
-                                            Only active categories can be used for new devices
+                                            {{ form.sort_order }}
+                                            {% if form.sort_order.errors %}
+                                                <div class="invalid-feedback">{{ form.sort_order.errors.0 }}</div>
+                                            {% endif %}
+                                            <div class="help-text">
+                                                <i class="bi bi-info-circle"></i>
+                                                Number to control display order (lower numbers appear first)
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Action Buttons -->
-                        <div class="action-buttons">
-                            <div class="d-flex gap-3 justify-content-end">
-                                <a href="{% url 'devices:category_list' %}" class="btn-cancel">
-                                    <i class="bi bi-x-circle me-2"></i>
+                            <!-- Status Section -->
+                            <div class="form-section">
+                                <h3 class="section-title">
+                                    <i class="bi bi-toggle-on"></i>
+                                    Status Settings
+                                </h3>
+                                
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        Active Category
+                                    </label>
+                                    {% if form.is_active.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.is_active.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="help-text mt-2">
+                                        <i class="bi bi-info-circle"></i>
+                                        Only active categories will be available for device assignment
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="form-actions">
+                                <a href="{% url 'devices:category_list' %}" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle"></i>
                                     Cancel
                                 </a>
-                                <button type="submit" class="btn-submit" id="submitBtn">
-                                    <i class="bi bi-check-circle me-2"></i>
+                                <button type="submit" class="btn btn-primary" id="submitBtn">
+                                    <i class="bi bi-check-circle"></i>
                                     Create Category
                                 </button>
                             </div>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
 
-            <!-- Preview and Help Sidebar -->
+            <!-- Sidebar Information -->
             <div class="col-lg-4">
-                <!-- Live Preview -->
-                <div class="glass-card mb-4">
-                    <div class="card-header-glass">
-                        <h6 class="mb-0 text-dark">
-                            <i class="bi bi-eye me-2"></i>
-                            Live Preview
-                        </h6>
-                    </div>
-                    <div class="preview-section">
-                        <div class="category-preview">
-                            <div class="preview-icon" id="previewIcon">
-                                <i class="bi bi-laptop"></i>
-                            </div>
-                            <div class="preview-name" id="previewName">Category Name</div>
-                            <div class="preview-code" id="previewCode">CODE</div>
-                            <div class="preview-description" id="previewDescription">
-                                Category description will appear here...
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Help Section -->
-                <div class="help-section">
-                    <h6 class="help-title">
+                <div class="sidebar-info">
+                    <h3 class="sidebar-title">
                         <i class="bi bi-question-circle"></i>
                         Category Guidelines
-                    </h6>
-                    <ul class="help-list">
-                        <li>
-                            <i class="bi bi-check-circle"></i>
-                            Use clear, descriptive names
-                        </li>
-                        <li>
-                            <i class="bi bi-check-circle"></i>
-                            Keep codes short and meaningful
-                        </li>
-                        <li>
-                            <i class="bi bi-check-circle"></i>
-                            Choose appropriate icons
-                        </li>
-                        <li>
-                            <i class="bi bi-check-circle"></i>
-                            Write detailed descriptions
-                        </li>
-                        <li>
-                            <i class="bi bi-check-circle"></i>
-                            Set logical sort orders
-                        </li>
-                    </ul>
+                    </h3>
+                    
+                    <div class="info-item">
+                        <div class="info-title">Naming Convention</div>
+                        <div class="info-text">
+                            Use clear, descriptive names that represent broad device types. 
+                            Examples: "Computers", "Network Equipment", "Storage Devices"
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-title">Category Codes</div>
+                        <div class="info-text">
+                            Keep codes short (2-10 characters) and use uppercase letters. 
+                            Examples: "COMP", "NET", "STOR", "PRINT"
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-title">Organization Tips</div>
+                        <div class="info-text">
+                            Categories should represent main device types. Use subcategories 
+                            for more specific classifications like "Laptops" under "Computers"
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-title">Icon Selection</div>
+                        <div class="info-text">
+                            Choose intuitive Bootstrap icons that visually represent your category. 
+                            Click on examples above to quickly select common device icons
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -633,112 +815,125 @@
 
 {% block extra_js %}
 <script>
-// Device Category Create JavaScript - Bangladesh Parliament Secretariat PIMS
 document.addEventListener('DOMContentLoaded', function() {
+    // Form elements
     const form = document.getElementById('categoryForm');
-    const nameInput = document.getElementById('{{ form.name.id_for_label }}');
-    const codeInput = document.getElementById('{{ form.code.id_for_label }}');
-    const descriptionInput = document.getElementById('{{ form.description.id_for_label }}');
-    const iconInput = document.getElementById('{{ form.icon_class.id_for_label }}');
     const submitBtn = document.getElementById('submitBtn');
+    const codeInput = document.getElementById('{{ form.code.id_for_label }}');
+    const iconInput = document.getElementById('{{ form.icon_class.id_for_label }}');
     
-    // Preview elements
-    const previewName = document.getElementById('previewName');
-    const previewCode = document.getElementById('previewCode');
-    const previewDescription = document.getElementById('previewDescription');
-    const previewIcon = document.getElementById('previewIcon');
-    
-    // Icon options
-    const iconOptions = document.querySelectorAll('.icon-option');
-    
-    // Auto-generate code from name
-    nameInput.addEventListener('input', function() {
-        const name = this.value.trim();
-        if (name && !codeInput.value) {
-            const code = name.substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '');
-            codeInput.value = code;
-            updatePreview();
-        }
-        updatePreview();
-    });
-    
-    // Update preview on input changes
-    [nameInput, codeInput, descriptionInput, iconInput].forEach(input => {
-        if (input) {
-            input.addEventListener('input', updatePreview);
-        }
-    });
-    
-    // Icon selection
-    iconOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            // Remove selected class from all options
-            iconOptions.forEach(opt => opt.classList.remove('selected'));
-            
-            // Add selected class to clicked option
-            this.classList.add('selected');
-            
-            // Update icon input and preview
+    // Icon selection functionality
+    const iconItems = document.querySelectorAll('.icon-item');
+    iconItems.forEach(item => {
+        item.addEventListener('click', function() {
             const iconClass = this.dataset.icon;
             iconInput.value = iconClass;
-            updatePreview();
+            iconInput.focus();
+            
+            // Visual feedback
+            iconItems.forEach(i => i.style.background = '');
+            this.style.background = 'rgba(249, 115, 22, 0.1)';
         });
     });
     
-    // Initialize preview
-    updatePreview();
-    
-    function updatePreview() {
-        // Update name
-        const name = nameInput.value.trim() || 'Category Name';
-        previewName.textContent = name;
-        
-        // Update code
-        const code = codeInput.value.trim() || 'CODE';
-        previewCode.textContent = code;
-        
-        // Update description
-        const description = descriptionInput.value.trim() || 'Category description will appear here...';
-        previewDescription.textContent = description;
-        
-        // Update icon
-        const iconClass = iconInput.value.trim() || 'bi-laptop';
-        previewIcon.innerHTML = `<i class="${iconClass}"></i>`;
-        
-        // Update icon selection
-        iconOptions.forEach(option => {
-            option.classList.remove('selected');
-            if (option.dataset.icon === iconClass) {
-                option.classList.add('selected');
-            }
-        });
-    }
-    
-    // Form validation
+    // Form validation and submission
     form.addEventListener('submit', function(e) {
-        const name = nameInput.value.trim();
-        const code = codeInput.value.trim();
+        // Basic client-side validation
+        const nameInput = document.getElementById('{{ form.name.id_for_label }}');
+        const codeInput = document.getElementById('{{ form.code.id_for_label }}');
         
-        if (!name || !code) {
+        let isValid = true;
+        
+        // Remove existing error classes
+        document.querySelectorAll('.form-control, .form-select').forEach(input => {
+            input.classList.remove('is-invalid');
+        });
+        
+        // Validate required fields
+        if (!nameInput.value.trim()) {
+            nameInput.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        if (!codeInput.value.trim()) {
+            codeInput.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        if (!isValid) {
             e.preventDefault();
-            alert('Please fill in all required fields.');
+            submitBtn.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>Please fix errors';
+            setTimeout(() => {
+                submitBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Create Category';
+            }, 3000);
             return;
         }
         
         // Disable submit button and show loading
-        submitBtn.innerHTML = '<i class="spinner-border spinner-border-sm me-2"></i>Creating...';
         submitBtn.disabled = true;
+        submitBtn.classList.add('btn-loading');
+        submitBtn.innerHTML = '<i class="spinner-border spinner-border-sm me-2"></i>Creating...';
     });
     
     // Auto-uppercase code input
-    codeInput.addEventListener('input', function() {
-        this.value = this.value.toUpperCase();
+    if (codeInput) {
+        codeInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+    
+    // Real-time validation feedback
+    const inputs = document.querySelectorAll('.form-control, .form-select');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.hasAttribute('required') && !this.value.trim()) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        });
+        
+        input.addEventListener('input', function() {
+            if (this.classList.contains('is-invalid') && this.value.trim()) {
+                this.classList.remove('is-invalid');
+            }
+        });
     });
     
     // Initialize tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Auto-focus first input
+    const firstInput = document.getElementById('{{ form.name.id_for_label }}');
+    if (firstInput) {
+        firstInput.focus();
+    }
+    
+    // Smooth scroll to errors
+    const errorElements = document.querySelectorAll('.invalid-feedback');
+    if (errorElements.length > 0) {
+        errorElements[0].scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+        });
+    }
+});
+
+// Page load animations
+window.addEventListener('load', function() {
+    // Animate form sections
+    const sections = document.querySelectorAll('.form-section');
+    sections.forEach((section, index) => {
+        section.style.opacity = '0';
+        section.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            section.style.transition = 'all 0.5s ease';
+            section.style.opacity = '1';
+            section.style.transform = 'translateY(0)';
+        }, index * 100);
     });
 });
 </script>

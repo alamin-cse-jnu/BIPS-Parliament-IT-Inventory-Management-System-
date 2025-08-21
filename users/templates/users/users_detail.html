@@ -1,58 +1,511 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ user_obj.get_display_name }} - PIMS{% endblock %}
+{% block title %}{{ user_obj.get_display_name }} - PIMS - Bangladesh Parliament Secretariat{% endblock %}
 
 {% block breadcrumb_items %}
     <li class="breadcrumb-item"><a href="{% url 'users:list' %}">Users</a></li>
     <li class="breadcrumb-item active">{{ user_obj.get_display_name }}</li>
 {% endblock %}
 
-{% block content %}
-<div class="container-fluid">
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-1">
-                <i class="bi bi-person-circle me-2 text-primary"></i>
-                {{ user_obj.get_display_name }}
-            </h1>
-            <p class="text-muted mb-0">User profile and system information</p>
-        </div>
-        <div class="btn-group">
-            {% if perms.auth.change_user %}
-                <a href="{% url 'users:edit' user_obj.pk %}" class="btn btn-parliament-primary">
-                    <i class="bi bi-pencil me-2"></i>
-                    Edit User
-                </a>
-            {% endif %}
-            <a href="{% url 'users:list' %}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left me-2"></i>
-                Back to Users
-            </a>
-        </div>
-    </div>
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+/* User Detail Page Redesign - Parliament IT Management System */
+/* Location: Dhaka, Bangladesh Parliament Secretariat */
+/* Flat Design with High Contrast - Teal, Orange, Red Color Scheme */
 
-    <div class="row">
-        <!-- User Profile Card -->
-        <div class="col-lg-4 col-md-5">
-            <div class="detail-container">
-                <div class="detail-header">
-                    <div class="text-center">
+:root {
+    --primary-teal: #14b8a6;
+    --primary-teal-hover: #0f9488;
+    --primary-orange: #f97316;
+    --primary-red: #ef4444;
+    --success-green: #10b981;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --border-light: #e2e8f0;
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Main Container */
+.user-detail-container {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+/* Page Header */
+.page-header {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-card);
+}
+
+.page-title-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.page-title {
+    color: var(--text-primary);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 2rem;
+}
+
+.page-title i {
+    color: var(--primary-teal);
+    background: rgba(20, 184, 166, 0.1);
+    padding: 0.75rem;
+    border-radius: 12px;
+    font-size: 1.5rem;
+}
+
+.page-subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 0;
+    font-size: 1.125rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.btn-modern {
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.btn-primary-modern {
+    background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-hover));
+    color: white;
+    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+}
+
+.btn-primary-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(20, 184, 166, 0.4);
+    color: white;
+}
+
+.btn-outline-modern {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-light);
+}
+
+.btn-outline-modern:hover {
+    background: var(--bg-secondary);
+    border-color: var(--primary-teal);
+    color: var(--primary-teal);
+    transform: translateY(-2px);
+}
+
+/* Main Grid Layout */
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Profile Card */
+.profile-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    transition: all 0.3s ease;
+    height: fit-content;
+}
+
+.profile-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.profile-header {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+    position: relative;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: 700;
+    color: white;
+}
+
+.profile-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.profile-username {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin-bottom: 0;
+}
+
+.profile-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+}
+
+.profile-body {
+    padding: 2rem;
+}
+
+/* Detail Sections */
+.detail-section {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    transition: all 0.3s ease;
+}
+
+.detail-section:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.section-header {
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-content {
+    padding: 2rem;
+}
+
+/* Detail Grid Items */
+.detail-grid-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.detail-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.detail-item:hover {
+    background: var(--bg-primary);
+    border-color: var(--primary-teal);
+    transform: translateY(-2px);
+}
+
+.detail-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.detail-value {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.detail-value.empty {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.detail-value i {
+    color: var(--primary-teal);
+}
+
+.detail-value small {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-badge.active {
+    background: linear-gradient(135deg, var(--success-green), #047857);
+    color: white;
+}
+
+.status-badge.inactive {
+    background: linear-gradient(135deg, var(--primary-red), #dc2626);
+    color: white;
+}
+
+.status-badge.staff {
+    background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-hover));
+    color: white;
+}
+
+.status-badge.superuser {
+    background: linear-gradient(135deg, var(--primary-orange), #ea580c);
+    color: white;
+}
+
+/* Permission Lists */
+.permission-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.permission-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.permission-item:hover {
+    background: var(--bg-primary);
+    border-color: var(--primary-teal);
+}
+
+.permission-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.permission-icon {
+    font-size: 1.25rem;
+}
+
+.permission-icon.granted {
+    color: var(--success-green);
+}
+
+.permission-icon.denied {
+    color: var(--primary-red);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .user-detail-container {
+        padding: 1rem 0;
+    }
+    
+    .page-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-title-section {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+    }
+    
+    .page-subtitle {
+        font-size: 1rem;
+    }
+    
+    .header-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+    
+    .btn-modern {
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .detail-grid-items {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .profile-header {
+        padding: 1.5rem;
+    }
+    
+    .profile-body {
+        padding: 1.5rem;
+    }
+    
+    .section-content {
+        padding: 1.5rem;
+    }
+    
+    .detail-item {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-header {
+        padding: 1rem;
+    }
+    
+    .section-header {
+        padding: 1rem;
+    }
+    
+    .section-content {
+        padding: 1rem;
+    }
+    
+    .profile-header {
+        padding: 1rem;
+    }
+    
+    .profile-body {
+        padding: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="user-detail-container">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-title-section">
+                <div>
+                    <h1 class="page-title">
+                        <i class="bi bi-person-circle"></i>
+                        {{ user_obj.get_display_name }}
+                    </h1>
+                    <p class="page-subtitle">User profile and system information</p>
+                </div>
+                <div class="header-actions">
+                    {% if perms.auth.change_user %}
+                        <a href="{% url 'users:edit' user_obj.pk %}" class="btn-modern btn-primary-modern">
+                            <i class="bi bi-pencil"></i>
+                            Edit User
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'users:list' %}" class="btn-modern btn-outline-modern">
+                        <i class="bi bi-arrow-left"></i>
+                        Back to Users
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="detail-grid">
+            <!-- User Profile Card -->
+            <div class="profile-card">
+                <div class="profile-header">
+                    <div class="profile-avatar">
                         {% if user_obj.profile_image %}
-                            <img src="{{ user_obj.profile_image.url }}" alt="{{ user_obj.get_full_name }}" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover; border: 4px solid rgba(255,255,255,0.3);">
+                            <img src="{{ user_obj.profile_image.url }}" alt="{{ user_obj.get_full_name }}">
                         {% else %}
-                            <div class="bg-white bg-opacity-25 rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 120px; height: 120px;">
-                                <i class="bi bi-person fs-1 text-white"></i>
+                            <div class="profile-avatar-placeholder">
+                                {{ user_obj.get_display_name|first|upper }}
                             </div>
                         {% endif %}
-                        <h3 class="detail-title">{{ user_obj.get_full_name }}</h3>
-                        <p class="detail-subtitle">{{ user_obj.username }}</p>
                     </div>
-                    <div class="detail-actions">
+                    <h3 class="profile-name">{{ user_obj.get_full_name }}</h3>
+                    <p class="profile-username">{{ user_obj.username }}</p>
+                    
+                    <div class="profile-actions">
                         <div class="dropdown">
                             <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-three-dots"></i>
+                                <i class="bi bi-gear me-1"></i>
+                                Actions
                             </button>
                             <ul class="dropdown-menu">
                                 {% if perms.auth.change_user %}
@@ -62,509 +515,261 @@
                                     <li><a class="dropdown-item" href="{% url 'users:roles' user_obj.pk %}">
                                         <i class="bi bi-shield-check me-2"></i>Manage Roles
                                     </a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    {% if user_obj.is_active %}
-                                        <li>
-                                            <form method="post" action="{% url 'users:deactivate' user_obj.pk %}" class="d-inline">
-                                                {% csrf_token %}
-                                                <button type="submit" class="dropdown-item text-warning" 
-                                                        data-confirm="Are you sure you want to deactivate this user?">
-                                                    <i class="bi bi-pause-circle me-2"></i>Deactivate
-                                                </button>
-                                            </form>
-                                        </li>
-                                    {% else %}
-                                        <li>
-                                            <form method="post" action="{% url 'users:activate' user_obj.pk %}" class="d-inline">
-                                                {% csrf_token %}
-                                                <button type="submit" class="dropdown-item text-success">
-                                                    <i class="bi bi-play-circle me-2"></i>Activate
-                                                </button>
-                                            </form>
-                                        </li>
-                                    {% endif %}
-                                {% endif %}
-                                {% if perms.auth.delete_user %}
-                                    <li><a class="dropdown-item text-danger" href="{% url 'users:delete' user_obj.pk %}"
-                                           data-confirm="Are you sure you want to delete this user?">
-                                        <i class="bi bi-trash me-2"></i>Delete User
+                                    <li><a class="dropdown-item" href="{% url 'users:permissions' user_obj.pk %}">
+                                        <i class="bi bi-key me-2"></i>View Permissions
                                     </a></li>
+                                    <li><hr class="dropdown-divider"></li>
                                 {% endif %}
+                                <li><a class="dropdown-item" href="#">
+                                    <i class="bi bi-printer me-2"></i>Print Profile
+                                </a></li>
                             </ul>
                         </div>
                     </div>
                 </div>
 
-                <div class="detail-body">
-                    <!-- Status Section -->
-                    <div class="detail-section">
-                        <h4 class="detail-section-title">
-                            <i class="bi bi-info-circle"></i>
-                            Status
-                        </h4>
-                        <div class="text-center">
-                            {% if user_obj.is_active and user_obj.is_active_employee %}
-                                <span class="badge bg-success fs-6 px-3 py-2">
-                                    <i class="bi bi-check-circle me-2"></i>Active
-                                </span>
-                            {% else %}
-                                <span class="badge bg-secondary fs-6 px-3 py-2">
-                                    <i class="bi bi-x-circle me-2"></i>Inactive
-                                </span>
-                            {% endif %}
-                            
-                            {% if user_obj.is_superuser %}
-                                <span class="badge bg-danger fs-6 px-3 py-2 ms-2">
-                                    <i class="bi bi-shield-fill me-2"></i>Super Admin
-                                </span>
-                            {% elif user_obj.is_staff %}
-                                <span class="badge bg-warning fs-6 px-3 py-2 ms-2">
-                                    <i class="bi bi-person-badge me-2"></i>Staff
-                                </span>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <!-- Quick Stats -->
-                    <div class="detail-section">
-                        <h4 class="detail-section-title">
-                            <i class="bi bi-graph-up"></i>
-                            Quick Stats
-                        </h4>
-                        <div class="row text-center">
-                            <div class="col-6">
-                                <div class="stat-item">
-                                    <div class="stat-number text-primary">{{ assigned_devices_count }}</div>
-                                    <div class="stat-label">Assigned Devices</div>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="stat-item">
-                                    <div class="stat-number text-success">{{ user_groups|length }}</div>
-                                    <div class="stat-label">User Groups</div>
-                                </div>
+                <div class="profile-body">
+                    <!-- Basic Information -->
+                    <div class="detail-grid-items">
+                        <div class="detail-item">
+                            <div class="detail-label">Employee ID</div>
+                            <div class="detail-value">
+                                {% if user_obj.employee_id %}
+                                    <i class="bi bi-badge-tm"></i>
+                                    {{ user_obj.employee_id }}
+                                {% else %}
+                                    <span class="detail-value empty">Not assigned</span>
+                                {% endif %}
                             </div>
                         </div>
-                    </div>
 
-                    <!-- User Groups -->
-                    <div class="detail-section">
-                        <h4 class="detail-section-title">
-                            <i class="bi bi-people"></i>
-                            User Groups
-                        </h4>
-                        {% if user_groups %}
-                            <div class="d-flex flex-wrap gap-2">
-                                {% for group in user_groups %}
-                                    <span class="badge bg-primary">{{ group.name }}</span>
-                                {% endfor %}
+                        <div class="detail-item">
+                            <div class="detail-label">Email Address</div>
+                            <div class="detail-value">
+                                {% if user_obj.email %}
+                                    <i class="bi bi-envelope"></i>
+                                    {{ user_obj.email }}
+                                {% else %}
+                                    <span class="detail-value empty">Not provided</span>
+                                {% endif %}
                             </div>
-                        {% else %}
-                            <p class="text-muted">No groups assigned</p>
-                        {% endif %}
+                        </div>
+
+                        <div class="detail-item">
+                            <div class="detail-label">Phone Number</div>
+                            <div class="detail-value">
+                                {% if user_obj.phone_number %}
+                                    <i class="bi bi-telephone"></i>
+                                    {{ user_obj.phone_number }}
+                                {% else %}
+                                    <span class="detail-value empty">Not provided</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="detail-item">
+                            <div class="detail-label">Status</div>
+                            <div class="detail-value">
+                                {% if user_obj.is_active %}
+                                    <span class="status-badge active">Active</span>
+                                {% else %}
+                                    <span class="status-badge inactive">Inactive</span>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- User Details -->
-        <div class="col-lg-8 col-md-7">
-            <div class="detail-container">
-                <div class="detail-header">
-                    <h2 class="detail-title">
-                        <i class="bi bi-person-lines-fill"></i>
-                        User Information
-                    </h2>
-                </div>
-
-                <div class="detail-body">
-                    <!-- Personal Information -->
-                    <div class="detail-section">
-                        <h3 class="detail-section-title">Personal Information</h3>
-                        <div class="detail-grid">
-                            <div class="detail-item">
-                                <div class="detail-label">Full Name</div>
-                                <div class="detail-value">{{ user_obj.get_full_name|default:"Not provided" }}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Username</div>
-                                <div class="detail-value">
-                                    <code>{{ user_obj.username }}</code>
-                                </div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Employee ID</div>
-                                <div class="detail-value">
-                                    <code>{{ user_obj.employee_id }}</code>
-                                </div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Email Address</div>
-                                <div class="detail-value">
-                                    {% if user_obj.email %}
-                                        <a href="mailto:{{ user_obj.email }}" class="text-decoration-none">
-                                            <i class="bi bi-envelope me-1"></i>{{ user_obj.email }}
-                                        </a>
-                                    {% else %}
-                                        <span class="detail-value empty">Not provided</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Phone Number</div>
-                                <div class="detail-value">
-                                    {% if user_obj.phone_number %}
-                                        <a href="tel:{{ user_obj.phone_number }}" class="text-decoration-none">
-                                            <i class="bi bi-telephone me-1"></i>{{ user_obj.phone_number }}
-                                        </a>
-                                    {% else %}
-                                        <span class="detail-value empty">Not provided</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
+            <!-- Detail Sections -->
+            <div class="detail-sections">
+                <!-- Employment Information -->
+                <div class="detail-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="bi bi-building"></i>
+                            Employment Information
+                        </h3>
                     </div>
-
-                    <!-- Employment Information -->
-                    <div class="detail-section">
-                        <h3 class="detail-section-title">Employment Information</h3>
-                        <div class="detail-grid">
+                    <div class="section-content">
+                        <div class="detail-grid-items">
                             <div class="detail-item">
                                 <div class="detail-label">Designation</div>
-                                <div class="detail-value">{{ user_obj.designation|default:"Not specified" }}</div>
+                                <div class="detail-value">
+                                    {% if user_obj.designation %}
+                                        <i class="bi bi-person-badge"></i>
+                                        {{ user_obj.designation }}
+                                    {% else %}
+                                        <span class="detail-value empty">Not specified</span>
+                                    {% endif %}
+                                </div>
                             </div>
+
                             <div class="detail-item">
                                 <div class="detail-label">Office</div>
-                                <div class="detail-value">{{ user_obj.office|default:"Not specified" }}</div>
+                                <div class="detail-value">
+                                    {% if user_obj.office %}
+                                        <i class="bi bi-geo-alt"></i>
+                                        {{ user_obj.office }}
+                                    {% else %}
+                                        <span class="detail-value empty">Not specified</span>
+                                    {% endif %}
+                                </div>
                             </div>
+
                             <div class="detail-item">
                                 <div class="detail-label">Employee Status</div>
                                 <div class="detail-value">
                                     {% if user_obj.is_active_employee %}
-                                        <span class="badge bg-success">Active Employee</span>
+                                        <span class="status-badge active">Active Employee</span>
                                     {% else %}
-                                        <span class="badge bg-secondary">Inactive Employee</span>
+                                        <span class="status-badge inactive">Inactive Employee</span>
                                     {% endif %}
                                 </div>
                             </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">Department</div>
+                                <div class="detail-value">
+                                    {% if user_obj.department %}
+                                        <i class="bi bi-diagram-3"></i>
+                                        {{ user_obj.department }}
+                                    {% else %}
+                                        <span class="detail-value empty">Not specified</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Information -->
+                <div class="detail-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="bi bi-clock-history"></i>
+                            System Information
+                        </h3>
+                    </div>
+                    <div class="section-content">
+                        <div class="detail-grid-items">
                             <div class="detail-item">
                                 <div class="detail-label">Account Created</div>
                                 <div class="detail-value">
-                                    <i class="bi bi-calendar3 me-1"></i>
-                                    {{ user_obj.created_at|date:"F j, Y" }}
-                                    <small class="text-muted">({{ user_obj.created_at|timesince }} ago)</small>
+                                    <i class="bi bi-calendar3"></i>
+                                    {{ user_obj.date_joined|date:"F j, Y" }}
+                                    <small>({{ user_obj.date_joined|timesince }} ago)</small>
                                 </div>
                             </div>
+
                             <div class="detail-item">
                                 <div class="detail-label">Last Login</div>
                                 <div class="detail-value">
                                     {% if user_obj.last_login %}
-                                        <i class="bi bi-clock me-1"></i>
+                                        <i class="bi bi-clock"></i>
                                         {{ user_obj.last_login|date:"F j, Y g:i A" }}
-                                        <small class="text-muted">({{ user_obj.last_login|timesince }} ago)</small>
+                                        <small>({{ user_obj.last_login|timesince }} ago)</small>
                                     {% else %}
                                         <span class="detail-value empty">Never logged in</span>
                                     {% endif %}
                                 </div>
                             </div>
+
                             <div class="detail-item">
                                 <div class="detail-label">Last Updated</div>
                                 <div class="detail-value">
-                                    <i class="bi bi-pencil me-1"></i>
-                                    {{ user_obj.updated_at|date:"F j, Y g:i A" }}
-                                    <small class="text-muted">({{ user_obj.updated_at|timesince }} ago)</small>
+                                    {% if user_obj.updated_at %}
+                                        <i class="bi bi-pencil"></i>
+                                        {{ user_obj.updated_at|date:"F j, Y g:i A" }}
+                                        <small>({{ user_obj.updated_at|timesince }} ago)</small>
+                                    {% else %}
+                                        <span class="detail-value empty">No updates recorded</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">User ID</div>
+                                <div class="detail-value">
+                                    <i class="bi bi-hash"></i>
+                                    {{ user_obj.id }}
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- System Permissions -->
-                    <div class="detail-section">
-                        <h3 class="detail-section-title">System Permissions</h3>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6 class="fw-bold mb-3">Account Permissions</h6>
-                                <div class="list-group list-group-flush">
-                                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                                        <span>
-                                            <i class="bi bi-person-check me-2"></i>
-                                            Active Account
-                                        </span>
-                                        {% if user_obj.is_active %}
-                                            <span class="badge bg-success">Yes</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">No</span>
-                                        {% endif %}
+                <!-- System Permissions -->
+                <div class="detail-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="bi bi-shield-check"></i>
+                            System Permissions
+                        </h3>
+                    </div>
+                    <div class="section-content">
+                        <div class="detail-grid-items">
+                            <div class="detail-item">
+                                <div class="detail-label">Account Permissions</div>
+                                <div class="permission-list">
+                                    <div class="permission-item">
+                                        <span class="permission-name">Active User</span>
+                                        <i class="bi bi-{% if user_obj.is_active %}check-circle-fill permission-icon granted{% else %}x-circle-fill permission-icon denied{% endif %}"></i>
                                     </div>
-                                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                                        <span>
-                                            <i class="bi bi-shield-check me-2"></i>
-                                            Staff Access
-                                        </span>
-                                        {% if user_obj.is_staff %}
-                                            <span class="badge bg-warning">Yes</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">No</span>
-                                        {% endif %}
+                                    <div class="permission-item">
+                                        <span class="permission-name">Staff Access</span>
+                                        <i class="bi bi-{% if user_obj.is_staff %}check-circle-fill permission-icon granted{% else %}x-circle-fill permission-icon denied{% endif %}"></i>
                                     </div>
-                                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                                        <span>
-                                            <i class="bi bi-shield-fill me-2"></i>
-                                            Superuser
-                                        </span>
-                                        {% if user_obj.is_superuser %}
-                                            <span class="badge bg-danger">Yes</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">No</span>
-                                        {% endif %}
+                                    <div class="permission-item">
+                                        <span class="permission-name">Superuser Access</span>
+                                        <i class="bi bi-{% if user_obj.is_superuser %}check-circle-fill permission-icon granted{% else %}x-circle-fill permission-icon denied{% endif %}"></i>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <h6 class="fw-bold mb-3">Specific Permissions</h6>
-                                {% if user_permissions %}
-                                    <div class="permission-list">
-                                        {% for permission in user_permissions %}
-                                            <div class="permission-item">
-                                                <i class="bi bi-key me-2 text-primary"></i>
-                                                <small>{{ permission.name }}</small>
-                                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">Account Type</div>
+                                <div class="detail-value">
+                                    {% if user_obj.is_superuser %}
+                                        <span class="status-badge superuser">Superuser</span>
+                                    {% elif user_obj.is_staff %}
+                                        <span class="status-badge staff">Staff Member</span>
+                                    {% else %}
+                                        <span class="status-badge active">Regular User</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">Groups & Roles</div>
+                                <div class="detail-value">
+                                    {% if user_obj.groups.exists %}
+                                        {% for group in user_obj.groups.all %}
+                                            <span class="status-badge active">{{ group.name }}</span>
                                         {% endfor %}
-                                    </div>
-                                {% else %}
-                                    <p class="text-muted">No specific permissions assigned</p>
-                                {% endif %}
+                                    {% else %}
+                                        <span class="detail-value empty">No groups assigned</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">Permission Count</div>
+                                <div class="detail-value">
+                                    <i class="bi bi-key"></i>
+                                    {{ user_obj.get_all_permissions|length }} permissions
+                                    {% if perms.auth.view_permission %}
+                                        <a href="{% url 'users:permissions' user_obj.pk %}" class="btn btn-outline-primary btn-sm ms-2">
+                                            <i class="bi bi-eye"></i> View Details
+                                        </a>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Administrative Notes -->
-                    {% if user_obj.notes %}
-                        <div class="detail-section">
-                            <h3 class="detail-section-title">Administrative Notes</h3>
-                            <div class="alert alert-info">
-                                <i class="bi bi-sticky me-2"></i>
-                                {{ user_obj.notes|linebreaks }}
-                            </div>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Related Information -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-laptop me-2"></i>
-                        Assigned Devices
-                    </h5>
-                </div>
-                <div class="card-body">
-                    {% if assigned_devices_count > 0 %}
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle me-2"></i>
-                            This user has {{ assigned_devices_count }} device{{ assigned_devices_count|pluralize }} assigned.
-                            <a href="#" class="alert-link">View device assignments</a>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="bi bi-laptop text-muted" style="font-size: 3rem;"></i>
-                            <h6 class="mt-3">No Devices Assigned</h6>
-                            <p class="text-muted">This user has no devices currently assigned.</p>
-                        </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Confirmation for actions
-        document.addEventListener('click', function(e) {
-            const confirmBtn = e.target.closest('[data-confirm]');
-            if (confirmBtn) {
-                const message = confirmBtn.getAttribute('data-confirm');
-                if (!confirm(message)) {
-                    e.preventDefault();
-                }
-            }
-        });
-
-        // Copy to clipboard functionality
-        function copyToClipboard(text, element) {
-            navigator.clipboard.writeText(text).then(() => {
-                // Show success feedback
-                const originalText = element.textContent;
-                element.textContent = 'Copied!';
-                element.classList.add('text-success');
-                
-                setTimeout(() => {
-                    element.textContent = originalText;
-                    element.classList.remove('text-success');
-                }, 2000);
-            }).catch(() => {
-                // Fallback for older browsers
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                
-                // Show success feedback
-                const originalText = element.textContent;
-                element.textContent = 'Copied!';
-                element.classList.add('text-success');
-                
-                setTimeout(() => {
-                    element.textContent = originalText;
-                    element.classList.remove('text-success');
-                }, 2000);
-            });
-        }
-
-        // Add click handlers for copyable elements
-        const copyableElements = document.querySelectorAll('code');
-        copyableElements.forEach(element => {
-            element.style.cursor = 'pointer';
-            element.title = 'Click to copy';
-            element.addEventListener('click', function() {
-                copyToClipboard(this.textContent, this);
-            });
-        });
-
-        // Add tooltips to action buttons
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        const tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-
-        // Smooth scroll to sections
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-    });
-</script>
-
-<style>
-    .stat-item {
-        padding: var(--spacing-md);
-        text-align: center;
-    }
-    
-    .stat-number {
-        font-size: 2rem;
-        font-weight: 700;
-        display: block;
-        margin-bottom: var(--spacing-xs);
-    }
-    
-    .stat-label {
-        font-size: 0.75rem;
-        color: var(--parliament-neutral);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .permission-list {
-        max-height: 200px;
-        overflow-y: auto;
-    }
-    
-    .permission-item {
-        padding: var(--spacing-xs) 0;
-        border-bottom: 1px solid #f3f4f6;
-    }
-    
-    .permission-item:last-child {
-        border-bottom: none;
-    }
-    
-    .list-group-item {
-        border: none;
-        padding: var(--spacing-sm) 0;
-    }
-    
-    .list-group-item:not(:last-child) {
-        border-bottom: 1px solid #f3f4f6;
-    }
-    
-    .detail-actions {
-        position: absolute;
-        top: var(--spacing-lg);
-        right: var(--spacing-lg);
-    }
-    
-    .detail-header {
-        position: relative;
-        padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg);
-    }
-    
-    code {
-        background-color: rgba(var(--parliament-primary-rgb), 0.1);
-        color: var(--parliament-primary);
-        padding: 0.25rem 0.5rem;
-        border-radius: var(--border-radius);
-        font-size: 0.875rem;
-        cursor: pointer;
-        transition: var(--transition-fast);
-    }
-    
-    code:hover {
-        background-color: rgba(var(--parliament-primary-rgb), 0.2);
-    }
-    
-    .badge {
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-    
-    .alert {
-        border: none;
-        border-radius: var(--border-radius);
-        border-left: 4px solid;
-    }
-    
-    .alert-info {
-        border-left-color: var(--parliament-info);
-    }
-    
-    @media (max-width: 991.98px) {
-        .detail-actions {
-            position: static;
-            margin-top: var(--spacing-md);
-            text-align: center;
-        }
-        
-        .detail-header {
-            text-align: center;
-        }
-        
-        .btn-group {
-            flex-direction: column;
-            gap: var(--spacing-sm);
-        }
-        
-        .btn-group .btn {
-            width: 100%;
-        }
-    }
-</style>
 {% endblock %}

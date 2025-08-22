@@ -299,7 +299,6 @@ class DeviceCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     form_class = DeviceForm
     template_name = 'devices/create.html'
     permission_required = 'devices.add_device'
-    # Remove success_url from here to let get_success_url() handle it
     
     def get_context_data(self, **kwargs):
         """Add additional context data."""
@@ -316,19 +315,10 @@ class DeviceCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
             # Set created_by field
             form.instance.created_by = self.request.user
             
-            # Validate the form data before saving
-            if not form.is_valid():
-                logger.warning(f"Form validation failed: {form.errors}")
-                return self.form_invalid(form)
-            
             # Save the device using transaction for data integrity
             with transaction.atomic():
                 # Call parent form_valid which saves the object
                 response = super().form_valid(form)
-                
-                # Ensure the object was created successfully
-                if not self.object or not self.object.pk:
-                    raise ValueError("Device object was not created successfully")
                 
                 # Add success message
                 messages.success(
@@ -369,29 +359,7 @@ class DeviceCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     
     def get_success_url(self):
         """Redirect to device detail page after successful creation."""
-        if self.object and self.object.pk:
-            return reverse('devices:detail', kwargs={'pk': self.object.pk})
-        else:
-            # Fallback to device list if object creation failed
-            logger.warning("Object not created, redirecting to device list")
-            return reverse('devices:list')
-    
-    def dispatch(self, request, *args, **kwargs):
-        """Add extra security and logging."""
-        logger.info(f"Device create view accessed by user: {request.user}")
-        return super().dispatch(request, *args, **kwargs)
-    
-    def post(self, request, *args, **kwargs):
-        """Override post method to add debugging."""
-        logger.info(f"POST request received for device creation: {request.POST}")
-        
-        # Ensure this is a proper POST request
-        if request.method != 'POST':
-            logger.warning(f"Invalid request method: {request.method}")
-            return redirect('devices:create')
-        
-        return super().post(request, *args, **kwargs)
-
+        return reverse('devices:detail', kwargs={'pk': self.object.pk})
 
 class DeviceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     """Update view for devices."""
@@ -1680,25 +1648,17 @@ class DepreciationReportView(LoginRequiredMixin, TemplateView):
                     'original_value': device.purchase_price,
                     'annual_depreciation': annual_depreciation,
                     'accumulated_depreciation': accumulated_depreciation,
-                    'current_value': current_value,
-                    'depreciation_rate': round((accumulated_depreciation / device.purchase_price) * 100, 1)
+                    'current_value': current_value
                 })
                 
                 total_original_value += device.purchase_price
                 total_current_value += current_value
         
         # Summary
-        total_depreciation = total_original_value - total_current_value
-        overall_depreciation_rate = round(
-            (total_depreciation / total_original_value * 100) if total_original_value > 0 else 0, 1
-        )
-        
         summary = {
             'total_devices': len(depreciation_data),
             'total_original_value': total_original_value,
             'total_current_value': total_current_value,
-            'total_depreciation': total_depreciation,
-            'depreciation_rate': overall_depreciation_rate
         }
         
         context.update({

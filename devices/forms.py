@@ -205,7 +205,7 @@ class DeviceForm(forms.ModelForm):
             'status', 'condition', 'priority',
             'purchase_date', 'purchase_price', 'vendor',
             'current_location', 'specifications_json',
-            'notes', 'barcode', 'depreciation_rate',
+            'notes', 'barcode',
             'is_active', 'is_assignable', 'requires_approval'
         ]
         widgets = {
@@ -286,12 +286,6 @@ class DeviceForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Enter barcode (optional)',
                 'maxlength': 100
-            }),
-            'depreciation_rate': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': '0',
-                'max': '100',
-                'step': '0.01'
             }),
             'is_active': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'

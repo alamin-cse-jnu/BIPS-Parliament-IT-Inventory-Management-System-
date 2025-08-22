@@ -134,10 +134,7 @@
                     <div class="text-white-50 small">Purchase Date</div>
                     <div class="fw-bold">{{ device.purchase_date|date:'M d, Y' }}</div>
                 </div>
-                <div class="col-sm-6 col-md-3">
-                    <div class="text-white-50 small">Current Value</div>
-                    <div class="fw-bold">৳{{ device.current_value|floatformat:0 }}</div>
-                </div>
+               
             </div>
         </div>
         <div class="col-md-4 text-end">
@@ -225,12 +222,6 @@
                             </div>
                             <div class="col-6">
                                 ৳{{ device.purchase_price|floatformat:0 }}
-                            </div>
-                            <div class="col-6">
-                                <strong>Current Value:</strong>
-                            </div>
-                            <div class="col-6">
-                                ৳{{ device.current_value|floatformat:0 }}
                             </div>
                             <div class="col-6">
                                 <strong>Age:</strong>
@@ -514,14 +505,6 @@
                     </div>
                 </div>
                 
-                <div class="mt-3 pt-3 border-top">
-                    <div class="row text-center">
-                        <div class="col-12">
-                            <small class="text-muted">Depreciation Rate</small>
-                            <div class="fw-bold">{{ device.depreciation_rate }}% annually</div>
-                        </div>
-                    </div>
-                </div>
 
                 {% if device.device_type == 'COMPLETE' %}
                 <div class="mt-3 pt-3 border-top">

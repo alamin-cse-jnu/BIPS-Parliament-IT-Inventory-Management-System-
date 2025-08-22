@@ -1,89 +1,756 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Device Management | PIMS{% endblock %}
+{% block title %}Device Management - PIMS - Bangladesh Parliament Secretariat{% endblock %}
 
 {% block breadcrumb_items %}
     <li class="breadcrumb-item active">Devices</li>
 {% endblock %}
 
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+/* Device List Page Redesign - Parliament Design System */
+/* Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh */
+/* Flat Design with High Contrast - Teal, Orange, Red Color Scheme */
+
+:root {
+    --primary-teal: #14b8a6;
+    --primary-teal-hover: #0f766e;
+    --primary-orange: #f97316;
+    --primary-red: #ef4444;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --border-light: #e2e8f0;
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+}
+
+/* Main Container */
+.devices-container {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+/* Page Header */
+.page-header {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-card);
+}
+
+.page-title {
+    color: var(--text-primary);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 2rem;
+}
+
+.page-subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 0;
+    font-size: 1.125rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.btn-primary-custom {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-card);
+}
+
+.btn-primary-custom:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-outline-custom {
+    background: transparent;
+    border: 2px solid var(--primary-teal);
+    color: var(--primary-teal);
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-custom:hover {
+    background: var(--primary-teal);
+    color: white;
+    text-decoration: none;
+}
+
+/* Filter Tabs - Following Dashboard Pattern */
+.filter-tabs {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+}
+
+.nav-tabs-custom {
+    border: none;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.nav-tabs-custom .nav-item {
+    flex: 1;
+    min-width: 160px;
+}
+
+.nav-tabs-custom .nav-link {
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 1.5rem 1rem;
+    text-align: center;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    border-radius: 0;
+    position: relative;
+}
+
+.nav-tabs-custom .nav-link.active {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
+    color: white;
+}
+
+.nav-tabs-custom .nav-link:hover:not(.active) {
+    background: rgba(20, 184, 166, 0.1);
+    color: var(--primary-teal);
+}
+
+.status-badge {
+    background: rgba(100, 116, 139, 0.1);
+    color: var(--text-secondary);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    min-width: 24px;
+    text-align: center;
+}
+
+.nav-link.active .status-badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+/* Color coding for different statuses */
+.nav-link:nth-child(1) .status-badge { background: rgba(100, 116, 139, 0.1); }
+.nav-link:nth-child(2) .status-badge { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+.nav-link:nth-child(3) .status-badge { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.nav-link:nth-child(4) .status-badge { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+.nav-link:nth-child(5) .status-badge { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+
+/* Search and Filter Section */
+.search-filter-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-card);
+}
+
+.search-filter-form {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr auto;
+    gap: 1rem;
+    align-items: end;
+}
+
+.form-group-custom {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-label-custom {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.form-control-custom {
+    border: 2px solid var(--border-light);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: var(--bg-secondary);
+}
+
+.form-control-custom:focus {
+    outline: none;
+    border-color: var(--primary-teal);
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+    background: var(--bg-primary);
+}
+
+.form-select-custom {
+    border: 2px solid var(--border-light);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: var(--bg-secondary);
+    cursor: pointer;
+}
+
+.form-select-custom:focus {
+    outline: none;
+    border-color: var(--primary-teal);
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+    background: var(--bg-primary);
+}
+
+/* Device Grid */
+.devices-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.device-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-card);
+    position: relative;
+}
+
+.device-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--primary-teal);
+}
+
+.device-card-header {
+    padding: 1.5rem;
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #f1f5f9 100%);
+    border-bottom: 1px solid var(--border-light);
+    position: relative;
+}
+
+.device-status-indicator {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.device-status-indicator.available { background: var(--success); }
+.device-status-indicator.assigned { background: #3b82f6; }
+.device-status-indicator.maintenance { background: var(--warning); }
+.device-status-indicator.retired { background: var(--danger); }
+
+.device-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-card);
+}
+
+.device-name {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+}
+
+.device-name a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.device-name a:hover {
+    color: var(--primary-teal);
+}
+
+.device-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.device-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.device-meta-item i {
+    color: var(--primary-teal);
+    width: 16px;
+    text-align: center;
+}
+
+.device-card-body {
+    padding: 1.5rem;
+}
+
+.device-specs-preview {
+    margin-bottom: 1.5rem;
+}
+
+.spec-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 0.875rem;
+}
+
+.spec-item:last-child {
+    border-bottom: none;
+}
+
+.spec-key {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.spec-value {
+    color: var(--text-primary);
+    font-weight: 600;
+    text-align: right;
+}
+
+.spec-more {
+    text-align: center;
+    padding: 0.5rem 0;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.device-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+    margin-top: 1rem;
+}
+
+.btn-action {
+    flex: 1;
+    padding: 0.75rem;
+    border-radius: 8px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: 1px solid;
+}
+
+.btn-action-view {
+    background: rgba(20, 184, 166, 0.1);
+    color: var(--primary-teal);
+    border-color: rgba(20, 184, 166, 0.2);
+}
+
+.btn-action-view:hover {
+    background: var(--primary-teal);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-action-edit {
+    background: rgba(249, 115, 22, 0.1);
+    color: var(--primary-orange);
+    border-color: rgba(249, 115, 22, 0.2);
+}
+
+.btn-action-edit:hover {
+    background: var(--primary-orange);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-action-assign {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.btn-action-assign:hover {
+    background: #3b82f6;
+    color: white;
+    text-decoration: none;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    box-shadow: var(--shadow-card);
+}
+
+.empty-state-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(20, 184, 166, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-teal);
+    font-size: 2rem;
+    margin: 0 auto 1.5rem;
+}
+
+.empty-state-title {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.empty-state-description {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin-bottom: 2rem;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Pagination */
+.pagination-wrapper {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    box-shadow: var(--shadow-card);
+}
+
+.pagination-custom {
+    justify-content: center;
+    margin: 0;
+}
+
+.pagination-custom .page-link {
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+    padding: 0.75rem 1rem;
+    margin: 0 0.25rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.pagination-custom .page-link:hover {
+    background: var(--primary-teal);
+    color: white;
+    border-color: var(--primary-teal);
+}
+
+.pagination-custom .page-item.active .page-link {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
+    border-color: var(--primary-teal);
+    color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .devices-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+    
+    .search-filter-form {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .devices-container {
+        padding: 1rem 0;
+    }
+    
+    .page-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .header-actions {
+        width: 100%;
+        margin-top: 1rem;
+        justify-content: flex-start;
+    }
+    
+    .nav-tabs-custom {
+        flex-direction: column;
+    }
+    
+    .nav-tabs-custom .nav-item {
+        flex: none;
+        min-width: auto;
+    }
+    
+    .search-filter-form {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .devices-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .device-card-header {
+        padding: 1rem;
+    }
+    
+    .device-card-body {
+        padding: 1rem;
+    }
+    
+    .device-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .btn-action {
+        flex: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .devices-container {
+        padding: 0.5rem 0;
+    }
+    
+    .page-header {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .search-filter-card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .device-card-header,
+    .device-card-body {
+        padding: 0.75rem;
+    }
+    
+    .device-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .device-name {
+        font-size: 1.125rem;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .device-card,
+    .filter-tabs,
+    .search-filter-card {
+        border-width: 2px;
+    }
+    
+    .device-icon {
+        filter: contrast(1.2);
+    }
+}
+
+/* Print styles */
+@media print {
+    .devices-container {
+        background: white;
+        padding: 0;
+    }
+    
+    .header-actions,
+    .search-filter-card,
+    .device-actions {
+        display: none;
+    }
+    
+    .device-card {
+        box-shadow: none;
+        border: 1px solid #ccc;
+        break-inside: avoid;
+        margin-bottom: 1rem;
+    }
+    
+    .devices-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="mb-1">Device Management</h2>
-        <p class="text-muted mb-0">Manage IT inventory for Bangladesh Parliament Secretariat</p>
-    </div>
-    <div class="d-flex gap-2">
-        <a href="{% url 'devices:create' %}" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-2"></i>Add Device
-        </a>
-        <div class="dropdown">
-            <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                <i class="bi bi-download me-2"></i>Export
-            </button>
-            <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="{% url 'devices:export_excel' %}">
-                    <i class="bi bi-file-earmark-excel me-2"></i>Excel
-                </a></li>
-                <li><a class="dropdown-item" href="{% url 'devices:export_pdf' %}">
-                    <i class="bi bi-file-earmark-pdf me-2"></i>PDF
-                </a></li>
-                <li><a class="dropdown-item" href="{% url 'devices:export_csv' %}">
-                    <i class="bi bi-file-earmark-text me-2"></i>CSV
-                </a></li>
-            </ul>
+<div class="devices-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-start flex-wrap">
+            <div class="mb-3 mb-md-0">
+                <h1 class="page-title">
+                    <i class="bi bi-laptop"></i>
+                    Device Management
+                </h1>
+                <p class="page-subtitle">
+                    IT inventory management for Bangladesh Parliament Secretariat, Dhaka
+                </p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'devices:create' %}" class="btn-primary-custom">
+                    <i class="bi bi-plus-circle"></i>
+                    Add Device
+                </a>
+                <div class="dropdown">
+                    <button class="btn-outline-custom dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-download"></i>
+                        Export
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'devices:export_excel' %}">
+                            <i class="bi bi-file-earmark-excel me-2"></i>Excel Report
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'devices:export_pdf' %}">
+                            <i class="bi bi-file-earmark-pdf me-2"></i>PDF Report
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'devices:export_csv' %}">
+                            <i class="bi bi-file-earmark-text me-2"></i>CSV Export
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Filter Tabs -->
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body p-0">
-        <ul class="nav nav-tabs nav-tabs-line" role="tablist">
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+        <ul class="nav-tabs-custom" role="tablist">
             <li class="nav-item">
-                <a class="nav-link active d-flex align-items-center px-4 py-3" href="{% url 'devices:list' %}">
-                    <i class="bi bi-grid me-2"></i>All Devices
-                    <span class="badge bg-secondary ms-2">{{ total_count|default:0 }}</span>
+                <a class="nav-link active" href="{% url 'devices:list' %}">
+                    <i class="bi bi-grid"></i>
+                    All Devices
+                    <span class="status-badge">{{ total_count|default:0 }}</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link d-flex align-items-center px-4 py-3" href="{% url 'devices:available' %}">
-                    <i class="bi bi-check-circle text-success me-2"></i>Available
-                    <span class="badge bg-success ms-2">{{ available_count|default:0 }}</span>
+                <a class="nav-link" href="{% url 'devices:available' %}">
+                    <i class="bi bi-check-circle"></i>
+                    Available
+                    <span class="status-badge">{{ available_count|default:0 }}</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link d-flex align-items-center px-4 py-3" href="{% url 'devices:assigned' %}">
-                    <i class="bi bi-arrow-right-circle text-info me-2"></i>Assigned
-                    <span class="badge bg-info ms-2">{{ assigned_count|default:0 }}</span>
+                <a class="nav-link" href="{% url 'devices:assigned' %}">
+                    <i class="bi bi-arrow-right-circle"></i>
+                    Assigned
+                    <span class="status-badge">{{ assigned_count|default:0 }}</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link d-flex align-items-center px-4 py-3" href="{% url 'devices:maintenance' %}">
-                    <i class="bi bi-tools text-warning me-2"></i>Maintenance
-                    <span class="badge bg-warning ms-2">{{ maintenance_count|default:0 }}</span>
+                <a class="nav-link" href="{% url 'devices:maintenance' %}">
+                    <i class="bi bi-tools"></i>
+                    Maintenance
+                    <span class="status-badge">{{ maintenance_count|default:0 }}</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link d-flex align-items-center px-4 py-3" href="{% url 'devices:retired' %}">
-                    <i class="bi bi-archive text-danger me-2"></i>Retired
-                    <span class="badge bg-danger ms-2">{{ retired_count|default:0 }}</span>
+                <a class="nav-link" href="{% url 'devices:retired' %}">
+                    <i class="bi bi-archive"></i>
+                    Retired
+                    <span class="status-badge">{{ retired_count|default:0 }}</span>
                 </a>
             </li>
         </ul>
     </div>
-</div>
 
-<!-- Search and Filter Section -->
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body">
-        <form method="get" class="row g-3">
-            <div class="col-md-4">
-                <input type="text" class="form-control" name="search" placeholder="Search devices..." 
-                       value="{{ request.GET.search }}">
+    <!-- Search and Filter Section -->
+    <div class="search-filter-card">
+        <form method="get" class="search-filter-form">
+            <div class="form-group-custom">
+                <label class="form-label-custom">Search Devices</label>
+                <input type="text" class="form-control-custom" name="search" placeholder="Search by name, ID, or model..." value="{{ request.GET.search }}">
             </div>
-            <div class="col-md-2">
-                <select class="form-select" name="category">
+            <div class="form-group-custom">
+                <label class="form-label-custom">Category</label>
+                <select class="form-select-custom" name="category">
                     <option value="">All Categories</option>
                     {% for category in categories %}
                     <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
@@ -92,8 +759,9 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="col-md-2">
-                <select class="form-select" name="subcategory">
+            <div class="form-group-custom">
+                <label class="form-label-custom">Subcategory</label>
+                <select class="form-select-custom" name="subcategory">
                     <option value="">All Subcategories</option>
                     {% for subcategory in subcategories %}
                     <option value="{{ subcategory.id }}" {% if request.GET.subcategory == subcategory.id|stringformat:"s" %}selected{% endif %}>
@@ -102,199 +770,294 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="col-md-2">
-                <select class="form-select" name="status">
-                    <option value="">All Status</option>
-                    <option value="AVAILABLE" {% if request.GET.status == 'AVAILABLE' %}selected{% endif %}>Available</option>
-                    <option value="ASSIGNED" {% if request.GET.status == 'ASSIGNED' %}selected{% endif %}>Assigned</option>
-                    <option value="MAINTENANCE" {% if request.GET.status == 'MAINTENANCE' %}selected{% endif %}>Maintenance</option>
-                    <option value="RETIRED" {% if request.GET.status == 'RETIRED' %}selected{% endif %}>Retired</option>
+            <div class="form-group-custom">
+                <label class="form-label-custom">Location</label>
+                <select class="form-select-custom" name="location">
+                    <option value="">All Locations</option>
+                    {% for location in locations %}
+                    <option value="{{ location.id }}" {% if request.GET.location == location.id|stringformat:"s" %}selected{% endif %}>
+                        {{ location.name }}
+                    </option>
+                    {% endfor %}
                 </select>
             </div>
-            <div class="col-md-2 d-flex gap-2">
-                <button type="submit" class="btn btn-outline-primary flex-fill">
+            <div class="form-group-custom">
+                <button type="submit" class="btn-primary-custom">
                     <i class="bi bi-search"></i>
+                    Filter
                 </button>
-                <a href="{% url 'devices:list' %}" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-clockwise"></i>
-                </a>
             </div>
         </form>
     </div>
-</div>
 
-<!-- Devices Table -->
-<div class="card border-0 shadow-sm">
-    <div class="card-body p-0">
-        {% if devices %}
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Device Info</th>
-                        <th>Category</th>
-                        <th>Status</th>
-                        <th>Condition</th>
-                        <th>Location</th>
-                        <th>Purchase Date</th>
-                        <th>Warranty</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for device in devices %}
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="device-icon me-3">
-                                    <i class="bi bi-{{ device.subcategory.category.icon_class|default:'laptop' }} fs-4 text-primary"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-semibold">{{ device.brand }} {{ device.model }}</div>
-                                    <small class="text-muted">ID: {{ device.device_id }}</small>
-                                    {% if device.serial_number %}
-                                    <br><small class="text-muted">S/N: {{ device.serial_number }}</small>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="small">
-                                <div class="fw-semibold">{{ device.subcategory.category.name }}</div>
-                                <div class="text-muted">{{ device.subcategory.name }}</div>
-                            </div>
-                        </td>
-                        <td>
-                            {% if device.status == 'AVAILABLE' %}
-                                <span class="badge bg-success">Available</span>
-                            {% elif device.status == 'ASSIGNED' %}
-                                <span class="badge bg-info">Assigned</span>
-                            {% elif device.status == 'MAINTENANCE' %}
-                                <span class="badge bg-warning">Maintenance</span>
-                            {% elif device.status == 'RETIRED' %}
-                                <span class="badge bg-danger">Retired</span>
+    <!-- Devices Grid -->
+    {% if devices %}
+        <div class="devices-grid">
+            {% for device in devices %}
+                <div class="device-card">
+                    <!-- Status Indicator -->
+                    <div class="device-status-indicator {{ device.status|lower }}"></div>
+                    
+                    <!-- Card Header -->
+                    <div class="device-card-header">
+                        <div class="device-icon">
+                            {% if device.subcategory.category.icon_class %}
+                                <i class="{{ device.subcategory.category.icon_class }}"></i>
+                            {% else %}
+                                <i class="bi bi-laptop"></i>
                             {% endif %}
-                        </td>
-                        <td>
-                            {% if device.condition == 'NEW' %}
-                                <span class="badge bg-success">New</span>
-                            {% elif device.condition == 'EXCELLENT' %}
-                                <span class="badge bg-success">Excellent</span>
-                            {% elif device.condition == 'GOOD' %}
-                                <span class="badge bg-info">Good</span>
-                            {% elif device.condition == 'FAIR' %}
-                                <span class="badge bg-warning">Fair</span>
-                            {% elif device.condition == 'POOR' %}
-                                <span class="badge bg-warning">Poor</span>
-                            {% elif device.condition == 'DAMAGED' %}
-                                <span class="badge bg-danger">Damaged</span>
-                            {% endif %}
-                        </td>
-                        <td>
+                        </div>
+                        
+                        <h3 class="device-name">
+                            <a href="{% url 'devices:detail' device.id %}">
+                                {{ device.name }}
+                            </a>
+                        </h3>
+                        
+                        <div class="device-meta">
+                            <div class="device-meta-item">
+                                <i class="bi bi-tag-fill"></i>
+                                <span>{{ device.device_id }}</span>
+                            </div>
+                            <div class="device-meta-item">
+                                <i class="bi bi-folder-fill"></i>
+                                <span>{{ device.subcategory.category.name }}</span>
+                            </div>
                             {% if device.current_location %}
-                                <small class="text-muted">{{ device.current_location.name }}</small>
-                            {% else %}
-                                <small class="text-muted">No location</small>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if device.purchase_date %}
-                                <small class="text-muted">{{ device.purchase_date|date:"M d, Y" }}</small>
-                            {% else %}
-                                <small class="text-muted">Not specified</small>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if device.is_under_warranty %}
-                                <span class="text-success"><i class="bi bi-shield-check"></i></span>
-                            {% elif device.warranty_expires_soon %}
-                                <span class="text-warning"><i class="bi bi-shield-exclamation"></i></span>
-                            {% else %}
-                                <span class="text-danger"><i class="bi bi-shield-x"></i></span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" 
-                                        data-bs-toggle="dropdown">
-                                    Actions
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="{% url 'devices:detail' device.pk %}">
-                                        <i class="bi bi-eye me-2"></i>View Details
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{% url 'devices:edit' device.pk %}">
-                                        <i class="bi bi-pencil me-2"></i>Edit
-                                    </a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="{% url 'devices:qr_generate' device.pk %}">
-                                        <i class="bi bi-qr-code me-2"></i>Generate QR
-                                    </a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-danger" href="{% url 'devices:delete' device.pk %}">
-                                        <i class="bi bi-trash me-2"></i>Delete
-                                    </a></li>
-                                </ul>
+                            <div class="device-meta-item">
+                                <i class="bi bi-geo-alt-fill"></i>
+                                <span>{{ device.current_location.name }}</span>
                             </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="device-card-body">
+                        {% if device.specifications %}
+                            <div class="device-specs-preview">
+                                {% for key, value in device.specifications.items|slice:":3" %}
+                                    <div class="spec-item">
+                                        <span class="spec-key">{{ key|title }}:</span>
+                                        <span class="spec-value">{{ value|truncatechars:20 }}</span>
+                                    </div>
+                                {% endfor %}
+                                {% if device.specifications|length > 3 %}
+                                    <div class="spec-more">
+                                        +{{ device.specifications|length|add:"-3" }} more specifications
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Device Actions -->
+                        <div class="device-actions">
+                            <a href="{% url 'devices:detail' device.id %}" class="btn-action btn-action-view">
+                                <i class="bi bi-eye me-1"></i>
+                                View
+                            </a>
+                            {% if perms.devices.change_device %}
+                                <a href="{% url 'devices:edit' device.id %}" class="btn-action btn-action-edit">
+                                    <i class="bi bi-pencil me-1"></i>
+                                    Edit
+                                </a>
+                            {% endif %}
+                            {% if device.status == 'AVAILABLE' and perms.assignments.add_assignment %}
+                                <a href="{% url 'assignments:create' %}?device={{ device.id }}" class="btn-action btn-action-assign">
+                                    <i class="bi bi-arrow-right me-1"></i>
+                                    Assign
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
         </div>
-        
+
         <!-- Pagination -->
-        {% if is_paginated %}
-        <div class="d-flex justify-content-between align-items-center p-3 border-top">
-            <div class="text-muted">
-                Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ paginator.count }} devices
-            </div>
-            <nav>
-                <ul class="pagination pagination-sm mb-0">
-                    {% if page_obj.has_previous %}
+        {% if devices.has_other_pages %}
+        <div class="pagination-wrapper">
+            <nav aria-label="Device pagination">
+                <ul class="pagination pagination-custom">
+                    {% if devices.has_previous %}
                         <li class="page-item">
-                            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">First</a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
+                            <a class="page-link" href="?page={{ devices.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.subcategory %}&subcategory={{ request.GET.subcategory }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}" aria-label="Previous">
+                                <i class="bi bi-chevron-left"></i>
+                                Previous
+                            </a>
                         </li>
                     {% endif %}
-                    
-                    {% for num in page_obj.paginator.page_range %}
-                        {% if page_obj.number == num %}
+
+                    {% for num in devices.paginator.page_range %}
+                        {% if devices.number == num %}
                             <li class="page-item active">
                                 <span class="page-link">{{ num }}</span>
                             </li>
-                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        {% elif num > devices.number|add:'-3' and num < devices.number|add:'3' %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                                <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.subcategory %}&subcategory={{ request.GET.subcategory }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}">{{ num }}</a>
                             </li>
                         {% endif %}
                     {% endfor %}
-                    
-                    {% if page_obj.has_next %}
+
+                    {% if devices.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Last</a>
+                            <a class="page-link" href="?page={{ devices.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.subcategory %}&subcategory={{ request.GET.subcategory }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}" aria-label="Next">
+                                Next
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
                         </li>
                     {% endif %}
                 </ul>
             </nav>
         </div>
         {% endif %}
-        
-        {% else %}
-        <div class="text-center py-5">
-            <i class="bi bi-inbox display-1 text-muted mb-3"></i>
-            <h4 class="text-muted">No devices found</h4>
-            <p class="text-muted mb-4">Start by adding your first device to the inventory system.</p>
-            <a href="{% url 'devices:create' %}" class="btn btn-primary">
-                <i class="bi bi-plus-circle me-2"></i>Add First Device
-            </a>
+
+    {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="bi bi-laptop"></i>
+            </div>
+            <h2 class="empty-state-title">No Devices Found</h2>
+            <p class="empty-state-description">
+                {% if request.GET.search or request.GET.category or request.GET.subcategory or request.GET.location %}
+                    No devices match your current filters. Try adjusting your search criteria or clearing the filters.
+                {% else %}
+                    Start building your IT inventory by adding your first device to the system.
+                {% endif %}
+            </p>
+            {% if not request.GET.search and not request.GET.category and not request.GET.subcategory and not request.GET.location %}
+                <a href="{% url 'devices:create' %}" class="btn-primary-custom">
+                    <i class="bi bi-plus-circle"></i>
+                    Add First Device
+                </a>
+            {% else %}
+                <a href="{% url 'devices:list' %}" class="btn-outline-custom">
+                    <i class="bi bi-arrow-left"></i>
+                    Clear Filters
+                </a>
+            {% endif %}
         </div>
-        {% endif %}
-    </div>
+    {% endif %}
 </div>
+
+<script>
+// Auto-submit form on filter change for better UX
+document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.querySelector('select[name="category"]');
+    const subcategorySelect = document.querySelector('select[name="subcategory"]');
+    const locationSelect = document.querySelector('select[name="location"]');
+    
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            // Clear subcategory when category changes
+            if (subcategorySelect) {
+                subcategorySelect.value = '';
+            }
+        });
+    }
+    
+    // Optional: Auto-submit on select change (uncomment if desired)
+    // [categorySelect, subcategorySelect, locationSelect].forEach(select => {
+    //     if (select) {
+    //         select.addEventListener('change', function() {
+    //             this.form.submit();
+    //         });
+    //     }
+    // });
+});
+
+// Smooth scrolling for pagination
+document.querySelectorAll('.pagination a').forEach(link => {
+    link.addEventListener('click', function(e) {
+        // Scroll to top of devices grid
+        const devicesGrid = document.querySelector('.devices-grid');
+        if (devicesGrid) {
+            setTimeout(() => {
+                devicesGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+    });
+});
+
+// Enhanced search functionality
+const searchInput = document.querySelector('input[name="search"]');
+if (searchInput) {
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        // Optional: Implement live search with debouncing (uncomment if backend supports it)
+        // searchTimeout = setTimeout(() => {
+        //     this.form.submit();
+        // }, 500);
+    });
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + K to focus search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        const searchInput = document.querySelector('input[name="search"]');
+        if (searchInput) {
+            searchInput.focus();
+            searchInput.select();
+        }
+    }
+    
+    // Escape to clear search
+    if (e.key === 'Escape') {
+        const searchInput = document.querySelector('input[name="search"]');
+        if (searchInput && searchInput === document.activeElement) {
+            searchInput.value = '';
+        }
+    }
+});
+
+// Add loading states for better UX
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function() {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            const originalContent = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Loading...';
+            submitBtn.disabled = true;
+            
+            // Re-enable after 3 seconds as fallback
+            setTimeout(() => {
+                submitBtn.innerHTML = originalContent;
+                submitBtn.disabled = false;
+            }, 3000);
+        }
+    });
+});
+
+// Add tooltips for status indicators
+document.querySelectorAll('.device-status-indicator').forEach(indicator => {
+    const status = Array.from(indicator.classList).find(cls => 
+        ['available', 'assigned', 'maintenance', 'retired'].includes(cls)
+    );
+    
+    if (status) {
+        const statusText = {
+            'available': 'Available for assignment',
+            'assigned': 'Currently assigned to user',
+            'maintenance': 'Under maintenance',
+            'retired': 'Retired from service'
+        };
+        
+        indicator.setAttribute('title', statusText[status]);
+        indicator.setAttribute('data-bs-toggle', 'tooltip');
+    }
+});
+
+// Initialize Bootstrap tooltips if available
+if (typeof bootstrap !== 'undefined') {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+}
+</script>
 {% endblock %}

@@ -101,23 +101,78 @@ class VendorCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     permission_required = 'vendors.add_vendor'
     success_url = reverse_lazy('vendors:list')
     
-    def form_valid(self, form):
-        """Handle successful form submission."""
-        # Set created_by to current user
-        form.instance.created_by = self.request.user
-        response = super().form_valid(form)
-        messages.success(
-            self.request, 
-            f'Vendor "{self.object.name}" created successfully!'
-        )
-        return response
-    
     def get_context_data(self, **kwargs):
         """Add additional context data."""
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Create New Vendor'
         context['form_action'] = 'Create'
         return context
+    
+    def form_valid(self, form):
+        """Handle successful form submission."""
+        try:
+            # Set created_by to current user
+            form.instance.created_by = self.request.user
+            
+            # Save the vendor
+            response = super().form_valid(form)
+            
+            # Add success message
+            messages.success(
+                self.request, 
+                f'Vendor "{self.object.name}" (Code: {self.object.vendor_code}) created successfully!'
+            )
+            
+            return response
+            
+        except Exception as e:
+            # Log the error for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f'Error creating vendor: {str(e)}')
+            
+            # Add error message
+            messages.error(
+                self.request, 
+                f'Error creating vendor: {str(e)}'
+            )
+            
+            # Return to form with error
+            return self.form_invalid(form)
+    
+    def form_invalid(self, form):
+        """Handle form validation errors."""
+        # Add error message
+        messages.error(
+            self.request, 
+            'Please correct the errors below and try again.'
+        )
+        
+        # Log form errors for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f'Vendor form validation errors: {form.errors}')
+        
+        return super().form_invalid(form)
+    
+    def post(self, request, *args, **kwargs):
+        """Override post method to add better error handling."""
+        try:
+            return super().post(request, *args, **kwargs)
+        except Exception as e:
+            # Log the error
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f'Unexpected error in vendor creation: {str(e)}')
+            
+            # Add error message
+            messages.error(
+                request, 
+                'An unexpected error occurred. Please try again or contact support.'
+            )
+            
+            # Return to form
+            return redirect('vendors:create')
 
 
 class VendorUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
@@ -514,22 +569,65 @@ def vendor_toggle_preferred(request, pk):
 @csrf_exempt
 @require_http_methods(["POST"])
 def vendor_validate_code(request):
-    """AJAX endpoint to validate vendor code uniqueness."""
-    vendor_code = request.POST.get('vendor_code', '').upper().strip()
-    vendor_id = request.POST.get('vendor_id')  # For edit forms
-    
-    if not vendor_code:
-        return JsonResponse({'valid': False, 'message': 'Vendor code is required.'})
-    
-    # Check uniqueness
-    queryset = Vendor.objects.filter(vendor_code=vendor_code)
-    if vendor_id:
-        queryset = queryset.exclude(pk=vendor_id)
-    
-    if queryset.exists():
-        return JsonResponse({'valid': False, 'message': 'Vendor code already exists.'})
-    
-    return JsonResponse({'valid': True, 'message': 'Vendor code is available.'})
+    """
+    AJAX endpoint to validate vendor code uniqueness.
+    Enhanced with better error handling and logging.
+    """
+    try:
+        vendor_code = request.POST.get('vendor_code', '').upper().strip()
+        vendor_id = request.POST.get('vendor_id')  # For edit forms
+        
+        # Basic validation
+        if not vendor_code:
+            return JsonResponse({
+                'valid': False, 
+                'message': 'Vendor code is required.'
+            })
+        
+        # Format validation
+        if len(vendor_code) < 3:
+            return JsonResponse({
+                'valid': False, 
+                'message': 'Vendor code must be at least 3 characters long.'
+            })
+        
+        if not vendor_code.replace('_', '').replace('-', '').isalnum():
+            return JsonResponse({
+                'valid': False, 
+                'message': 'Vendor code can only contain letters, numbers, hyphens, and underscores.'
+            })
+        
+        # Check uniqueness
+        queryset = Vendor.objects.filter(vendor_code=vendor_code)
+        if vendor_id:
+            try:
+                vendor_id = int(vendor_id)
+                queryset = queryset.exclude(pk=vendor_id)
+            except (ValueError, TypeError):
+                pass  # Invalid vendor_id, ignore
+        
+        if queryset.exists():
+            existing_vendor = queryset.first()
+            return JsonResponse({
+                'valid': False, 
+                'message': f'Vendor code "{vendor_code}" is already used by {existing_vendor.name}.'
+            })
+        
+        return JsonResponse({
+            'valid': True, 
+            'message': f'Vendor code "{vendor_code}" is available.'
+        })
+        
+    except Exception as e:
+        # Log error for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Error in vendor_validate_code: {str(e)}')
+        
+        return JsonResponse({
+            'valid': False, 
+            'message': 'Error validating vendor code. Please try again.'
+        }, status=500)
 
 
 @csrf_exempt

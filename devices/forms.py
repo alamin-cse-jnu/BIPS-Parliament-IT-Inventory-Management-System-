@@ -342,7 +342,7 @@ class DeviceForm(forms.ModelForm):
                     field.widget.attrs['class'] = 'form-control'
     
     def clean_specifications_json(self):
-        """Validate JSON specifications."""
+        """Validate and parse JSON specifications."""
         specifications_json = self.cleaned_data.get('specifications_json', '')
         
         if not specifications_json.strip():
@@ -357,35 +357,75 @@ class DeviceForm(forms.ModelForm):
             raise ValidationError(f"Invalid JSON format: {str(e)}")
     
     def clean(self):
-        """Additional validation."""
+        """Additional validation for device form."""
         cleaned_data = super().clean()
         device_type = cleaned_data.get('device_type')
         parent_device = cleaned_data.get('parent_device')
         status = cleaned_data.get('status')
         condition = cleaned_data.get('condition')
         is_assignable = cleaned_data.get('is_assignable')
+        subcategory = cleaned_data.get('subcategory')
+        brand = cleaned_data.get('brand')
+        model = cleaned_data.get('model')
+        
+        # Validate required fields
+        if not brand:
+            raise ValidationError({'brand': 'Brand is required.'})
+        
+        if not model:
+            raise ValidationError({'model': 'Model is required.'})
+        
+        if not subcategory:
+            raise ValidationError({'subcategory': 'Subcategory is required.'})
+        
+        if not device_type:
+            raise ValidationError({'device_type': 'Device type is required.'})
+        
+        if not status:
+            raise ValidationError({'status': 'Status is required.'})
+        
+        if not condition:
+            raise ValidationError({'condition': 'Condition is required.'})
         
         # Validate parent device relationship
+        if device_type == 'COMPONENT':
+            if not parent_device:
+                raise ValidationError({
+                    'parent_device': 'Parent device is required for components.'
+                })
+            
+            if parent_device.device_type != 'COMPLETE':
+                raise ValidationError({
+                    'parent_device': 'Parent device must be a complete device.'
+                })
+        
         if parent_device and device_type == 'COMPLETE':
             raise ValidationError({
-                'parent_device': "Complete devices cannot have parent devices"
-            })
-        
-        if parent_device and parent_device.device_type != 'COMPLETE':
-            raise ValidationError({
-                'parent_device': "Parent device must be a complete device"
+                'parent_device': "Complete devices cannot have parent devices."
             })
         
         # Business logic validation
         if status == 'ASSIGNED' and not is_assignable:
             raise ValidationError({
-                'status': "Device marked as non-assignable cannot be assigned"
+                'status': "Device marked as non-assignable cannot be assigned."
             })
         
         if condition == 'DAMAGED' and status == 'AVAILABLE':
             raise ValidationError({
-                'status': "Damaged devices should not be available for assignment"
+                'status': "Damaged devices should not be available for assignment."
             })
+        
+        # Validate serial number uniqueness if provided
+        serial_number = cleaned_data.get('serial_number')
+        if serial_number:
+            existing_device = Device.objects.filter(
+                serial_number=serial_number
+            ).exclude(pk=self.instance.pk if self.instance else None)
+            
+            if existing_device.exists():
+                raise ValidationError({
+                    'serial_number': 'A device with this serial number already exists.'
+                })
         
         return cleaned_data
     
@@ -396,6 +436,10 @@ class DeviceForm(forms.ModelForm):
         # Set specifications from JSON field
         specifications_json = self.cleaned_data.get('specifications_json', {})
         device.specifications = specifications_json
+        
+        # Auto-generate device_id if not provided
+        if not device.device_id:
+            device.device_id = device.generate_device_id()
         
         if commit:
             device.save()

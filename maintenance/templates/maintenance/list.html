@@ -1,129 +1,231 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Maintenance Management - PIMS{% endblock %}
+{% block title %}Maintenance Management - PIMS - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item active">Maintenance Records</li>
+{% endblock %}
 
 {% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 <style>
-/* Maintenance List Styling - Parliament Design System */
+/* Maintenance List Page Redesign - Parliament Design System */
+/* Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh */
+/* Flat Design with High Contrast - Teal, Orange, Red Color Scheme */
+
+:root {
+    --primary-teal: #14b8a6;
+    --primary-teal-hover: #0f9488;
+    --primary-orange: #f97316;
+    --primary-red: #ef4444;
+    --success-green: #10b981;
+    --warning-amber: #f59e0b;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --border-light: #e2e8f0;
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Main Container */
 .maintenance-container {
-    background: var(--bg-gradient-primary);
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #e2e8f0 100%);
     min-height: 100vh;
     padding: 2rem 0;
 }
 
+/* Page Header */
 .page-header {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-backdrop);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--border-radius-lg);
-    padding: var(--spacing-xl);
-    margin-bottom: var(--spacing-xl);
-    box-shadow: var(--glass-shadow);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-card);
 }
 
 .page-title {
-    color: var(--parliament-primary);
+    color: var(--text-primary);
     font-weight: 700;
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
+    gap: 1rem;
+    font-size: 2rem;
 }
 
 .page-subtitle {
-    color: var(--parliament-neutral);
+    color: var(--text-secondary);
     margin-bottom: 0;
+    font-size: 1.125rem;
 }
 
-.stats-row {
+/* Statistics Cards - Following Dashboard Pattern */
+.stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-xl);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .stat-card {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-backdrop);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--border-radius-lg);
-    padding: var(--spacing-lg);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 1.5rem;
     text-align: center;
-    transition: var(--transition);
-    box-shadow: var(--glass-shadow);
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-card);
 }
 
 .stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--glass-shadow-hover);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
 }
 
 .stat-icon {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto var(--spacing-md);
-    font-size: 1.25rem;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
     color: white;
 }
 
-.stat-icon.total { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+/* Color scheme matching dashboard design */
+.stat-icon.total { background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-hover)); }
 .stat-icon.scheduled { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
-.stat-icon.in-progress { background: linear-gradient(135deg, #f59e0b, #d97706); }
-.stat-icon.completed { background: linear-gradient(135deg, #10b981, #059669); }
-.stat-icon.overdue { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.stat-icon.in-progress { background: linear-gradient(135deg, var(--primary-orange), #ea580c); }
+.stat-icon.completed { background: linear-gradient(135deg, var(--success-green), #047857); }
+.stat-icon.overdue { background: linear-gradient(135deg, var(--primary-red), #dc2626); }
 
 .stat-number {
-    font-size: 1.5rem;
+    font-size: 2rem;
     font-weight: 700;
-    color: var(--parliament-dark);
-    margin-bottom: var(--spacing-xs);
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
 }
 
 .stat-label {
-    color: var(--parliament-neutral);
+    color: var(--text-secondary);
     font-size: 0.875rem;
     font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
+/* Filters Section */
 .filters-section {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-backdrop);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--border-radius-lg);
-    padding: var(--spacing-xl);
-    margin-bottom: var(--spacing-xl);
-    box-shadow: var(--glass-shadow);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-card);
 }
 
 .filters-header {
-    color: var(--parliament-primary);
+    color: var(--primary-teal);
     font-weight: 600;
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: 0.75rem;
+    font-size: 1.25rem;
 }
 
+.filter-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    align-items: end;
+}
+
+.form-group {
+    margin-bottom: 0;
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.form-control, .form-select {
+    border: 2px solid var(--border-light);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    background: var(--bg-primary);
+    font-size: 0.95rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-teal);
+    box-shadow: 0 0 0 0.2rem rgba(20, 184, 166, 0.25);
+    background: var(--bg-primary);
+    outline: none;
+}
+
+.btn {
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-hover));
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-teal-hover), #0d7a6c);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.btn-outline-secondary {
+    background: transparent;
+    border: 2px solid var(--border-light);
+    color: var(--text-secondary);
+}
+
+.btn-outline-secondary:hover {
+    background: var(--text-secondary);
+    color: white;
+    border-color: var(--text-secondary);
+}
+
+/* Maintenance List */
 .maintenance-list {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-backdrop);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--border-radius-lg);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: var(--glass-shadow);
+    box-shadow: var(--shadow-card);
+    margin-bottom: 2rem;
 }
 
 .list-header {
-    background: linear-gradient(135deg, var(--parliament-primary) 0%, #3b82f6 100%);
+    background: linear-gradient(135deg, var(--text-primary) 0%, #334155 100%);
     color: white;
-    padding: var(--spacing-lg);
+    padding: 1.5rem 2rem;
     display: flex;
-    justify-content: between;
+    justify-content: space-between;
     align-items: center;
 }
 
@@ -133,22 +235,39 @@
     margin: 0;
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: 0.75rem;
 }
 
 .list-actions {
     display: flex;
-    gap: var(--spacing-sm);
+    gap: 0.75rem;
 }
 
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.btn-light {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+.btn-light:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+/* Maintenance Items */
 .maintenance-item {
-    border-bottom: 1px solid rgba(203, 213, 225, 0.3);
-    padding: var(--spacing-lg);
-    transition: var(--transition);
+    border-bottom: 1px solid var(--border-light);
+    padding: 1.5rem 2rem;
+    transition: all 0.3s ease;
 }
 
 .maintenance-item:hover {
-    background: rgba(248, 250, 252, 0.8);
+    background: var(--bg-secondary);
 }
 
 .maintenance-item:last-child {
@@ -157,15 +276,15 @@
 
 .maintenance-content {
     display: grid;
-    grid-template-columns: auto 1fr auto auto;
-    gap: var(--spacing-lg);
+    grid-template-columns: auto 1fr auto;
+    gap: 1.5rem;
     align-items: center;
 }
 
 .maintenance-icon {
     width: 50px;
     height: 50px;
-    border-radius: var(--border-radius);
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -174,9 +293,9 @@
 }
 
 .maintenance-icon.scheduled { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
-.maintenance-icon.in-progress { background: linear-gradient(135deg, #f59e0b, #d97706); }
-.maintenance-icon.completed { background: linear-gradient(135deg, #10b981, #059669); }
-.maintenance-icon.overdue { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.maintenance-icon.in-progress { background: linear-gradient(135deg, var(--primary-orange), #ea580c); }
+.maintenance-icon.completed { background: linear-gradient(135deg, var(--success-green), #047857); }
+.maintenance-icon.overdue { background: linear-gradient(135deg, var(--primary-red), #dc2626); }
 .maintenance-icon.cancelled { background: linear-gradient(135deg, #6b7280, #4b5563); }
 
 .maintenance-details {
@@ -185,125 +304,244 @@
 
 .maintenance-title {
     font-weight: 600;
-    color: var(--parliament-dark);
-    margin-bottom: var(--spacing-xs);
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 1.125rem;
 }
 
 .maintenance-title a {
-    color: var(--parliament-dark);
+    color: var(--text-primary);
     text-decoration: none;
-    transition: var(--transition);
+    transition: all 0.3s ease;
 }
 
 .maintenance-title a:hover {
-    color: var(--parliament-primary);
+    color: var(--primary-teal);
 }
 
 .maintenance-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-sm);
+    gap: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .meta-badge {
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
     font-size: 0.75rem;
-    font-weight: 500;
-}
-
-.maintenance-id { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
-.device-badge { background: rgba(16, 185, 129, 0.1); color: #059669; }
-.priority-high { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
-.priority-medium { background: rgba(245, 158, 11, 0.1); color: #d97706; }
-.priority-low { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
-
-.maintenance-dates {
-    color: var(--parliament-neutral);
-    font-size: 0.875rem;
-}
-
-.status-badge {
-    padding: 0.5rem 1rem;
-    border-radius: var(--border-radius);
-    font-size: 0.875rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.025em;
+    letter-spacing: 0.05em;
 }
 
-.status-scheduled { background: rgba(139, 92, 246, 0.1); color: #7c3aed; border: 1px solid rgba(139, 92, 246, 0.3); }
-.status-in-progress { background: rgba(245, 158, 11, 0.1); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3); }
-.status-completed { background: rgba(16, 185, 129, 0.1); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3); }
-.status-overdue { background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); }
-.status-cancelled { background: rgba(107, 114, 128, 0.1); color: #4b5563; border: 1px solid rgba(107, 114, 128, 0.3); }
+.meta-badge.device {
+    background: rgba(20, 184, 166, 0.1);
+    color: var(--primary-teal);
+    border: 1px solid rgba(20, 184, 166, 0.2);
+}
+
+.meta-badge.vendor {
+    background: rgba(249, 115, 22, 0.1);
+    color: var(--primary-orange);
+    border: 1px solid rgba(249, 115, 22, 0.2);
+}
+
+.meta-badge.date {
+    background: rgba(100, 116, 139, 0.1);
+    color: var(--text-secondary);
+    border: 1px solid rgba(100, 116, 139, 0.2);
+}
+
+.meta-badge.cost {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-green);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.maintenance-description {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
 
 .maintenance-actions {
     display: flex;
-    gap: var(--spacing-xs);
+    gap: 0.5rem;
+    align-items: center;
 }
 
+.btn-outline-primary {
+    background: transparent;
+    border: 2px solid var(--primary-teal);
+    color: var(--primary-teal);
+    padding: 0.5rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-outline-primary:hover {
+    background: var(--primary-teal);
+    color: white;
+}
+
+.btn-outline-warning {
+    background: transparent;
+    border: 2px solid var(--warning-amber);
+    color: var(--warning-amber);
+    padding: 0.5rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-outline-warning:hover {
+    background: var(--warning-amber);
+    color: white;
+}
+
+.btn-outline-danger {
+    background: transparent;
+    border: 2px solid var(--primary-red);
+    color: var(--primary-red);
+    padding: 0.5rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-outline-danger:hover {
+    background: var(--primary-red);
+    color: white;
+}
+
+/* Empty State */
 .empty-state {
     text-align: center;
-    padding: var(--spacing-3xl);
-    color: var(--parliament-neutral);
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
 }
 
 .empty-state i {
     font-size: 4rem;
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: 1.5rem;
     opacity: 0.5;
+    color: var(--primary-teal);
 }
 
+.empty-state h5 {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    margin-bottom: 2rem;
+    font-size: 1.125rem;
+}
+
+/* Pagination */
 .pagination-wrapper {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-backdrop);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--border-radius-lg);
-    padding: var(--spacing-lg);
-    margin-top: var(--spacing-xl);
-    box-shadow: var(--glass-shadow);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-card);
 }
 
-/* Quick Action Buttons */
-.quick-actions {
-    display: flex;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-xl);
+.pagination {
+    margin: 0;
 }
 
-.quick-action-btn {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--border-radius);
-    font-size: 0.875rem;
+.page-link {
+    border: 2px solid var(--border-light);
+    color: var(--text-secondary);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin: 0 0.25rem;
     font-weight: 500;
-    transition: var(--transition);
+}
+
+.page-link:hover {
+    background: var(--primary-teal);
+    border-color: var(--primary-teal);
+    color: white;
+}
+
+.page-item.active .page-link {
+    background: var(--primary-teal);
+    border-color: var(--primary-teal);
+    color: white;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .maintenance-container {
+        padding: 1rem 0;
+    }
+    
+    .page-header, .filters-section, .maintenance-list, .pagination-wrapper {
+        margin-left: 1rem;
+        margin-right: 1rem;
+        border-radius: 12px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-left: 1rem;
+        margin-right: 1rem;
+    }
+    
+    .filter-form {
+        grid-template-columns: 1fr;
+    }
+    
     .maintenance-content {
         grid-template-columns: auto 1fr;
-        gap: var(--spacing-md);
+        gap: 1rem;
     }
     
     .maintenance-actions {
         grid-column: 1 / -1;
-        margin-top: var(--spacing-md);
-        padding-top: var(--spacing-md);
-        border-top: 1px solid rgba(203, 213, 225, 0.3);
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-light);
+        justify-content: center;
     }
     
-    .stats-row {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .quick-actions {
+    .list-header {
+        padding: 1rem;
         flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .maintenance-item {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-title {
+        font-size: 1.5rem;
+    }
+    
+    .maintenance-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .maintenance-actions {
+        flex-wrap: wrap;
+        gap: 0.75rem;
     }
 }
 </style>
@@ -315,116 +553,117 @@
         <!-- Page Header -->
         <div class="page-header">
             <h1 class="page-title">
-                <i class="bi bi-wrench-adjustable"></i>
+                <i class="bi bi-tools"></i>
                 Maintenance Management
             </h1>
-            <p class="page-subtitle">Bangladesh Parliament Secretariat - IT Inventory Management</p>
+            <p class="page-subtitle">
+                <i class="bi bi-geo-alt"></i> Bangladesh Parliament Secretariat, Dhaka
+            </p>
         </div>
 
-        <!-- Statistics Overview -->
-        <div class="stats-row">
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon total">
                     <i class="bi bi-wrench"></i>
                 </div>
-                <div class="stat-number">{{ total_maintenance }}</div>
-                <div class="stat-label">Total Maintenance</div>
+                <div class="stat-number">{{ maintenance_records|length|default:0 }}</div>
+                <div class="stat-label">Total Records</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon scheduled">
                     <i class="bi bi-calendar-check"></i>
                 </div>
-                <div class="stat-number">{{ stats.scheduled }}</div>
+                <div class="stat-number">
+                    {% for maintenance in maintenance_records %}
+                        {% if maintenance.status == 'SCHEDULED' %}{{ forloop.counter }}{% endif %}
+                    {% empty %}0{% endfor %}
+                </div>
                 <div class="stat-label">Scheduled</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon in-progress">
                     <i class="bi bi-gear"></i>
                 </div>
-                <div class="stat-number">{{ in_progress_count }}</div>
+                <div class="stat-number">
+                    {% for maintenance in maintenance_records %}
+                        {% if maintenance.status == 'IN_PROGRESS' %}{{ forloop.counter }}{% endif %}
+                    {% empty %}0{% endfor %}
+                </div>
                 <div class="stat-label">In Progress</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon completed">
                     <i class="bi bi-check-circle"></i>
                 </div>
-                <div class="stat-number">{{ completed_count }}</div>
+                <div class="stat-number">
+                    {% for maintenance in maintenance_records %}
+                        {% if maintenance.status == 'COMPLETED' %}{{ forloop.counter }}{% endif %}
+                    {% empty %}0{% endfor %}
+                </div>
                 <div class="stat-label">Completed</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon overdue">
                     <i class="bi bi-exclamation-triangle"></i>
                 </div>
-                <div class="stat-number">{{ overdue_count }}</div>
+                <div class="stat-number">
+                    {% for maintenance in maintenance_records %}
+                        {% if maintenance.is_overdue %}{{ forloop.counter }}{% endif %}
+                    {% empty %}0{% endfor %}
+                </div>
                 <div class="stat-label">Overdue</div>
             </div>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="quick-actions">
-            <a href="{% url 'maintenance:create' %}" class="btn btn-primary quick-action-btn">
-                <i class="bi bi-plus-circle"></i>
-                New Maintenance
-            </a>
-            <a href="{% url 'maintenance:schedule_create' %}" class="btn btn-success quick-action-btn">
-                <i class="bi bi-calendar-plus"></i>
-                Schedule Maintenance
-            </a>
-            <a href="{% url 'maintenance:overdue' %}" class="btn btn-warning quick-action-btn">
-                <i class="bi bi-exclamation-triangle"></i>
-                Overdue ({{ overdue_count }})
-            </a>
-            <a href="{% url 'maintenance:bulk_export' %}" class="btn btn-outline-secondary quick-action-btn">
-                <i class="bi bi-download"></i>
-                Export Data
-            </a>
-        </div>
-
         <!-- Filters Section -->
         <div class="filters-section">
-            <h6 class="filters-header">
+            <h5 class="filters-header">
                 <i class="bi bi-funnel"></i>
                 Filter & Search
-            </h6>
-            <form method="get" action="" class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label">Status</label>
-                    {{ filter_form.status }}
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Priority</label>
-                    {{ filter_form.priority }}
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Maintenance Type</label>
-                    {{ filter_form.maintenance_type }}
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Device Category</label>
-                    {{ filter_form.device_category }}
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Date Range</label>
-                    <div class="row g-2">
-                        <div class="col">
-                            {{ filter_form.start_date_from }}
-                        </div>
-                        <div class="col">
-                            {{ filter_form.start_date_to }}
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
+            </h5>
+            <form method="get" class="filter-form">
+                <div class="form-group">
                     <label class="form-label">Search</label>
-                    <div class="input-group">
-                        <input type="text" name="search" class="form-control" placeholder="Search maintenance..." value="{{ request.GET.search }}">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-search"></i>
-                        </button>
-                        <a href="{% url 'maintenance:list' %}" class="btn btn-outline-secondary">
-                            <i class="bi bi-x-circle"></i>
-                        </a>
-                    </div>
+                    <input type="text" 
+                           name="search" 
+                           class="form-control" 
+                           placeholder="Search maintenance records..."
+                           value="{{ request.GET.search }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="SCHEDULED" {% if request.GET.status == 'SCHEDULED' %}selected{% endif %}>Scheduled</option>
+                        <option value="IN_PROGRESS" {% if request.GET.status == 'IN_PROGRESS' %}selected{% endif %}>In Progress</option>
+                        <option value="COMPLETED" {% if request.GET.status == 'COMPLETED' %}selected{% endif %}>Completed</option>
+                        <option value="CANCELLED" {% if request.GET.status == 'CANCELLED' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date From</label>
+                    <input type="date" 
+                           name="date_from" 
+                           class="form-control"
+                           value="{{ request.GET.date_from }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date To</label>
+                    <input type="date" 
+                           name="date_to" 
+                           class="form-control"
+                           value="{{ request.GET.date_to }}">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i>
+                        Filter
+                    </button>
+                    <a href="{% url 'maintenance:list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i>
+                        Clear
+                    </a>
                 </div>
             </form>
         </div>
@@ -438,6 +677,12 @@
                     {% if maintenance_records %}({{ maintenance_records|length }}){% endif %}
                 </h5>
                 <div class="list-actions">
+                    {% if perms.maintenance.add_maintenance %}
+                    <a href="{% url 'maintenance:create' %}" class="btn btn-sm btn-light">
+                        <i class="bi bi-plus-circle"></i>
+                        Add New
+                    </a>
+                    {% endif %}
                     <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#bulkUpdateModal">
                         <i class="bi bi-pencil-square"></i>
                         Bulk Update
@@ -473,59 +718,52 @@
                             </h6>
                             
                             <div class="maintenance-meta">
-                                <span class="meta-badge maintenance-id">{{ maintenance.maintenance_id }}</span>
-                                <span class="meta-badge device-badge">{{ maintenance.device.device_id }}</span>
-                                <span class="meta-badge priority-{{ maintenance.priority|lower }}">
-                                    {{ maintenance.get_priority_display }}
+                                <span class="meta-badge device">
+                                    <i class="bi bi-laptop"></i>
+                                    {{ maintenance.device.device_id }}
                                 </span>
-                                {% if maintenance.maintenance_type %}
-                                <span class="meta-badge" style="background: rgba(34, 197, 94, 0.1); color: #059669;">
-                                    {{ maintenance.get_maintenance_type_display }}
-                                </span>
-                                {% endif %}
-                            </div>
-
-                            <div class="maintenance-dates">
-                                <i class="bi bi-calendar me-1"></i>
-                                Start: {{ maintenance.start_date|date:"M d, Y" }}
-                                {% if maintenance.expected_end_date %}
-                                    | Expected End: {{ maintenance.expected_end_date|date:"M d, Y" }}
-                                {% endif %}
-                                {% if maintenance.actual_end_date %}
-                                    | Completed: {{ maintenance.actual_end_date|date:"M d, Y" }}
-                                {% endif %}
                                 {% if maintenance.vendor %}
-                                    <br><i class="bi bi-building me-1"></i>Vendor: {{ maintenance.vendor.name }}
+                                <span class="meta-badge vendor">
+                                    <i class="bi bi-building"></i>
+                                    {{ maintenance.vendor.name }}
+                                </span>
+                                {% endif %}
+                                <span class="meta-badge date">
+                                    <i class="bi bi-calendar"></i>
+                                    {{ maintenance.scheduled_date|date:"M d, Y" }}
+                                </span>
+                                {% if maintenance.estimated_cost %}
+                                <span class="meta-badge cost">
+                                    <i class="bi bi-currency-dollar"></i>
+                                    ৳{{ maintenance.estimated_cost }}
+                                </span>
                                 {% endif %}
                             </div>
-                        </div>
-
-                        <!-- Status Badge -->
-                        <div class="status-badge status-{{ maintenance.status|lower }}">
-                            {% if maintenance.is_overdue and maintenance.status != 'COMPLETED' %}
-                                Overdue
-                            {% else %}
-                                {{ maintenance.get_status_display }}
+                            
+                            {% if maintenance.description %}
+                            <p class="maintenance-description">
+                                {{ maintenance.description|truncatewords:20 }}
+                            </p>
                             {% endif %}
                         </div>
 
-                        <!-- Action Buttons -->
+                        <!-- Actions -->
                         <div class="maintenance-actions">
                             <a href="{% url 'maintenance:detail' maintenance.pk %}" 
-                               class="btn btn-sm btn-outline-primary" 
+                               class="btn btn-outline-primary" 
                                title="View Details">
                                 <i class="bi bi-eye"></i>
                             </a>
                             {% if perms.maintenance.change_maintenance %}
                             <a href="{% url 'maintenance:edit' maintenance.pk %}" 
-                               class="btn btn-sm btn-outline-warning" 
+                               class="btn btn-outline-warning" 
                                title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </a>
                             {% endif %}
                             {% if perms.maintenance.delete_maintenance %}
                             <button type="button" 
-                                    class="btn btn-sm btn-outline-danger" 
+                                    class="btn btn-outline-danger" 
                                     onclick="confirmDelete('{{ maintenance.maintenance_id }}', '{% url 'maintenance:delete' maintenance.pk %}')"
                                     title="Delete">
                                 <i class="bi bi-trash"></i>
@@ -540,10 +778,12 @@
                     <i class="bi bi-wrench"></i>
                     <h5>No Maintenance Records Found</h5>
                     <p>No maintenance records match your current filters.</p>
+                    {% if perms.maintenance.add_maintenance %}
                     <a href="{% url 'maintenance:create' %}" class="btn btn-primary">
                         <i class="bi bi-plus-circle me-2"></i>
                         Create First Maintenance
                     </a>
+                    {% endif %}
                 </div>
             {% endif %}
         </div>
@@ -555,12 +795,12 @@
                 <ul class="pagination justify-content-center mb-0">
                     {% if page_obj.has_previous %}
                         <li class="page-item">
-                            <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                            <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">
                                 <i class="bi bi-chevron-double-left"></i>
                             </a>
                         </li>
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">
                                 <i class="bi bi-chevron-left"></i>
                             </a>
                         </li>
@@ -573,19 +813,19 @@
                             </li>
                         {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">{{ num }}</a>
+                                <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">{{ num }}</a>
                             </li>
                         {% endif %}
                     {% endfor %}
 
                     {% if page_obj.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">
                                 <i class="bi bi-chevron-right"></i>
                             </a>
                         </li>
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">
                                 <i class="bi bi-chevron-double-right"></i>
                             </a>
                         </li>
@@ -599,30 +839,81 @@
 
 <!-- Bulk Update Modal -->
 <div class="modal fade" id="bulkUpdateModal" tabindex="-1" aria-labelledby="bulkUpdateModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-hover)); color: white;">
                 <h5 class="modal-title" id="bulkUpdateModalLabel">
                     <i class="bi bi-pencil-square me-2"></i>
-                    Bulk Update Maintenance
+                    Bulk Update Maintenance Records
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="post" action="{% url 'maintenance:bulk_update' %}">
-                <div class="modal-body">
+            <div class="modal-body">
+                <form method="post" action="{% url 'maintenance:bulk_update' %}">
                     {% csrf_token %}
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle me-2"></i>
-                        Select maintenance records from the list and choose an action to apply to all selected items.
+                    <div class="mb-3">
+                        <label for="bulk_status" class="form-label">Status</label>
+                        <select name="status" id="bulk_status" class="form-select">
+                            <option value="">Keep Current Status</option>
+                            <option value="SCHEDULED">Scheduled</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="COMPLETED">Completed</option>
+                            <option value="CANCELLED">Cancelled</option>
+                        </select>
                     </div>
-                    <!-- Bulk update form fields would go here -->
-                    <p>Bulk update functionality will be implemented here.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Apply Updates</button>
-                </div>
-            </form>
+                    <div class="mb-3">
+                        <label for="bulk_priority" class="form-label">Priority</label>
+                        <select name="priority" id="bulk_priority" class="form-select">
+                            <option value="">Keep Current Priority</option>
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="CRITICAL">Critical</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="select_all" id="selectAll">
+                            <label class="form-check-label" for="selectAll">
+                                Select all visible maintenance records
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>
+                            Update Selected
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-red), #dc2626); color: white;">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this maintenance record?</p>
+                <p class="text-danger"><strong>This action cannot be undone.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="confirmDeleteBtn" class="btn btn-danger">
+                    <i class="bi bi-trash me-2"></i>
+                    Delete
+                </a>
+            </div>
         </div>
     </div>
 </div>
@@ -630,21 +921,103 @@
 
 {% block extra_js %}
 <script>
-// Confirm delete function
+// Delete confirmation functionality
 function confirmDelete(maintenanceId, deleteUrl) {
-    if (confirm(`Are you sure you want to delete maintenance ${maintenanceId}? This action cannot be undone.`)) {
-        window.location.href = deleteUrl;
-    }
+    document.getElementById('confirmDeleteBtn').href = deleteUrl;
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
 }
 
-// Auto-submit filter form on change
+// Select all functionality for bulk update
 document.addEventListener('DOMContentLoaded', function() {
-    const filterSelects = document.querySelectorAll('.filters-section select');
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const maintenanceCheckboxes = document.querySelectorAll('input[name="maintenance_ids"]');
+    
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            maintenanceCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+    }
+    
+    // Update select all checkbox when individual checkboxes change
+    maintenanceCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const allChecked = Array.from(maintenanceCheckboxes).every(cb => cb.checked);
+            const someChecked = Array.from(maintenanceCheckboxes).some(cb => cb.checked);
+            
+            selectAllCheckbox.checked = allChecked;
+            selectAllCheckbox.indeterminate = someChecked && !allChecked;
+        });
+    });
+    
+    // Auto-submit filter form on select change
+    const filterSelects = document.querySelectorAll('.filter-form select');
     filterSelects.forEach(select => {
         select.addEventListener('change', function() {
             this.form.submit();
         });
     });
+    
+    // Enhanced search functionality with debounce
+    const searchInput = document.querySelector('input[name="search"]');
+    if (searchInput) {
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (this.value.length >= 3 || this.value.length === 0) {
+                    this.form.submit();
+                }
+            }, 500);
+        });
+    }
 });
+
+// Toast notifications for user feedback
+function showToast(message, type = 'success') {
+    const toastContainer = document.querySelector('.toast-container') || createToastContainer();
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', () => {
+        toast.remove();
+    });
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '1055';
+    document.body.appendChild(container);
+    return container;
+}
+
+// Display Django messages as toasts
+{% if messages %}
+document.addEventListener('DOMContentLoaded', function() {
+    {% for message in messages %}
+        showToast('{{ message|escapejs }}', '{% if message.tags == "error" %}error{% else %}{{ message.tags }}{% endif %}');
+    {% endfor %}
+});
+{% endif %}
 </script>
 {% endblock %}

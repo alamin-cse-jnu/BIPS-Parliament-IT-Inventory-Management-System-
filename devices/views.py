@@ -289,6 +289,10 @@ class DeviceDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 class DeviceCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     """Create view for devices."""
     model = Device
@@ -297,14 +301,59 @@ class DeviceCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     permission_required = 'devices.add_device'
     success_url = reverse_lazy('devices:list')
     
+    def get_context_data(self, **kwargs):
+        """Add additional context data."""
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Create New Device'
+        context['form_action'] = 'Create'
+        return context
+    
     def form_valid(self, form):
-        """Set created_by field."""
-        form.instance.created_by = self.request.user
-        messages.success(
-            self.request,
-            f'Device {form.instance.brand} {form.instance.model} created successfully!'
+        """Handle successful form submission."""
+        try:
+            # Set created_by field
+            form.instance.created_by = self.request.user
+            
+            # Save the device
+            response = super().form_valid(form)
+            
+            # Add success message
+            messages.success(
+                self.request,
+                f'Device "{self.object.brand} {self.object.model}" created successfully! '
+                f'Device ID: {self.object.device_id}'
+            )
+            
+            return response
+            
+        except Exception as e:
+            # Log the error
+            logger.error(f"Error creating device: {str(e)}")
+            
+            # Add error message
+            messages.error(
+                self.request,
+                f'Error creating device: {str(e)}. Please try again.'
+            )
+            
+            # Return to form with errors
+            return self.form_invalid(form)
+    
+    def form_invalid(self, form):
+        """Handle form validation errors."""
+        messages.error(
+            self.request, 
+            'Please correct the errors below and try again.'
         )
-        return super().form_valid(form)
+        
+        # Log form errors for debugging
+        logger.warning(f"Device creation form errors: {form.errors}")
+        
+        return super().form_invalid(form)
+    
+    def get_success_url(self):
+        """Redirect to device detail page after successful creation."""
+        return reverse('devices:detail', kwargs={'pk': self.object.pk})
 
 
 class DeviceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):

@@ -1,319 +1,1117 @@
-{% extends 'vendors/base_vendor.html' %}
+{% extends 'base.html' %}
 {% load static %}
 
-{% block vendor_title %}All Vendors{% endblock %}
+{% block title %}Vendors - PIMS - Bangladesh Parliament Secretariat{% endblock %}
 
-{% block vendor_breadcrumb_items %}
-    <li class="breadcrumb-item active">All Vendors</li>
+{% block extra_css %}
+<style>
+/* Vendors List Specific Styling - Flat Design */
+.vendors-container {
+    background-color: #f8fafc;
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.vendors-header {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.vendors-title {
+    color: #1e293b;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 2rem;
+}
+
+.vendors-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+    font-size: 1.125rem;
+}
+
+/* Statistics Grid - Matching Dashboard Design */
+.vendor-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.vendor-stat-card {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #f1f5f9;
+}
+
+.vendor-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Color scheme matching reference design */
+.vendor-stat-card.total {
+    background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+    color: white;
+}
+
+.vendor-stat-card.active {
+    background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+    color: white;
+}
+
+.vendor-stat-card.preferred {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: white;
+}
+
+.vendor-stat-card.suppliers {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.vendor-stat-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.vendor-stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    backdrop-filter: blur(10px);
+}
+
+.vendor-stat-content {
+    flex: 1;
+}
+
+.vendor-stat-number {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.vendor-stat-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+/* Search and Filter Section */
+.vendors-controls {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.search-input-group {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.search-input-group .form-control {
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    padding: 0.75rem 1rem 0.75rem 3rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.search-input-group .form-control:focus {
+    border-color: #14b8a6;
+    box-shadow: 0 0 0 0.2rem rgba(20, 184, 166, 0.25);
+}
+
+.search-input-group .search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+    z-index: 2;
+}
+
+.filter-row {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-select {
+    border-radius: 8px;
+    border: 2px solid #e2e8f0;
+    padding: 0.5rem 1rem;
+    min-width: 150px;
+    transition: border-color 0.3s ease;
+}
+
+.filter-select:focus {
+    border-color: #14b8a6;
+    box-shadow: 0 0 0 0.2rem rgba(20, 184, 166, 0.25);
+}
+
+.view-toggle {
+    display: flex;
+    background-color: #f1f5f9;
+    border-radius: 8px;
+    padding: 0.25rem;
+    margin-left: auto;
+}
+
+.view-toggle .btn {
+    border: none;
+    background: transparent;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    color: #64748b;
+}
+
+.view-toggle .btn.active {
+    background-color: #14b8a6;
+    color: white;
+    box-shadow: 0 2px 4px rgba(20, 184, 166, 0.3);
+}
+
+/* Vendor Cards Grid */
+.vendors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.vendor-card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.vendor-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border-color: #14b8a6;
+}
+
+.vendor-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.vendor-type-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.vendor-type-icon.vendor-type-supplier {
+    background: linear-gradient(135deg, #10b981, #047857);
+}
+
+.vendor-type-icon.vendor-type-manufacturer {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.vendor-type-icon.vendor-type-maintenance {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+.vendor-type-icon.vendor-type-support {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.vendor-type-icon.vendor-type-installation {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.vendor-type-icon.vendor-type-consultant {
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+}
+
+.vendor-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.vendor-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+    text-decoration: none;
+}
+
+.vendor-name:hover {
+    color: #14b8a6;
+}
+
+.vendor-code {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.vendor-type-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.vendor-type-badge.supplier {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #047857;
+}
+
+.vendor-type-badge.manufacturer {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #1d4ed8;
+}
+
+.vendor-type-badge.maintenance {
+    background-color: rgba(249, 115, 22, 0.1);
+    color: #ea580c;
+}
+
+.vendor-type-badge.support {
+    background-color: rgba(139, 92, 246, 0.1);
+    color: #7c3aed;
+}
+
+.vendor-type-badge.installation {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.vendor-type-badge.consultant {
+    background-color: rgba(20, 184, 166, 0.1);
+    color: #0f766e;
+}
+
+.vendor-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.vendor-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.vendor-detail-icon {
+    width: 16px;
+    height: 16px;
+    color: #14b8a6;
+}
+
+.vendor-badges {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.vendor-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.vendor-badge.active {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #047857;
+}
+
+.vendor-badge.inactive {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.vendor-badge.preferred {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+}
+
+.vendor-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f1f5f9;
+}
+
+.btn-vendor-action {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    background-color: #ffffff;
+    color: #64748b;
+}
+
+.btn-vendor-action:hover {
+    background-color: #14b8a6;
+    color: white;
+    border-color: #14b8a6;
+    transform: translateY(-1px);
+}
+
+.btn-vendor-primary {
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.btn-vendor-primary:hover {
+    background: linear-gradient(135deg, #0f766e, #0d5555);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+    color: white;
+}
+
+/* List View Styles */
+.vendors-list {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.vendor-list-item {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background-color 0.3s ease;
+}
+
+.vendor-list-item:last-child {
+    border-bottom: none;
+}
+
+.vendor-list-item:hover {
+    background-color: #f8fafc;
+}
+
+.vendor-list-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.vendor-list-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.vendor-list-name {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.vendor-list-meta {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+/* Pagination */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.pagination {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e2e8f0;
+}
+
+.page-link {
+    border: none;
+    padding: 0.75rem 1rem;
+    margin: 0 0.25rem;
+    border-radius: 8px;
+    color: #64748b;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.page-link:hover {
+    background-color: #14b8a6;
+    color: white;
+}
+
+.page-item.active .page-link {
+    background-color: #14b8a6;
+    color: white;
+    box-shadow: 0 2px 4px rgba(20, 184, 166, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .vendors-grid {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .vendors-container {
+        padding: 1rem 0;
+    }
+    
+    .vendors-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .vendors-title {
+        font-size: 1.75rem;
+    }
+    
+    .vendor-stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .vendor-stat-card {
+        padding: 1rem;
+    }
+    
+    .vendor-stat-number {
+        font-size: 2rem;
+    }
+    
+    .vendor-stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .vendors-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .vendor-card {
+        padding: 1rem;
+    }
+    
+    .vendors-controls {
+        padding: 1rem;
+    }
+    
+    .filter-row {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .filter-select {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .view-toggle {
+        margin-left: 0;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .vendor-details {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    
+    .vendor-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .btn-vendor-action {
+        flex: none;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .vendors-header {
+        padding: 1rem;
+    }
+    
+    .vendors-title {
+        font-size: 1.5rem;
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+    
+    .vendor-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .vendor-card-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+    }
+    
+    .vendor-type-icon {
+        align-self: center;
+    }
+    
+    .vendor-info {
+        text-align: center;
+    }
+}
+
+/* Loading and Empty States */
+.loading-state {
+    text-align: center;
+    padding: 3rem;
+    color: #64748b;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 2rem;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #cbd5e1;
+    margin-bottom: 1rem;
+}
+
+.empty-state-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state-message {
+    color: #64748b;
+    margin-bottom: 2rem;
+}
+</style>
 {% endblock %}
 
-{% block vendor_content %}
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="stats-card">
-                <div class="stats-number primary">{{ total_vendors }}</div>
-                <div class="text-muted">Total Vendors</div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="stats-card">
-                <div class="stats-number success">{{ active_vendors }}</div>
-                <div class="text-muted">Active Vendors</div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="stats-card">
-                <div class="stats-number warning">{{ preferred_vendors }}</div>
-                <div class="text-muted">Preferred Vendors</div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="stats-card">
-                <div class="stats-number info">{{ suppliers }}</div>
-                <div class="text-muted">Suppliers</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Search and Filter Bar -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="GET" class="row g-3">
-                <div class="col-md-4">
-                    <div class="search-box">
-                        <i class="bi bi-search search-icon"></i>
-                        <input type="text" name="search" class="form-control search-input" 
-                               placeholder="Search vendors..." value="{{ search_form.search.value|default:'' }}">
-                    </div>
-                </div>
-                
-                <div class="col-md-2">
-                    <select name="vendor_type" class="form-select filter-dropdown">
-                        <option value="">All Types</option>
-                        {% for value, label in search_form.vendor_type.field.choices %}
-                            {% if value %}
-                                <option value="{{ value }}" {% if search_form.vendor_type.value == value %}selected{% endif %}>
-                                    {{ label }}
-                                </option>
-                            {% endif %}
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="col-md-2">
-                    <select name="status" class="form-select filter-dropdown">
-                        <option value="">All Status</option>
-                        {% for value, label in search_form.status.field.choices %}
-                            {% if value %}
-                                <option value="{{ value }}" {% if search_form.status.value == value %}selected{% endif %}>
-                                    {{ label }}
-                                </option>
-                            {% endif %}
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="col-md-2">
-                    <select name="is_active" class="form-select filter-dropdown">
-                        {% for value, label in search_form.is_active.field.choices %}
-                            <option value="{{ value }}" {% if search_form.is_active.value == value %}selected{% endif %}>
-                                {{ label }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="col-md-2">
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-vendor-primary">
-                            <i class="bi bi-funnel me-1"></i>
-                            Filter
-                        </button>
-                        <a href="{% url 'vendors:list' %}" class="btn btn-vendor-secondary">
-                            <i class="bi bi-arrow-clockwise"></i>
-                        </a>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Action Bar -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h4 class="mb-0">
-                {% if vendors %}
-                    {{ vendors|length }} of {{ page_obj.paginator.count }} vendor{{ page_obj.paginator.count|pluralize }}
-                {% else %}
-                    No vendors found
-                {% endif %}
-            </h4>
-            {% if search_form.search.value %}
-                <small class="text-muted">
-                    Search results for "<strong>{{ search_form.search.value }}</strong>"
-                </small>
-            {% endif %}
-        </div>
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Search functionality
+    const searchInput = document.getElementById('vendorSearch');
+    const vendorItems = document.querySelectorAll('.vendor-search-item');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            
+            vendorItems.forEach(item => {
+                const vendorData = item.dataset.vendor || '';
+                const isVisible = vendorData.includes(searchTerm);
+                item.style.display = isVisible ? 'block' : 'none';
+            });
+        });
+    }
+    
+    // View toggle functionality
+    const cardViewBtn = document.getElementById('cardViewBtn');
+    const listViewBtn = document.getElementById('listViewBtn');
+    const cardViewContainer = document.getElementById('cardViewContainer');
+    const listViewContainer = document.getElementById('listViewContainer');
+    
+    if (cardViewBtn && listViewBtn) {
+        cardViewBtn.addEventListener('click', function() {
+            cardViewBtn.classList.add('active');
+            listViewBtn.classList.remove('active');
+            cardViewContainer.classList.remove('d-none');
+            listViewContainer.classList.add('d-none');
+            localStorage.setItem('vendorViewPreference', 'card');
+        });
         
-        <div class="d-flex gap-2">
-            {% if vendors %}
-                <div class="dropdown">
-                    <button class="btn btn-vendor-secondary dropdown-toggle" type="button" 
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-download me-1"></i>
-                        Export
+        listViewBtn.addEventListener('click', function() {
+            listViewBtn.classList.add('active');
+            cardViewBtn.classList.remove('active');
+            listViewContainer.classList.remove('d-none');
+            cardViewContainer.classList.add('d-none');
+            localStorage.setItem('vendorViewPreference', 'list');
+        });
+        
+        // Restore view preference
+        const savedView = localStorage.getItem('vendorViewPreference');
+        if (savedView === 'list') {
+            listViewBtn.click();
+        }
+    }
+    
+    // Filter functionality
+    const filterSelects = document.querySelectorAll('.filter-select');
+    filterSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            // You can implement additional filtering logic here
+            console.log('Filter changed:', this.name, this.value);
+        });
+    });
+    
+    // Smooth animations
+    const cards = document.querySelectorAll('.vendor-card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+    });
+});
+
+// Export functionality
+function exportVendors(format) {
+    const currentParams = new URLSearchParams(window.location.search);
+    const exportUrl = format === 'csv' ? 
+        "{% url 'vendors:export_csv' %}" : 
+        "{% url 'vendors:export_contacts' %}";
+    
+    window.location.href = exportUrl + '?' + currentParams.toString();
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="vendors-container">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="vendors-header">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h1 class="vendors-title">
+                        <i class="bi bi-laptop"></i>
+                        Vendor Management
+                    </h1>
+                    <p class="vendors-subtitle">
+                        Manage equipment suppliers, manufacturers, and service providers for 
+                        <strong>Bangladesh Parliament Secretariat</strong>
+                    </p>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    {% if perms.vendors.view_vendor %}
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-download me-1"></i>Export
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="javascript:exportVendors('csv')">
+                                        <i class="bi bi-file-earmark-spreadsheet me-2"></i>Export CSV
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="javascript:exportVendors('contacts')">
+                                        <i class="bi bi-person-lines-fill me-2"></i>Contact List
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    {% endif %}
+                    
+                    {% if perms.vendors.add_vendor %}
+                        <a href="{% url 'vendors:create' %}" class="btn btn-vendor-primary">
+                            <i class="bi bi-plus-circle me-1"></i>Add Vendor
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Overview -->
+        <div class="vendor-stats-grid">
+            <div class="vendor-stat-card total">
+                <div class="vendor-stat-header">
+                    <div class="vendor-stat-content">
+                        <div class="vendor-stat-number">{{ total_vendors|default:0 }}</div>
+                        <div class="vendor-stat-label">Total Vendors</div>
+                    </div>
+                    <div class="vendor-stat-icon">
+                        <i class="bi bi-building"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="vendor-stat-card active">
+                <div class="vendor-stat-header">
+                    <div class="vendor-stat-content">
+                        <div class="vendor-stat-number">{{ active_vendors|default:0 }}</div>
+                        <div class="vendor-stat-label">Active Vendors</div>
+                    </div>
+                    <div class="vendor-stat-icon">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="vendor-stat-card preferred">
+                <div class="vendor-stat-header">
+                    <div class="vendor-stat-content">
+                        <div class="vendor-stat-number">{{ preferred_vendors|default:0 }}</div>
+                        <div class="vendor-stat-label">Preferred Vendors</div>
+                    </div>
+                    <div class="vendor-stat-icon">
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="vendor-stat-card suppliers">
+                <div class="vendor-stat-header">
+                    <div class="vendor-stat-content">
+                        <div class="vendor-stat-number">{{ suppliers|default:0 }}</div>
+                        <div class="vendor-stat-label">Equipment Suppliers</div>
+                    </div>
+                    <div class="vendor-stat-icon">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter Controls -->
+        <div class="vendors-controls">
+            <div class="search-input-group">
+                <i class="bi bi-search search-icon"></i>
+                <input type="text" class="form-control" id="vendorSearch" placeholder="Search vendors by name, code, contact person, or type...">
+            </div>
+            
+            <div class="filter-row">
+                <div class="d-flex gap-2 flex-wrap align-items-center">
+                    <label class="text-muted fw-medium">Filter by:</label>
+                    
+                    <select class="filter-select" name="vendor_type">
+                        <option value="">All Types</option>
+                        <option value="SUPPLIER" {% if request.GET.vendor_type == 'SUPPLIER' %}selected{% endif %}>Supplier</option>
+                        <option value="MANUFACTURER" {% if request.GET.vendor_type == 'MANUFACTURER' %}selected{% endif %}>Manufacturer</option>
+                        <option value="MAINTENANCE" {% if request.GET.vendor_type == 'MAINTENANCE' %}selected{% endif %}>Maintenance</option>
+                        <option value="SUPPORT" {% if request.GET.vendor_type == 'SUPPORT' %}selected{% endif %}>Support</option>
+                        <option value="INSTALLATION" {% if request.GET.vendor_type == 'INSTALLATION' %}selected{% endif %}>Installation</option>
+                        <option value="CONSULTANT" {% if request.GET.vendor_type == 'CONSULTANT' %}selected{% endif %}>Consultant</option>
+                    </select>
+                    
+                    <select class="filter-select" name="status">
+                        <option value="">All Status</option>
+                        <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                    </select>
+                    
+                    <select class="filter-select" name="preferred">
+                        <option value="">All Vendors</option>
+                        <option value="true" {% if request.GET.preferred == 'true' %}selected{% endif %}>Preferred Only</option>
+                    </select>
+                </div>
+                
+                <div class="view-toggle">
+                    <button type="button" class="btn active" id="cardViewBtn">
+                        <i class="bi bi-grid"></i> Cards
                     </button>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="{% url 'vendors:export_csv' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
-                                <i class="bi bi-file-earmark-spreadsheet me-2"></i>
-                                Export CSV
+                    <button type="button" class="btn" id="listViewBtn">
+                        <i class="bi bi-list"></i> List
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vendors Content -->
+        {% if vendors %}
+            <!-- Card View (Default) -->
+            <div id="cardViewContainer" class="vendors-grid">
+                {% for vendor in vendors %}
+                    <div class="vendor-card vendor-search-item" data-vendor="{{ vendor.name|lower }} {{ vendor.vendor_code|lower }} {{ vendor.contact_person|lower }} {{ vendor.vendor_type|lower }}">
+                        <div class="vendor-card-header">
+                            <div class="vendor-type-icon vendor-type-{{ vendor.vendor_type|lower }}">
+                                {% if vendor.vendor_type == 'SUPPLIER' %}
+                                    <i class="bi bi-box-seam"></i>
+                                {% elif vendor.vendor_type == 'MANUFACTURER' %}
+                                    <i class="bi bi-gear-fill"></i>
+                                {% elif vendor.vendor_type == 'MAINTENANCE' %}
+                                    <i class="bi bi-wrench"></i>
+                                {% elif vendor.vendor_type == 'SUPPORT' %}
+                                    <i class="bi bi-headset"></i>
+                                {% elif vendor.vendor_type == 'INSTALLATION' %}
+                                    <i class="bi bi-hammer"></i>
+                                {% elif vendor.vendor_type == 'CONSULTANT' %}
+                                    <i class="bi bi-person-badge"></i>
+                                {% else %}
+                                    <i class="bi bi-building"></i>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="vendor-info">
+                                <a href="{% url 'vendors:detail' vendor.pk %}" class="vendor-name">
+                                    {{ vendor.name }}
+                                    {% if vendor.is_preferred %}
+                                        <i class="bi bi-star-fill text-warning ms-1"></i>
+                                    {% endif %}
+                                </a>
+                                <div class="vendor-code">{{ vendor.vendor_code }}</div>
+                                <span class="vendor-type-badge {{ vendor.vendor_type|lower }}">
+                                    {{ vendor.get_vendor_type_display }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="vendor-details">
+                            {% if vendor.contact_person %}
+                                <div class="vendor-detail-item">
+                                    <i class="bi bi-person vendor-detail-icon"></i>
+                                    <span>{{ vendor.contact_person }}</span>
+                                </div>
+                            {% endif %}
+                            
+                            {% if vendor.phone_primary %}
+                                <div class="vendor-detail-item">
+                                    <i class="bi bi-telephone vendor-detail-icon"></i>
+                                    <span>{{ vendor.phone_primary }}</span>
+                                </div>
+                            {% endif %}
+                            
+                            {% if vendor.email %}
+                                <div class="vendor-detail-item">
+                                    <i class="bi bi-envelope vendor-detail-icon"></i>
+                                    <span>{{ vendor.email|truncatechars:25 }}</span>
+                                </div>
+                            {% endif %}
+                            
+                            {% if vendor.city %}
+                                <div class="vendor-detail-item">
+                                    <i class="bi bi-geo-alt vendor-detail-icon"></i>
+                                    <span>{{ vendor.city }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="vendor-badges">
+                            {% if vendor.is_active %}
+                                <span class="vendor-badge active">Active</span>
+                            {% else %}
+                                <span class="vendor-badge inactive">Inactive</span>
+                            {% endif %}
+                            
+                            {% if vendor.is_preferred %}
+                                <span class="vendor-badge preferred">Preferred</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="vendor-actions">
+                            <a href="{% url 'vendors:detail' vendor.pk %}" class="btn-vendor-action">
+                                <i class="bi bi-eye me-1"></i>View
                             </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="{% url 'vendors:export_contacts' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
-                                <i class="bi bi-person-lines-fill me-2"></i>
-                                Contact List
-                            </a>
-                        </li>
-                    </ul>
+                            
+                            {% if perms.vendors.change_vendor %}
+                                <a href="{% url 'vendors:edit' vendor.pk %}" class="btn-vendor-action">
+                                    <i class="bi bi-pencil me-1"></i>Edit
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- List View (Compact) -->
+            <div id="listViewContainer" class="vendors-list d-none">
+                {% for vendor in vendors %}
+                    <div class="vendor-list-item vendor-search-item" data-vendor="{{ vendor.name|lower }} {{ vendor.vendor_code|lower }} {{ vendor.contact_person|lower }} {{ vendor.vendor_type|lower }}">
+                        <div class="vendor-list-content">
+                            <div class="vendor-type-icon vendor-type-{{ vendor.vendor_type|lower }}">
+                                {% if vendor.vendor_type == 'SUPPLIER' %}
+                                    <i class="bi bi-box-seam"></i>
+                                {% elif vendor.vendor_type == 'MANUFACTURER' %}
+                                    <i class="bi bi-gear-fill"></i>
+                                {% elif vendor.vendor_type == 'MAINTENANCE' %}
+                                    <i class="bi bi-wrench"></i>
+                                {% elif vendor.vendor_type == 'SUPPORT' %}
+                                    <i class="bi bi-headset"></i>
+                                {% elif vendor.vendor_type == 'INSTALLATION' %}
+                                    <i class="bi bi-hammer"></i>
+                                {% elif vendor.vendor_type == 'CONSULTANT' %}
+                                    <i class="bi bi-person-badge"></i>
+                                {% else %}
+                                    <i class="bi bi-building"></i>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="vendor-list-info">
+                                <div class="vendor-list-name">
+                                    <a href="{% url 'vendors:detail' vendor.pk %}" class="text-decoration-none">
+                                        {{ vendor.name }}
+                                        {% if vendor.is_preferred %}
+                                            <i class="bi bi-star-fill text-warning ms-1"></i>
+                                        {% endif %}
+                                    </a>
+                                </div>
+                                <div class="vendor-list-meta">
+                                    {{ vendor.vendor_code }} • {{ vendor.get_vendor_type_display }} • 
+                                    {{ vendor.contact_person|default:"No contact" }} • 
+                                    {{ vendor.city|default:"Unknown location" }}
+                                </div>
+                            </div>
+                            
+                            <div class="vendor-badges">
+                                {% if vendor.is_active %}
+                                    <span class="vendor-badge active">Active</span>
+                                {% else %}
+                                    <span class="vendor-badge inactive">Inactive</span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'vendors:detail' vendor.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                
+                                {% if perms.vendors.change_vendor %}
+                                    <a href="{% url 'vendors:edit' vendor.pk %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+                <div class="pagination-container">
+                    <nav aria-label="Vendor pagination">
+                        <ul class="pagination">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page=1">
+                                        <i class="bi bi-chevron-double-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.paginator.num_pages }}">
+                                        <i class="bi bi-chevron-double-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
                 </div>
             {% endif %}
             
-            {% if perms.vendors.add_vendor %}
-                <a href="{% url 'vendors:create' %}" class="btn btn-vendor-primary">
-                    <i class="bi bi-plus-circle me-1"></i>
-                    Add Vendor
-                </a>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Vendors List -->
-    {% if vendors %}
-        <div class="vendors-list">
-            {% for vendor in vendors %}
-                {% include 'vendors/_vendor_card.html' %}
-            {% endfor %}
-        </div>
-
-        <!-- Pagination -->
-        {% if page_obj.has_other_pages %}
-            <nav aria-label="Vendors pagination" class="mt-4">
-                <ul class="pagination justify-content-center">
-                    {% if page_obj.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page=1">
-                                <i class="bi bi-chevron-double-left"></i>
-                            </a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}">
-                                <i class="bi bi-chevron-left"></i>
-                            </a>
-                        </li>
+        {% else %}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="bi bi-building"></i>
+                </div>
+                <h3 class="empty-state-title">No Vendors Found</h3>
+                <p class="empty-state-message">
+                    {% if request.GET.search %}
+                        No vendors match your search criteria. Try adjusting your search terms or filters.
                     {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link"><i class="bi bi-chevron-double-left"></i></span>
-                        </li>
-                        <li class="page-item disabled">
-                            <span class="page-link"><i class="bi bi-chevron-left"></i></span>
-                        </li>
+                        Get started by adding your first vendor to the system.
                     {% endif %}
-
-                    {% for num in page_obj.paginator.page_range %}
-                        {% if page_obj.number == num %}
-                            <li class="page-item active">
-                                <span class="page-link">{{ num }}</span>
-                            </li>
-                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                            <li class="page-item">
-                                <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}">{{ num }}</a>
-                            </li>
-                        {% endif %}
-                    {% endfor %}
-
-                    {% if page_obj.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}">
-                                <i class="bi bi-chevron-right"></i>
-                            </a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.paginator.num_pages }}">
-                                <i class="bi bi-chevron-double-right"></i>
-                            </a>
-                        </li>
-                    {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link"><i class="bi bi-chevron-right"></i></span>
-                        </li>
-                        <li class="page-item disabled">
-                            <span class="page-link"><i class="bi bi-chevron-double-right"></i></span>
-                        </li>
-                    {% endif %}
-                </ul>
-            </nav>
-        {% endif %}
-    {% else %}
-        <!-- Empty State -->
-        <div class="text-center py-5">
-            <div class="mb-4">
-                <i class="bi bi-building" style="font-size: 4rem; color: #e5e7eb;"></i>
-            </div>
-            <h4 class="text-muted mb-3">
-                {% if search_form.search.value or search_form.vendor_type.value or search_form.status.value %}
-                    No vendors match your search criteria
-                {% else %}
-                    No vendors found
-                {% endif %}
-            </h4>
-            <p class="text-muted mb-4">
-                {% if search_form.search.value or search_form.vendor_type.value or search_form.status.value %}
-                    Try adjusting your search filters or clearing them to see all vendors.
-                {% else %}
-                    Get started by adding your first vendor to the system.
-                {% endif %}
-            </p>
-            <div class="d-flex justify-content-center gap-3">
-                {% if search_form.search.value or search_form.vendor_type.value or search_form.status.value %}
-                    <a href="{% url 'vendors:list' %}" class="btn btn-vendor-secondary">
-                        <i class="bi bi-arrow-clockwise me-1"></i>
-                        Clear Filters
-                    </a>
-                {% endif %}
+                </p>
+                
                 {% if perms.vendors.add_vendor %}
                     <a href="{% url 'vendors:create' %}" class="btn btn-vendor-primary">
-                        <i class="bi bi-plus-circle me-1"></i>
-                        Add First Vendor
+                        <i class="bi bi-plus-circle me-1"></i>Add Your First Vendor
                     </a>
                 {% endif %}
             </div>
-        </div>
-    {% endif %}
-{% endblock %}
-
-{% block vendor_extra_js %}
-    <script>
-        // Auto-submit form on filter change
-        document.querySelectorAll('.filter-dropdown').forEach(function(select) {
-            select.addEventListener('change', function() {
-                this.closest('form').submit();
-            });
-        });
-
-        // Clear individual filters
-        function clearFilter(filterName) {
-            const form = document.querySelector('form');
-            const input = form.querySelector(`[name="${filterName}"]`);
-            if (input) {
-                if (input.type === 'select-one') {
-                    input.selectedIndex = 0;
-                } else {
-                    input.value = '';
-                }
-                form.submit();
-            }
-        }
-
-        // Bulk selection functionality
-        const selectAllCheckbox = document.getElementById('selectAll');
-        const vendorCheckboxes = document.querySelectorAll('.vendor-checkbox');
-
-        if (selectAllCheckbox) {
-            selectAllCheckbox.addEventListener('change', function() {
-                vendorCheckboxes.forEach(checkbox => {
-                    checkbox.checked = this.checked;
-                });
-                updateBulkActions();
-            });
-        }
-
-        vendorCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                updateBulkActions();
-                if (!this.checked) {
-                    selectAllCheckbox.checked = false;
-                }
-            });
-        });
-
-        function updateBulkActions() {
-            const checkedBoxes = document.querySelectorAll('.vendor-checkbox:checked');
-            const bulkActions = document.querySelector('.bulk-actions');
-            
-            if (bulkActions) {
-                bulkActions.style.display = checkedBoxes.length > 0 ? 'block' : 'none';
-            }
-        }
-
-        // Search with Enter key
-        document.querySelector('.search-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                this.closest('form').submit();
-            }
-        });
-    </script>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

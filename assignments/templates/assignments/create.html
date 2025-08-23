@@ -26,6 +26,7 @@
     margin-bottom: 2rem;
     box-shadow: 0 8px 32px rgba(30, 58, 138, 0.1);
     text-align: center;
+    position: relative;
 }
 
 .create-header::before {
@@ -91,6 +92,77 @@
     padding: 2rem;
 }
 
+/* Assignment Mode Selection */
+.assignment-mode-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.assignment-mode-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.mode-option {
+    position: relative;
+}
+
+.mode-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.mode-label {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(248, 250, 252, 0.8);
+    border: 2px solid rgba(203, 213, 225, 0.3);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mode-option input[type="radio"]:checked + .mode-label {
+    background: rgba(20, 184, 166, 0.1);
+    border-color: #14b8a6;
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+.mode-icon {
+    font-size: 2rem;
+    color: #6b7280;
+    transition: color 0.3s ease;
+}
+
+.mode-option input[type="radio"]:checked + .mode-label .mode-icon {
+    color: #14b8a6;
+}
+
+.mode-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.mode-title {
+    font-weight: 600;
+    color: #374151;
+    font-size: 1.1rem;
+}
+
+.mode-description {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
 .form-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -120,6 +192,13 @@
     content: '*';
     color: #ef4444;
     margin-left: 0.25rem;
+}
+
+.form-label.conditional-required:not(.required)::after {
+    content: ' (Optional)';
+    color: #6b7280;
+    font-weight: normal;
+    font-size: 0.875rem;
 }
 
 .form-control, .form-select {
@@ -205,128 +284,77 @@
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
     color: white;
-    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #1e40af, #2563eb);
+    background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(30, 58, 138, 0.4);
-    color: white;
+    box-shadow: 0 8px 25px rgba(30, 58, 138, 0.3);
 }
 
 .btn-secondary {
-    background: rgba(107, 114, 128, 0.1);
-    color: #6b7280;
-    border: 1px solid rgba(107, 114, 128, 0.3);
+    background: rgba(108, 117, 125, 0.1);
+    border: 2px solid #6c757d;
+    color: #6c757d;
 }
 
 .btn-secondary:hover {
-    background: #6b7280;
+    background: #6c757d;
     color: white;
-    border-color: #6b7280;
-}
-
-.alert-info {
-    background: rgba(59, 130, 246, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.3);
-    border-radius: 8px;
-    padding: 1rem;
-    color: #1e40af;
-    margin-bottom: 1rem;
-}
-
-.device-info-preview {
-    background: rgba(16, 185, 129, 0.1);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-    border-radius: 8px;
-    padding: 1rem;
-    margin-top: 0.5rem;
-    display: none;
+    transform: translateY(-2px);
 }
 
 .employee-info-preview {
-    background: rgba(139, 92, 246, 0.1);
-    border: 1px solid rgba(139, 92, 246, 0.3);
-    border-radius: 8px;
+    margin-top: 1rem;
     padding: 1rem;
-    margin-top: 0.5rem;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 8px;
     display: none;
 }
 
-.quick-select-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
+.employee-info-preview.show {
+    display: block;
 }
 
-.quick-select-item {
-    background: rgba(248, 250, 252, 0.8);
-    border: 1px solid rgba(203, 213, 225, 0.3);
-    border-radius: 8px;
-    padding: 1rem;
-    text-align: center;
-    cursor: pointer;
+/* Conditional Field States */
+.user-assignment-group,
+.location-assignment-group {
     transition: all 0.3s ease;
 }
 
-.quick-select-item:hover {
-    background: rgba(59, 130, 246, 0.1);
-    border-color: #3b82f6;
+.user-assignment-group.disabled,
+.location-assignment-group.disabled {
+    opacity: 0.6;
 }
 
-.quick-select-icon {
-    font-size: 1.5rem;
-    color: #3b82f6;
-    margin-bottom: 0.5rem;
+.user-assignment-group.disabled .form-control,
+.location-assignment-group.disabled .form-control {
+    background-color: rgba(243, 244, 246, 0.8);
+    cursor: not-allowed;
 }
 
-.quick-select-label {
-    font-weight: 500;
-    color: #374151;
-}
-
-/* Responsive Design */
-@media (max-width: 991.98px) {
+@media (max-width: 768px) {
     .create-container {
         padding: 1rem 0;
     }
     
-    .create-header {
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-    
     .section-content {
-        padding: 1.5rem;
+        padding: 1rem;
     }
     
     .form-row {
         grid-template-columns: 1fr;
-        gap: 1rem;
     }
     
     .action-buttons {
         flex-direction: column;
         align-items: stretch;
     }
-}
-
-@media (max-width: 767.98px) {
-    .create-title {
-        font-size: 1.5rem;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
     
-    .form-actions {
-        padding: 1.5rem;
-    }
-    
-    .quick-select-grid {
+    .assignment-mode-options {
         grid-template-columns: 1fr;
     }
 }
@@ -342,15 +370,80 @@
                 <i class="bi bi-plus-circle"></i>
                 Create New Assignment
             </h1>
-            <p class="create-subtitle">
-                Assign a device to an employee for Bangladesh Parliament Secretariat
-            </p>
+            <p class="create-subtitle">Assign devices to employees, locations, or both - Bangladesh Parliament Secretariat</p>
         </div>
 
-        <!-- Assignment Form -->
-        <form method="post" id="assignmentForm">
+        <form method="post" class="assignment-form" novalidate>
             {% csrf_token %}
             
+            <!-- Assignment Mode Selection Section -->
+            <div class="form-section assignment-mode-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="bi bi-diagram-3"></i>
+                        Assignment Type
+                    </h3>
+                </div>
+                <div class="section-content">
+                    <div class="assignment-mode-options">
+                        <div class="mode-option">
+                            <input type="radio" 
+                                   name="assignment_mode" 
+                                   value="USER_ONLY"
+                                   id="mode_USER_ONLY"
+                                   class="form-check-input assignment-mode-radio"
+                                   data-mode="USER_ONLY"
+                                   checked>
+                            <label for="mode_USER_ONLY" class="mode-label">
+                                <div class="mode-icon">
+                                    <i class="bi bi-person-circle"></i>
+                                </div>
+                                <div class="mode-text">
+                                    <span class="mode-title">Assign to User Only</span>
+                                    <span class="mode-description">Assign device to a specific employee</span>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="mode-option">
+                            <input type="radio" 
+                                   name="assignment_mode" 
+                                   value="LOCATION_ONLY"
+                                   id="mode_LOCATION_ONLY"
+                                   class="form-check-input assignment-mode-radio"
+                                   data-mode="LOCATION_ONLY">
+                            <label for="mode_LOCATION_ONLY" class="mode-label">
+                                <div class="mode-icon">
+                                    <i class="bi bi-geo-alt-fill"></i>
+                                </div>
+                                <div class="mode-text">
+                                    <span class="mode-title">Assign to Location Only</span>
+                                    <span class="mode-description">Assign device to a specific location/room</span>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="mode-option">
+                            <input type="radio" 
+                                   name="assignment_mode" 
+                                   value="BOTH"
+                                   id="mode_BOTH"
+                                   class="form-check-input assignment-mode-radio"
+                                   data-mode="BOTH">
+                            <label for="mode_BOTH" class="mode-label">
+                                <div class="mode-icon">
+                                    <i class="bi bi-diagram-2"></i>
+                                </div>
+                                <div class="mode-text">
+                                    <span class="mode-title">Assign to Both User and Location</span>
+                                    <span class="mode-description">Assign device to both employee and location</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Device Selection Section -->
             <div class="form-section">
                 <div class="section-header">
@@ -360,50 +453,45 @@
                     </h3>
                 </div>
                 <div class="section-content">
-                    <div class="alert-info">
-                        <i class="bi bi-info-circle me-2"></i>
-                        Only available devices are shown for assignment.
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="{{ form.device.id_for_label }}" class="form-label required">
-                            <i class="bi bi-laptop"></i>
-                            Device
-                        </label>
-                        {{ form.device }}
-                        {% if form.device.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.device.errors %}
-                                    <i class="bi bi-exclamation-triangle"></i>
-                                    {{ error }}
-                                {% endfor %}
+                    <div class="form-row single">
+                        <div class="form-group">
+                            <label for="{{ form.device.id_for_label }}" class="form-label required">
+                                <i class="bi bi-cpu"></i>
+                                Device
+                            </label>
+                            {{ form.device }}
+                            {% if form.device.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.device.errors %}
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                Select device to assign. Only available devices are shown.
                             </div>
-                        {% endif %}
-                        <div class="form-text">
-                            <i class="bi bi-info-circle"></i>
-                            Select the device to be assigned
-                        </div>
-                        <div class="device-info-preview" id="devicePreview">
-                            <!-- Device details will be loaded here via AJAX -->
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Employee Selection Section -->
-            <div class="form-section">
+            <!-- Assignment Details Section -->
+            <div class="form-section assignment-details-section">
                 <div class="section-header">
                     <h3 class="section-title">
-                        <i class="bi bi-person"></i>
-                        Employee Assignment
+                        <i class="bi bi-person-gear"></i>
+                        Assignment Details
                     </h3>
                 </div>
                 <div class="section-content">
                     <div class="form-row">
-                        <div class="form-group">
-                            <label for="{{ form.assigned_to.id_for_label }}" class="form-label required">
-                                <i class="bi bi-person"></i>
-                                Assigned To
+                        <!-- User Field - Now Conditional -->
+                        <div class="form-group user-assignment-group" id="userAssignmentGroup">
+                            <label for="{{ form.assigned_to.id_for_label }}" class="form-label conditional-required required">
+                                <i class="bi bi-person-check"></i>
+                                Assigned To (Employee)
                             </label>
                             {{ form.assigned_to }}
                             {% if form.assigned_to.errors %}
@@ -416,15 +504,16 @@
                             {% endif %}
                             <div class="form-text">
                                 <i class="bi bi-info-circle"></i>
-                                Select the employee who will receive this device
+                                <span id="userHelpText">Select the employee who will receive this device</span>
                             </div>
                             <div class="employee-info-preview" id="employeePreview">
                                 <!-- Employee details will be loaded here via AJAX -->
                             </div>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="{{ form.assigned_location.id_for_label }}" class="form-label">
+                        <!-- Location Field - Now Conditional -->  
+                        <div class="form-group location-assignment-group" id="locationAssignmentGroup">
+                            <label for="{{ form.assigned_location.id_for_label }}" class="form-label conditional-required">
                                 <i class="bi bi-geo-alt"></i>
                                 Location
                             </label>
@@ -439,19 +528,19 @@
                             {% endif %}
                             <div class="form-text">
                                 <i class="bi bi-info-circle"></i>
-                                Optional: Specify the location where device will be used
+                                <span id="locationHelpText">Specify where the device will be located (optional)</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Assignment Details Section -->
+            <!-- Assignment Configuration Section -->
             <div class="form-section">
                 <div class="section-header">
                     <h3 class="section-title">
                         <i class="bi bi-calendar"></i>
-                        Assignment Details
+                        Assignment Configuration
                     </h3>
                 </div>
                 <div class="section-content">
@@ -478,7 +567,7 @@
                         
                         <div class="form-group">
                             <label for="{{ form.assigned_date.id_for_label }}" class="form-label required">
-                                <i class="bi bi-calendar"></i>
+                                <i class="bi bi-calendar-date"></i>
                                 Assignment Date
                             </label>
                             {{ form.assigned_date }}
@@ -492,7 +581,7 @@
                             {% endif %}
                             <div class="form-text">
                                 <i class="bi bi-info-circle"></i>
-                                Date when the assignment begins
+                                Date when device is assigned
                             </div>
                         </div>
                     </div>
@@ -500,7 +589,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="{{ form.expected_return_date.id_for_label }}" class="form-label">
-                                <i class="bi bi-calendar-event"></i>
+                                <i class="bi bi-calendar-x"></i>
                                 Expected Return Date
                             </label>
                             {{ form.expected_return_date }}
@@ -514,13 +603,13 @@
                             {% endif %}
                             <div class="form-text">
                                 <i class="bi bi-info-circle"></i>
-                                Optional: When should the device be returned?
+                                Expected return date (required for temporary assignments)
                             </div>
                         </div>
                         
                         <div class="form-group">
-                            <label for="{{ form.condition_at_assignment.id_for_label }}" class="form-label">
-                                <i class="bi bi-shield-check"></i>
+                            <label for="{{ form.condition_at_assignment.id_for_label }}" class="form-label required">
+                                <i class="bi bi-check-circle"></i>
                                 Device Condition
                             </label>
                             {{ form.condition_at_assignment }}
@@ -534,15 +623,26 @@
                             {% endif %}
                             <div class="form-text">
                                 <i class="bi bi-info-circle"></i>
-                                Current condition of the device being assigned
+                                Current condition of device being assigned
                             </div>
                         </div>
                     </div>
-                    
+                </div>
+            </div>
+
+            <!-- Assignment Purpose Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="bi bi-chat-text"></i>
+                        Assignment Purpose & Notes
+                    </h3>
+                </div>
+                <div class="section-content">
                     <div class="form-row single">
                         <div class="form-group">
-                            <label for="{{ form.purpose.id_for_label }}" class="form-label">
-                                <i class="bi bi-journal-text"></i>
+                            <label for="{{ form.purpose.id_for_label }}" class="form-label required">
+                                <i class="bi bi-bullseye"></i>
                                 Purpose
                             </label>
                             {{ form.purpose }}
@@ -556,7 +656,29 @@
                             {% endif %}
                             <div class="form-text">
                                 <i class="bi bi-info-circle"></i>
-                                Brief description of why this device is being assigned
+                                Brief description of why device is being assigned
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row single">
+                        <div class="form-group">
+                            <label for="{{ form.assignment_notes.id_for_label }}" class="form-label">
+                                <i class="bi bi-journal-text"></i>
+                                Additional Notes
+                            </label>
+                            {{ form.assignment_notes }}
+                            {% if form.assignment_notes.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.assignment_notes.errors %}
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                Additional notes about this assignment (optional)
                             </div>
                         </div>
                     </div>
@@ -568,15 +690,15 @@
                 <div class="section-header">
                     <h3 class="section-title">
                         <i class="bi bi-telephone"></i>
-                        Emergency Contact
+                        Emergency Contact Information
                     </h3>
                 </div>
                 <div class="section-content">
                     <div class="form-row">
                         <div class="form-group">
                             <label for="{{ form.emergency_contact.id_for_label }}" class="form-label">
-                                <i class="bi bi-person-lines-fill"></i>
-                                Emergency Contact Name
+                                <i class="bi bi-person-badge"></i>
+                                Emergency Contact Person
                             </label>
                             {{ form.emergency_contact }}
                             {% if form.emergency_contact.errors %}
@@ -589,14 +711,14 @@
                             {% endif %}
                             <div class="form-text">
                                 <i class="bi bi-info-circle"></i>
-                                Optional: Alternative contact person
+                                Emergency contact person in case device is lost/damaged
                             </div>
                         </div>
                         
                         <div class="form-group">
                             <label for="{{ form.emergency_phone.id_for_label }}" class="form-label">
-                                <i class="bi bi-telephone"></i>
-                                Emergency Phone
+                                <i class="bi bi-phone"></i>
+                                Emergency Contact Phone
                             </label>
                             {{ form.emergency_phone }}
                             {% if form.emergency_phone.errors %}
@@ -609,56 +731,9 @@
                             {% endif %}
                             <div class="form-text">
                                 <i class="bi bi-info-circle"></i>
-                                Optional: Emergency contact phone number
+                                Emergency contact phone number (Bangladesh format)
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Notes Section -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h3 class="section-title">
-                        <i class="bi bi-sticky"></i>
-                        Additional Information
-                    </h3>
-                </div>
-                <div class="section-content">
-                    <div class="form-group">
-                        <label for="{{ form.assignment_notes.id_for_label }}" class="form-label">
-                            <i class="bi bi-sticky"></i>
-                            Assignment Notes
-                        </label>
-                        {{ form.assignment_notes }}
-                        {% if form.assignment_notes.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.assignment_notes.errors %}
-                                    <i class="bi bi-exclamation-triangle"></i>
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                        <div class="form-text">
-                            <i class="bi bi-info-circle"></i>
-                            Any additional notes or special instructions for this assignment
-                        </div>
-                    </div>
-                    
-                    <div class="form-check">
-                        {{ form.acknowledgment_received }}
-                        <label for="{{ form.acknowledgment_received.id_for_label }}" class="form-check-label">
-                            <i class="bi bi-check-square"></i>
-                            I acknowledge that the employee has received and accepted this device assignment
-                        </label>
-                        {% if form.acknowledgment_received.errors %}
-                            <div class="invalid-feedback d-block mt-2">
-                                {% for error in form.acknowledgment_received.errors %}
-                                    <i class="bi bi-exclamation-triangle"></i>
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -666,19 +741,15 @@
             <!-- Form Actions -->
             <div class="form-actions">
                 <div class="action-buttons">
-                    <div>
-                        <small class="text-muted">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Required fields are marked with <span class="text-danger">*</span>
-                        </small>
-                    </div>
-                    <div class="d-flex gap-3">
+                    <div class="d-flex gap-2">
                         <a href="{% url 'assignments:list' %}" class="btn btn-secondary">
                             <i class="bi bi-arrow-left"></i>
                             Cancel
                         </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-lg"></i>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" id="submitButton">
+                            <i class="bi bi-check-circle"></i>
                             Create Assignment
                         </button>
                     </div>
@@ -687,70 +758,365 @@
         </form>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-// Assignment Create Form JavaScript
 document.addEventListener('DOMContentLoaded', function() {
-    // Device selection preview
-    const deviceSelect = document.getElementById('{{ form.device.id_for_label }}');
-    const devicePreview = document.getElementById('devicePreview');
+    // Assignment Mode Selection Logic
+    const modeRadios = document.querySelectorAll('.assignment-mode-radio');
+    const userGroup = document.getElementById('userAssignmentGroup');
+    const locationGroup = document.getElementById('locationAssignmentGroup');
+    const userField = document.querySelector('[name="assigned_to"]');
+    const locationField = document.querySelector('[name="assigned_location"]');
     
-    if (deviceSelect) {
-        deviceSelect.addEventListener('change', function() {
-            if (this.value) {
-                // Show device preview
-                devicePreview.style.display = 'block';
-                devicePreview.innerHTML = '<i class="bi bi-hourglass-split"></i> Loading device information...';
-                
-                // You can add AJAX call here to fetch device details
-            } else {
-                devicePreview.style.display = 'none';
-            }
+    // Handle assignment mode changes
+    modeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            updateFieldRequirements(this.value);
         });
+    });
+    
+    function updateFieldRequirements(mode) {
+        // Reset all states
+        userGroup.style.display = 'block';
+        locationGroup.style.display = 'block';
+        userGroup.classList.remove('disabled');
+        locationGroup.classList.remove('disabled');
+        
+        // Remove all required states
+        removeRequired(userField, userGroup);
+        removeRequired(locationField, locationGroup);
+        
+        switch(mode) {
+            case 'USER_ONLY':
+                addRequired(userField, userGroup);
+                updateHelpText('userHelpText', 'Select the employee who will receive this device');
+                updateHelpText('locationHelpText', 'Location is optional for user-only assignments');
+                break;
+                
+            case 'LOCATION_ONLY':
+                addRequired(locationField, locationGroup);
+                userGroup.classList.add('disabled');
+                userField.value = '';
+                updateHelpText('locationHelpText', 'Select the location where device will be stationed');
+                updateHelpText('userHelpText', 'User is not required for location-only assignments');
+                break;
+                
+            case 'BOTH':
+                addRequired(userField, userGroup);
+                addRequired(locationField, locationGroup);
+                updateHelpText('userHelpText', 'Select the employee responsible for this device');
+                updateHelpText('locationHelpText', 'Select the location where device will be used');
+                break;
+        }
     }
     
-    // Employee selection preview
-    const employeeSelect = document.getElementById('{{ form.assigned_to.id_for_label }}');
+    function addRequired(field, group) {
+        field.setAttribute('required', 'required');
+        const label = group.querySelector('.form-label');
+        label.classList.add('required');
+    }
+    
+    function removeRequired(field, group) {
+        field.removeAttribute('required');
+        const label = group.querySelector('.form-label');
+        label.classList.remove('required');
+    }
+    
+    function updateHelpText(elementId, text) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = text;
+        }
+    }
+    
+    // Initialize with first mode
+    const checkedRadio = document.querySelector('.assignment-mode-radio:checked');
+    if (checkedRadio) {
+        updateFieldRequirements(checkedRadio.value);
+    }
+    
+    // Employee Selection Preview (AJAX)
+    const employeeSelect = document.querySelector('[name="assigned_to"]');
     const employeePreview = document.getElementById('employeePreview');
     
     if (employeeSelect) {
         employeeSelect.addEventListener('change', function() {
             if (this.value) {
-                // Show employee preview
-                employeePreview.style.display = 'block';
-                employeePreview.innerHTML = '<i class="bi bi-hourglass-split"></i> Loading employee information...';
-                
-                // You can add AJAX call here to fetch employee details
+                fetchEmployeeInfo(this.value);
             } else {
-                employeePreview.style.display = 'none';
+                employeePreview.classList.remove('show');
+                employeePreview.innerHTML = '';
             }
         });
     }
     
-    // Set default assignment date to today
-    const assignmentDateField = document.getElementById('{{ form.assigned_date.id_for_label }}');
-    if (assignmentDateField && !assignmentDateField.value) {
-        const today = new Date();
-        const todayString = today.toISOString().split('T')[0];
-        assignmentDateField.value = todayString;
+    function fetchEmployeeInfo(userId) {
+        fetch(`/users/lookup/${userId}/`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                employeePreview.innerHTML = `
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="employee-avatar">
+                            <i class="bi bi-person-circle" style="font-size: 2rem; color: #10b981;"></i>
+                        </div>
+                        <div class="employee-details">
+                            <div class="fw-bold text-success">${data.user.full_name}</div>
+                            <div class="small text-muted">
+                                <span class="me-3"><i class="bi bi-card-text me-1"></i>ID: ${data.user.employee_id || 'N/A'}</span>
+                                <span class="me-3"><i class="bi bi-briefcase me-1"></i>${data.user.department || 'N/A'}</span>
+                                <span><i class="bi bi-envelope me-1"></i>${data.user.email || 'N/A'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                employeePreview.classList.add('show');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching employee info:', error);
+            employeePreview.classList.remove('show');
+        });
     }
     
-    // Form validation
-    const form = document.getElementById('assignmentForm');
-    if (form) {
+    // Assignment Type conditional logic
+    const assignmentTypeSelect = document.querySelector('[name="assignment_type"]');
+    const returnDateGroup = document.querySelector('[name="expected_return_date"]').closest('.form-group');
+    const returnDateLabel = returnDateGroup.querySelector('.form-label');
+    
+    if (assignmentTypeSelect) {
+        assignmentTypeSelect.addEventListener('change', function() {
+            if (this.value === 'TEMPORARY') {
+                returnDateLabel.classList.add('required');
+                document.querySelector('[name="expected_return_date"]').setAttribute('required', 'required');
+            } else {
+                returnDateLabel.classList.remove('required');
+                document.querySelector('[name="expected_return_date"]').removeAttribute('required');
+                if (this.value === 'PERMANENT') {
+                    document.querySelector('[name="expected_return_date"]').value = '';
+                }
+            }
+        });
+        
+        // Initialize on page load
+        if (assignmentTypeSelect.value === 'TEMPORARY') {
+            returnDateLabel.classList.add('required');
+            document.querySelector('[name="expected_return_date"]').setAttribute('required', 'required');
+        }
+    }
+    
+    // Form validation enhancement
+    const form = document.querySelector('.assignment-form');
+    const submitButton = document.getElementById('submitButton');
+    
+    if (form && submitButton) {
         form.addEventListener('submit', function(e) {
-            // Basic validation can be added here
-            const device = document.getElementById('{{ form.device.id_for_label }}').value;
-            const assignedTo = document.getElementById('{{ form.assigned_to.id_for_label }}').value;
-            const assignmentType = document.getElementById('{{ form.assignment_type.id_for_label }}').value;
+            // Add loading state
+            submitButton.classList.add('btn-loading');
+            submitButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Creating Assignment...';
+            submitButton.disabled = true;
             
-            if (!device || !assignedTo || !assignmentType) {
+            // Validate assignment mode requirements
+            const selectedMode = document.querySelector('.assignment-mode-radio:checked').value;
+            const userValue = userField.value;
+            const locationValue = locationField.value;
+            
+            let validationError = null;
+            
+            switch(selectedMode) {
+                case 'USER_ONLY':
+                    if (!userValue) {
+                        validationError = 'Please select an employee for user-only assignment.';
+                    }
+                    break;
+                case 'LOCATION_ONLY':
+                    if (!locationValue) {
+                        validationError = 'Please select a location for location-only assignment.';
+                    }
+                    break;
+                case 'BOTH':
+                    if (!userValue || !locationValue) {
+                        validationError = 'Please select both employee and location for this assignment type.';
+                    }
+                    break;
+            }
+            
+            if (validationError) {
                 e.preventDefault();
-                alert('Please fill in all required fields.');
-                return false;
+                alert(validationError);
+                submitButton.classList.remove('btn-loading');
+                submitButton.innerHTML = '<i class="bi bi-check-circle"></i> Create Assignment';
+                submitButton.disabled = false;
+                return;
+            }
+            
+            // Additional device selection validation
+            const deviceValue = document.querySelector('[name="device"]').value;
+            if (!deviceValue) {
+                e.preventDefault();
+                alert('Please select a device to assign.');
+                submitButton.classList.remove('btn-loading');
+                submitButton.innerHTML = '<i class="bi bi-check-circle"></i> Create Assignment';
+                submitButton.disabled = false;
+                return;
+            }
+            
+            // Additional purpose validation
+            const purposeValue = document.querySelector('[name="purpose"]').value.trim();
+            if (!purposeValue || purposeValue.length < 5) {
+                e.preventDefault();
+                alert('Please provide a meaningful assignment purpose (at least 5 characters).');
+                submitButton.classList.remove('btn-loading');
+                submitButton.innerHTML = '<i class="bi bi-check-circle"></i> Create Assignment';
+                submitButton.disabled = false;
+                return;
+            }
+        });
+    }
+    
+    // Device selection enhancement
+    const deviceSelect = document.querySelector('[name="device"]');
+    if (deviceSelect) {
+        deviceSelect.addEventListener('change', function() {
+            if (this.value) {
+                // You can add AJAX call here to fetch device details
+                console.log('Device selected:', this.value);
+            }
+        });
+    }
+    
+    // Auto-focus on first visible required field
+    const firstRequiredField = document.querySelector('.form-control[required], .form-select[required]');
+    if (firstRequiredField && firstRequiredField.offsetParent !== null) {
+        firstRequiredField.focus();
+    }
+    
+    // Responsive form adjustments
+    function adjustFormLayout() {
+        const isMobile = window.innerWidth <= 768;
+        const formRows = document.querySelectorAll('.form-row:not(.single)');
+        
+        formRows.forEach(row => {
+            if (isMobile) {
+                row.style.gridTemplateColumns = '1fr';
+            } else {
+                row.style.gridTemplateColumns = 'repeat(auto-fit, minmax(280px, 1fr))';
+            }
+        });
+    }
+    
+    // Initial layout adjustment
+    adjustFormLayout();
+    
+    // Adjust on window resize
+    window.addEventListener('resize', adjustFormLayout);
+    
+    // Enhanced error handling for form fields
+    const formFields = document.querySelectorAll('.form-control, .form-select');
+    formFields.forEach(field => {
+        field.addEventListener('blur', function() {
+            if (this.hasAttribute('required') && !this.value) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        });
+        
+        field.addEventListener('input', function() {
+            if (this.classList.contains('is-invalid') && this.value) {
+                this.classList.remove('is-invalid');
+            }
+        });
+    });
+    
+    // Phone number formatting for Bangladesh
+    const phoneField = document.querySelector('[name="emergency_phone"]');
+    if (phoneField) {
+        phoneField.addEventListener('input', function() {
+            let value = this.value.replace(/\D/g, ''); // Remove non-digits
+            
+            // Format Bangladesh phone numbers
+            if (value.length > 0) {
+                if (value.startsWith('880')) {
+                    // International format
+                    value = value.replace(/^(880)(\d{3})(\d{3})(\d{4}).*/, '+$1 $2 $3 $4');
+                } else if (value.length === 11 && value.startsWith('01')) {
+                    // National format
+                    value = value.replace(/^(\d{3})(\d{4})(\d{4}).*/, '$1-$2-$3');
+                }
+            }
+            
+            this.value = value;
+        });
+        
+        phoneField.addEventListener('blur', function() {
+            const phonePattern = /^(\+880|880|0)?(13|14|15|16|17|18|19)\d{8}$/;
+            const cleanPhone = this.value.replace(/\D/g, '');
+            
+            if (this.value && !phonePattern.test(cleanPhone)) {
+                this.classList.add('is-invalid');
+                this.setCustomValidity('Please enter a valid Bangladesh phone number');
+            } else {
+                this.classList.remove('is-invalid');
+                this.setCustomValidity('');
             }
         });
     }
 });
+
+// Additional utility functions for assignment form
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Form data validation helper
+function validateAssignmentForm(formData) {
+    const errors = [];
+    
+    // Check assignment mode consistency
+    const mode = document.querySelector('.assignment-mode-radio:checked')?.value;
+    const user = formData.get('assigned_to');
+    const location = formData.get('assigned_location');
+    
+    switch(mode) {
+        case 'USER_ONLY':
+            if (!user) errors.push('User selection is required for user-only assignments');
+            break;
+        case 'LOCATION_ONLY':
+            if (!location) errors.push('Location selection is required for location-only assignments');
+            if (user) errors.push('User should not be selected for location-only assignments');
+            break;
+        case 'BOTH':
+            if (!user) errors.push('User selection is required for both user and location assignments');
+            if (!location) errors.push('Location selection is required for both user and location assignments');
+            break;
+    }
+    
+    return errors;
+}
 </script>
 {% endblock %}

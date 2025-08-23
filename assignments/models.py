@@ -84,8 +84,10 @@ class Assignment(models.Model):
     assigned_to = models.ForeignKey(
         'users.CustomUser',
         on_delete=models.CASCADE,
+        null=True,  #  Allow null for location-only assignments
+        blank=True,  #  Allow blank in forms
         related_name='device_assignments',
-        help_text="User receiving the device assignment"
+        help_text="User receiving the device assignment (required for user assignments)"
     )
     assigned_by = models.ForeignKey(
         'users.CustomUser',
@@ -242,8 +244,18 @@ class Assignment(models.Model):
         self.update_device_status()
     
     def clean(self):
-        """Validate assignment data."""
+        """Enhanced validation for assignment modes"""
         errors = {}
+        
+        # ✅ NEW: Ensure at least user OR location is assigned
+        if not self.assigned_to and not self.assigned_location:
+            errors['__all__'] = "Assignment must have either a user, location, or both."
+        
+        # Existing device validation...
+        # Existing date validation...
+        
+        if errors:
+            raise ValidationError(errors)
         
         # Check if device is available for assignment
         if self.device and self.status == 'ASSIGNED':

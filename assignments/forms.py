@@ -54,7 +54,7 @@ class AssignmentForm(forms.ModelForm):
             }),
             'assigned_location': forms.Select(attrs={
                 'class': 'form-select location-selector',
-                'data-placeholder': 'Select location (optional)...'
+                'data-placeholder': 'Select location...'
             }),
             'assignment_type': forms.Select(attrs={
                 'class': 'form-select assignment-type-selector'
@@ -123,7 +123,7 @@ class AssignmentForm(forms.ModelForm):
         self.fields['assigned_location'].queryset = Location.objects.filter(
             is_active=True
         ).order_by('name')
-        self.fields['assigned_location'].empty_label = "Select location (optional)..."
+        self.fields['assigned_location'].empty_label = "Select location..."
         
         # Set defaults for new assignments
         if not self.editing:

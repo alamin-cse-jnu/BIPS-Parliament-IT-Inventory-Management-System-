@@ -48,24 +48,24 @@ prp_patterns = [
     
     # PRP User Lookup and Management
     path('lookup/<str:employee_id>/', views.prp_user_lookup, name='prp_user_lookup'),
-    path('search/', views.prp_user_search, name='prp_user_search'),
+    # path('search/', views.prp_user_search, name='prp_user_search'),
     
     # Individual User Sync Operations
     path('<int:pk>/sync/', views.prp_sync_single_user, name='prp_sync_single_user'),
-    path('<int:pk>/sync/force/', views.prp_force_sync_single_user, name='prp_force_sync_user'),
+    # path('<int:pk>/sync/force/', views.prp_force_sync_single_user, name='prp_force_sync_user'),
     
     # Bulk Operations
     path('sync/bulk/', views.prp_bulk_sync_users, name='prp_bulk_sync'),
     path('sync/department/<int:department_id>/', views.prp_sync_department_users, name='prp_sync_department'),
     
     # PRP Status and Health Check
-    path('health/', views.prp_health_check, name='prp_health_check'),
-    path('api-status/', views.prp_api_status, name='prp_api_status'),
+    #path('health/', views.prp_health_check, name='prp_health_check'),
+    #path('api-status/', views.prp_api_status, name='prp_api_status'),
     
     # PRP Reports and Analytics
     path('reports/', views.prp_sync_reports, name='prp_sync_reports'),
     path('reports/sync-history/', views.prp_sync_history, name='prp_sync_history'),
-    path('reports/errors/', views.prp_error_reports, name='prp_error_reports'),
+    #path('reports/errors/', views.prp_error_reports, name='prp_error_reports'),
 ]
 
 # ============================================================================
@@ -130,25 +130,25 @@ search_reporting_patterns = [
     
     # User Reports and Analytics
     path('reports/', views.UserReportsView.as_view(), name='reports'),
-    path('export/', views.UserExportView.as_view(), name='export'),
-    path('statistics/', views.UserStatisticsView.as_view(), name='statistics'),
+    #path('export/', views.UserExportView.as_view(), name='export'),
+    #path('statistics/', views.UserStatisticsView.as_view(), name='statistics'),
 ]
 
 # AJAX API endpoints for dynamic functionality
 api_patterns = [
     # User data endpoints
-    path('api/user-info/<int:user_id>/', views.get_user_info_ajax, name='api_user_info'),
-    path('api/validate-employee-id/', views.validate_employee_id_ajax, name='api_validate_employee_id'),
-    path('api/validate-username/', views.validate_username_ajax, name='api_validate_username'),
+    # path('api/user-info/<int:user_id>/', views.get_user_info_ajax, name='api_user_info'),
+    # path('api/validate-employee-id/', views.validate_employee_id_ajax, name='api_validate_employee_id'),
+    # path('api/validate-username/', views.validate_username_ajax, name='api_validate_username'),
     
-    # PRP-specific API endpoints
-    path('api/prp-user-check/<str:employee_id>/', views.check_prp_user_exists, name='api_prp_user_check'),
-    path('api/prp-departments/', views.get_prp_departments_ajax, name='api_prp_departments'),
-    path('api/prp-sync-progress/', views.get_prp_sync_progress, name='api_prp_sync_progress'),
+    # # PRP-specific API endpoints
+    # path('api/prp-user-check/<str:employee_id>/', views.check_prp_user_exists, name='api_prp_user_check'),
+    # path('api/prp-departments/', views.get_prp_departments_ajax, name='api_prp_departments'),
+    # path('api/prp-sync-progress/', views.get_prp_sync_progress, name='api_prp_sync_progress'),
     
-    # Dashboard statistics
-    path('api/user-stats/', views.get_user_statistics_ajax, name='api_user_stats'),
-    path('api/prp-stats/', views.get_prp_statistics_ajax, name='api_prp_stats'),
+    # # Dashboard statistics
+    # path('api/user-stats/', views.get_user_statistics_ajax, name='api_user_stats'),
+    # path('api/prp-stats/', views.get_prp_statistics_ajax, name='api_prp_stats'),
 ]
 
 # ============================================================================

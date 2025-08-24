@@ -618,7 +618,7 @@ class UserDeleteView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
 
 # ============================================================================
-# PRP SYNC ENDPOINTS (NEW)
+# PRP SYNC ENDPOINTS 
 # ============================================================================
 
 @method_decorator([login_required, staff_member_required], name='dispatch')
@@ -2136,6 +2136,729 @@ def get_user_status_summary():
             'prp_integration_available': PRP_INTEGRATION_AVAILABLE,
             'error': str(e)
         }
+
+
+
+# ============================================================================
+
+# PRP sync
+# ============================================================================
+
+@require_http_methods(["GET", "POST"])
+@login_required
+@staff_member_required
+def prp_sync_departments(request):
+    """
+    View to sync and refresh departments from PRP API.
+    
+    This view manages department synchronization from Parliament Resource Portal
+    for accurate office field mapping during user sync operations.
+    
+    Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
+    """
+    if not PRP_INTEGRATION_AVAILABLE:
+        messages.error(request, 'PRP integration is not available.')
+        return redirect('users:list')
+    
+    context = {
+        'page_title': 'PRP Department Synchronization',
+        'breadcrumb_items': [
+            {'name': 'Users', 'url': reverse('users:list')},
+            {'name': 'PRP Integration', 'url': '#'},
+            {'name': 'Sync Departments', 'url': ''},
+        ]
+    }
+    
+    if request.method == 'POST':
+        try:
+            # Initialize PRP client and sync service
+            prp_client = create_prp_client()
+            sync_service = PRPSyncService(prp_client)
+            
+            # Get sync options from form
+            force_sync = request.POST.get('force_sync', False)
+            dry_run = request.POST.get('dry_run', False)
+            
+            logger.info(
+                f"Starting PRP department sync - Force: {force_sync}, Dry Run: {dry_run}",
+                extra={'user': request.user.username, 'location': 'Dhaka, Bangladesh'}
+            )
+            
+            # Perform department synchronization
+            with transaction.atomic():
+                if not dry_run:
+                    savepoint = transaction.savepoint()
+                
+                try:
+                    # Sync departments from PRP
+                    dept_result = sync_service.sync_departments(force_refresh=force_sync)
+                    
+                    if not dry_run and not dept_result.success:
+                        transaction.savepoint_rollback(savepoint)
+                        raise PRPSyncError("Department sync failed", details=dept_result.errors)
+                    
+                    # Prepare success message
+                    if dry_run:
+                        message = f"Dry Run Complete: Would sync {dept_result.departments_processed} departments"
+                    else:
+                        message = f"Successfully synced {dept_result.departments_processed} departments from PRP"
+                        transaction.savepoint_commit(savepoint)
+                    
+                    messages.success(request, message)
+                    context['sync_result'] = dept_result
+                    
+                except Exception as e:
+                    if not dry_run:
+                        transaction.savepoint_rollback(savepoint)
+                    raise
+                    
+        except (PRPConnectionError, PRPAuthenticationError, PRPSyncError) as e:
+            logger.error(f"PRP error during department sync: {e}")
+            messages.error(request, f'Department sync failed: {e.message if hasattr(e, "message") else str(e)}')
+            
+        except Exception as e:
+            logger.error(f"Unexpected error during department sync: {e}", exc_info=True)
+            messages.error(request, f'Department sync failed: {str(e)}')
+    
+    # Get current department cache status
+    try:
+        from django.core.cache import cache
+        cached_departments = cache.get('prp_departments', [])
+        last_sync_time = cache.get('prp_departments_last_sync')
+        
+        context.update({
+            'cached_departments_count': len(cached_departments),
+            'last_sync_time': last_sync_time,
+            'cache_expired': (
+                not last_sync_time or 
+                (timezone.now() - last_sync_time).total_seconds() > 86400  # 24 hours
+            ),
+            'departments_sample': cached_departments[:5] if cached_departments else []
+        })
+        
+    except Exception as e:
+        logger.warning(f"Could not get department cache status: {e}")
+        context['cache_error'] = str(e)
+    
+    return render(request, 'users/prp_sync_departments.html', context)
+
+
+@require_http_methods(["POST"])
+@login_required
+@staff_member_required
+def prp_departments_refresh(request):
+    """
+    AJAX endpoint to refresh department cache from PRP API.
+    
+    Forces a refresh of the department cache, bypassing normal cache timeout.
+    Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
+    """
+    if not PRP_INTEGRATION_AVAILABLE:
+        return JsonResponse({
+            'success': False,
+            'error': 'PRP integration is not available.'
+        }, status=503)
+    
+    try:
+        prp_client = create_prp_client()
+        sync_service = PRPSyncService(prp_client)
+        
+        # Force refresh departments
+        result = sync_service.sync_departments(force_refresh=True)
+        
+        if result.success:
+            return JsonResponse({
+                'success': True,
+                'message': f'Refreshed {result.departments_processed} departments',
+                'departments_count': result.departments_processed,
+                'timestamp': timezone.now().isoformat()
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'Department refresh failed',
+                'details': result.errors
+            }, status=500)
+            
+    except Exception as e:
+        logger.error(f"Error during department refresh: {e}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'Department refresh failed: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["GET", "POST"])
+@login_required
+@staff_member_required
+def prp_bulk_sync_users(request):
+    """
+    View for bulk user synchronization from PRP.
+    
+    Handles bulk synchronization of users from multiple departments
+    with comprehensive progress tracking and error handling.
+    
+    Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
+    """
+    if not PRP_INTEGRATION_AVAILABLE:
+        messages.error(request, 'PRP integration is not available.')
+        return redirect('users:list')
+    
+    context = {
+        'page_title': 'PRP Bulk User Synchronization',
+        'breadcrumb_items': [
+            {'name': 'Users', 'url': reverse('users:list')},
+            {'name': 'PRP Integration', 'url': '#'},
+            {'name': 'Bulk Sync Users', 'url': ''},
+        ]
+    }
+    
+    if request.method == 'POST':
+        try:
+            # Initialize PRP client and sync service
+            prp_client = create_prp_client()
+            sync_service = PRPSyncService(prp_client)
+            
+            # Get sync parameters
+            selected_departments = request.POST.getlist('departments', [])
+            sync_all = request.POST.get('sync_all', False) == 'on'
+            force_sync = request.POST.get('force_sync', False) == 'on'
+            dry_run = request.POST.get('dry_run', False) == 'on'
+            update_inactive = request.POST.get('update_inactive', False) == 'on'
+            
+            # Validation
+            if not sync_all and not selected_departments:
+                messages.error(request, 'Please select departments to sync or choose "Sync All"')
+                return render(request, 'users/prp_bulk_sync_users.html', context)
+            
+            logger.info(
+                f"Starting bulk PRP user sync",
+                extra={
+                    'user': request.user.username,
+                    'departments': selected_departments if not sync_all else 'ALL',
+                    'force_sync': force_sync,
+                    'dry_run': dry_run,
+                    'location': 'Bangladesh Parliament Secretariat, Dhaka'
+                }
+            )
+            
+            # Perform bulk synchronization
+            with transaction.atomic():
+                if not dry_run:
+                    savepoint = transaction.savepoint()
+                
+                try:
+                    if sync_all:
+                        # Sync all departments
+                        sync_result = sync_service.sync_all_departments(
+                            force_sync=force_sync,
+                            update_inactive_users=update_inactive,
+                            dry_run=dry_run
+                        )
+                    else:
+                        # Sync selected departments
+                        sync_result = sync_service.sync_multiple_departments(
+                            department_ids=[int(d) for d in selected_departments if d.isdigit()],
+                            force_sync=force_sync,
+                            update_inactive_users=update_inactive,
+                            dry_run=dry_run
+                        )
+                    
+                    if not dry_run and not sync_result.success:
+                        transaction.savepoint_rollback(savepoint)
+                        raise PRPSyncError("Bulk user sync failed", details=sync_result.errors)
+                    
+                    # Prepare success message
+                    if dry_run:
+                        message = (
+                            f"Dry Run Complete: Would process {sync_result.users_created + sync_result.users_updated} users "
+                            f"from {sync_result.departments_processed} departments"
+                        )
+                    else:
+                        message = (
+                            f"Bulk sync completed successfully! "
+                            f"Created: {sync_result.users_created}, "
+                            f"Updated: {sync_result.users_updated}, "
+                            f"Departments: {sync_result.departments_processed}"
+                        )
+                        transaction.savepoint_commit(savepoint)
+                    
+                    messages.success(request, message)
+                    context['sync_result'] = sync_result
+                    
+                except Exception as e:
+                    if not dry_run:
+                        transaction.savepoint_rollback(savepoint)
+                    raise
+                    
+        except Exception as e:
+            logger.error(f"Error during bulk sync: {e}", exc_info=True)
+            messages.error(request, f'Bulk sync failed: {str(e)}')
+    
+    # Get available departments for selection
+    try:
+        from django.core.cache import cache
+        departments = cache.get('prp_departments', [])
+        context['departments'] = departments
+        
+        # Get current sync statistics
+        context['sync_stats'] = {
+            'total_users': CustomUser.objects.count(),
+            'prp_users': CustomUser.objects.filter(is_prp_managed=True).count() if hasattr(CustomUser, 'is_prp_managed') else 0,
+            'never_synced': CustomUser.objects.filter(
+                is_prp_managed=True,
+                prp_last_sync__isnull=True
+            ).count() if hasattr(CustomUser, 'is_prp_managed') else 0,
+        }
+        
+    except Exception as e:
+        logger.warning(f"Could not load departments or sync stats: {e}")
+        context['departments'] = []
+        context['load_error'] = str(e)
+    
+    return render(request, 'users/prp_bulk_sync_users.html', context)
+
+
+@require_http_methods(["GET", "POST"])
+@login_required
+@staff_member_required
+def prp_sync_department_users(request, department_id=None):
+    """
+    View to sync users from a specific PRP department.
+    
+    Handles synchronization of users from a single department,
+    with detailed progress tracking and error handling.
+    
+    Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
+    """
+    if not PRP_INTEGRATION_AVAILABLE:
+        messages.error(request, 'PRP integration is not available.')
+        return redirect('users:list')
+    
+    # If no department_id provided, show department selection
+    if not department_id and request.method == 'GET':
+        try:
+            from django.core.cache import cache
+            departments = cache.get('prp_departments', [])
+            
+            context = {
+                'page_title': 'Select Department for User Sync',
+                'departments': departments,
+                'breadcrumb_items': [
+                    {'name': 'Users', 'url': reverse('users:list')},
+                    {'name': 'PRP Integration', 'url': '#'},
+                    {'name': 'Department User Sync', 'url': ''},
+                ]
+            }
+            
+            return render(request, 'users/prp_select_department.html', context)
+            
+        except Exception as e:
+            logger.error(f"Could not load departments: {e}")
+            messages.error(request, f'Could not load departments: {str(e)}')
+            return redirect('users:list')
+    
+    # Handle department selection from POST
+    if not department_id and request.method == 'POST':
+        department_id = request.POST.get('department_id')
+        if not department_id:
+            messages.error(request, 'Please select a department')
+            return redirect('users:prp_sync_department_users')
+    
+    # Convert to int and validate
+    try:
+        department_id = int(department_id)
+    except (ValueError, TypeError):
+        messages.error(request, 'Invalid department ID')
+        return redirect('users:prp_sync_department_users')
+    
+    context = {
+        'page_title': f'PRP Department User Sync (Dept {department_id})',
+        'department_id': department_id,
+        'breadcrumb_items': [
+            {'name': 'Users', 'url': reverse('users:list')},
+            {'name': 'PRP Integration', 'url': '#'},
+            {'name': f'Sync Dept {department_id}', 'url': ''},
+        ]
+    }
+    
+    if request.method == 'POST':
+        try:
+            # Initialize PRP client and sync service
+            prp_client = create_prp_client()
+            sync_service = PRPSyncService(prp_client)
+            
+            # Get sync options
+            force_sync = request.POST.get('force_sync', False) == 'on'
+            dry_run = request.POST.get('dry_run', False) == 'on'
+            update_inactive = request.POST.get('update_inactive', False) == 'on'
+            
+            logger.info(
+                f"Starting department user sync for department {department_id}",
+                extra={
+                    'user': request.user.username,
+                    'department_id': department_id,
+                    'force_sync': force_sync,
+                    'dry_run': dry_run,
+                    'location': 'Bangladesh Parliament Secretariat, Dhaka'
+                }
+            )
+            
+            # Perform department user synchronization
+            with transaction.atomic():
+                if not dry_run:
+                    savepoint = transaction.savepoint()
+                
+                try:
+                    # Sync users from specific department
+                    sync_result = sync_service.sync_department_users(
+                        department_id=department_id,
+                        force_sync=force_sync,
+                        update_inactive_users=update_inactive,
+                        dry_run=dry_run
+                    )
+                    
+                    if not dry_run and not sync_result.success:
+                        transaction.savepoint_rollback(savepoint)
+                        raise PRPSyncError(f"Department {department_id} sync failed", details=sync_result.errors)
+                    
+                    # Prepare success message
+                    if dry_run:
+                        message = (
+                            f"Dry Run Complete: Would process {sync_result.users_created + sync_result.users_updated} users "
+                            f"from department {department_id}"
+                        )
+                    else:
+                        message = (
+                            f"Department sync completed successfully! "
+                            f"Created: {sync_result.users_created}, "
+                            f"Updated: {sync_result.users_updated}, "
+                            f"Skipped: {sync_result.users_skipped}"
+                        )
+                        transaction.savepoint_commit(savepoint)
+                    
+                    messages.success(request, message)
+                    context['sync_result'] = sync_result
+                    
+                except Exception as e:
+                    if not dry_run:
+                        transaction.savepoint_rollback(savepoint)
+                    raise
+                    
+        except Exception as e:
+            logger.error(f"Error during department sync: {e}", exc_info=True)
+            messages.error(request, f'Department sync failed: {str(e)}')
+    
+    # Get existing users from this department
+    try:
+        from django.core.cache import cache
+        departments = cache.get('prp_departments', [])
+        dept_info = next((d for d in departments if d.get('id') == department_id), None)
+        
+        if dept_info:
+            context['department_name'] = dept_info.get('nameEng', f'Department {department_id}')
+            # Get existing users from this department  
+            if hasattr(CustomUser, 'is_prp_managed'):
+                existing_users = CustomUser.objects.filter(
+                    office=dept_info.get('nameEng'),
+                    is_prp_managed=True
+                ).order_by('first_name', 'last_name')[:10]  # Limit for display
+                context['existing_users'] = existing_users
+                context['existing_users_count'] = CustomUser.objects.filter(
+                    office=dept_info.get('nameEng'),
+                    is_prp_managed=True
+                ).count()
+        else:
+            context['department_name'] = f'Department {department_id}'
+            
+    except Exception as e:
+        logger.warning(f"Could not load department info: {e}")
+    
+    return render(request, 'users/prp_sync_department_users.html', context)
+
+
+@require_http_methods(["GET"])
+@login_required
+@staff_member_required
+def prp_sync_reports(request):
+    """
+    View to display PRP synchronization reports and analytics.
+    
+    Provides comprehensive reporting on PRP sync operations including:
+    - Sync operation history and status
+    - User synchronization statistics  
+    - Department coverage analysis
+    - Error reporting and troubleshooting
+    
+    Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
+    """
+    if not PRP_INTEGRATION_AVAILABLE:
+        messages.error(request, 'PRP integration is not available.')
+        return redirect('users:list')
+    
+    try:
+        # Get date filter parameters
+        days_back = int(request.GET.get('days', 30))  # Default last 30 days
+        start_date = timezone.now() - timedelta(days=days_back)
+        
+        # Basic sync statistics
+        total_users = CustomUser.objects.count()
+        prp_users = CustomUser.objects.filter(is_prp_managed=True).count() if hasattr(CustomUser, 'is_prp_managed') else 0
+        local_users = total_users - prp_users
+        
+        # Sync status analysis (only if PRP fields exist)
+        sync_stats = {}
+        if hasattr(CustomUser, 'is_prp_managed'):
+            never_synced = CustomUser.objects.filter(
+                is_prp_managed=True,
+                prp_last_sync__isnull=True
+            ).count()
+            
+            recently_synced = CustomUser.objects.filter(
+                is_prp_managed=True,
+                prp_last_sync__gte=timezone.now() - timedelta(hours=24)
+            ).count()
+            
+            needs_sync = CustomUser.objects.filter(
+                is_prp_managed=True,
+                prp_last_sync__lt=timezone.now() - timedelta(days=7)
+            ).count()
+            
+            # Department coverage analysis
+            dept_coverage = CustomUser.objects.filter(
+                is_prp_managed=True
+            ).values('office').annotate(
+                user_count=Count('id')
+            ).order_by('-user_count')[:10]
+            
+            # Recent sync activity
+            recent_syncs = CustomUser.objects.filter(
+                is_prp_managed=True,
+                prp_last_sync__gte=start_date
+            ).order_by('-prp_last_sync')[:20]
+            
+            # User status distribution
+            active_prp_users = CustomUser.objects.filter(
+                is_prp_managed=True,
+                is_active=True,
+                is_active_employee=True
+            ).count()
+            
+            sync_stats = {
+                'never_synced': never_synced,
+                'recently_synced': recently_synced,
+                'needs_sync': needs_sync,
+                'active_prp_users': active_prp_users,
+                'inactive_prp_users': prp_users - active_prp_users,
+                'dept_coverage': dept_coverage,
+                'recent_syncs': recent_syncs,
+            }
+        
+        # Get PRP API status
+        api_status = {'success': False, 'error': 'Not tested'}
+        try:
+            prp_client = create_prp_client()
+            api_status = prp_client.test_connection()
+        except Exception as e:
+            api_status = {'success': False, 'error': str(e)}
+        
+        # Department cache status
+        try:
+            from django.core.cache import cache
+            cached_departments = cache.get('prp_departments', [])
+            dept_cache_time = cache.get('prp_departments_last_sync')
+        except Exception:
+            cached_departments = []
+            dept_cache_time = None
+        
+        context = {
+            'page_title': 'PRP Synchronization Reports',
+            'breadcrumb_items': [
+                {'name': 'Users', 'url': reverse('users:list')},
+                {'name': 'PRP Integration', 'url': '#'},
+                {'name': 'Sync Reports', 'url': ''},
+            ],
+            'report_period': f'Last {days_back} days',
+            'report_generated': timezone.now(),
+            
+            # Basic statistics
+            'total_users': total_users,
+            'prp_users': prp_users,
+            'local_users': local_users,
+            'prp_percentage': round((prp_users / total_users * 100), 1) if total_users > 0 else 0,
+            
+            # Department data
+            'cached_departments_count': len(cached_departments),
+            'dept_cache_time': dept_cache_time,
+            
+            # API status
+            'api_status': api_status,
+            
+            # Filter options
+            'days_options': [7, 15, 30, 60, 90],
+            'selected_days': days_back,
+        }
+        
+        # Add PRP-specific stats if available
+        context.update(sync_stats)
+        
+        return render(request, 'users/prp_sync_reports.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error generating PRP sync reports: {e}", exc_info=True)
+        messages.error(request, f'Could not generate reports: {str(e)}')
+        return redirect('users:list')
+
+
+@require_http_methods(["GET"])
+@login_required
+@staff_member_required
+def prp_sync_history(request):
+    """
+    View to display detailed PRP synchronization history.
+    
+    Provides detailed history of sync operations including:
+    - Individual sync operation logs
+    - Success/failure tracking  
+    - User-level sync details
+    - Error analysis and troubleshooting
+    
+    Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
+    """
+    if not PRP_INTEGRATION_AVAILABLE:
+        messages.error(request, 'PRP integration is not available.')
+        return redirect('users:list')
+    
+    try:
+        # Get filter parameters
+        days_back = int(request.GET.get('days', 7))  # Default last 7 days
+        search_query = request.GET.get('q', '').strip()
+        
+        # Date range
+        end_date = timezone.now()
+        start_date = end_date - timedelta(days=days_back)
+        
+        # Get users with sync activity in the date range (only if PRP fields exist)
+        sync_activity = CustomUser.objects.none()
+        
+        if hasattr(CustomUser, 'is_prp_managed'):
+            sync_activity = CustomUser.objects.filter(
+                is_prp_managed=True,
+                prp_last_sync__gte=start_date,
+                prp_last_sync__lte=end_date
+            ).order_by('-prp_last_sync')
+            
+            # Apply search filter
+            if search_query:
+                sync_activity = sync_activity.filter(
+                    Q(first_name__icontains=search_query) |
+                    Q(last_name__icontains=search_query) |
+                    Q(employee_id__icontains=search_query) |
+                    Q(email__icontains=search_query) |
+                    Q(office__icontains=search_query)
+                )
+        
+        # Pagination
+        paginator = Paginator(sync_activity, 20)  # 20 records per page
+        page = request.GET.get('page')
+        sync_records = paginator.get_page(page)
+        
+        # Get summary statistics for the period
+        total_syncs = sync_activity.count()
+        unique_users = sync_activity.values('id').distinct().count()
+        
+        # Department breakdown
+        dept_breakdown = sync_activity.values('office').annotate(
+            sync_count=Count('id')
+        ).order_by('-sync_count')[:10]
+        
+        # Daily sync activity (for chart)
+        daily_activity = []
+        current_date = start_date.date()
+        end_date_only = end_date.date()
+        
+        while current_date <= end_date_only:
+            day_start = timezone.make_aware(datetime.combine(current_date, datetime.min.time()))
+            day_end = day_start + timedelta(days=1)
+            
+            day_syncs = 0
+            if hasattr(CustomUser, 'is_prp_managed'):
+                day_syncs = CustomUser.objects.filter(
+                    is_prp_managed=True,
+                    prp_last_sync__gte=day_start,
+                    prp_last_sync__lt=day_end
+                ).count()
+            
+            daily_activity.append({
+                'date': current_date.strftime('%Y-%m-%d'),
+                'syncs': day_syncs,
+                'date_formatted': current_date.strftime('%b %d')
+            })
+            
+            current_date += timedelta(days=1)
+        
+        # Export functionality
+        if request.GET.get('export') == 'csv':
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="prp_sync_history_{start_date.date()}_{end_date.date()}.csv"'
+            
+            writer = csv.writer(response)
+            writer.writerow([
+                'Employee ID', 'Full Name', 'Email', 'Office', 
+                'Last Sync Time', 'Status', 'Created At'
+            ])
+            
+            for user in sync_activity:
+                writer.writerow([
+                    user.employee_id,
+                    user.get_full_name(),
+                    user.email,
+                    user.office,
+                    user.prp_last_sync.strftime('%Y-%m-%d %H:%M:%S') if user.prp_last_sync else '',
+                    'Active' if user.is_active and user.is_active_employee else 'Inactive',
+                    user.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                ])
+            
+            return response
+        
+        context = {
+            'page_title': 'PRP Synchronization History',
+            'breadcrumb_items': [
+                {'name': 'Users', 'url': reverse('users:list')},
+                {'name': 'PRP Integration', 'url': '#'},
+                {'name': 'Sync History', 'url': ''},
+            ],
+            
+            # Filter and pagination
+            'sync_records': sync_records,
+            'total_syncs': total_syncs,
+            'unique_users': unique_users,
+            'start_date': start_date,
+            'end_date': end_date,
+            
+            # Filter values for form
+            'days_back': days_back,
+            'search_query': search_query,
+            
+            # Analytics data
+            'dept_breakdown': dept_breakdown,
+            'daily_activity': daily_activity,
+            
+            # Filter options
+            'days_options': [1, 3, 7, 15, 30, 60, 90],
+        }
+        
+        return render(request, 'users/prp_sync_history.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error loading PRP sync history: {e}", exc_info=True)
+        messages.error(request, f'Could not load sync history: {str(e)}')
+        return redirect('users:list')
+
+
+# ============================================================================
+# END OF PRP SYNC VIEWS
+# ============================================================================
 
 
 # ============================================================================

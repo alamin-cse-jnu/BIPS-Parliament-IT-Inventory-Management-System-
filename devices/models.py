@@ -330,14 +330,7 @@ class Device(models.Model):
         help_text="Internal barcode if different from device_id"
     )
     
-    # Depreciation tracking
-    depreciation_rate = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=Decimal('20.00'),
-        validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
-        help_text="Annual depreciation rate percentage"
-    )
+
     
     # Flags
     is_active = models.BooleanField(
@@ -468,6 +461,13 @@ class Device(models.Model):
         sequence = existing_devices + 1
         return f"{prefix}{year:02d}{sequence:04d}"
     
+    def generate_device_id(self):
+        """
+        Public method to generate device ID (for form compatibility).
+        This is the method that forms can call.
+        """
+        return self._generate_device_id()
+    
     def _is_valid_status_transition(self, old_status, new_status):
         """Check if status transition is valid."""
         valid_transitions = {
@@ -494,13 +494,6 @@ class Device(models.Model):
     def age_in_years(self):
         """Calculate device age in years."""
         return (date.today() - self.purchase_date).days / 365.25
-    
-    @property
-    def current_value(self):
-        """Calculate current value after depreciation."""
-        age = self.age_in_years
-        depreciation_factor = (1 - (self.depreciation_rate / 100)) ** age
-        return self.purchase_price * Decimal(str(depreciation_factor))
     
     @property
     def is_under_warranty(self):

@@ -298,16 +298,6 @@
                                 {% endif %}
                             </div>
                             <div class="col-md-6">
-                                <label for="{{ form.depreciation_rate.id_for_label }}" class="form-label">
-                                    Depreciation Rate (%)
-                                </label>
-                                {{ form.depreciation_rate }}
-                                <small class="form-text text-muted">Annual depreciation rate (default: 20%)</small>
-                                {% if form.depreciation_rate.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.depreciation_rate.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6">
                                 <label for="{{ form.current_location.id_for_label }}" class="form-label">
                                     Current Location
                                 </label>

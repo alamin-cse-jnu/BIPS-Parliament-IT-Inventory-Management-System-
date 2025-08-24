@@ -1,22 +1,3 @@
-"""
-Forms for Assignments app in PIMS (Parliament IT Inventory Management System)
-Bangladesh Parliament Secretariat
-
-This module defines forms for assignment management including:
-- AssignmentForm: Create and edit device assignments
-- AssignmentFilterForm: Filter assignments with advanced search
-- QuickAssignmentForm: Simplified form for quick assignments
-- AssignmentReturnForm: Handle device returns
-- AssignmentTransferForm: Transfer assignments between users/locations
-
-Features:
-- Smart device filtering (only available devices)
-- User-friendly widgets with Bootstrap 5.3 styling
-- Real-time validation and error handling
-- Consistent design following PIMS template patterns
-- Integration with devices, users, and locations apps
-"""
-
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -31,6 +12,12 @@ from locations.models import Location
 
 User = get_user_model()
 
+# Assignment mode choices
+ASSIGNMENT_MODE_CHOICES = [
+    ('USER_ONLY', 'Assign to User Only'),
+    ('LOCATION_ONLY', 'Assign to Location Only'), 
+    ('BOTH', 'Assign to Both User and Location'),
+]
 
 class AssignmentForm(forms.ModelForm):
     """
@@ -38,10 +25,18 @@ class AssignmentForm(forms.ModelForm):
     Includes all assignment fields with proper validation and styling.
     """
     
+    assignment_mode = forms.ChoiceField(
+        choices=ASSIGNMENT_MODE_CHOICES,
+        widget=forms.RadioSelect(attrs={
+            'class': 'form-check-input assignment-mode-selector'
+        }),
+        help_text="Choose assignment type"
+    )
+    
     class Meta:
         model = Assignment
         fields = [
-            'device', 'assigned_to', 'assigned_location',
+            'assignment_mode', 'device', 'assigned_to', 'assigned_location',
             'assignment_type', 'assigned_date', 'expected_return_date',
             'purpose', 'assignment_notes',
             'condition_at_assignment',
@@ -59,7 +54,7 @@ class AssignmentForm(forms.ModelForm):
             }),
             'assigned_location': forms.Select(attrs={
                 'class': 'form-select location-selector',
-                'data-placeholder': 'Select location (optional)...'
+                'data-placeholder': 'Select location...'
             }),
             'assignment_type': forms.Select(attrs={
                 'class': 'form-select assignment-type-selector'
@@ -104,13 +99,11 @@ class AssignmentForm(forms.ModelForm):
         
         # Filter devices - only show available devices or current device (for editing)
         if self.editing and self.instance.device:
-            # When editing, include current device even if it's assigned
             available_devices = Device.objects.filter(
                 Q(status='AVAILABLE', is_active=True) |
                 Q(id=self.instance.device.id)
             ).select_related('subcategory__category').order_by('device_id')
         else:
-            # For new assignments, only show available devices
             available_devices = Device.objects.filter(
                 status='AVAILABLE',
                 is_active=True
@@ -130,13 +123,14 @@ class AssignmentForm(forms.ModelForm):
         self.fields['assigned_location'].queryset = Location.objects.filter(
             is_active=True
         ).order_by('name')
-        self.fields['assigned_location'].empty_label = "Select location (optional)..."
+        self.fields['assigned_location'].empty_label = "Select location..."
         
         # Set defaults for new assignments
         if not self.editing:
             self.fields['assigned_date'].initial = date.today()
             self.fields['assignment_type'].initial = 'TEMPORARY'
             self.fields['condition_at_assignment'].initial = 'GOOD'
+            self.fields['assignment_mode'].initial = 'USER_ONLY'
         
         # Set help texts
         self._set_help_texts()
@@ -146,9 +140,10 @@ class AssignmentForm(forms.ModelForm):
     
     def _set_help_texts(self):
         """Set comprehensive help texts for form fields."""
+        self.fields['assignment_mode'].help_text = "Choose whether to assign to user, location, or both"
         self.fields['device'].help_text = "Select device to assign. Only available devices are shown."
         self.fields['assigned_to'].help_text = "Parliament employee receiving the device"
-        self.fields['assigned_location'].help_text = "Where the device will be used (optional)"
+        self.fields['assigned_location'].help_text = "Where the device will be used"
         self.fields['assignment_type'].help_text = "Type of assignment - affects return date requirements"
         self.fields['assigned_date'].help_text = "Date when device is assigned to user"
         self.fields['expected_return_date'].help_text = "Expected return date (required for temporary assignments)"
@@ -159,12 +154,12 @@ class AssignmentForm(forms.ModelForm):
     
     def _setup_conditional_fields(self):
         """Setup conditional field requirements based on assignment type."""
-        # Add CSS classes for JavaScript handling
         self.fields['assignment_type'].widget.attrs['data-toggle'] = 'assignment-type'
         self.fields['expected_return_date'].widget.attrs['data-conditional'] = 'temporary'
+        self.fields['assignment_mode'].widget.attrs['data-toggle'] = 'assignment-mode'
         
         # Mark required fields visually
-        required_fields = ['device', 'assigned_to', 'assignment_type', 'assigned_date', 'purpose']
+        required_fields = ['device', 'assignment_type', 'assigned_date', 'purpose', 'assignment_mode']
         for field_name in required_fields:
             if field_name in self.fields:
                 self.fields[field_name].widget.attrs['required'] = True
@@ -176,7 +171,6 @@ class AssignmentForm(forms.ModelForm):
         if not device:
             raise ValidationError("Device selection is required.")
         
-        # Check if device is available (unless editing same assignment)
         if device.status != 'AVAILABLE':
             if not self.editing or (self.editing and device != self.instance.device):
                 raise ValidationError(
@@ -184,7 +178,6 @@ class AssignmentForm(forms.ModelForm):
                     f"Current status: {device.get_status_display()}"
                 )
         
-        # Check for existing active assignments (unless editing same assignment)
         existing_assignment = Assignment.objects.filter(
             device=device,
             status='ASSIGNED',
@@ -204,19 +197,33 @@ class AssignmentForm(forms.ModelForm):
         return device
     
     def clean_assigned_to(self):
-        """Validate assigned user."""
+        """Conditional validation based on assignment mode"""
         assigned_to = self.cleaned_data.get('assigned_to')
+        assignment_mode = self.cleaned_data.get('assignment_mode')
         
-        if not assigned_to:
-            raise ValidationError("Employee selection is required.")
+        if assignment_mode in ['USER_ONLY', 'BOTH'] and not assigned_to:
+            raise ValidationError("User selection is required for this assignment type.")
         
-        if not assigned_to.is_active:
+        if assignment_mode == 'LOCATION_ONLY' and assigned_to:
+            raise ValidationError("User should not be selected for location-only assignments.")
+        
+        if assigned_to and not assigned_to.is_active:
             raise ValidationError("Selected employee is not active.")
         
-        if not getattr(assigned_to, 'is_active_employee', True):
+        if assigned_to and not getattr(assigned_to, 'is_active_employee', True):
             raise ValidationError("Selected user is not an active Parliament employee.")
         
         return assigned_to
+    
+    def clean_assigned_location(self):
+        """Conditional validation for location field"""
+        assigned_location = self.cleaned_data.get('assigned_location')
+        assignment_mode = self.cleaned_data.get('assignment_mode')
+        
+        if assignment_mode in ['LOCATION_ONLY', 'BOTH'] and not assigned_location:
+            raise ValidationError("Location selection is required for this assignment type.")
+        
+        return assigned_location
     
     def clean_assigned_date(self):
         """Validate assignment date."""
@@ -225,13 +232,11 @@ class AssignmentForm(forms.ModelForm):
         if not assigned_date:
             raise ValidationError("Assignment date is required.")
         
-        # Check if date is not too far in the past (unless editing)
         if not self.editing:
             thirty_days_ago = date.today() - timedelta(days=30)
             if assigned_date < thirty_days_ago:
                 raise ValidationError("Assignment date cannot be more than 30 days in the past.")
         
-        # Check if date is not too far in the future
         ninety_days_future = date.today() + timedelta(days=90)
         if assigned_date > ninety_days_future:
             raise ValidationError("Assignment date cannot be more than 90 days in the future.")
@@ -244,17 +249,14 @@ class AssignmentForm(forms.ModelForm):
         assignment_type = self.cleaned_data.get('assignment_type')
         assigned_date = self.cleaned_data.get('assigned_date')
         
-        # Required for temporary assignments
         if assignment_type == 'TEMPORARY' and not expected_return_date:
             raise ValidationError("Expected return date is required for temporary assignments.")
         
-        # Validate return date is after assignment date
         if expected_return_date and assigned_date:
             if expected_return_date <= assigned_date:
                 raise ValidationError("Expected return date must be after assignment date.")
             
-            # Check reasonable timeframe
-            max_days = 365 * 2  # 2 years maximum
+            max_days = 365 * 2
             if (expected_return_date - assigned_date).days > max_days:
                 raise ValidationError("Assignment period cannot exceed 2 years.")
         
@@ -277,14 +279,11 @@ class AssignmentForm(forms.ModelForm):
         emergency_phone = self.cleaned_data.get('emergency_phone')
         
         if emergency_phone:
-            # Remove spaces and dashes for validation
             phone_digits = ''.join(c for c in emergency_phone if c.isdigit())
             
-            # Bangladesh phone number validation
             if len(phone_digits) < 11 or len(phone_digits) > 14:
                 raise ValidationError("Please enter a valid phone number (11-14 digits).")
             
-            # Check if starts with valid BD mobile prefixes
             if len(phone_digits) == 11 and not phone_digits.startswith(('013', '014', '015', '016', '017', '018', '019')):
                 raise ValidationError("Please enter a valid Bangladesh mobile number.")
         
@@ -297,7 +296,6 @@ class AssignmentForm(forms.ModelForm):
         assignment_type = cleaned_data.get('assignment_type')
         expected_return_date = cleaned_data.get('expected_return_date')
         
-        # Permanent assignments should not have return dates
         if assignment_type == 'PERMANENT' and expected_return_date:
             cleaned_data['expected_return_date'] = None
         
@@ -307,11 +305,9 @@ class AssignmentForm(forms.ModelForm):
         """Save assignment with additional logic."""
         assignment = super().save(commit=False)
         
-        # Set assigned_by if user is provided
         if self.user:
             assignment.assigned_by = self.user
         
-        # Set status for new assignments
         if not self.editing:
             assignment.status = 'ASSIGNED'
             assignment.is_active = True
@@ -328,11 +324,19 @@ class QuickAssignmentForm(forms.ModelForm):
     Contains only essential fields for fast assignment workflow.
     """
     
+    assignment_mode = forms.ChoiceField(
+        choices=ASSIGNMENT_MODE_CHOICES,
+        widget=forms.RadioSelect(attrs={
+            'class': 'form-check-input assignment-mode-selector'
+        }),
+        help_text="Choose assignment type"
+    )
+    
     class Meta:
         model = Assignment
         fields = [
-            'device', 'assigned_to', 'assignment_type',
-            'assigned_date', 'expected_return_date', 'purpose'
+            'assignment_mode', 'device', 'assigned_to', 'assigned_location',
+            'assignment_type', 'assigned_date', 'expected_return_date', 'purpose'
         ]
         
         widgets = {
@@ -342,7 +346,11 @@ class QuickAssignmentForm(forms.ModelForm):
             }),
             'assigned_to': forms.Select(attrs={
                 'class': 'form-select',
-                'required': True
+                'required': False
+            }),
+            'assigned_location': forms.Select(attrs={
+                'class': 'form-select',
+                'required': False
             }),
             'assignment_type': forms.Select(attrs={
                 'class': 'form-select'
@@ -366,21 +374,46 @@ class QuickAssignmentForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Filter to available devices only
         self.fields['device'].queryset = Device.objects.filter(
             status='AVAILABLE',
             is_active=True
         ).order_by('device_id')
         
-        # Filter to active employees only
         self.fields['assigned_to'].queryset = User.objects.filter(
             is_active=True,
             is_active_employee=True
         ).order_by('first_name', 'last_name')
         
-        # Set defaults
+        self.fields['assigned_location'].queryset = Location.objects.filter(
+            is_active=True
+        ).order_by('name')
+        
         self.fields['assigned_date'].initial = date.today()
         self.fields['assignment_type'].initial = 'TEMPORARY'
+        self.fields['assignment_mode'].initial = 'USER_ONLY'
+    
+    def clean_assigned_to(self):
+        """Conditional validation based on assignment mode"""
+        assigned_to = self.cleaned_data.get('assigned_to')
+        assignment_mode = self.cleaned_data.get('assignment_mode')
+        
+        if assignment_mode in ['USER_ONLY', 'BOTH'] and not assigned_to:
+            raise ValidationError("User selection is required for this assignment type.")
+        
+        if assignment_mode == 'LOCATION_ONLY' and assigned_to:
+            raise ValidationError("User should not be selected for location-only assignments.")
+        
+        return assigned_to
+    
+    def clean_assigned_location(self):
+        """Conditional validation for location field"""
+        assigned_location = self.cleaned_data.get('assigned_location')
+        assignment_mode = self.cleaned_data.get('assignment_mode')
+        
+        if assignment_mode in ['LOCATION_ONLY', 'BOTH'] and not assigned_location:
+            raise ValidationError("Location selection is required for this assignment type.")
+        
+        return assigned_location
 
 
 class AssignmentFilterForm(forms.Form):
@@ -389,7 +422,6 @@ class AssignmentFilterForm(forms.Form):
     Used in assignment list views for search and filtering.
     """
     
-    # Search fields
     search = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={
@@ -400,7 +432,6 @@ class AssignmentFilterForm(forms.Form):
         help_text="Search assignments by ID, device, or employee"
     )
     
-    # Status filter
     status = forms.ChoiceField(
         required=False,
         choices=[('', 'All Statuses')] + Assignment.STATUS_CHOICES,
@@ -409,7 +440,6 @@ class AssignmentFilterForm(forms.Form):
         })
     )
     
-    # Assignment type filter
     assignment_type = forms.ChoiceField(
         required=False,
         choices=[('', 'All Types')] + Assignment.ASSIGNMENT_TYPE_CHOICES,
@@ -418,7 +448,14 @@ class AssignmentFilterForm(forms.Form):
         })
     )
     
-    # Employee filter
+    assignment_mode = forms.ChoiceField(
+        required=False,
+        choices=[('', 'All Modes')] + ASSIGNMENT_MODE_CHOICES,
+        widget=forms.Select(attrs={
+            'class': 'form-select filter-dropdown'
+        })
+    )
+    
     assigned_to = forms.ModelChoiceField(
         required=False,
         queryset=User.objects.filter(is_active=True),
@@ -428,7 +465,6 @@ class AssignmentFilterForm(forms.Form):
         })
     )
     
-    # Location filter
     assigned_location = forms.ModelChoiceField(
         required=False,
         queryset=Location.objects.filter(is_active=True),
@@ -438,7 +474,6 @@ class AssignmentFilterForm(forms.Form):
         })
     )
     
-    # Date range filters
     assigned_date_from = forms.DateField(
         required=False,
         widget=forms.DateInput(attrs={
@@ -457,7 +492,6 @@ class AssignmentFilterForm(forms.Form):
         })
     )
     
-    # Return date filters
     expected_return_date_from = forms.DateField(
         required=False,
         widget=forms.DateInput(attrs={
@@ -474,7 +508,6 @@ class AssignmentFilterForm(forms.Form):
         })
     )
     
-    # Overdue filter
     is_overdue = forms.ChoiceField(
         required=False,
         choices=[
@@ -490,26 +523,22 @@ class AssignmentFilterForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Order employee choices
         self.fields['assigned_to'].queryset = self.fields['assigned_to'].queryset.order_by(
             'first_name', 'last_name'
         )
         
-        # Order location choices
         self.fields['assigned_location'].queryset = self.fields['assigned_location'].queryset.order_by('name')
     
     def clean(self):
         """Validate date ranges."""
         cleaned_data = super().clean()
         
-        # Validate assigned date range
         assigned_from = cleaned_data.get('assigned_date_from')
         assigned_to = cleaned_data.get('assigned_date_to')
         
         if assigned_from and assigned_to and assigned_to < assigned_from:
             raise ValidationError("Assignment end date must be after start date.")
         
-        # Validate return date range
         return_from = cleaned_data.get('expected_return_date_from')
         return_to = cleaned_data.get('expected_return_date_to')
         
@@ -551,10 +580,8 @@ class AssignmentReturnForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Set default return date to today
         self.fields['actual_return_date'].initial = date.today()
             
-        # Set help texts
         self.fields['actual_return_date'].help_text = "Date when device was actually returned"
         self.fields['condition_at_return'].help_text = "Condition of device upon return"
         self.fields['return_notes'].help_text = "Any notes about the return process or device condition"
@@ -637,7 +664,6 @@ class AssignmentTransferForm(forms.Form):
         super().__init__(*args, **kwargs)
         
         if assignment:
-            # Exclude current assignee from new employee options
             self.fields['new_assigned_to'].queryset = self.fields['new_assigned_to'].queryset.exclude(
                 id=assignment.assigned_to.id
             )
@@ -649,11 +675,9 @@ class AssignmentTransferForm(forms.Form):
         new_assigned_to = cleaned_data.get('new_assigned_to')
         new_assigned_location = cleaned_data.get('new_assigned_location')
         
-        # At least one field must be changed
         if not new_assigned_to and not new_assigned_location:
             raise ValidationError("At least one field (employee or location) must be changed for transfer.")
         
-        # Validate effective date
         effective_date = cleaned_data.get('effective_date')
         if effective_date:
             if self.assignment and effective_date < self.assignment.assigned_date:

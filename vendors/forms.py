@@ -8,6 +8,7 @@ from .models import Vendor
 class VendorForm(forms.ModelForm):
     """
     Form for creating and editing Vendor records.
+    Enhanced with better validation and error handling.
     """
     
     class Meta:
@@ -28,12 +29,14 @@ class VendorForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Enter vendor code (e.g., VND001, DELL001)',
                 'maxlength': 20,
-                'style': 'text-transform: uppercase;'
+                'style': 'text-transform: uppercase;',
+                'required': True
             }),
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Enter full company/vendor name',
-                'maxlength': 200
+                'maxlength': 200,
+                'required': True
             }),
             'trade_name': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -41,96 +44,99 @@ class VendorForm(forms.ModelForm):
                 'maxlength': 200
             }),
             'vendor_type': forms.Select(attrs={
-                'class': 'form-select'
+                'class': 'form-select',
+                'required': True
             }),
             'status': forms.Select(attrs={
-                'class': 'form-select'
+                'class': 'form-select',
+                'required': True
             }),
             'contact_person': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Enter primary contact person name',
-                'maxlength': 100
+                'maxlength': 100,
+                'required': True
             }),
             'contact_designation': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter contact person designation (e.g., Sales Manager)',
+                'placeholder': 'Enter contact person designation',
                 'maxlength': 100
             }),
             'phone_primary': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter primary phone number (e.g., 01712345678)',
-                'pattern': r'^(\+880|880|0)?1[3-9]\d{8}$',
-                'title': 'Enter valid Bangladeshi mobile number'
+                'placeholder': '+880 1XXX-XXXXXX',
+                'maxlength': 20,
+                'required': True
             }),
             'phone_secondary': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter secondary phone number (optional)',
-                'pattern': r'^(\+880|880|0)?1[3-9]\d{8}$',
-                'title': 'Enter valid Bangladeshi mobile number'
+                'placeholder': '+880 1XXX-XXXXXX (Optional)',
+                'maxlength': 20
             }),
             'email_primary': forms.EmailInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter primary email address'
+                'placeholder': 'primary@vendor.com'
             }),
             'email_secondary': forms.EmailInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter secondary email address (optional)'
+                'placeholder': 'secondary@vendor.com (Optional)'
             }),
             'address': forms.Textarea(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter complete vendor address',
+                'placeholder': 'Enter complete address',
                 'rows': 3
             }),
             'city': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter city name',
-                'value': 'Dhaka'
+                'placeholder': 'Dhaka',
+                'maxlength': 100
             }),
             'district': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter district name',
-                'value': 'Dhaka'
+                'placeholder': 'Dhaka',
+                'maxlength': 100
             }),
             'country': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter country name',
+                'placeholder': 'Bangladesh',
+                'maxlength': 100,
                 'value': 'Bangladesh'
             }),
             'postal_code': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter postal/ZIP code (optional)',
+                'placeholder': '1000',
                 'maxlength': 20
             }),
             'business_registration_no': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter business registration number (optional)',
-                'maxlength': 100
+                'placeholder': 'Business registration number',
+                'maxlength': 50
             }),
             'tax_identification_no': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter TIN number (optional)',
-                'maxlength': 100
+                'placeholder': 'Tax identification number',
+                'maxlength': 50
             }),
             'website': forms.URLInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter website URL (optional)'
+                'placeholder': 'https://www.vendor.com'
             }),
             'specialization': forms.Textarea(attrs={
                 'class': 'form-control',
-                'placeholder': 'Describe areas of specialization or products/services offered',
-                'rows': 4
+                'placeholder': 'Describe vendor specialization and expertise',
+                'rows': 3
             }),
             'service_categories': forms.Textarea(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter service categories (comma-separated, e.g., Hardware Supply, Software Installation, Maintenance)',
-                'rows': 3
+                'placeholder': 'List service categories (e.g., Hardware, Software, Support)',
+                'rows': 2
             }),
             'performance_rating': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter rating (0.00 to 5.00)',
-                'min': '0',
-                'max': '5',
-                'step': '0.01'
+                'placeholder': '3.5',
+                'min': 0,
+                'max': 5,
+                'step': 0.1
             }),
             'is_preferred': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
@@ -140,7 +146,7 @@ class VendorForm(forms.ModelForm):
             }),
             'notes': forms.Textarea(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter additional notes about the vendor',
+                'placeholder': 'Additional notes about this vendor',
                 'rows': 4
             })
         }
@@ -148,108 +154,184 @@ class VendorForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Mark required fields
-        self.fields['vendor_code'].required = True
-        self.fields['name'].required = True
-        self.fields['contact_person'].required = True
-        self.fields['phone_primary'].required = True
-        self.fields['email_primary'].required = True
-        self.fields['address'].required = True
+        # Set default values
+        self.fields['is_active'].initial = True
+        self.fields['status'].initial = 'ACTIVE'
+        self.fields['country'].initial = 'Bangladesh'
         
-        # Set default values for Bangladesh location
-        if not self.instance.pk:  # Only for new records
-            self.fields['city'].initial = 'Dhaka'
-            self.fields['district'].initial = 'Dhaka'
-            self.fields['country'].initial = 'Bangladesh'
+        # Add help text
+        self.fields['vendor_code'].help_text = 'Unique identifier for this vendor (e.g., DELL001, MS001)'
+        self.fields['performance_rating'].help_text = 'Rate vendor performance from 0.0 to 5.0'
+        self.fields['phone_primary'].help_text = 'Bangladesh phone format: +880 1XXX-XXXXXX'
 
     def clean_vendor_code(self):
-        """Validate and format vendor code."""
-        vendor_code = self.cleaned_data.get('vendor_code')
-        if vendor_code:
-            vendor_code = vendor_code.upper().strip()
-            
-            # Check for uniqueness (excluding current instance if editing)
-            existing = Vendor.objects.filter(vendor_code=vendor_code)
-            if self.instance.pk:
-                existing = existing.exclude(pk=self.instance.pk)
-            
-            if existing.exists():
-                raise ValidationError('Vendor code already exists.')
+        """Validate vendor code uniqueness and format."""
+        vendor_code = self.cleaned_data.get('vendor_code', '').upper().strip()
+        
+        if not vendor_code:
+            raise ValidationError('Vendor code is required.')
+        
+        # Check format
+        if len(vendor_code) < 3:
+            raise ValidationError('Vendor code must be at least 3 characters long.')
+        
+        if not vendor_code.replace('_', '').replace('-', '').isalnum():
+            raise ValidationError('Vendor code can only contain letters, numbers, hyphens, and underscores.')
+        
+        # Check uniqueness
+        queryset = Vendor.objects.filter(vendor_code=vendor_code)
+        if self.instance and self.instance.pk:
+            queryset = queryset.exclude(pk=self.instance.pk)
+        
+        if queryset.exists():
+            raise ValidationError(f'Vendor code "{vendor_code}" already exists. Please choose a different code.')
         
         return vendor_code
 
     def clean_name(self):
         """Validate vendor name."""
-        name = self.cleaned_data.get('name')
-        if name:
-            name = name.strip()
-            
-            # Check for similar names (case-insensitive)
-            existing = Vendor.objects.filter(name__iexact=name)
-            if self.instance.pk:
-                existing = existing.exclude(pk=self.instance.pk)
-            
-            if existing.exists():
-                raise ValidationError('A vendor with this name already exists.')
+        name = self.cleaned_data.get('name', '').strip()
+        
+        if not name:
+            raise ValidationError('Vendor name is required.')
+        
+        if len(name) < 2:
+            raise ValidationError('Vendor name must be at least 2 characters long.')
         
         return name
 
-    def clean_email_primary(self):
-        """Validate primary email uniqueness."""
-        email = self.cleaned_data.get('email_primary')
-        if email:
-            existing = Vendor.objects.filter(email_primary=email)
-            if self.instance.pk:
-                existing = existing.exclude(pk=self.instance.pk)
-            
-            if existing.exists():
-                raise ValidationError('This email address is already registered with another vendor.')
+    def clean_contact_person(self):
+        """Validate contact person name."""
+        contact_person = self.cleaned_data.get('contact_person', '').strip()
         
-        return email
+        if not contact_person:
+            raise ValidationError('Contact person is required.')
+        
+        if len(contact_person) < 2:
+            raise ValidationError('Contact person name must be at least 2 characters long.')
+        
+        return contact_person
 
     def clean_phone_primary(self):
-        """Validate primary phone number uniqueness."""
-        phone = self.cleaned_data.get('phone_primary')
-        if phone:
-            # Normalize phone number (remove spaces, hyphens)
-            phone = phone.replace(' ', '').replace('-', '')
-            
-            existing = Vendor.objects.filter(phone_primary=phone)
-            if self.instance.pk:
-                existing = existing.exclude(pk=self.instance.pk)
-            
-            if existing.exists():
-                raise ValidationError('This phone number is already registered with another vendor.')
+        """Validate primary phone number."""
+        phone = self.cleaned_data.get('phone_primary', '').strip()
+        
+        if not phone:
+            raise ValidationError('Primary phone number is required.')
+        
+        # Bangladesh phone number validation
+        import re
+        # Remove spaces, hyphens for validation
+        clean_phone = re.sub(r'[\s\-]', '', phone)
+        
+        # Bangladesh phone pattern: +880, 880, or 0 followed by 1-9 and 8-10 more digits
+        bd_phone_pattern = r'^(\+880|880|0)?[1-9]\d{8,10}$'
+        
+        if not re.match(bd_phone_pattern, clean_phone):
+            raise ValidationError(
+                'Please enter a valid Bangladesh phone number. '
+                'Format: +880 1XXX-XXXXXX or 01XXX-XXXXXX'
+            )
         
         return phone
 
+    def clean_phone_secondary(self):
+        """Validate secondary phone number if provided."""
+        phone = self.cleaned_data.get('phone_secondary', '').strip()
+        
+        if phone:  # Only validate if provided
+            import re
+            clean_phone = re.sub(r'[\s\-]', '', phone)
+            bd_phone_pattern = r'^(\+880|880|0)?[1-9]\d{8,10}$'
+            
+            if not re.match(bd_phone_pattern, clean_phone):
+                raise ValidationError(
+                    'Please enter a valid Bangladesh phone number. '
+                    'Format: +880 1XXX-XXXXXX or 01XXX-XXXXXX'
+                )
+        
+        return phone
+
+    def clean_email_primary(self):
+        """Validate primary email if provided."""
+        email = self.cleaned_data.get('email_primary', '').strip().lower()
+        
+        if email:  # Optional field
+            import re
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, email):
+                raise ValidationError('Please enter a valid email address.')
+        
+        return email
+
+    def clean_email_secondary(self):
+        """Validate secondary email if provided."""
+        email = self.cleaned_data.get('email_secondary', '').strip().lower()
+        
+        if email:  # Optional field
+            import re
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, email):
+                raise ValidationError('Please enter a valid email address.')
+        
+        return email
+
+    def clean_website(self):
+        """Validate website URL if provided."""
+        website = self.cleaned_data.get('website', '').strip()
+        
+        if website:  # Optional field
+            # Add protocol if missing
+            if not website.startswith(('http://', 'https://')):
+                website = 'https://' + website
+            
+            # Validate URL format
+            from django.core.validators import URLValidator
+            from django.core.exceptions import ValidationError as DjangoValidationError
+            
+            url_validator = URLValidator()
+            try:
+                url_validator(website)
+            except DjangoValidationError:
+                raise ValidationError('Please enter a valid website URL.')
+        
+        return website
+
     def clean_performance_rating(self):
-        """Validate performance rating range."""
+        """Validate performance rating."""
         rating = self.cleaned_data.get('performance_rating')
+        
         if rating is not None:
             if rating < 0 or rating > 5:
-                raise ValidationError('Performance rating must be between 0.00 and 5.00.')
+                raise ValidationError('Performance rating must be between 0.0 and 5.0.')
         
         return rating
 
+    def clean_postal_code(self):
+        """Validate postal code format."""
+        postal_code = self.cleaned_data.get('postal_code', '').strip()
+        
+        if postal_code:  # Optional field
+            # Bangladesh postal code validation (4 digits)
+            import re
+            if not re.match(r'^\d{4}$', postal_code):
+                raise ValidationError('Bangladesh postal code should be 4 digits (e.g., 1000).')
+        
+        return postal_code
+
     def clean(self):
-        """Perform additional cross-field validation."""
+        """Cross-field validation."""
         cleaned_data = super().clean()
         
-        # Validate status logic
+        # Get form data
+        is_active = cleaned_data.get('is_active', True)
         status = cleaned_data.get('status')
-        is_active = cleaned_data.get('is_active')
+        contact_person = cleaned_data.get('contact_person', '').strip()
+        phone_primary = cleaned_data.get('phone_primary', '').strip()
+        email_primary = cleaned_data.get('email_primary', '').strip()
         
-        if status == 'BLACKLISTED' and is_active:
-            raise ValidationError({
-                'is_active': 'Blacklisted vendors cannot be active.'
-            })
-        
-        # Ensure contact information is provided for active vendors
+        # Validate required fields for active vendors
         if is_active and status == 'ACTIVE':
-            contact_person = cleaned_data.get('contact_person', '').strip()
-            phone_primary = cleaned_data.get('phone_primary', '').strip()
-            
             if not contact_person:
                 raise ValidationError({
                     'contact_person': 'Contact person is required for active vendors.'
@@ -260,7 +342,46 @@ class VendorForm(forms.ModelForm):
                     'phone_primary': 'Primary phone number is required for active vendors.'
                 })
         
+        # Ensure emails are different if both provided
+        email_secondary = cleaned_data.get('email_secondary', '').strip()
+        if email_primary and email_secondary and email_primary == email_secondary:
+            raise ValidationError({
+                'email_secondary': 'Secondary email must be different from primary email.'
+            })
+        
+        # Ensure phone numbers are different if both provided
+        phone_secondary = cleaned_data.get('phone_secondary', '').strip()
+        if phone_primary and phone_secondary:
+            import re
+            clean_primary = re.sub(r'[\s\-]', '', phone_primary)
+            clean_secondary = re.sub(r'[\s\-]', '', phone_secondary)
+            if clean_primary == clean_secondary:
+                raise ValidationError({
+                    'phone_secondary': 'Secondary phone must be different from primary phone.'
+                })
+        
         return cleaned_data
+
+    def save(self, commit=True):
+        """Override save to handle special formatting."""
+        vendor = super().save(commit=False)
+        
+        # Ensure vendor code is uppercase
+        if vendor.vendor_code:
+            vendor.vendor_code = vendor.vendor_code.upper().strip()
+        
+        # Format website URL
+        if vendor.website and not vendor.website.startswith(('http://', 'https://')):
+            vendor.website = 'https://' + vendor.website
+        
+        # Set default country if not provided
+        if not vendor.country:
+            vendor.country = 'Bangladesh'
+        
+        if commit:
+            vendor.save()
+        
+        return vendor
 
 
 class VendorSearchForm(forms.Form):

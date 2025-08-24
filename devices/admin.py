@@ -362,7 +362,7 @@ class DeviceAdmin(admin.ModelAdmin):
             'classes': ('wide',)
         }),
         ('Financial Information', {
-            'fields': ('purchase_date', 'purchase_price', 'depreciation_rate', 'vendor'),
+            'fields': ('purchase_date', 'purchase_price', 'vendor'),
             'classes': ('collapse',)
         }),
         ('Location & Assignment', {

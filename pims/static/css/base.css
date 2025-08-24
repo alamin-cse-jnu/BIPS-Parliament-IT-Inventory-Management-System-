@@ -747,8 +747,8 @@ body {
 
 /* User Avatar Styles */
 .user-avatar {
-    width: 45px;
-    height: 45px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid var(--border-light);
@@ -756,8 +756,8 @@ body {
 }
 
 .user-avatar-placeholder {
-    width: 45px;
-    height: 45px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
     color: white;

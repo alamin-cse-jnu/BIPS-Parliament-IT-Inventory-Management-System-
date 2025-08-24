@@ -205,17 +205,19 @@ class DeviceForm(forms.ModelForm):
             'status', 'condition', 'priority',
             'purchase_date', 'purchase_price', 'vendor',
             'current_location', 'specifications_json',
-            'notes', 'barcode', 'depreciation_rate',
+            'notes', 'barcode',
             'is_active', 'is_assignable', 'requires_approval'
         ]
         widgets = {
             'subcategory': forms.Select(attrs={
                 'class': 'form-select',
-                'data-live-search': 'true'
+                'data-live-search': 'true',
+                'required': True
             }),
             'device_type': forms.Select(attrs={
                 'class': 'form-select',
-                'id': 'id_device_type'
+                'id': 'id_device_type',
+                'required': True
             }),
             'parent_device': forms.Select(attrs={
                 'class': 'form-select',
@@ -225,12 +227,14 @@ class DeviceForm(forms.ModelForm):
             'brand': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Enter brand name (e.g., Dell, HP, Cisco)',
-                'maxlength': 100
+                'maxlength': 100,
+                'required': True
             }),
             'model': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Enter model name/number',
-                'maxlength': 150
+                'maxlength': 150,
+                'required': True
             }),
             'serial_number': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -243,13 +247,16 @@ class DeviceForm(forms.ModelForm):
                 'maxlength': 50
             }),
             'status': forms.Select(attrs={
-                'class': 'form-select'
+                'class': 'form-select',
+                'required': True
             }),
             'condition': forms.Select(attrs={
-                'class': 'form-select'
+                'class': 'form-select',
+                'required': True
             }),
             'priority': forms.Select(attrs={
-                'class': 'form-select'
+                'class': 'form-select',
+                'required': True
             }),
             'purchase_date': forms.DateInput(attrs={
                 'class': 'form-control',
@@ -279,12 +286,6 @@ class DeviceForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Enter barcode (optional)',
                 'maxlength': 100
-            }),
-            'depreciation_rate': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': '0',
-                'max': '100',
-                'step': '0.01'
             }),
             'is_active': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
@@ -317,6 +318,25 @@ class DeviceForm(forms.ModelForm):
             is_active=True
         ).order_by('device_id')
         
+        # Make required fields truly required
+        self.fields['subcategory'].required = True
+        self.fields['device_type'].required = True
+        self.fields['brand'].required = True
+        self.fields['model'].required = True
+        self.fields['status'].required = True
+        self.fields['condition'].required = True
+        self.fields['priority'].required = True
+        
+        # Set default values for new instances
+        if not self.instance.pk:
+            self.fields['status'].initial = 'AVAILABLE'
+            self.fields['condition'].initial = 'EXCELLENT'
+            self.fields['priority'].initial = 'MEDIUM'
+            self.fields['device_type'].initial = 'COMPLETE'
+            self.fields['is_active'].initial = True
+            self.fields['is_assignable'].initial = True
+            self.fields['requires_approval'].initial = False
+        
         # Initialize specifications field
         if self.instance.pk and self.instance.specifications:
             self.fields['specifications_json'].initial = json.dumps(
@@ -342,7 +362,7 @@ class DeviceForm(forms.ModelForm):
                     field.widget.attrs['class'] = 'form-control'
     
     def clean_specifications_json(self):
-        """Validate JSON specifications."""
+        """Validate and parse JSON specifications."""
         specifications_json = self.cleaned_data.get('specifications_json', '')
         
         if not specifications_json.strip():
@@ -356,8 +376,57 @@ class DeviceForm(forms.ModelForm):
         except json.JSONDecodeError as e:
             raise ValidationError(f"Invalid JSON format: {str(e)}")
     
+    def clean_brand(self):
+        """Clean and validate brand field."""
+        brand = self.cleaned_data.get('brand')
+        if not brand:
+            raise ValidationError("Brand is required.")
+        return brand.strip()
+    
+    def clean_model(self):
+        """Clean and validate model field."""
+        model = self.cleaned_data.get('model')
+        if not model:
+            raise ValidationError("Model is required.")
+        return model.strip()
+    
+    def clean_subcategory(self):
+        """Validate subcategory field."""
+        subcategory = self.cleaned_data.get('subcategory')
+        if not subcategory:
+            raise ValidationError("Subcategory is required.")
+        return subcategory
+    
+    def clean_device_type(self):
+        """Validate device type field."""
+        device_type = self.cleaned_data.get('device_type')
+        if not device_type:
+            raise ValidationError("Device type is required.")
+        return device_type
+    
+    def clean_status(self):
+        """Validate status field."""
+        status = self.cleaned_data.get('status')
+        if not status:
+            raise ValidationError("Status is required.")
+        return status
+    
+    def clean_condition(self):
+        """Validate condition field."""
+        condition = self.cleaned_data.get('condition')
+        if not condition:
+            raise ValidationError("Condition is required.")
+        return condition
+    
+    def clean_priority(self):
+        """Validate priority field."""
+        priority = self.cleaned_data.get('priority')
+        if not priority:
+            raise ValidationError("Priority is required.")
+        return priority
+    
     def clean(self):
-        """Additional validation."""
+        """Additional validation for device form."""
         cleaned_data = super().clean()
         device_type = cleaned_data.get('device_type')
         parent_device = cleaned_data.get('parent_device')
@@ -366,26 +435,44 @@ class DeviceForm(forms.ModelForm):
         is_assignable = cleaned_data.get('is_assignable')
         
         # Validate parent device relationship
+        if device_type == 'COMPONENT':
+            if not parent_device:
+                raise ValidationError({
+                    'parent_device': 'Parent device is required for components.'
+                })
+            
+            if parent_device.device_type != 'COMPLETE':
+                raise ValidationError({
+                    'parent_device': 'Parent device must be a complete device.'
+                })
+        
         if parent_device and device_type == 'COMPLETE':
             raise ValidationError({
-                'parent_device': "Complete devices cannot have parent devices"
-            })
-        
-        if parent_device and parent_device.device_type != 'COMPLETE':
-            raise ValidationError({
-                'parent_device': "Parent device must be a complete device"
+                'parent_device': "Complete devices cannot have parent devices."
             })
         
         # Business logic validation
         if status == 'ASSIGNED' and not is_assignable:
             raise ValidationError({
-                'status': "Device marked as non-assignable cannot be assigned"
+                'status': "Device marked as non-assignable cannot be assigned."
             })
         
         if condition == 'DAMAGED' and status == 'AVAILABLE':
             raise ValidationError({
-                'status': "Damaged devices should not be available for assignment"
+                'status': "Damaged devices should not be available for assignment."
             })
+        
+        # Validate serial number uniqueness if provided
+        serial_number = cleaned_data.get('serial_number')
+        if serial_number:
+            existing_device = Device.objects.filter(
+                serial_number=serial_number
+            ).exclude(pk=self.instance.pk if self.instance else None)
+            
+            if existing_device.exists():
+                raise ValidationError({
+                    'serial_number': 'A device with this serial number already exists.'
+                })
         
         return cleaned_data
     
@@ -397,11 +484,14 @@ class DeviceForm(forms.ModelForm):
         specifications_json = self.cleaned_data.get('specifications_json', {})
         device.specifications = specifications_json
         
+        # Auto-generate device_id if not provided
+        if not device.device_id:
+            device.device_id = device.generate_device_id()
+        
         if commit:
             device.save()
         
         return device
-
 
 class DeviceFilterForm(forms.Form):
     """Form for filtering devices by various criteria."""

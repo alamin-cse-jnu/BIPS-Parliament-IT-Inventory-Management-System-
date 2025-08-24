@@ -1,540 +1,1365 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ device.brand }} {{ device.model }} | PIMS{% endblock %}
-
-{% block extra_css %}
-<style>
-    body {
-        background: linear-gradient(135deg, #1f2937 0%, #374151 50%, #4b5563 100%);
-        color: #f9fafb;
-        min-height: 100vh;
-    }
-    .main-content {
-        background: transparent;
-    }
-    .device-header {
-        background: linear-gradient(135deg, var(--parliament-primary) 0%, #1e40af 100%);
-        color: white;
-        border-radius: 0.75rem;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 10px 25px rgba(30, 58, 138, 0.3);
-    }
-    .device-card {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        transition: all 0.3s ease;
-        color: #f9fafb;
-    }
-    .device-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-        background: rgba(255, 255, 255, 0.15);
-    }
-    .card-header {
-        background: rgba(30, 58, 138, 0.2) !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        color: #f9fafb !important;
-    }
-    .card-title, .card-title i {
-        color: #f9fafb !important;
-    }
-    .text-muted {
-        color: #d1d5db !important;
-    }
-    .spec-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        color: #f9fafb;
-    }
-    .spec-item:last-child {
-        border-bottom: none;
-    }
-    .qr-code-preview {
-        max-width: 150px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        border-radius: 0.5rem;
-        padding: 0.5rem;
-        background: white;
-    }
-    .table {
-        color: #f9fafb;
-    }
-    .table th {
-        color: #e5e7eb;
-        border-color: rgba(255, 255, 255, 0.1);
-    }
-    .table td {
-        border-color: rgba(255, 255, 255, 0.1);
-    }
-    .border-top, .border-end {
-        border-color: rgba(255, 255, 255, 0.1) !important;
-    }
-    .btn-outline-primary {
-        border-color: rgba(255, 255, 255, 0.3);
-        color: #f9fafb;
-    }
-    .btn-outline-primary:hover {
-        background: var(--parliament-primary);
-        border-color: var(--parliament-primary);
-        color: white;
-    }
-    .dropdown-menu {
-        background: rgba(31, 41, 55, 0.95);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-    }
-    .dropdown-item {
-        color: #f9fafb;
-    }
-    .dropdown-item:hover {
-        background: rgba(30, 58, 138, 0.3);
-        color: white;
-    }
-    strong, .fw-bold, .fw-medium {
-        color: #f9fafb;
-    }
-    .timeline .bg-warning {
-        background: var(--parliament-warning) !important;
-    }
-</style>
-{% endblock %}
+{% block title %}{{ device.name }} - Device Details - PIMS - Bangladesh Parliament Secretariat{% endblock %}
 
 {% block breadcrumb_items %}
     <li class="breadcrumb-item"><a href="{% url 'devices:list' %}">Devices</a></li>
     <li class="breadcrumb-item active">{{ device.device_id }}</li>
 {% endblock %}
 
-{% block content %}
-<!-- Device Header -->
-<div class="device-header">
-    <div class="row align-items-center">
-        <div class="col-md-8">
-            <div class="d-flex align-items-center mb-3">
-                <i class="bi bi-{{ device.subcategory.category.icon_class|default:'laptop' }} display-4 me-3"></i>
-                <div>
-                    <h1 class="mb-1">{{ device.brand }} {{ device.model }}</h1>
-                    <p class="mb-0 opacity-75">{{ device.subcategory.category.name }} • {{ device.subcategory.name }}</p>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6 col-md-3">
-                    <div class="text-white-50 small">Device ID</div>
-                    <div class="fw-bold">{{ device.device_id }}</div>
-                </div>
-                <div class="col-sm-6 col-md-3">
-                    <div class="text-white-50 small">Serial Number</div>
-                    <div class="fw-bold">{{ device.serial_number|default:'Not specified' }}</div>
-                </div>
-                <div class="col-sm-6 col-md-3">
-                    <div class="text-white-50 small">Purchase Date</div>
-                    <div class="fw-bold">{{ device.purchase_date|date:'M d, Y' }}</div>
-                </div>
-                <div class="col-sm-6 col-md-3">
-                    <div class="text-white-50 small">Current Value</div>
-                    <div class="fw-bold">৳{{ device.current_value|floatformat:0 }}</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4 text-end">
-            <div class="dropdown">
-                <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <i class="bi bi-gear me-2"></i>Actions
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="{% url 'devices:edit' device.pk %}">
-                        <i class="bi bi-pencil me-2"></i>Edit Device
-                    </a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="{% url 'devices:qr_generate' device.pk %}">
-                        <i class="bi bi-qr-code me-2"></i>Generate QR Code
-                    </a></li>
-                    {% if device.can_have_components %}
-                    <li><a class="dropdown-item" href="{% url 'devices:components' device.pk %}">
-                        <i class="bi bi-cpu me-2"></i>Manage Components
-                    </a></li>
-                    {% endif %}
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="{% url 'devices:delete' device.pk %}">
-                        <i class="bi bi-trash me-2"></i>Delete Device
-                    </a></li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+/* Device Detail Page Redesign - Bangladesh Parliament Secretariat */
+/* Location: Dhaka, Bangladesh */
+/* Flat Design with High Contrast - Teal, Orange, Red Color Scheme */
 
-<div class="row">
-    <!-- Left Column -->
-    <div class="col-lg-8">
-        <!-- Status and Information -->
-        <div class="card device-card border-0 shadow-sm mb-4">
-            <div class="card-header bg-light">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-info-circle me-2 text-primary"></i>Device Information
-                </h5>
+:root {
+    --primary-teal: #14b8a6;
+    --primary-teal-hover: #0f9488;
+    --primary-orange: #f97316;
+    --primary-red: #ef4444;
+    --success-green: #10b981;
+    --warning-amber: #f59e0b;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --border-light: #e2e8f0;
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Main Container */
+.device-detail-container {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+/* Device Header */
+.device-header {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-card);
+    position: relative;
+    overflow: hidden;
+}
+
+.device-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-orange) 50%, var(--primary-red) 100%);
+}
+
+.device-header-content {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 2rem;
+    align-items: center;
+}
+
+.device-icon-large {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: white;
+    box-shadow: var(--shadow-card);
+}
+
+.device-header-info h1 {
+    color: var(--text-primary);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    font-size: 2rem;
+}
+
+.device-header-subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    font-size: 1.125rem;
+}
+
+.device-meta-badges {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.status-badge.available {
+    background: linear-gradient(135deg, var(--success-green) 0%, #047857 100%);
+    color: white;
+}
+
+.status-badge.assigned {
+    background: linear-gradient(135deg, var(--primary-orange) 0%, #ea580c 100%);
+    color: white;
+}
+
+.status-badge.maintenance {
+    background: linear-gradient(135deg, var(--warning-amber) 0%, #d97706 100%);
+    color: white;
+}
+
+.status-badge.retired {
+    background: linear-gradient(135deg, var(--primary-red) 0%, #dc2626 100%);
+    color: white;
+}
+
+.device-header-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.action-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: center;
+    min-width: 160px;
+}
+
+.action-btn.primary {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
+    color: white;
+}
+
+.action-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    color: white;
+}
+
+.action-btn.warning {
+    background: linear-gradient(135deg, var(--primary-orange) 0%, #ea580c 100%);
+    color: white;
+}
+
+.action-btn.warning:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    color: white;
+}
+
+.action-btn.danger {
+    background: linear-gradient(135deg, var(--primary-red) 0%, #dc2626 100%);
+    color: white;
+}
+
+.action-btn.danger:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    color: white;
+}
+
+.action-btn.secondary {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+}
+
+.action-btn.secondary:hover {
+    background: #e2e8f0;
+    color: var(--text-primary);
+    transform: translateY(-2px);
+}
+
+/* Main Content Grid */
+.device-content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Information Cards */
+.info-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    transition: all 0.3s ease;
+}
+
+.info-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.card-header-custom {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
+    color: white;
+    padding: 1.5rem;
+    border-bottom: none;
+}
+
+.card-header-custom.orange {
+    background: linear-gradient(135deg, var(--primary-orange) 0%, #ea580c 100%);
+}
+
+.card-header-custom.red {
+    background: linear-gradient(135deg, var(--primary-red) 0%, #dc2626 100%);
+}
+
+.card-header-custom h5 {
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.card-body-custom {
+    padding: 1.5rem;
+}
+
+/* Device Detail Rows */
+.device-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.device-detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.detail-value {
+    color: var(--text-primary);
+    font-weight: 500;
+    text-align: right;
+    flex: 1;
+    margin-left: 1rem;
+}
+
+.detail-value.highlight {
+    background: rgba(20, 184, 166, 0.1);
+    color: var(--primary-teal);
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-family: monospace;
+}
+
+/* Specifications Grid */
+.specifications-grid {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.spec-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    align-items: center;
+}
+
+.spec-key {
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    text-transform: capitalize;
+}
+
+.spec-value {
+    color: var(--text-primary);
+    font-weight: 500;
+    text-align: right;
+}
+
+/* Current Assignment Card */
+.assignment-info {
+    background: linear-gradient(135deg, rgba(20, 184, 166, 0.05) 0%, rgba(15, 118, 110, 0.05) 100%);
+    border: 1px solid rgba(20, 184, 166, 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.assignment-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.assignment-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.assignment-details h6 {
+    margin: 0;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.assignment-details small {
+    color: var(--text-secondary);
+}
+
+/* Warranty Status */
+.warranty-card {
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+
+.warranty-card.active {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.warranty-card.expiring {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.05) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.warranty-card.expired {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.warranty-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.warranty-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.warranty-icon.active {
+    background: linear-gradient(135deg, var(--success-green) 0%, #047857 100%);
+}
+
+.warranty-icon.expiring {
+    background: linear-gradient(135deg, var(--warning-amber) 0%, #d97706 100%);
+}
+
+.warranty-icon.expired {
+    background: linear-gradient(135deg, var(--primary-red) 0%, #dc2626 100%);
+}
+
+/* QR Code Section */
+.qr-code-card {
+    text-align: center;
+    padding: 2rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 2px dashed var(--border-light);
+}
+
+.qr-code-image {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 1rem;
+    border-radius: 12px;
+    background: white;
+    padding: 1rem;
+    box-shadow: var(--shadow-card);
+}
+
+.qr-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Maintenance History */
+.maintenance-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.maintenance-item:last-child {
+    border-bottom: none;
+}
+
+.maintenance-status-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+}
+
+.maintenance-status-icon.completed {
+    background: linear-gradient(135deg, var(--success-green) 0%, #047857 100%);
+}
+
+.maintenance-status-icon.scheduled {
+    background: linear-gradient(135deg, var(--primary-orange) 0%, #ea580c 100%);
+}
+
+.maintenance-status-icon.in-progress {
+    background: linear-gradient(135deg, var(--warning-amber) 0%, #d97706 100%);
+}
+
+.maintenance-info {
+    flex: 1;
+}
+
+.maintenance-info h6 {
+    margin: 0;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.925rem;
+}
+
+.maintenance-info small {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-secondary);
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+    color: var(--primary-teal);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .device-content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .device-detail-container {
+        padding: 1rem 0;
+    }
+    
+    .device-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .device-header-content {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        text-align: center;
+    }
+    
+    .device-header-actions {
+        order: -1;
+        align-self: center;
+    }
+    
+    .device-icon-large {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+        margin: 0 auto;
+    }
+    
+    .device-header-info h1 {
+        font-size: 1.75rem;
+    }
+    
+    .device-meta-badges {
+        justify-content: center;
+    }
+    
+    .action-btn {
+        min-width: auto;
+        flex: 1;
+    }
+    
+    .device-detail-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .detail-value {
+        text-align: left;
+        margin-left: 0;
+    }
+    
+    .spec-row {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    
+    .spec-value {
+        text-align: left;
+    }
+    
+    .qr-code-card {
+        padding: 1.5rem;
+    }
+    
+    .qr-code-image {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .qr-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .device-header {
+        padding: 1rem;
+    }
+    
+    .device-header-info h1 {
+        font-size: 1.5rem;
+    }
+    
+    .card-body-custom {
+        padding: 1rem;
+    }
+    
+    .specifications-grid {
+        gap: 0.5rem;
+    }
+    
+    .spec-row {
+        padding: 0.5rem;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .info-card,
+    .warranty-card,
+    .assignment-info {
+        border-width: 2px;
+    }
+    
+    .device-icon-large,
+    .assignment-icon,
+    .warranty-icon {
+        filter: contrast(1.2);
+    }
+}
+
+/* Print styles */
+@media print {
+    .device-detail-container {
+        background: white;
+        padding: 0;
+    }
+    
+    .device-header-actions {
+        display: none;
+    }
+    
+    .info-card {
+        box-shadow: none;
+        border: 1px solid #ccc;
+        break-inside: avoid;
+        margin-bottom: 1rem;
+    }
+    
+    .card-header-custom {
+        background: #f5f5f5 !important;
+        color: #000 !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="device-detail-container">
+    <div class="container">
+        <!-- Device Header -->
+        <div class="device-header">
+            <div class="device-header-content">
+                <!-- Device Icon -->
+                <div class="device-icon-large">
+                    {% if device.subcategory.category.icon_class %}
+                        <i class="{{ device.subcategory.category.icon_class }}"></i>
+                    {% else %}
+                        <i class="bi bi-laptop"></i>
+                    {% endif %}
+                </div>
+                
+                <!-- Device Information -->
+                <div class="device-header-info">
+                    <h1>{{ device.name }}</h1>
+                    <p class="device-header-subtitle">
+                        {{ device.brand }} {{ device.model }} • {{ device.subcategory.category.name }}
+                    </p>
+                    <div class="device-meta-badges">
+                        <span class="status-badge {{ device.status|lower }}">
+                            <i class="bi bi-circle-fill me-1"></i>
+                            {{ device.get_status_display }}
+                        </span>
+                        {% if device.device_type %}
+                        <span class="status-badge secondary" style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); color: white;">
+                            {{ device.get_device_type_display }}
+                        </span>
+                        {% endif %}
+                        {% if device.priority %}
+                        <span class="status-badge priority-{{ device.priority|lower }}" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white;">
+                            {{ device.get_priority_display }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="device-header-actions">
+                    <a href="{% url 'devices:edit' device.pk %}" class="action-btn primary">
+                        <i class="bi bi-pencil"></i>
+                        Edit Device
+                    </a>
+                    {% if device.status == 'AVAILABLE' %}
+                    <a href="{% url 'assignments:create' %}?device={{ device.pk }}" class="action-btn warning">
+                        <i class="bi bi-person-plus"></i>
+                        Assign Device
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'maintenance:create' %}?device={{ device.pk }}" class="action-btn secondary">
+                        <i class="bi bi-tools"></i>
+                        Schedule Maintenance
+                    </a>
+                    <a href="{% url 'devices:delete' device.pk %}" class="action-btn danger">
+                        <i class="bi bi-trash"></i>
+                        Delete Device
+                    </a>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <h6 class="text-muted mb-3">Status Information</h6>
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <strong>Status:</strong>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="device-content-grid">
+            <!-- Left Column - Main Information -->
+            <div class="device-main-content">
+                <!-- Basic Information -->
+                <div class="info-card">
+                    <div class="card-header-custom">
+                        <h5>
+                            <i class="bi bi-info-circle"></i>
+                            Device Information
+                        </h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="device-detail-row">
+                            <span class="detail-label">
+                                <i class="bi bi-hash"></i>
+                                Device ID
+                            </span>
+                            <span class="detail-value highlight">{{ device.device_id }}</span>
+                        </div>
+                        
+                        <div class="device-detail-row">
+                            <span class="detail-label">
+                                <i class="bi bi-tag"></i>
+                                Brand & Model
+                            </span>
+                            <span class="detail-value">{{ device.brand }} {{ device.model }}</span>
+                        </div>
+                        
+                        <div class="device-detail-row">
+                            <span class="detail-label">
+                                <i class="bi bi-grid-3x3-gap"></i>
+                                Category
+                            </span>
+                            <span class="detail-value">{{ device.subcategory.category.name }} - {{ device.subcategory.name }}</span>
+                        </div>
+                        
+                        {% if device.serial_number %}
+                        <div class="device-detail-row">
+                            <span class="detail-label">
+                                <i class="bi bi-upc-scan"></i>
+                                Serial Number
+                            </span>
+                            <span class="detail-value">{{ device.serial_number }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if device.purchase_date %}
+                        <div class="device-detail-row">
+                            <span class="detail-label">
+                                <i class="bi bi-calendar"></i>
+                                Purchase Date
+                            </span>
+                            <span class="detail-value">{{ device.purchase_date|date:"F d, Y" }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if device.purchase_price %}
+                        <div class="device-detail-row">
+                            <span class="detail-label">
+                                <i class="bi bi-currency-dollar"></i>
+                                Purchase Price
+                            </span>
+                            <span class="detail-value">৳{{ device.purchase_price|floatformat:2 }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="device-detail-row">
+                            <span class="detail-label">
+                                <i class="bi bi-calendar-check"></i>
+                                Device Age
+                            </span>
+                            <span class="detail-value">{{ device.age_in_years|floatformat:1 }} years</span>
+                        </div>
+                        
+                        <div class="device-detail-row">
+                            <span class="detail-label">
+                                <i class="bi bi-star"></i>
+                                Condition
+                            </span>
+                            <span class="detail-value">{{ device.get_condition_display }}</span>
+                        </div>
+                        
+                        {% if device.vendor %}
+                        <div class="device-detail-row">
+                            <span class="detail-label">
+                                <i class="bi bi-building"></i>
+                                Vendor
+                            </span>
+                            <span class="detail-value">
+                                <a href="{% url 'vendors:detail' device.vendor.pk %}" class="text-decoration-none" style="color: var(--primary-teal);">
+                                    {{ device.vendor.name }}
+                                </a>
+                            </span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if device.notes %}
+                        <div class="device-detail-row">
+                            <span class="detail-label">
+                                <i class="bi bi-chat-text"></i>
+                                Notes
+                            </span>
+                            <span class="detail-value">{{ device.notes|truncatechars:100 }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Specifications -->
+                {% if device.specifications %}
+                <div class="info-card">
+                    <div class="card-header-custom orange">
+                        <h5>
+                            <i class="bi bi-gear"></i>
+                            Technical Specifications
+                        </h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="specifications-grid">
+                            {% for key, value in device.specifications.items %}
+                            <div class="spec-row">
+                                <span class="spec-key">{{ key|title|cut:"_" }}</span>
+                                <span class="spec-value">{{ value }}</span>
                             </div>
-                            <div class="col-6">
-                                <span class="{{ device.get_status_badge_class }}">
-                                    {{ device.get_status_display }}
-                                </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Current Assignment -->
+                {% if current_assignment %}
+                <div class="info-card">
+                    <div class="card-header-custom">
+                        <h5>
+                            <i class="bi bi-person-check"></i>
+                            Current Assignment
+                        </h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="assignment-info">
+                            <div class="assignment-header">
+                                <div class="assignment-icon">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                                <div class="assignment-details">
+                                    {% if current_assignment.assigned_to %}
+                                    <h6>{{ current_assignment.assigned_to.get_full_name }}</h6>
+                                    <small>{{ current_assignment.assigned_to.email }}</small>
+                                    {% endif %}
+                                    {% if current_assignment.location %}
+                                    <h6>{{ current_assignment.location.name }}</h6>
+                                    <small>{{ current_assignment.location.get_full_address }}</small>
+                                    {% endif %}
+                                </div>
                             </div>
-                            <div class="col-6">
-                                <strong>Condition:</strong>
-                            </div>
-                            <div class="col-6">
-                                <span class="{{ device.get_condition_badge_class }}">
-                                    {{ device.get_condition_display }}
-                                </span>
-                            </div>
-                            <div class="col-6">
-                                <strong>Priority:</strong>
-                            </div>
-                            <div class="col-6">
-                                <span class="badge bg-secondary">{{ device.get_priority_display }}</span>
-                            </div>
-                            <div class="col-6">
-                                <strong>Assignable:</strong>
-                            </div>
-                            <div class="col-6">
-                                {% if device.is_assignable %}
-                                    <i class="bi bi-check-circle text-success"></i> Yes
-                                {% else %}
-                                    <i class="bi bi-x-circle text-danger"></i> No
+                            <div class="assignment-meta">
+                                <div class="device-detail-row">
+                                    <span class="detail-label">
+                                        <i class="bi bi-calendar-event"></i>
+                                        Assigned Date
+                                    </span>
+                                    <span class="detail-value">{{ current_assignment.assigned_date|date:"F d, Y" }}</span>
+                                </div>
+                                {% if current_assignment.notes %}
+                                <div class="device-detail-row">
+                                    <span class="detail-label">
+                                        <i class="bi bi-chat-text"></i>
+                                        Notes
+                                    </span>
+                                    <span class="detail-value">{{ current_assignment.notes|truncatechars:100 }}</span>
+                                </div>
                                 {% endif %}
                             </div>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <h6 class="text-muted mb-3">Financial Information</h6>
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <strong>Purchase Price:</strong>
-                            </div>
-                            <div class="col-6">
-                                ৳{{ device.purchase_price|floatformat:0 }}
-                            </div>
-                            <div class="col-6">
-                                <strong>Current Value:</strong>
-                            </div>
-                            <div class="col-6">
-                                ৳{{ device.current_value|floatformat:0 }}
-                            </div>
-                            <div class="col-6">
-                                <strong>Age:</strong>
-                            </div>
-                            <div class="col-6">
-                                {{ device.age_in_years|floatformat:1 }} years
-                            </div>
-                            <div class="col-6">
-                                <strong>Vendor:</strong>
-                            </div>
-                            <div class="col-6">
-                                {{ device.vendor.name }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                {% if device.current_location %}
-                <div class="mt-4 pt-3 border-top">
-                    <h6 class="text-muted mb-2">Current Location</h6>
-                    <p class="mb-0">
-                        <i class="bi bi-geo-alt text-primary me-1"></i>
-                        {{ device.current_location.name }}
-                    </p>
-                </div>
-                {% endif %}
-
-                {% if device.notes %}
-                <div class="mt-4 pt-3 border-top">
-                    <h6 class="text-muted mb-2">Notes</h6>
-                    <p class="mb-0">{{ device.notes }}</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Specifications -->
-        {% if device.specifications %}
-        <div class="card device-card border-0 shadow-sm mb-4">
-            <div class="card-header bg-light">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-gear me-2 text-primary"></i>Technical Specifications
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    {% for key, value in device.specifications.items %}
-                    <div class="col-md-6">
-                        <div class="spec-item">
-                            <span class="fw-medium">{{ key|title|capfirst }}:</span>
-                            <span class="text-end">{{ value }}</span>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Current Assignment -->
-        {% if current_assignment %}
-        <div class="card device-card border-0 shadow-sm mb-4">
-            <div class="card-header bg-light">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-person-check me-2 text-primary"></i>Current Assignment
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>Assigned To:</strong>
-                        <p class="mb-1">{{ current_assignment.assigned_to.get_full_name }}</p>
-                        <small class="text-muted">{{ current_assignment.assigned_to.employee_id }}</small>
-                    </div>
-                    <div class="col-md-6">
-                        <strong>Assignment Date:</strong>
-                        <p class="mb-1">{{ current_assignment.assignment_date|date:'M d, Y' }}</p>
-                        {% if current_assignment.expected_return_date %}
-                        <small class="text-muted">Expected return: {{ current_assignment.expected_return_date|date:'M d, Y' }}</small>
-                        {% endif %}
-                    </div>
-                </div>
-                {% if current_assignment.notes %}
-                <div class="mt-3 pt-3 border-top">
-                    <strong>Assignment Notes:</strong>
-                    <p class="mb-0">{{ current_assignment.notes }}</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Components (for complete devices) -->
-        {% if components %}
-        <div class="card device-card border-0 shadow-sm mb-4">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-cpu me-2 text-primary"></i>Components
-                </h5>
-                <a href="{% url 'devices:add_component' device.pk %}" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-plus me-1"></i>Add Component
-                </a>
-            </div>
-            <div class="card-body">
-                {% if components %}
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Component</th>
-                                <th>Brand/Model</th>
-                                <th>Serial Number</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for component in components %}
-                            <tr>
-                                <td>
-                                    <a href="{% url 'devices:detail' component.pk %}" class="text-decoration-none">
-                                        {{ component.subcategory.name }}
-                                    </a>
-                                </td>
-                                <td>{{ component.brand }} {{ component.model }}</td>
-                                <td><code>{{ component.serial_number|default:'N/A' }}</code></td>
-                                <td>
-                                    <span class="{{ component.get_status_badge_class }}">
-                                        {{ component.get_status_display }}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <p class="text-muted mb-0">No components added yet.</p>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Maintenance History -->
-        {% if maintenance_history %}
-        <div class="card device-card border-0 shadow-sm mb-4">
-            <div class="card-header bg-light">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-wrench me-2 text-primary"></i>Recent Maintenance History
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="timeline">
-                    {% for maintenance in maintenance_history %}
-                    <div class="d-flex mb-3">
-                        <div class="flex-shrink-0 me-3">
-                            <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                <i class="bi bi-wrench text-white small"></i>
-                            </div>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">{{ maintenance.maintenance_type|title }}</h6>
-                            <p class="mb-1 small text-muted">{{ maintenance.start_date|date:'M d, Y' }} - {{ maintenance.end_date|date:'M d, Y'|default:'Ongoing' }}</p>
-                            {% if maintenance.description %}
-                            <p class="mb-0 small">{{ maintenance.description|truncatewords:15 }}</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Right Column -->
-    <div class="col-lg-4">
-        <!-- Warranty Information -->
-        <div class="card device-card border-0 shadow-sm mb-4">
-            <div class="card-header bg-light">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-shield me-2 text-primary"></i>Warranty Status
-                </h5>
-            </div>
-            <div class="card-body">
-                {% if device.is_under_warranty %}
-                    <div class="text-center mb-3">
-                        <i class="bi bi-shield-check display-4 text-success"></i>
-                        <h6 class="text-success mt-2">Under Warranty</h6>
-                    </div>
-                {% elif device.warranty_expires_soon %}
-                    <div class="text-center mb-3">
-                        <i class="bi bi-shield-exclamation display-4 text-warning"></i>
-                        <h6 class="text-warning mt-2">Warranty Expires Soon</h6>
-                    </div>
-                {% else %}
-                    <div class="text-center mb-3">
-                        <i class="bi bi-shield-x display-4 text-danger"></i>
-                        <h6 class="text-danger mt-2">No Active Warranty</h6>
-                    </div>
-                {% endif %}
-
-                {% if active_warranties %}
-                    {% for warranty in active_warranties %}
-                    <div class="border rounded p-3 mb-2">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <strong>{{ warranty.warranty_type|title }}</strong>
-                                <br><small class="text-muted">{{ warranty.provider.name }}</small>
-                            </div>
-                            <small class="text-muted">{{ warranty.end_date|date:'M d, Y' }}</small>
-                        </div>
-                        {% if warranty.warranty_number %}
-                        <div class="mt-2">
-                            <small class="text-muted">Warranty #: {{ warranty.warranty_number }}</small>
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-muted text-center">No warranty information available</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- QR Codes -->
-        <div class="card device-card border-0 shadow-sm mb-4">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-qr-code me-2 text-primary"></i>QR Codes
-                </h5>
-                <a href="{% url 'devices:qr_generate' device.pk %}" class="btn btn-sm btn-outline-primary">
-                    Generate
-                </a>
-            </div>
-            <div class="card-body text-center">
-                {% if qr_codes %}
-                    {% for qr_code in qr_codes %}
-                    <div class="mb-3">
-                        {% if qr_code.qr_code %}
-                        <img src="{{ qr_code.qr_code.url }}" alt="QR Code" class="qr-code-preview">
-                        <div class="mt-2">
-                            <a href="{% url 'devices:qr_download' qr_code.pk %}" class="btn btn-sm btn-outline-success">
-                                <i class="bi bi-download me-1"></i>Download
+                        <div class="text-center mt-3">
+                            <a href="{% url 'assignments:detail' current_assignment.pk %}" class="action-btn secondary">
+                                <i class="bi bi-eye"></i>
+                                View Assignment Details
                             </a>
                         </div>
-                        {% endif %}
-                        <small class="d-block text-muted mt-1">
-                            Generated: {{ qr_code.generated_at|date:'M d, Y' }}
-                        </small>
                     </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-muted">No QR codes generated</p>
-                    <a href="{% url 'devices:qr_generate' device.pk %}" class="btn btn-primary">
-                        <i class="bi bi-qr-code me-2"></i>Generate QR Code
-                    </a>
+                </div>
                 {% endif %}
+
+                <!-- Maintenance History -->
+                <div class="info-card">
+                    <div class="card-header-custom red">
+                        <h5>
+                            <i class="bi bi-tools"></i>
+                            Maintenance History
+                        </h5>
+                    </div>
+                    <div class="card-body-custom">
+                        {% if maintenance_history %}
+                            {% for maintenance in maintenance_history %}
+                            <div class="maintenance-item">
+                                <div class="maintenance-status-icon {{ maintenance.status|lower }}">
+                                    {% if maintenance.status == 'COMPLETED' %}
+                                        <i class="bi bi-check-circle"></i>
+                                    {% elif maintenance.status == 'SCHEDULED' %}
+                                        <i class="bi bi-calendar-event"></i>
+                                    {% elif maintenance.status == 'IN_PROGRESS' %}
+                                        <i class="bi bi-gear"></i>
+                                    {% else %}
+                                        <i class="bi bi-clock"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="maintenance-info">
+                                    <h6>{{ maintenance.title|default:"Maintenance" }}</h6>
+                                    <small>
+                                        <i class="bi bi-calendar me-1"></i>
+                                        {{ maintenance.start_date|date:"M d, Y" }}
+                                        {% if maintenance.end_date %}
+                                            - {{ maintenance.end_date|date:"M d, Y" }}
+                                        {% endif %}
+                                        • {{ maintenance.get_maintenance_type_display }}
+                                    </small>
+                                </div>
+                                <div class="maintenance-actions">
+                                    <a href="{% url 'maintenance:detail' maintenance.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% if maintenance_history.count > 5 %}
+                            <div class="text-center mt-3">
+                                <a href="{% url 'maintenance:list' %}?device={{ device.pk }}" class="action-btn secondary">
+                                    <i class="bi bi-list"></i>
+                                    View All Maintenance Records
+                                </a>
+                            </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="bi bi-tools"></i>
+                                <h5>No Maintenance History</h5>
+                                <p>This device has no maintenance records yet.</p>
+                                <a href="{% url 'maintenance:create' %}?device={{ device.pk }}" class="action-btn primary">
+                                    <i class="bi bi-plus"></i>
+                                    Schedule First Maintenance
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Sidebar -->
+            <div class="device-sidebar">
+                <!-- Warranty Information -->
+                <div class="info-card">
+                    <div class="card-header-custom">
+                        <h5>
+                            <i class="bi bi-shield-check"></i>
+                            Warranty Status
+                        </h5>
+                    </div>
+                    <div class="card-body-custom">
+                        {% if device.warranty %}
+                            {% if device.is_under_warranty %}
+                            <div class="warranty-card active">
+                                <div class="warranty-header">
+                                    <div class="warranty-icon active">
+                                        <i class="bi bi-shield-check"></i>
+                                    </div>
+                                    <div>
+                                        <h6 style="color: var(--success-green); margin: 0;">Under Warranty</h6>
+                                        <small style="color: var(--text-secondary);">Valid until {{ device.warranty.end_date|date:"F d, Y" }}</small>
+                                    </div>
+                                </div>
+                                <div class="device-detail-row">
+                                    <span class="detail-label">
+                                        <i class="bi bi-calendar-range"></i>
+                                        Duration
+                                    </span>
+                                    <span class="detail-value">{{ device.warranty.duration_months }} months</span>
+                                </div>
+                                <div class="device-detail-row">
+                                    <span class="detail-label">
+                                        <i class="bi bi-building"></i>
+                                        Provider
+                                    </span>
+                                    <span class="detail-value">
+                                        {% if device.warranty.provider %}
+                                            <a href="{% url 'vendors:detail' device.warranty.provider.pk %}" class="text-decoration-none" style="color: var(--primary-teal);">
+                                                {{ device.warranty.provider.name }}
+                                            </a>
+                                        {% else %}
+                                            Manufacturer
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                {% if device.warranty.warranty_type %}
+                                <div class="device-detail-row">
+                                    <span class="detail-label">
+                                        <i class="bi bi-tag"></i>
+                                        Type
+                                    </span>
+                                    <span class="detail-value">{{ device.warranty.get_warranty_type_display }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% elif device.warranty_expires_soon %}
+                            <div class="warranty-card expiring">
+                                <div class="warranty-header">
+                                    <div class="warranty-icon expiring">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                    </div>
+                                    <div>
+                                        <h6 style="color: var(--warning-amber); margin: 0;">Expires Soon</h6>
+                                        <small style="color: var(--text-secondary);">{{ device.warranty.days_remaining }} days remaining</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="warranty-card expired">
+                                <div class="warranty-header">
+                                    <div class="warranty-icon expired">
+                                        <i class="bi bi-x-circle"></i>
+                                    </div>
+                                    <div>
+                                        <h6 style="color: var(--primary-red); margin: 0;">Warranty Expired</h6>
+                                        <small style="color: var(--text-secondary);">Expired on {{ device.warranty.end_date|date:"F d, Y" }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            <div class="text-center mt-3">
+                                <a href="{% url 'devices:warranty_detail' device.warranty.pk %}" class="action-btn secondary">
+                                    <i class="bi bi-eye"></i>
+                                    View Warranty Details
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="bi bi-shield-x"></i>
+                                <h5>No Warranty</h5>
+                                <p>No warranty information available for this device.</p>
+                                <a href="{% url 'devices:warranty_create' %}?device={{ device.pk }}" class="action-btn primary">
+                                    <i class="bi bi-plus"></i>
+                                    Add Warranty
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Current Location -->
+                {% if device.current_location %}
+                <div class="info-card">
+                    <div class="card-header-custom orange">
+                        <h5>
+                            <i class="bi bi-geo-alt"></i>
+                            Current Location
+                        </h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="assignment-info">
+                            <div class="assignment-header">
+                                <div class="assignment-icon" style="background: linear-gradient(135deg, var(--primary-orange) 0%, #ea580c 100%);">
+                                    <i class="bi bi-building"></i>
+                                </div>
+                                <div class="assignment-details">
+                                    <h6>{{ device.current_location.name }}</h6>
+                                    <small>{{ device.current_location.get_full_address }}</small>
+                                </div>
+                            </div>
+                            {% if device.current_location.description %}
+                            <div class="device-detail-row">
+                                <span class="detail-label">
+                                    <i class="bi bi-info"></i>
+                                    Description
+                                </span>
+                                <span class="detail-value">{{ device.current_location.description|truncatechars:80 }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="{% url 'locations:detail' device.current_location.pk %}" class="action-btn secondary">
+                                <i class="bi bi-eye"></i>
+                                View Location Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- QR Code -->
+                <div class="info-card">
+                    <div class="card-header-custom red">
+                        <h5>
+                            <i class="bi bi-qr-code"></i>
+                            QR Code
+                        </h5>
+                    </div>
+                    <div class="card-body-custom">
+                        {% if device.qr_codes.exists %}
+                            {% for qr_code in device.qr_codes.all %}
+                                {% if qr_code.is_active %}
+                                <div class="qr-code-card">
+                                    <div class="qr-code-image">
+                                        {% if qr_code.qr_code %}
+                                            <img src="{{ qr_code.qr_code.url }}" alt="QR Code for {{ device.device_id }}" class="img-fluid">
+                                        {% else %}
+                                            <i class="bi bi-qr-code" style="font-size: 4rem; color: var(--text-secondary);"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="qr-actions">
+                                        {% if qr_code.qr_code %}
+                                        <a href="{% url 'devices:qr_download' qr_code.pk %}" class="action-btn secondary">
+                                            <i class="bi bi-download"></i>
+                                            Download
+                                        </a>
+                                        {% endif %}
+                                        <a href="{% url 'devices:qr_view' qr_code.pk %}" class="action-btn primary">
+                                            <i class="bi bi-eye"></i>
+                                            View QR
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="bi bi-qr-code"></i>
+                                <h5>No QR Code</h5>
+                                <p>Generate a QR code for easy device identification.</p>
+                                <form method="post" action="{% url 'devices:qr_generate' device.pk %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="action-btn primary">
+                                        <i class="bi bi-plus"></i>
+                                        Generate QR Code
+                                    </button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="info-card">
+                    <div class="card-header-custom" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+                        <h5>
+                            <i class="bi bi-graph-up"></i>
+                            Quick Stats
+                        </h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="device-detail-row">
+                            <span class="detail-label">
+                                <i class="bi bi-calendar-plus"></i>
+                                Created Date
+                            </span>
+                            <span class="detail-value">{{ device.created_at|date:"F d, Y" }}</span>
+                        </div>
+                        
+                        {% if device.updated_at %}
+                        <div class="device-detail-row">
+                            <span class="detail-label">
+                                <i class="bi bi-calendar-check"></i>
+                                Last Updated
+                            </span>
+                            <span class="detail-value">{{ device.updated_at|date:"F d, Y" }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="device-detail-row">
+                            <span class="detail-label">
+                                <i class="bi bi-person"></i>
+                                Created By
+                            </span>
+                            <span class="detail-value">{{ device.created_by.get_full_name|default:device.created_by.username }}</span>
+                        </div>
+                        
+                        <div class="device-detail-row">
+                            <span class="detail-label">
+                                <i class="bi bi-activity"></i>
+                                Status History
+                            </span>
+                            <span class="detail-value">{{ device.assignment_set.count }} assignment(s)</span>
+                        </div>
+                        
+                        <div class="device-detail-row">
+                            <span class="detail-label">
+                                <i class="bi bi-tools"></i>
+                                Maintenance Count
+                            </span>
+                            <span class="detail-value">{{ device.maintenance_set.count }} record(s)</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Device Statistics -->
-        <div class="card device-card border-0 shadow-sm">
-            <div class="card-header bg-light">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-graph-up me-2 text-primary"></i>Device Statistics
+        <!-- Components Section (if applicable) -->
+        {% if device.device_type == 'COMPLETE' and device.components.exists %}
+        <div class="info-card">
+            <div class="card-header-custom" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);">
+                <h5>
+                    <i class="bi bi-cpu"></i>
+                    Device Components
                 </h5>
             </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-6">
-                        <div class="border-end">
-                            <div class="h4 text-primary mb-1">{{ device.age_in_years|floatformat:1 }}</div>
-                            <small class="text-muted">Years Old</small>
+            <div class="card-body-custom">
+                <div class="row">
+                    {% for component in device.components.all %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="component-card">
+                            <div class="component-header">
+                                <div class="component-icon">
+                                    {% if component.subcategory.category.icon_class %}
+                                        <i class="{{ component.subcategory.category.icon_class }}"></i>
+                                    {% else %}
+                                        <i class="bi bi-cpu"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <h6 style="margin: 0; color: var(--text-primary);">{{ component.name }}</h6>
+                                    <small style="color: var(--text-secondary);">{{ component.device_id }}</small>
+                                </div>
+                            </div>
+                            <div class="component-details">
+                                <div class="spec-row" style="grid-template-columns: 1fr; gap: 0.25rem;">
+                                    <span class="spec-key" style="text-align: left;">{{ component.brand }} {{ component.model }}</span>
+                                </div>
+                                <div class="spec-row" style="grid-template-columns: 1fr; gap: 0.25rem;">
+                                    <span class="spec-value" style="text-align: left; font-size: 0.8rem;">{{ component.subcategory.name }}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-6">
-                        <div class="h4 text-success mb-1">
-                            {{ device.current_value|floatformat:0|default:"0" }}
-                        </div>
-                        <small class="text-muted">Current Value (৳)</small>
-                    </div>
+                    {% endfor %}
                 </div>
-                
-                <div class="mt-3 pt-3 border-top">
-                    <div class="row text-center">
-                        <div class="col-12">
-                            <small class="text-muted">Depreciation Rate</small>
-                            <div class="fw-bold">{{ device.depreciation_rate }}% annually</div>
-                        </div>
-                    </div>
+                <div class="text-center mt-3">
+                    <a href="{% url 'devices:components' device.pk %}" class="action-btn secondary">
+                        <i class="bi bi-list"></i>
+                        Manage Components
+                    </a>
                 </div>
+            </div>
+        </div>
+        {% endif %}
 
-                {% if device.device_type == 'COMPLETE' %}
-                <div class="mt-3 pt-3 border-top">
-                    <div class="row text-center">
-                        <div class="col-12">
-                            <small class="text-muted">Components</small>
-                            <div class="fw-bold">{{ components|length|default:0 }} attached</div>
-                        </div>
+        <!-- Additional Actions -->
+        <div class="info-card">
+            <div class="card-header-custom" style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);">
+                <h5>
+                    <i class="bi bi-gear"></i>
+                    Additional Actions
+                </h5>
+            </div>
+            <div class="card-body-custom">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <a href="{% url 'devices:qr_view' device.pk %}" class="action-btn secondary w-100">
+                            <i class="bi bi-qr-code"></i>
+                            QR Code Manager
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'maintenance:list' %}?device={{ device.pk }}" class="action-btn secondary w-100">
+                            <i class="bi bi-clipboard-data"></i>
+                            View Reports
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'devices:list' %}?category={{ device.subcategory.category.pk }}" class="action-btn secondary w-100">
+                            <i class="bi bi-arrow-left"></i>
+                            Back to List
+                        </a>
                     </div>
                 </div>
-                {% endif %}
             </div>
         </div>
     </div>
 </div>
+
+<!-- Additional Styles for Components -->
+<style>
+.component-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.component-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card);
+}
+
+.component-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.component-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+}
+
+.component-details {
+    display: grid;
+    gap: 0.5rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh last updated time
+    function updateLastUpdated() {
+        const lastUpdatedElement = document.getElementById('last-updated');
+        if (lastUpdatedElement) {
+            const now = new Date();
+            lastUpdatedElement.textContent = now.toLocaleString();
+        }
+    }
+    
+    // Update every 30 seconds
+    setInterval(updateLastUpdated, 30000);
+    
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

@@ -762,7 +762,7 @@
                                 <th>User Information</th>
                                 <th>User ID</th>
                                 <th>Contact Details</th>
-                                <th>Department & Role</th>
+                                <th>Office & Role</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -814,10 +814,10 @@
                                         </div>
                                     </td>
 
-                                    <!-- Department & Role -->
+                                    <!-- Office & Role -->
                                     <td>
                                         <div>
-                                            <strong>{{ user_obj.department|default:"Not Assigned" }}</strong>
+                                            <strong>{{ user_obj.office|default:"Not Assigned" }}</strong>
                                         </div>
                                         <div class="role-badges mt-1">
                                             {% if user_obj.is_superuser %}

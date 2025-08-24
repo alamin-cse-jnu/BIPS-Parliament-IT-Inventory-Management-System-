@@ -838,7 +838,7 @@
                                             {{ floor.location_set.count }}
                                         </span>
                                         {% if floor.location_set.count > 0 %}
-                                            <a href="{% url 'locations:location_list' %}?floor={{ floor.pk }}" class="view-locations-btn">
+                                            <a href="{% url 'locations:list' %}?floor={{ floor.pk }}" class="view-locations-btn">
                                                 View Locations
                                             </a>
                                         {% else %}
@@ -861,7 +861,7 @@
                                            title="View Details">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <a href="{% url 'locations:floor_update' floor.pk %}" 
+                                        <a href="{% url 'locations:floor_edit' floor.pk %}" 
                                            class="action-btn edit" 
                                            title="Edit Floor">
                                             <i class="bi bi-pencil"></i>

@@ -1,0 +1,1048 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}PRP Sync History - Bangladesh Parliament Secretariat PIMS{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'users:list' %}">Users</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'users:prp_sync_dashboard' %}">PRP Integration</a></li>
+    <li class="breadcrumb-item active">Sync History</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* PRP Sync History Template - Bangladesh Parliament Secretariat PIMS */
+/* Flat Design with High Contrast - Teal, Orange, Red Color Scheme */
+/* Following Dashboard Design Pattern */
+
+.sync-history-container {
+    background-color: #f8fafc;
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+.sync-header {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.sync-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+}
+
+.sync-title {
+    color: #1e293b;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 2rem;
+}
+
+.sync-subtitle {
+    color: #64748b;
+    margin: 0;
+    font-size: 1.125rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.location-badge {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-left: auto;
+}
+
+/* Filter Section */
+.filter-section {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-control {
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.filter-control:focus {
+    border-color: #14b8a6;
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+    outline: none;
+}
+
+.filter-btn {
+    background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+}
+
+/* Statistics Section */
+.stats-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #f1f5f9;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card.total-syncs {
+    background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+    color: white;
+}
+
+.stat-card.unique-users {
+    background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+    color: white;
+}
+
+.stat-card.period {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: white;
+}
+
+.stat-card.timezone {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.9;
+}
+
+/* History Table Section */
+.history-section {
+    background-color: #ffffff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+    margin-bottom: 2rem;
+}
+
+.section-header {
+    background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.sync-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.sync-table th {
+    background-color: #f8fafc;
+    color: #374151;
+    font-weight: 600;
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 2px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.sync-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.sync-table tr:hover {
+    background-color: #f8fafc;
+}
+
+/* User Information Styling */
+.user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.user-name {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.user-id {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-family: 'Courier New', monospace;
+}
+
+.user-office {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+/* Status Badges */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.badge-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.badge-warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.badge-error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.badge-prp {
+    background: rgba(20, 184, 166, 0.1);
+    color: #0f766e;
+    border: 1px solid rgba(20, 184, 166, 0.2);
+}
+
+.badge-local {
+    background: rgba(107, 114, 128, 0.1);
+    color: #374151;
+    border: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+/* Sync Time Formatting */
+.sync-time {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.sync-date {
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.sync-timestamp {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-family: 'Courier New', monospace;
+}
+
+/* Pagination */
+.pagination-section {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pagination-info {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.pagination-nav {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.page-btn {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #374151;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.page-btn:hover {
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    color: white;
+    text-decoration: none;
+    border-color: #14b8a6;
+}
+
+.page-btn.active {
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    color: white;
+    border-color: #14b8a6;
+}
+
+.page-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.page-btn.disabled:hover {
+    background-color: #f8fafc;
+    color: #374151;
+    border-color: #e2e8f0;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #64748b;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: #cbd5e1;
+    margin-bottom: 1rem;
+}
+
+.empty-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.empty-message {
+    font-size: 1rem;
+    line-height: 1.5;
+    max-width: 400px;
+    margin: 0 auto 2rem;
+}
+
+.empty-action {
+    background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.empty-action:hover {
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+}
+
+/* Department Breakdown */
+.dept-breakdown {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+    margin-bottom: 2rem;
+}
+
+.dept-breakdown .section-header {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    margin: -1.5rem -1.5rem 1.5rem;
+}
+
+.dept-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.dept-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background-color: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.dept-name {
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.dept-count {
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .stats-section {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .sync-history-container {
+        padding: 1rem 0;
+    }
+    
+    .sync-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .sync-title {
+        font-size: 1.5rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .location-badge {
+        margin-left: 0;
+    }
+    
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-section {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .table-container {
+        margin: 0 -1.5rem;
+    }
+    
+    .sync-table th,
+    .sync-table td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .pagination-section {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .sync-header {
+        padding: 1rem;
+    }
+    
+    .sync-table {
+        font-size: 0.8rem;
+    }
+    
+    .sync-table th,
+    .sync-table td {
+        padding: 0.5rem 0.25rem;
+    }
+    
+    .user-info,
+    .sync-time {
+        gap: 0.125rem;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.125rem 0.5rem;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .sync-header,
+    .filter-section,
+    .stat-card,
+    .history-section,
+    .pagination-section,
+    .dept-breakdown {
+        border-width: 2px;
+    }
+    
+    .sync-table th {
+        border-bottom-width: 3px;
+    }
+}
+
+/* Print styles */
+@media print {
+    .sync-history-container {
+        background: white;
+        padding: 0;
+    }
+    
+    .sync-header,
+    .filter-section,
+    .stat-card,
+    .history-section {
+        box-shadow: none;
+        border: 1px solid #ccc;
+        break-inside: avoid;
+        margin-bottom: 1rem;
+    }
+    
+    .section-header {
+        background: #f5f5f5 !important;
+        color: #000 !important;
+    }
+    
+    .filter-section {
+        display: none;
+    }
+    
+    .sync-table th,
+    .sync-table td {
+        border: 1px solid #ccc;
+    }
+    
+    .pagination-section {
+        display: none;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sync-history-container">
+    <!-- Sync History Header -->
+    <div class="sync-header">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="sync-title">
+                    <i class="bi bi-clock-history"></i>
+                    PRP Sync History
+                </h1>
+                <p class="sync-subtitle">
+                    <i class="bi bi-arrow-repeat me-1"></i>
+                    Detailed synchronization history from Parliament Resource Portal
+                    <span class="location-badge">
+                        <i class="bi bi-geo-alt me-1"></i>
+                        Bangladesh Parliament Secretariat, Dhaka
+                    </span>
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <div class="text-muted">
+                    <i class="bi bi-clock me-1"></i>
+                    Report generated: <span id="report-time">{{ end_date|date:"M d, Y H:i T" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <form method="get" id="filterForm">
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label for="days" class="filter-label">
+                        <i class="bi bi-calendar-range"></i>
+                        Time Period
+                    </label>
+                    <select name="days" id="days" class="filter-control">
+                        {% for option in days_options %}
+                            <option value="{{ option }}" {% if option == days_back %}selected{% endif %}>
+                                Last {{ option }} day{{ option|pluralize }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="search" class="filter-label">
+                        <i class="bi bi-search"></i>
+                        Search Users
+                    </label>
+                    <input type="text" name="q" id="search" class="filter-control" 
+                           placeholder="Name, ID, Email, Office..." value="{{ search_query }}">
+                </div>
+                
+                <div class="filter-group">
+                    <button type="submit" class="filter-btn">
+                        <i class="bi bi-funnel"></i>
+                        Apply Filters
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="stats-section">
+        <div class="stat-card total-syncs">
+            <div class="stat-number">{{ total_syncs|default:0 }}</div>
+            <div class="stat-label">Total Sync Operations</div>
+        </div>
+        
+        <div class="stat-card unique-users">
+            <div class="stat-number">{{ unique_users|default:0 }}</div>
+            <div class="stat-label">Unique Users Synced</div>
+        </div>
+        
+        <div class="stat-card period">
+            <div class="stat-number">{{ days_back }}</div>
+            <div class="stat-label">Days Period</div>
+        </div>
+        
+        <div class="stat-card timezone">
+            <div class="stat-number">GMT+6</div>
+            <div class="stat-label">Asia/Dhaka Time</div>
+        </div>
+    </div>
+
+    <!-- Department Breakdown -->
+    {% if dept_breakdown %}
+    <div class="dept-breakdown">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="bi bi-building"></i>
+                Top Departments by Sync Activity
+            </h3>
+        </div>
+        <div class="dept-list">
+            {% for dept in dept_breakdown %}
+                <div class="dept-item">
+                    <span class="dept-name">{{ dept.office|default:"Unknown Department" }}</span>
+                    <span class="dept-count">{{ dept.sync_count }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Sync History Table -->
+    <div class="history-section">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="bi bi-table"></i>
+                Synchronization Records
+            </h3>
+            <div class="text-sm">
+                <i class="bi bi-info-circle me-1"></i>
+                Showing {{ sync_records.start_index }}-{{ sync_records.end_index }} of {{ total_syncs }} records
+            </div>
+        </div>
+        
+        {% if sync_records %}
+        <div class="table-container">
+            <table class="sync-table">
+                <thead>
+                    <tr>
+                        <th>User Information</th>
+                        <th>Employee ID</th>
+                        <th>Status</th>
+                        <th>Source</th>
+                        <th>Last Sync Time (Asia/Dhaka)</th>
+                        <th>Office/Department</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in sync_records %}
+                    <tr>
+                        <td>
+                            <div class="user-info">
+                                <div class="user-name">{{ user.get_full_name|default:"Unknown User" }}</div>
+                                <div class="user-id">{{ user.email|default:"No email" }}</div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge badge-prp">
+                                <i class="bi bi-person-badge"></i>
+                                {{ user.employee_id|default:"N/A" }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if user.is_active and user.is_active_employee %}
+                                <span class="badge badge-success">
+                                    <i class="bi bi-check-circle"></i>
+                                    Active
+                                </span>
+                            {% else %}
+                                <span class="badge badge-warning">
+                                    <i class="bi bi-pause-circle"></i>
+                                    Inactive
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.is_prp_managed %}
+                                <span class="badge badge-prp">
+                                    <i class="bi bi-cloud"></i>
+                                    PRP Managed
+                                </span>
+                            {% else %}
+                                <span class="badge badge-local">
+                                    <i class="bi bi-hdd"></i>
+                                    Local
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.prp_last_sync %}
+                            <div class="sync-time">
+                                <div class="sync-date">{{ user.prp_last_sync|date:"M d, Y" }}</div>
+                                <div class="sync-timestamp">{{ user.prp_last_sync|date:"H:i:s T" }}</div>
+                            </div>
+                            {% else %}
+                                <span class="badge badge-warning">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    Never Synced
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="user-office">{{ user.office|default:"No office assigned" }}</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="bi bi-inbox"></i>
+            </div>
+            <h3 class="empty-title">No Sync Records Found</h3>
+            <p class="empty-message">
+                No PRP synchronization records were found for the selected time period and filters.
+                Try adjusting your search criteria or sync some users from the PRP dashboard.
+            </p>
+            <a href="{% url 'users:prp_sync_dashboard' %}" class="empty-action">
+                <i class="bi bi-arrow-clockwise"></i>
+                Go to PRP Sync Dashboard
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if sync_records.has_other_pages %}
+    <div class="pagination-section">
+        <div class="pagination-info">
+            Page {{ sync_records.number }} of {{ sync_records.paginator.num_pages }}
+            ({{ total_syncs }} total records)
+        </div>
+        
+        <div class="pagination-nav">
+            {% if sync_records.has_previous %}
+                <a href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}{% if days_back %}&days={{ days_back }}{% endif %}" 
+                   class="page-btn">
+                    <i class="bi bi-chevron-double-left"></i>
+                </a>
+                <a href="?page={{ sync_records.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if days_back %}&days={{ days_back }}{% endif %}" 
+                   class="page-btn">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            {% else %}
+                <span class="page-btn disabled">
+                    <i class="bi bi-chevron-double-left"></i>
+                </span>
+                <span class="page-btn disabled">
+                    <i class="bi bi-chevron-left"></i>
+                </span>
+            {% endif %}
+
+            {% for num in sync_records.paginator.page_range %}
+                {% if num == sync_records.number %}
+                    <span class="page-btn active">{{ num }}</span>
+                {% elif num > sync_records.number|add:'-3' and num < sync_records.number|add:'3' %}
+                    <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if days_back %}&days={{ days_back }}{% endif %}" 
+                       class="page-btn">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if sync_records.has_next %}
+                <a href="?page={{ sync_records.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if days_back %}&days={{ days_back }}{% endif %}" 
+                   class="page-btn">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+                <a href="?page={{ sync_records.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}{% if days_back %}&days={{ days_back }}{% endif %}" 
+                   class="page-btn">
+                    <i class="bi bi-chevron-double-right"></i>
+                </a>
+            {% else %}
+                <span class="page-btn disabled">
+                    <i class="bi bi-chevron-right"></i>
+                </span>
+                <span class="page-btn disabled">
+                    <i class="bi bi-chevron-double-right"></i>
+                </span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Auto-refresh functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Update last updated time
+    function updateTime() {
+        const timeElement = document.getElementById('report-time');
+        if (timeElement) {
+            const now = new Date();
+            const options = {
+                year: 'numeric',
+                month: 'short',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'Asia/Dhaka',
+                timeZoneName: 'short'
+            };
+            timeElement.textContent = now.toLocaleDateString('en-US', options);
+        }
+    }
+
+    // Auto-submit form on dropdown change
+    const daysSelect = document.getElementById('days');
+    if (daysSelect) {
+        daysSelect.addEventListener('change', function() {
+            document.getElementById('filterForm').submit();
+        });
+    }
+
+    // Search input debounce
+    let searchTimeout;
+    const searchInput = document.getElementById('search');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                // Auto-submit could be enabled here if desired
+                // document.getElementById('filterForm').submit();
+            }, 500);
+        });
+    }
+
+    // Update time every minute
+    updateTime();
+    setInterval(updateTime, 60000);
+    
+    // Add loading state to form
+    const filterForm = document.getElementById('filterForm');
+    if (filterForm) {
+        filterForm.addEventListener('submit', function() {
+            const submitBtn = this.querySelector('.filter-btn');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Loading...';
+                submitBtn.disabled = true;
+            }
+        });
+    }
+
+    // Highlight current page in URL
+    const currentUrl = window.location.href;
+    const navLinks = document.querySelectorAll('.page-btn');
+    navLinks.forEach(link => {
+        if (link.href === currentUrl) {
+            link.classList.add('active');
+        }
+    });
+
+    // Add table row click functionality for user details
+    const tableRows = document.querySelectorAll('.sync-table tbody tr');
+    tableRows.forEach(row => {
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', function(e) {
+            // Only trigger if not clicking on a badge or link
+            if (!e.target.closest('.badge') && !e.target.closest('a')) {
+                const employeeId = this.querySelector('.badge-prp')?.textContent.trim();
+                if (employeeId && employeeId !== 'N/A') {
+                    // Could navigate to user detail page
+                    // window.location.href = `/users/lookup/${employeeId}/`;
+                }
+            }
+        });
+    });
+
+    // Add tooltips for status badges
+    const badges = document.querySelectorAll('.badge');
+    badges.forEach(badge => {
+        if (badge.textContent.includes('PRP Managed')) {
+            badge.title = 'This user is synchronized from Parliament Resource Portal';
+        } else if (badge.textContent.includes('Local')) {
+            badge.title = 'This user was created locally in PIMS';
+        } else if (badge.textContent.includes('Active')) {
+            badge.title = 'User account is active and can login';
+        } else if (badge.textContent.includes('Inactive')) {
+            badge.title = 'User account is inactive and cannot login';
+        } else if (badge.textContent.includes('Never Synced')) {
+            badge.title = 'This PRP user has never been synchronized';
+        }
+    });
+});
+
+// Utility function to format Bangladesh time
+function formatBangladeshTime(dateString) {
+    if (!dateString) return 'N/A';
+    
+    const date = new Date(dateString);
+    const options = {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZone: 'Asia/Dhaka',
+        timeZoneName: 'short'
+    };
+    
+    return date.toLocaleDateString('en-US', options);
+}
+
+// Export functionality (if needed)
+function exportSyncHistory() {
+    const params = new URLSearchParams(window.location.search);
+    params.set('export', 'csv');
+    window.location.href = window.location.pathname + '?' + params.toString();
+}
+
+// Print functionality
+function printSyncHistory() {
+    window.print();
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + F to focus search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        const searchInput = document.getElementById('search');
+        if (searchInput) {
+            searchInput.focus();
+            searchInput.select();
+        }
+    }
+    
+    // Ctrl/Cmd + R to refresh
+    if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+        e.preventDefault();
+        location.reload();
+    }
+});
+</script>
+{% endblock %}

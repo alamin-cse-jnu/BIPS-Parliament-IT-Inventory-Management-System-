@@ -86,7 +86,8 @@ class CustomLoginView(LoginView):
     
     def form_valid(self, form):
         """Handle successful login with PRP user detection."""
-        user = form.cleaned_data['user']
+        # FIX: Use form.get_user() instead of form.cleaned_data['user']
+        user = form.get_user()
         login(self.request, user)
         
         # Set session timeout based on remember_me
@@ -142,9 +143,15 @@ class CustomPasswordResetView(PasswordResetView):
                     'Password reset will use the default PRP password.'
                 )
         except CustomUser.DoesNotExist:
-            pass  # User doesn't exist, let Django handle normally
+            pass
         
         return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        """Add Bangladesh context to password reset page."""
+        context = super().get_context_data(**kwargs)
+        context['location'] = 'Bangladesh Parliament Secretariat, Dhaka'
+        return context
 
 
 # ============================================================================
@@ -161,7 +168,7 @@ class UserListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         """Enhanced queryset with PRP support and filtering."""
         queryset = CustomUser.objects.select_related().annotate(
-            assigned_devices_count=Count('assignment_set', distinct=True)
+            assigned_devices_count=Count('device_assignments', distinct=True)
         )
         
         # Apply search and filtering

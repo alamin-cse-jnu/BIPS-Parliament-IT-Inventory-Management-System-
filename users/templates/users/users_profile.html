@@ -12,6 +12,7 @@
 /* User Profile Page Redesign - Parliament Design System */
 /* Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh */
 /* Flat Design with High Contrast - Teal, Orange, Red Color Scheme */
+/* PRP Integration with User Badge System */
 
 :root {
     --primary-teal: #14b8a6;
@@ -102,8 +103,8 @@
 
 .btn-outline-secondary {
     background: transparent;
-    border: 2px solid var(--border-light);
-    color: var(--text-secondary);
+    border: 2px solid var(--primary-teal);
+    color: var(--primary-teal);
     padding: 0.75rem 1.5rem;
     border-radius: 12px;
     font-weight: 600;
@@ -115,29 +116,129 @@
 }
 
 .btn-outline-secondary:hover {
-    background: var(--bg-secondary);
-    border-color: var(--primary-teal);
-    color: var(--primary-teal);
+    background: var(--primary-teal);
+    color: white;
     transform: translateY(-2px);
 }
 
-/* Profile Cards Layout */
+/* PRP User Badge System - Teal Color Scheme */
+.prp-badge-section {
+    background: rgba(20, 184, 166, 0.08);
+    border: 2px solid rgba(20, 184, 166, 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.prp-badge-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-teal);
+    border-radius: 12px 12px 0 0;
+}
+
+.prp-badge-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.prp-main-badge {
+    background: var(--gradient-teal);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+}
+
+.prp-status-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.prp-status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.prp-status-badge.sync-status {
+    background: rgba(16, 185, 129, 0.15);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.prp-status-badge.read-only {
+    background: rgba(251, 146, 60, 0.15);
+    color: #ea580c;
+    border: 1px solid rgba(251, 146, 60, 0.3);
+}
+
+.prp-status-badge.admin-override {
+    background: rgba(239, 68, 68, 0.15);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.prp-sync-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid rgba(20, 184, 166, 0.1);
+}
+
+.prp-sync-detail {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.prp-sync-detail .detail-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.prp-sync-detail .detail-value {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* Profile Sections */
 .profile-sidebar {
     margin-bottom: 2rem;
 }
 
-.profile-main {
-    margin-bottom: 2rem;
-}
-
-/* Detail Container - Following Dashboard Pattern */
 .detail-container {
     background: var(--bg-primary);
-    border: 1px solid var(--border-light);
     border-radius: 16px;
-    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border-light);
     overflow: hidden;
+    box-shadow: var(--shadow-card);
     transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
 }
 
 .detail-container:hover {
@@ -145,41 +246,34 @@
     box-shadow: var(--shadow-hover);
 }
 
-/* Profile Header with Gradient Background */
 .detail-header {
     background: var(--gradient-teal);
     color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.detail-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.detail-body {
     padding: 2rem;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
 }
 
-.detail-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-}
-
-.detail-header > * {
-    position: relative;
-    z-index: 1;
-}
-
-/* Profile Image */
 .profile-image {
     width: 120px;
     height: 120px;
     border-radius: 50%;
+    border: 4px solid rgba(255, 255, 255, 0.2);
     object-fit: cover;
-    border: 4px solid rgba(255, 255, 255, 0.3);
-    margin-bottom: 1rem;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .profile-image-placeholder {
@@ -190,61 +284,20 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 1rem;
-    backdrop-filter: blur(10px);
-    border: 4px solid rgba(255, 255, 255, 0.3);
+    font-size: 3rem;
+    color: rgba(255, 255, 255, 0.8);
 }
 
-.detail-title {
-    font-size: 1.75rem;
+.profile-name {
+    font-size: 1.5rem;
     font-weight: 700;
-    margin-bottom: 0.5rem;
-    color: white;
+    margin: 0;
 }
 
-.detail-subtitle {
-    font-size: 1.125rem;
-    color: rgba(255, 255, 255, 0.9);
-    margin-bottom: 1rem;
-}
-
-/* Status Indicators */
-.status-indicators {
-    display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin-bottom: 0;
-}
-
-.badge {
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.bg-success {
-    background: var(--success-green) !important;
-}
-
-.bg-danger {
-    background: var(--primary-red) !important;
-}
-
-.bg-warning {
-    background: var(--warning-amber) !important;
-}
-
-.bg-secondary {
-    background: #6b7280 !important;
-}
-
-/* Detail Body */
-.detail-body {
-    padding: 2rem;
+.profile-role {
+    opacity: 0.9;
+    margin: 0;
+    font-size: 1rem;
 }
 
 /* Detail Sections */
@@ -252,156 +305,26 @@
     margin-bottom: 2rem;
 }
 
-.detail-section:last-child {
-    margin-bottom: 0;
-}
-
 .detail-section-title {
     color: var(--text-primary);
+    font-size: 1.125rem;
     font-weight: 600;
-    font-size: 1.25rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding-bottom: 0.75rem;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
     border-bottom: 2px solid var(--border-light);
 }
 
-.detail-section-title i {
-    color: var(--primary-teal);
-    font-size: 1.125rem;
-}
-
-/* Statistics Grid - Following Dashboard Pattern */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 0;
-}
-
-.stat-item {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-light);
-    border-radius: 12px;
-    padding: 1.5rem;
-    text-align: center;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.stat-item:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-card);
-    border-color: var(--primary-teal);
-}
-
-.stat-item::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--gradient-teal);
-}
-
-.stat-number {
-    font-size: 2rem;
-    font-weight: 800;
-    margin-bottom: 0.5rem;
-    color: var(--text-primary);
-}
-
-.stat-label {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-/* Color variants for stats */
-.stat-item:nth-child(1) .stat-number { color: var(--primary-teal); }
-.stat-item:nth-child(1)::before { background: var(--gradient-teal); }
-
-.stat-item:nth-child(2) .stat-number { color: var(--success-green); }
-.stat-item:nth-child(2)::before { background: linear-gradient(135deg, var(--success-green), #047857); }
-
-.stat-item:nth-child(3) .stat-number { color: var(--primary-orange); }
-.stat-item:nth-child(3)::before { background: var(--gradient-orange); }
-
-.stat-item:nth-child(4) .stat-number { color: var(--warning-amber); }
-.stat-item:nth-child(4)::before { background: linear-gradient(135deg, var(--warning-amber), #d97706); }
-
-/* Groups Display */
-.group-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-}
-
-.group-badge {
-    background: var(--gradient-teal);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.2);
-    transition: all 0.3s ease;
-}
-
-.group-badge:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(20, 184, 166, 0.3);
-}
-
-/* Quick Actions */
-.actions-grid {
-    display: grid;
-    gap: 1rem;
-}
-
-.action-btn {
-    background: transparent;
-    border: 2px solid var(--border-light);
-    color: var(--text-secondary);
-    padding: 1rem;
-    border-radius: 12px;
-    font-weight: 600;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    transition: all 0.3s ease;
-    text-align: left;
-}
-
-.action-btn:hover {
-    border-color: var(--primary-teal);
-    color: var(--primary-teal);
-    background: rgba(20, 184, 166, 0.05);
-    transform: translateY(-2px);
-}
-
-.action-btn i {
-    font-size: 1.25rem;
-    width: 24px;
-}
-
-/* Detail Grid for Information Display */
 .detail-grid {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
 }
 
 .detail-item {
-    background: var(--bg-secondary);
+    background: rgba(248, 250, 252, 0.5);
     border: 1px solid var(--border-light);
     border-radius: 12px;
     padding: 1.25rem;
@@ -409,93 +332,184 @@
 }
 
 .detail-item:hover {
-    border-color: var(--primary-teal);
-    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.1);
+    background: var(--bg-primary);
+    border-color: rgba(20, 184, 166, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .detail-label {
-    font-weight: 600;
     color: var(--text-secondary);
     font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-weight: 500;
     margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .detail-value {
     color: var(--text-primary);
-    font-weight: 500;
-    font-size: 1rem;
+    font-weight: 600;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    font-size: 1rem;
 }
 
 .detail-value i {
     color: var(--primary-teal);
-    font-size: 1.125rem;
 }
 
-.detail-value.empty {
+.detail-value.empty,
+.empty {
     color: var(--text-secondary);
     font-style: italic;
+    font-weight: 400;
+}
+
+/* PRP Field Indicators - Read-only styling */
+.prp-field {
+    position: relative;
+}
+
+.prp-field::after {
+    content: 'PRP';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--gradient-teal);
+    color: white;
+    font-size: 0.625rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 8px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    box-shadow: 0 2px 8px rgba(20, 184, 166, 0.3);
+}
+
+.prp-field .detail-value {
+    background: rgba(20, 184, 166, 0.05);
+    padding: 0.5rem;
+    border-radius: 6px;
+    border-left: 3px solid var(--primary-teal);
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.375rem 0.875rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.status-badge.active {
+    background: rgba(16, 185, 129, 0.15);
+    color: #047857;
+}
+
+.status-badge.inactive {
+    background: rgba(239, 68, 68, 0.15);
+    color: #dc2626;
+}
+
+/* Group Badges */
+.group-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.group-badge {
+    background: var(--gradient-orange);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Statistics Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1.5rem;
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+    transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+    background: var(--bg-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-teal);
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
-    .page-title-section {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .page-actions {
-        width: 100%;
-        justify-content: flex-start;
-    }
-    
-    .profile-page-header {
-        padding: 1.5rem;
-    }
-    
-    .detail-header {
-        padding: 1.5rem;
-    }
-    
-    .detail-body {
-        padding: 1.5rem;
-    }
-    
-    .stats-grid {
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+@media (max-width: 1200px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
         gap: 1rem;
     }
     
-    .stat-item {
-        padding: 1rem;
-    }
-    
-    .stat-number {
-        font-size: 1.5rem;
-    }
-    
-    .profile-image,
-    .profile-image-placeholder {
-        width: 100px;
-        height: 100px;
-    }
-    
-    .detail-title {
-        font-size: 1.5rem;
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
-@media (max-width: 576px) {
+@media (max-width: 768px) {
     .profile-container {
         padding: 1rem 0;
     }
     
+    .profile-page-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-title-section {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .page-title-info h1 {
+        font-size: 1.5rem;
+    }
+    
+    .page-title-info p {
+        font-size: 1rem;
+    }
+    
     .page-actions {
         flex-direction: column;
+        width: 100%;
     }
     
     .btn-parliament-primary,
@@ -508,8 +522,26 @@
         grid-template-columns: 1fr;
     }
     
-    .group-badges {
-        justify-content: center;
+    .prp-sync-info {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .detail-body {
+        padding: 1.5rem;
+    }
+    
+    .detail-item {
+        padding: 1rem;
+    }
+    
+    .prp-badge-section {
+        padding: 1rem;
+    }
+    
+    .prp-status-badges {
+        flex-direction: column;
     }
 }
 
@@ -553,6 +585,11 @@
         background: #f8fafc !important;
         color: #1e293b !important;
     }
+    
+    .prp-badge-section {
+        background: #f8fafc !important;
+        border: 1px solid #000;
+    }
 }
 </style>
 {% endblock %}
@@ -571,10 +608,12 @@
                     <p>View and manage your account information - Bangladesh Parliament Secretariat</p>
                 </div>
                 <div class="page-actions">
-                    <a href="{% url 'users:profile_edit' %}" class="btn-parliament-primary">
-                        <i class="bi bi-pencil"></i>
-                        Edit Profile
-                    </a>
+                    {% if not user.is_prp_managed %}
+                        <a href="{% url 'users:profile_edit' %}" class="btn-parliament-primary">
+                            <i class="bi bi-pencil"></i>
+                            Edit Profile
+                        </a>
+                    {% endif %}
                     <a href="{% url 'users:password_change' %}" class="btn-outline-secondary">
                         <i class="bi bi-key"></i>
                         Change Password
@@ -583,163 +622,105 @@
             </div>
         </div>
 
+        <!-- PRP User Badge Section -->
+        {% if user.is_prp_managed %}
+        <div class="prp-badge-section">
+            <div class="prp-badge-header">
+                <div class="prp-main-badge">
+                    <i class="bi bi-shield-check"></i>
+                    PRP Managed User
+                </div>
+                <div class="prp-status-badges">
+                    <div class="prp-status-badge sync-status">
+                        <i class="bi bi-arrow-repeat"></i>
+                        Synced from PRP
+                    </div>
+                    <div class="prp-status-badge read-only">
+                        <i class="bi bi-lock"></i>
+                        Read-Only Fields
+                    </div>
+                    {% if not user.is_active and user.is_active_employee %}
+                    <div class="prp-status-badge admin-override">
+                        <i class="bi bi-person-x"></i>
+                        Admin Override
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="prp-sync-info">
+                <div class="prp-sync-detail">
+                    <i class="bi bi-database" style="color: var(--primary-teal);"></i>
+                    <div>
+                        <div class="detail-label">Data Source</div>
+                        <div class="detail-value">Parliament Resource Portal (PRP)</div>
+                    </div>
+                </div>
+                {% if user.prp_last_sync %}
+                <div class="prp-sync-detail">
+                    <i class="bi bi-clock" style="color: var(--primary-teal);"></i>
+                    <div>
+                        <div class="detail-label">Last Sync</div>
+                        <div class="detail-value">{{ user.prp_last_sync|date:"M j, Y g:i A" }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="prp-sync-detail">
+                    <i class="bi bi-geo-alt" style="color: var(--primary-teal);"></i>
+                    <div>
+                        <div class="detail-label">Timezone</div>
+                        <div class="detail-value">Asia/Dhaka</div>
+                    </div>
+                </div>
+                <div class="prp-sync-detail">
+                    <i class="bi bi-info-circle" style="color: var(--primary-teal);"></i>
+                    <div>
+                        <div class="detail-label">Status</div>
+                        <div class="detail-value">
+                            {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="row">
             <!-- Profile Summary Sidebar -->
             <div class="col-lg-4 col-md-5 profile-sidebar">
                 <div class="detail-container">
                     <div class="detail-header">
-                        <div>
+                        <i class="bi bi-person-badge"></i>
+                        <h2>Profile Summary</h2>
+                    </div>
+                    <div class="detail-body">
+                        <div class="text-center mb-4">
                             {% if user.profile_image %}
                                 <img src="{{ user.profile_image.url }}" alt="{{ user.get_full_name }}" class="profile-image">
                             {% else %}
                                 <div class="profile-image-placeholder">
-                                    <i class="bi bi-person fs-1"></i>
+                                    <i class="bi bi-person"></i>
                                 </div>
                             {% endif %}
-                            <h3 class="detail-title">{{ user.get_full_name }}</h3>
-                            <p class="detail-subtitle">@{{ user.username }}</p>
-                            <div class="status-indicators">
-                                {% if user.is_active and user.is_active_employee %}
-                                    <span class="badge bg-success">Active</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">Inactive</span>
-                                {% endif %}
-                                {% if user.is_superuser %}
-                                    <span class="badge bg-danger">Super Admin</span>
-                                {% elif user.is_staff %}
-                                    <span class="badge bg-warning">Staff</span>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="detail-body">
-                        <!-- Quick Stats -->
-                        <div class="detail-section">
-                            <h4 class="detail-section-title">
-                                <i class="bi bi-graph-up"></i>
-                                Quick Stats
-                            </h4>
-                            <div class="stats-grid">
-                                <div class="stat-item">
-                                    <div class="stat-number">{{ assigned_devices_count|default:0 }}</div>
-                                    <div class="stat-label">Assigned Devices</div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-number">{{ user.groups.count }}</div>
-                                    <div class="stat-label">User Groups</div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-number">
-                                        {% if user.created_at %}
-                                            {{ user.created_at|timesince|truncatewords:1 }}
-                                        {% else %}
-                                            N/A
-                                        {% endif %}
-                                    </div>
-                                    <div class="stat-label">Member Since</div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-number">
-                                        {% if user.last_login %}
-                                            {{ user.last_login|timesince|truncatewords:1 }}
-                                        {% else %}
-                                            Never
-                                        {% endif %}
-                                    </div>
-                                    <div class="stat-label">Last Login</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- User Groups -->
-                        <div class="detail-section">
-                            <h4 class="detail-section-title">
-                                <i class="bi bi-people"></i>
-                                My Groups
-                            </h4>
-                            {% if user.groups.exists %}
+                            <h3 class="profile-name mt-3">{{ user.get_full_name|default:"No Name Provided" }}</h3>
+                            <p class="profile-role">{{ user.designation|default:"No Designation" }}</p>
+                            {% if user.groups.all %}
                                 <div class="group-badges">
                                     {% for group in user.groups.all %}
                                         <span class="group-badge">{{ group.name }}</span>
                                     {% endfor %}
                                 </div>
-                            {% else %}
-                                <p class="text-muted">No groups assigned</p>
                             {% endif %}
                         </div>
 
-                        <!-- Quick Actions -->
-                        <div class="detail-section">
-                            <h4 class="detail-section-title">
-                                <i class="bi bi-lightning"></i>
-                                Quick Actions
-                            </h4>
-                            <div class="actions-grid">
-                                <a href="{% url 'users:profile_edit' %}" class="action-btn">
-                                    <i class="bi bi-pencil"></i>
-                                    <span>Edit Profile</span>
-                                </a>
-                                <a href="{% url 'users:password_change' %}" class="action-btn">
-                                    <i class="bi bi-key"></i>
-                                    <span>Change Password</span>
-                                </a>
-                                {% if assigned_devices_count > 0 %}
-                                    <a href="#" class="action-btn">
-                                        <i class="bi bi-laptop"></i>
-                                        <span>View My Devices ({{ assigned_devices_count }})</span>
-                                    </a>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Profile Details Main Content -->
-            <div class="col-lg-8 col-md-7 profile-main">
-                <div class="detail-container">
-                    <div class="detail-header">
-                        <h2 class="detail-title">
-                            <i class="bi bi-person-lines-fill"></i>
-                            Profile Information
-                        </h2>
-                    </div>
-
-                    <div class="detail-body">
-                        <!-- Personal Information -->
+                        <!-- Quick Info -->
                         <div class="detail-section">
                             <h3 class="detail-section-title">
-                                <i class="bi bi-person"></i>
-                                Personal Information
+                                <i class="bi bi-info-circle"></i>
+                                Quick Information
                             </h3>
                             <div class="detail-grid">
-                                <div class="detail-item">
-                                    <div class="detail-label">Full Name</div>
-                                    <div class="detail-value">
-                                        <i class="bi bi-person"></i>
-                                        {{ user.get_full_name|default:"Not provided" }}
-                                    </div>
-                                </div>
-                                <div class="detail-item">
-                                    <div class="detail-label">Username</div>
-                                    <div class="detail-value">
-                                        <i class="bi bi-at"></i>
-                                        {{ user.username }}
-                                    </div>
-                                </div>
-                                <div class="detail-item">
-                                    <div class="detail-label">Email Address</div>
-                                    <div class="detail-value">
-                                        <i class="bi bi-envelope"></i>
-                                        {% if user.email %}
-                                            {{ user.email }}
-                                        {% else %}
-                                            <span class="empty">Not provided</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div class="detail-item">
+                                <div class="detail-item {% if user.is_prp_managed %}prp-field{% endif %}">
                                     <div class="detail-label">Employee ID</div>
                                     <div class="detail-value">
                                         <i class="bi bi-badge-id"></i>
@@ -752,48 +733,59 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
 
-                        <!-- Work Information -->
+            <!-- Main Profile Content -->
+            <div class="col-lg-8 col-md-7">
+                <!-- Personal Information -->
+                <div class="detail-container">
+                    <div class="detail-header">
+                        <i class="bi bi-person"></i>
+                        <h2>Personal Information</h2>
+                    </div>
+                    <div class="detail-body">
                         <div class="detail-section">
                             <h3 class="detail-section-title">
-                                <i class="bi bi-building"></i>
-                                Work Information
+                                <i class="bi bi-person-lines-fill"></i>
+                                Basic Details
                             </h3>
                             <div class="detail-grid">
-                                <div class="detail-item">
-                                    <div class="detail-label">Designation</div>
+                                <div class="detail-item {% if user.is_prp_managed %}prp-field{% endif %}">
+                                    <div class="detail-label">First Name</div>
                                     <div class="detail-value">
-                                        <i class="bi bi-briefcase"></i>
-                                        {% if user.designation %}
-                                            {{ user.designation }}
+                                        <i class="bi bi-person"></i>
+                                        {% if user.first_name %}
+                                            {{ user.first_name }}
                                         {% else %}
                                             <span class="empty">Not provided</span>
                                         {% endif %}
                                     </div>
                                 </div>
-                                <div class="detail-item">
-                                    <div class="detail-label">Office</div>
+                                <div class="detail-item {% if user.is_prp_managed %}prp-field{% endif %}">
+                                    <div class="detail-label">Last Name</div>
                                     <div class="detail-value">
-                                        <i class="bi bi-geo-alt"></i>
-                                        {% if user.office %}
-                                            {{ user.office }}
+                                        <i class="bi bi-person"></i>
+                                        {% if user.last_name %}
+                                            {{ user.last_name }}
                                         {% else %}
                                             <span class="empty">Not provided</span>
                                         {% endif %}
                                     </div>
                                 </div>
-                                <div class="detail-item">
-                                    <div class="detail-label">Department</div>
+                                <div class="detail-item {% if user.is_prp_managed %}prp-field{% endif %}">
+                                    <div class="detail-label">Email Address</div>
                                     <div class="detail-value">
-                                        <i class="bi bi-diagram-3"></i>
-                                        {% if user.department %}
-                                            {{ user.department }}
+                                        <i class="bi bi-envelope"></i>
+                                        {% if user.email %}
+                                            {{ user.email }}
                                         {% else %}
                                             <span class="empty">Not provided</span>
                                         {% endif %}
                                     </div>
                                 </div>
-                                <div class="detail-item">
+                                <div class="detail-item {% if user.is_prp_managed %}prp-field{% endif %}">
                                     <div class="detail-label">Phone Number</div>
                                     <div class="detail-value">
                                         <i class="bi bi-telephone"></i>
@@ -807,22 +799,92 @@
                             </div>
                         </div>
 
-                        <!-- Account Information -->
+                        <!-- Work Information -->
                         <div class="detail-section">
                             <h3 class="detail-section-title">
-                                <i class="bi bi-shield-check"></i>
-                                Account Information
+                                <i class="bi bi-building"></i>
+                                Work Information
+                            </h3>
+                            <div class="detail-grid">
+                                <div class="detail-item {% if user.is_prp_managed %}prp-field{% endif %}">
+                                    <div class="detail-label">Designation</div>
+                                    <div class="detail-value">
+                                        <i class="bi bi-briefcase"></i>
+                                        {% if user.designation %}
+                                            {{ user.designation }}
+                                        {% else %}
+                                            <span class="empty">Not provided</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="detail-item {% if user.is_prp_managed %}prp-field{% endif %}">
+                                    <div class="detail-label">Office</div>
+                                    <div class="detail-value">
+                                        <i class="bi bi-geo-alt"></i>
+                                        {% if user.office %}
+                                            {{ user.office }}
+                                        {% else %}
+                                            <span class="empty">Not provided</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Account Status</div>
+                                    <div class="detail-value">
+                                        {% if user.is_active %}
+                                            <span class="status-badge active">
+                                                <i class="bi bi-check-circle"></i>
+                                                Active
+                                            </span>
+                                        {% else %}
+                                            <span class="status-badge inactive">
+                                                <i class="bi bi-x-circle"></i>
+                                                Inactive
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Employee Status</div>
+                                    <div class="detail-value">
+                                        {% if user.is_active_employee %}
+                                            <span class="status-badge active">
+                                                <i class="bi bi-person-check"></i>
+                                                Active Employee
+                                            </span>
+                                        {% else %}
+                                            <span class="status-badge inactive">
+                                                <i class="bi bi-person-dash"></i>
+                                                Inactive Employee
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Information -->
+                <div class="detail-container">
+                    <div class="detail-header">
+                        <i class="bi bi-gear"></i>
+                        <h2>System Information</h2>
+                    </div>
+                    <div class="detail-body">
+                        <div class="detail-section">
+                            <h3 class="detail-section-title">
+                                <i class="bi bi-shield-lock"></i>
+                                Security Information
                             </h3>
                             <div class="detail-grid">
                                 <div class="detail-item">
-                                    <div class="detail-label">Account Created</div>
+                                    <div class="detail-label">Username</div>
                                     <div class="detail-value">
-                                        <i class="bi bi-calendar-plus"></i>
-                                        {% if user.date_joined %}
-                                            {{ user.date_joined|date:"F j, Y g:i A" }}
-                                            <small class="text-muted">({{ user.date_joined|timesince }} ago)</small>
-                                        {% else %}
-                                            <span class="empty">Unknown</span>
+                                        <i class="bi bi-at"></i>
+                                        {{ user.username }}
+                                        {% if user.is_prp_managed %}
+                                            <small style="color: var(--primary-teal); font-weight: 500;">(PRP Generated)</small>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -839,74 +901,31 @@
                                     </div>
                                 </div>
                                 <div class="detail-item">
-                                    <div class="detail-label">Account Status</div>
+                                    <div class="detail-label">Date Joined</div>
                                     <div class="detail-value">
-                                        <i class="bi bi-activity"></i>
-                                        {% if user.is_active and user.is_active_employee %}
-                                            <span style="color: var(--success-green); font-weight: 600;">Active Employee</span>
-                                        {% elif user.is_active %}
-                                            <span style="color: var(--warning-amber); font-weight: 600;">Active (Non-Employee)</span>
-                                        {% else %}
-                                            <span style="color: var(--primary-red); font-weight: 600;">Inactive</span>
-                                        {% endif %}
+                                        <i class="bi bi-calendar-plus"></i>
+                                        {{ user.date_joined|date:"F j, Y g:i A" }}
+                                        <small class="text-muted">({{ user.date_joined|timesince }} ago)</small>
                                     </div>
                                 </div>
+                                {% if user.is_staff or user.is_superuser %}
                                 <div class="detail-item">
-                                    <div class="detail-label">Permissions Level</div>
+                                    <div class="detail-label">Admin Privileges</div>
                                     <div class="detail-value">
-                                        <i class="bi bi-shield"></i>
                                         {% if user.is_superuser %}
-                                            <span style="color: var(--primary-red); font-weight: 600;">Super Administrator</span>
-                                        {% elif user.is_staff %}
-                                            <span style="color: var(--primary-orange); font-weight: 600;">Staff Member</span>
-                                        {% else %}
-                                            <span style="color: var(--primary-teal); font-weight: 600;">Regular User</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- System Activity -->
-                        <div class="detail-section">
-                            <h3 class="detail-section-title">
-                                <i class="bi bi-activity"></i>
-                                System Activity
-                            </h3>
-                            <div class="detail-grid">
-                                <div class="detail-item">
-                                    <div class="detail-label">Total Assigned Devices</div>
-                                    <div class="detail-value">
-                                        <i class="bi bi-laptop"></i>
-                                        <span style="color: var(--primary-teal); font-weight: 600; font-size: 1.125rem;">
-                                            {{ assigned_devices_count|default:0 }}
-                                        </span>
-                                        devices currently assigned
-                                    </div>
-                                </div>
-                                <div class="detail-item">
-                                    <div class="detail-label">Active Sessions</div>
-                                    <div class="detail-value">
-                                        <i class="bi bi-pc-display"></i>
-                                        {% if user.last_login %}
-                                            <span style="color: var(--success-green); font-weight: 600;">Current session active</span>
-                                        {% else %}
-                                            <span style="color: var(--text-secondary);">No active sessions</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div class="detail-item">
-                                    <div class="detail-label">Profile Completion</div>
-                                    <div class="detail-value">
-                                        <i class="bi bi-pie-chart"></i>
-                                        {% with completion=user.get_profile_completion_percentage|default:75 %}
-                                            <span style="color: {% if completion >= 80 %}var(--success-green){% elif completion >= 50 %}var(--warning-amber){% else %}var(--primary-red){% endif %}; font-weight: 600;">
-                                                {{ completion }}%
+                                            <span class="status-badge" style="background: rgba(239, 68, 68, 0.15); color: #dc2626;">
+                                                <i class="bi bi-shield-exclamation"></i>
+                                                Superuser
                                             </span>
-                                            complete
-                                        {% endwith %}
+                                        {% elif user.is_staff %}
+                                            <span class="status-badge" style="background: rgba(251, 146, 60, 0.15); color: #ea580c;">
+                                                <i class="bi bi-shield"></i>
+                                                Staff User
+                                            </span>
+                                        {% endif %}
                                     </div>
                                 </div>
+                                {% endif %}
                                 <div class="detail-item">
                                     <div class="detail-label">Security Level</div>
                                     <div class="detail-value">
@@ -940,6 +959,79 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- PRP Specific Information -->
+                        {% if user.is_prp_managed %}
+                        <div class="detail-section">
+                            <h3 class="detail-section-title">
+                                <i class="bi bi-database"></i>
+                                PRP Integration Details
+                            </h3>
+                            <div class="detail-grid">
+                                <div class="detail-item prp-field">
+                                    <div class="detail-label">Data Source</div>
+                                    <div class="detail-value">
+                                        <i class="bi bi-cloud"></i>
+                                        Parliament Resource Portal (PRP)
+                                    </div>
+                                </div>
+                                <div class="detail-item prp-field">
+                                    <div class="detail-label">Sync Method</div>
+                                    <div class="detail-value">
+                                        <i class="bi bi-arrow-down-circle"></i>
+                                        One-way (PRP → PIMS)
+                                    </div>
+                                </div>
+                                {% if user.prp_last_sync %}
+                                <div class="detail-item prp-field">
+                                    <div class="detail-label">Last Synchronization</div>
+                                    <div class="detail-value">
+                                        <i class="bi bi-arrow-repeat"></i>
+                                        {{ user.prp_last_sync|date:"F j, Y g:i A" }}
+                                        <small class="text-muted">({{ user.prp_last_sync|timesince }} ago)</small>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                <div class="detail-item prp-field">
+                                    <div class="detail-label">Field Editing</div>
+                                    <div class="detail-value">
+                                        <i class="bi bi-lock"></i>
+                                        <span style="color: var(--primary-orange); font-weight: 600;">Read-Only (PRP Managed)</span>
+                                    </div>
+                                </div>
+                                <div class="detail-item prp-field">
+                                    <div class="detail-label">Data Integrity</div>
+                                    <div class="detail-value">
+                                        <i class="bi bi-shield-check"></i>
+                                        <span style="color: var(--success-green); font-weight: 600;">PRP Authoritative Source</span>
+                                    </div>
+                                </div>
+                                {% if not user.is_active and user.is_active_employee %}
+                                <div class="detail-item">
+                                    <div class="detail-label">Status Override</div>
+                                    <div class="detail-value">
+                                        <i class="bi bi-person-x"></i>
+                                        <span style="color: var(--primary-red); font-weight: 600;">Admin Deactivated</span>
+                                        <small class="text-muted d-block">User is active in PRP but deactivated by PIMS admin</small>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Additional Notes -->
+                        {% if user.notes %}
+                        <div class="detail-section">
+                            <h3 class="detail-section-title">
+                                <i class="bi bi-sticky"></i>
+                                Notes
+                            </h3>
+                            <div class="detail-item">
+                                <div class="detail-value" style="white-space: pre-wrap; line-height: 1.6;">{{ user.notes }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -949,164 +1041,112 @@
         <div class="row mt-4">
             <div class="col-12">
                 <div class="detail-container">
+                    <div class="detail-header">
+                        <i class="bi bi-bar-chart"></i>
+                        <h2>Account Statistics</h2>
+                    </div>
                     <div class="detail-body">
-                        <div class="row text-center">
-                            <div class="col-md-3 col-6 mb-3 mb-md-0">
-                                <div class="stat-item">
-                                    <div class="stat-number text-primary">
-                                        {% if user.date_joined %}
-                                            {{ user.date_joined|timesince|truncatewords:1 }}
-                                        {% else %}
-                                            N/A
-                                        {% endif %}
-                                    </div>
-                                    <div class="stat-label">Service Duration</div>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-number">
+                                    {% if user.date_joined %}
+                                        {{ user.date_joined|timesince|truncatewords:1 }}
+                                    {% else %}
+                                        0
+                                    {% endif %}
                                 </div>
+                                <div class="stat-label">Account Age</div>
                             </div>
-                            <div class="col-md-3 col-6 mb-3 mb-md-0">
-                                <div class="stat-item">
-                                    <div class="stat-number text-success">
-                                        {% if user.groups.exists %}
-                                            {{ user.groups.count }}
-                                        {% else %}
-                                            0
-                                        {% endif %}
-                                    </div>
-                                    <div class="stat-label">Access Groups</div>
+                            <div class="stat-item">
+                                <div class="stat-number">
+                                    {% if user.last_login %}
+                                        {{ user.last_login|timesince|truncatewords:1 }}
+                                    {% else %}
+                                        Never
+                                    {% endif %}
                                 </div>
+                                <div class="stat-label">Last Login</div>
                             </div>
-                            <div class="col-md-3 col-6 mb-3 mb-md-0">
-                                <div class="stat-item">
-                                    <div class="stat-number" style="color: var(--primary-orange);">
-                                        {% if user.is_active and user.is_active_employee %}
-                                            Active
-                                        {% else %}
-                                            Inactive
-                                        {% endif %}
-                                    </div>
-                                    <div class="stat-label">Current Status</div>
-                                </div>
+                            <div class="stat-item">
+                                <div class="stat-number">{{ user.groups.count }}</div>
+                                <div class="stat-label">Group Memberships</div>
                             </div>
-                            <div class="col-md-3 col-6">
-                                <div class="stat-item">
-                                    <div class="stat-number" style="color: var(--primary-red);">
-                                        {% if user.is_superuser %}
-                                            Admin
-                                        {% elif user.is_staff %}
-                                            Staff
-                                        {% else %}
-                                            User
-                                        {% endif %}
-                                    </div>
-                                    <div class="stat-label">Role Level</div>
+                            <div class="stat-item">
+                                <div class="stat-number">
+                                    {% if user.is_prp_managed %}PRP{% else %}PIMS{% endif %}
                                 </div>
+                                <div class="stat-label">Data Source</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Information Notice for PRP Users -->
+        {% if user.is_prp_managed %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="alert alert-info" style="background: rgba(20, 184, 166, 0.1); border: 1px solid rgba(20, 184, 166, 0.3); border-radius: 12px; padding: 1.5rem;">
+                    <div class="d-flex align-items-start gap-3">
+                        <i class="bi bi-info-circle-fill" style="color: var(--primary-teal); font-size: 1.5rem; margin-top: 0.125rem;"></i>
+                        <div>
+                            <h5 style="color: var(--text-primary); margin-bottom: 0.5rem; font-weight: 600;">
+                                <i class="bi bi-shield-check"></i>
+                                PRP Managed Account Information
+                            </h5>
+                            <p style="color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6;">
+                                Your account is managed by the <strong>Parliament Resource Portal (PRP)</strong>. 
+                                Personal information fields are automatically synchronized from PRP and cannot be edited directly in PIMS.
+                            </p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 style="color: var(--text-primary); font-weight: 600; margin-bottom: 0.5rem;">
+                                        <i class="bi bi-lock" style="color: var(--primary-teal);"></i>
+                                        Read-Only Fields:
+                                    </h6>
+                                    <ul style="color: var(--text-secondary); margin: 0; padding-left: 1.5rem;">
+                                        <li>Employee ID</li>
+                                        <li>Name (First & Last)</li>
+                                        <li>Email Address</li>
+                                        <li>Phone Number</li>
+                                        <li>Designation</li>
+                                        <li>Office/Department</li>
+                                        <li>Profile Image</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 style="color: var(--text-primary); font-weight: 600; margin-bottom: 0.5rem;">
+                                        <i class="bi bi-pencil" style="color: var(--success-green);"></i>
+                                        Available Actions:
+                                    </h6>
+                                    <ul style="color: var(--text-secondary); margin: 0; padding-left: 1.5rem;">
+                                        <li>Change Password</li>
+                                        <li>View Profile Information</li>
+                                        <li>Access System Features</li>
+                                        <li>Update Personal Notes (Admin)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <hr style="border-color: rgba(20, 184, 166, 0.2); margin: 1rem 0;">
+                            <p style="color: var(--text-secondary); margin: 0; font-size: 0.875rem;">
+                                <i class="bi bi-clock" style="color: var(--primary-teal);"></i>
+                                <strong>Last Sync:</strong> 
+                                {% if user.prp_last_sync %}
+                                    {{ user.prp_last_sync|date:"F j, Y g:i A" }} ({{ user.prp_last_sync|timesince }} ago)
+                                {% else %}
+                                    Not available
+                                {% endif %}
+                                &nbsp;|&nbsp;
+                                <i class="bi bi-geo-alt" style="color: var(--primary-teal);"></i>
+                                <strong>Timezone:</strong> Asia/Dhaka (Bangladesh)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Add smooth scroll behavior for internal links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        });
-    });
-
-    // Add loading animation for dynamic content
-    const statItems = document.querySelectorAll('.stat-item');
-    statItems.forEach((item, index) => {
-        item.style.animationDelay = `${index * 0.1}s`;
-    });
-
-    // Add hover effects for detail items
-    const detailItems = document.querySelectorAll('.detail-item');
-    detailItems.forEach(item => {
-        item.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-2px)';
-        });
-        
-        item.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0)';
-        });
-    });
-
-    // Profile image error handling
-    const profileImage = document.querySelector('.profile-image');
-    if (profileImage) {
-        profileImage.addEventListener('error', function() {
-            this.style.display = 'none';
-            const placeholder = this.parentElement.querySelector('.profile-image-placeholder');
-            if (placeholder) {
-                placeholder.style.display = 'flex';
-            }
-        });
-    }
-
-    // Initialize tooltips if Bootstrap is available
-    if (typeof bootstrap !== 'undefined') {
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    }
-
-    // Add copy functionality for employee ID
-    const employeeIdElement = document.querySelector('.detail-item [data-employee-id]');
-    if (employeeIdElement) {
-        employeeIdElement.addEventListener('click', function() {
-            navigator.clipboard.writeText(this.textContent).then(function() {
-                const originalText = employeeIdElement.textContent;
-                employeeIdElement.textContent = 'Copied!';
-                setTimeout(() => {
-                    employeeIdElement.textContent = originalText;
-                }, 1000);
-            });
-        });
-    }
-
-    // Print functionality
-    const printBtn = document.getElementById('print-profile');
-    if (printBtn) {
-        printBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            window.print();
-        });
-    }
-
-    // Enhanced mobile responsiveness
-    function handleMobileLayout() {
-        const isMobile = window.innerWidth <= 768;
-        const actionBtns = document.querySelectorAll('.action-btn');
-        
-        actionBtns.forEach(btn => {
-            if (isMobile) {
-                btn.style.padding = '0.875rem';
-                btn.style.fontSize = '0.875rem';
-            } else {
-                btn.style.padding = '1rem';
-                btn.style.fontSize = '1rem';
-            }
-        });
-    }
-
-    // Call on load and resize
-    handleMobileLayout();
-    window.addEventListener('resize', handleMobileLayout);
-});
-</script>
 {% endblock %}

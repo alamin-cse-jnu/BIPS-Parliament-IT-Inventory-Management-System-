@@ -1,604 +1,1354 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Edit User - PIMS{% endblock %}
+{% block title %}
+{% if form.instance.pk %}
+    Edit User - {{ form.instance.first_name }} {{ form.instance.last_name }}
+{% else %}
+    Create New User
+{% endif %} - PIMS - Bangladesh Parliament Secretariat
+{% endblock %}
 
 {% block breadcrumb_items %}
     <li class="breadcrumb-item"><a href="{% url 'users:list' %}">Users</a></li>
-    <li class="breadcrumb-item"><a href="{% url 'users:detail' object.pk %}">{{ object.get_display_name }}</a></li>
-    <li class="breadcrumb-item active">Edit</li>
+    <li class="breadcrumb-item active">
+        {% if form.instance.pk %}Edit User{% else %}Create User{% endif %}
+    </li>
+{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+/* User Edit Form - Parliament IT Management System */
+/* Location: Dhaka, Bangladesh - Flat Design with High Contrast */
+/* Following Template Design Pattern Rules */
+
+:root {
+    --primary-teal: #14b8a6;
+    --primary-teal-hover: #0f9488;
+    --primary-orange: #f97316;
+    --primary-red: #ef4444;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --border-light: #e2e8f0;
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: var(--bg-secondary);
+}
+
+/* Main Container */
+.user-edit-container {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+/* Page Header */
+.edit-page-header {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-card);
+    position: relative;
+    overflow: hidden;
+}
+
+.edit-page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.page-title-section h1 {
+    color: var(--text-primary);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.page-title-section h1 i {
+    color: var(--primary-teal);
+    background: rgba(20, 184, 166, 0.1);
+    padding: 0.75rem;
+    border-radius: 12px;
+    font-size: 1.5rem;
+}
+
+.page-subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 0;
+    font-size: 1.125rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* PRP Status Indicator */
+.prp-status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.prp-status-indicator.prp-managed {
+    background: rgba(20, 184, 166, 0.1);
+    color: var(--primary-teal);
+    border: 2px solid var(--primary-teal);
+}
+
+.prp-status-indicator.local-managed {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+    border: 2px solid #6b7280;
+}
+
+/* Header Actions */
+.header-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.btn-modern {
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-hover));
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-outline {
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    border: 2px solid var(--border-light);
+}
+
+.btn-outline:hover {
+    background: var(--bg-secondary);
+    border-color: var(--primary-teal);
+    color: var(--primary-teal);
+    text-decoration: none;
+}
+
+/* Form Sections */
+.form-section {
+    background: var(--bg-primary);
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border-light);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.form-section:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.section-header {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-content {
+    padding: 2rem;
+}
+
+/* PRP Information Section Styling */
+.form-section.prp-info .section-header {
+    background: linear-gradient(135deg, var(--primary-orange) 0%, #ea580c 100%);
+}
+
+/* Form Grid Layout */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.form-grid.single-column {
+    grid-template-columns: 1fr;
+}
+
+.form-grid.two-column {
+    grid-template-columns: 1fr 1fr;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-label {
+    display: block;
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.form-label.required::after {
+    content: ' *';
+    color: var(--primary-red);
+    font-weight: 700;
+}
+
+/* Standard Form Controls */
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--border-light);
+    border-radius: 8px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-teal);
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+/* PRP READ-ONLY FIELD STYLING */
+/* Following Template Design Pattern Rules with Orange (#f97316) for read-only indicators */
+
+.form-control.prp-readonly {
+    background-color: #f8f9fa !important;
+    border-left: 4px solid var(--primary-orange) !important;
+    border-color: var(--primary-orange) !important;
+    color: #495057 !important;
+    cursor: not-allowed !important;
+    position: relative;
+    padding-right: 3rem !important;
+}
+
+.form-control.prp-readonly:focus {
+    border-color: var(--primary-orange) !important;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1) !important;
+}
+
+/* PRP Field Container with Indicator */
+.prp-field-container {
+    position: relative;
+}
+
+.prp-field-indicator {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--primary-orange);
+    font-size: 1.25rem;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.prp-field-tooltip {
+    position: absolute;
+    right: -8px;
+    top: -8px;
+    width: 24px;
+    height: 24px;
+    background: var(--primary-orange);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    z-index: 10;
+    cursor: help;
+}
+
+/* Help Text Styling */
+.form-text {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    line-height: 1.4;
+}
+
+.form-text.prp-help {
+    color: var(--primary-orange);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-text.prp-help::before {
+    content: '🏛️';
+    font-size: 1rem;
+}
+
+/* Error Styling */
+.is-invalid {
+    border-color: var(--primary-red) !important;
+}
+
+.invalid-feedback {
+    color: var(--primary-red);
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.invalid-feedback::before {
+    content: '⚠️';
+    font-size: 1rem;
+}
+
+/* Checkboxes and Radio Buttons */
+.form-check {
+    margin-bottom: 1rem;
+}
+
+.form-check-input {
+    margin-right: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.form-check-label {
+    color: var(--text-primary);
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-teal);
+    border-color: var(--primary-teal);
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+/* File Upload Styling */
+.file-upload-area {
+    border: 2px dashed var(--border-light);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    background-color: var(--bg-secondary);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.file-upload-area:hover {
+    border-color: var(--primary-teal);
+    background-color: rgba(20, 184, 166, 0.05);
+}
+
+.file-upload-area.has-file {
+    border-color: var(--success);
+    background-color: rgba(16, 185, 129, 0.05);
+}
+
+/* Current Profile Image Display */
+.current-image-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.current-profile-image {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 2px solid var(--border-light);
+}
+
+.current-image-info h6 {
+    color: var(--text-primary);
+    margin: 0 0 0.25rem 0;
+    font-weight: 600;
+}
+
+.current-image-info small {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+}
+
+/* Sync Status Display */
+.sync-status-section {
+    background: linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(249, 115, 22, 0.1) 100%);
+    border: 2px solid var(--primary-orange);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.sync-status-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.sync-status-title {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.125rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.sync-timestamp {
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-family: 'Courier New', monospace;
+    border: 1px solid var(--border-light);
+}
+
+.sync-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.sync-info-item {
+    background: var(--bg-primary);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+}
+
+.sync-info-label {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.sync-info-value {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Form Actions */
+.form-actions {
+    background: var(--bg-primary);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn-save {
+    background: linear-gradient(135deg, var(--success) 0%, #047857 100%);
+    color: white;
+    padding: 1rem 2rem;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+    color: white;
+}
+
+.btn-cancel {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 2px solid var(--border-light);
+    padding: 1rem 2rem;
+    font-weight: 600;
+}
+
+.btn-cancel:hover {
+    background: var(--bg-secondary);
+    border-color: var(--primary-red);
+    color: var(--primary-red);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .action-buttons {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 768px) {
+    .user-edit-container {
+        padding: 1rem 0;
+    }
+    
+    .edit-page-header,
+    .section-content {
+        padding: 1.5rem;
+    }
+    
+    .page-title-section h1 {
+        font-size: 1.5rem;
+    }
+    
+    .sync-info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .btn-modern,
+    .btn-save,
+    .btn-cancel {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .header-actions,
+    .action-buttons {
+        width: 100%;
+        flex-direction: column;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .user-edit-container {
+        background: white;
+        padding: 0;
+    }
+    
+    .header-actions,
+    .form-actions {
+        display: none;
+    }
+    
+    .form-section {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        margin-bottom: 1rem;
+    }
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-1">
-                <i class="bi bi-pencil-square me-2 text-primary"></i>
-                Edit User
-            </h1>
-            <p class="text-muted mb-0">Update user information for {{ object.get_display_name }}</p>
-        </div>
-        <div class="btn-group">
-            <a href="{% url 'users:detail' object.pk %}" class="btn btn-outline-primary">
-                <i class="bi bi-eye me-2"></i>
-                View Details
-            </a>
-            <a href="{% url 'users:list' %}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left me-2"></i>
-                Back to Users
-            </a>
-        </div>
-    </div>
-
-    <!-- User Info Card -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body text-center">
-                    {% if object.profile_image %}
-                        <img src="{{ object.profile_image.url }}" alt="{{ object.get_full_name }}" class="rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;">
-                    {% else %}
-                        <div class="bg-primary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center text-white" style="width: 100px; height: 100px;">
-                            <i class="bi bi-person fs-1"></i>
-                        </div>
-                    {% endif %}
-                    <h5 class="mb-1">{{ object.get_full_name }}</h5>
-                    <p class="text-muted mb-2">{{ object.username }}</p>
-                    <span class="badge bg-{% if object.is_active and object.is_active_employee %}success{% else %}secondary{% endif %}">
-                        {% if object.is_active and object.is_active_employee %}Active{% else %}Inactive{% endif %}
-                    </span>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <strong>Employee ID:</strong> {{ object.employee_id }}<br>
-                            <strong>Email:</strong> {{ object.email|default:"Not provided" }}<br>
-                            <strong>Phone:</strong> {{ object.phone_number|default:"Not provided" }}
-                        </div>
-                        <div class="col-md-6">
-                            <strong>Office:</strong> {{ object.office|default:"Not specified" }}<br>
-                            <strong>Designation:</strong> {{ object.designation|default:"Not specified" }}<br>
-                            <strong>Joined:</strong> {{ object.created_at|date:"M d, Y" }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Form Container -->
-    <div class="form-container">
-        <div class="form-header">
-            <h2 class="form-title">
-                <i class="bi bi-pencil-square"></i>
-                Update User Information
-            </h2>
-        </div>
-
-        <div class="form-body">
-            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
-                {% csrf_token %}
-
-                <!-- Basic Information Section -->
-                <div class="form-section">
-                    <h3 class="form-section-title">Basic Information</h3>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="{{ form.username.id_for_label }}" class="form-label required">
-                                <i class="bi bi-person-circle me-2"></i>Username
-                            </label>
-                            {{ form.username }}
-                            {% if form.username.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.username.errors %}
-                                        <small class="text-danger">{{ error }}</small>
-                                    {% endfor %}
-                                </div>
+<div class="user-edit-container">
+    <div class="container">
+        <!-- Page Header -->
+        <div class="edit-page-header">
+            <div class="header-content">
+                <div class="page-title-section">
+                    <h1>
+                        <i class="bi bi-person-gear"></i>
+                        {% if form.instance.pk %}
+                            Edit User
+                        {% else %}
+                            Create New User
+                        {% endif %}
+                    </h1>
+                    <div class="page-subtitle">
+                        {% if form.instance.pk %}
+                            <span>Managing: {{ form.instance.first_name }} {{ form.instance.last_name }}</span>
+                            {% if form.instance.is_prp_managed %}
+                                <span class="prp-status-indicator prp-managed">
+                                    <i class="bi bi-building"></i>
+                                    PRP Managed
+                                </span>
+                            {% else %}
+                                <span class="prp-status-indicator local-managed">
+                                    <i class="bi bi-laptop"></i>
+                                    Local User
+                                </span>
                             {% endif %}
-                            <div class="form-text">
-                                <i class="bi bi-info-circle me-1"></i>
-                                Username used for login. Must be unique.
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="{{ form.employee_id.id_for_label }}" class="form-label required">
-                                <i class="bi bi-badge-4k me-2"></i>Employee ID
-                            </label>
-                            {{ form.employee_id }}
-                            {% if form.employee_id.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.employee_id.errors %}
-                                        <small class="text-danger">{{ error }}</small>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            <div class="form-text">
-                                <i class="bi bi-info-circle me-1"></i>
-                                Numbers only, minimum 3 digits
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Personal Information Section -->
-                <div class="form-section">
-                    <h3 class="form-section-title">Personal Information</h3>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="{{ form.first_name.id_for_label }}" class="form-label required">
-                                <i class="bi bi-person me-2"></i>First Name
-                            </label>
-                            {{ form.first_name }}
-                            {% if form.first_name.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.first_name.errors %}
-                                        <small class="text-danger">{{ error }}</small>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="form-group">
-                            <label for="{{ form.last_name.id_for_label }}" class="form-label required">
-                                <i class="bi bi-person me-2"></i>Last Name
-                            </label>
-                            {{ form.last_name }}
-                            {% if form.last_name.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.last_name.errors %}
-                                        <small class="text-danger">{{ error }}</small>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="{{ form.email.id_for_label }}" class="form-label required">
-                                <i class="bi bi-envelope me-2"></i>Email Address
-                            </label>
-                            {{ form.email }}
-                            {% if form.email.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.email.errors %}
-                                        <small class="text-danger">{{ error }}</small>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            <div class="form-text">
-                                <i class="bi bi-info-circle me-1"></i>
-                                Official email address for notifications
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="{{ form.phone_number.id_for_label }}" class="form-label">
-                                <i class="bi bi-telephone me-2"></i>Phone Number
-                            </label>
-                            {{ form.phone_number }}
-                            {% if form.phone_number.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.phone_number.errors %}
-                                        <small class="text-danger">{{ error }}</small>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            <div class="form-text">
-                                <i class="bi bi-info-circle me-1"></i>
-                                Format: +8801XXXXXXXXX or 01XXXXXXXXX
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Employee Information Section -->
-                <div class="form-section">
-                    <h3 class="form-section-title">Employee Information</h3>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="{{ form.designation.id_for_label }}" class="form-label">
-                                <i class="bi bi-briefcase me-2"></i>Designation
-                            </label>
-                            {{ form.designation }}
-                            {% if form.designation.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.designation.errors %}
-                                        <small class="text-danger">{{ error }}</small>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            <div class="form-text">
-                                <i class="bi bi-info-circle me-1"></i>
-                                Job title or position
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="{{ form.office.id_for_label }}" class="form-label">
-                                <i class="bi bi-building me-2"></i>Office
-                            </label>
-                            {{ form.office }}
-                            {% if form.office.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.office.errors %}
-                                        <small class="text-danger">{{ error }}</small>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            <div class="form-text">
-                                <i class="bi bi-info-circle me-1"></i>
-                                Department or office within Parliament Secretariat
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Profile Picture Section -->
-                <div class="form-section">
-                    <h3 class="form-section-title">Profile Picture</h3>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="{{ form.profile_image.id_for_label }}" class="form-label">
-                                <i class="bi bi-camera me-2"></i>Profile Image
-                            </label>
-                            {{ form.profile_image }}
-                            {% if form.profile_image.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.profile_image.errors %}
-                                        <small class="text-danger">{{ error }}</small>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            <div class="form-text">
-                                <i class="bi bi-info-circle me-1"></i>
-                                Upload a new profile picture (JPG, PNG, GIF, WebP - Max 2MB)
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="current-image mb-3">
-                                {% if object.profile_image %}
-                                    <label class="form-label">Current Image:</label>
-                                    <div>
-                                        <img src="{{ object.profile_image.url }}" alt="Current profile" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
-                                    </div>
-                                {% else %}
-                                    <p class="text-muted">No profile image uploaded</p>
-                                {% endif %}
-                            </div>
-                            <div id="imagePreview" class="image-preview" style="display: none;">
-                                <label class="form-label">New Image Preview:</label>
-                                <div>
-                                    <img id="previewImg" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Status Section -->
-                <div class="form-section">
-                    <h3 class="form-section-title">Status & Settings</h3>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <div class="form-check">
-                                {{ form.is_active_employee }}
-                                <label class="form-check-label" for="{{ form.is_active_employee.id_for_label }}">
-                                    <i class="bi bi-person-check me-2"></i>Active Employee
-                                </label>
-                            </div>
-                            {% if form.is_active_employee.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.is_active_employee.errors %}
-                                        <small class="text-danger">{{ error }}</small>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            <div class="form-text">
-                                <i class="bi bi-info-circle me-1"></i>
-                                Uncheck to deactivate the employee account
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Notes Section -->
-                <div class="form-section">
-                    <h3 class="form-section-title">Administrative Notes</h3>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="{{ form.notes.id_for_label }}" class="form-label">
-                                <i class="bi bi-sticky me-2"></i>Notes
-                            </label>
-                            {{ form.notes }}
-                            {% if form.notes.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.notes.errors %}
-                                        <small class="text-danger">{{ error }}</small>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            <div class="form-text">
-                                <i class="bi bi-info-circle me-1"></i>
-                                Internal notes for administrative purposes
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Form Actions -->
-                <div class="form-footer">
-                    <div class="text-muted">
-                        <i class="bi bi-info-circle me-1"></i>
-                        <small>Fields marked with * are required</small>
-                    </div>
-                    <div class="btn-group">
-                        <button type="submit" class="btn btn-parliament-primary">
-                            <i class="bi bi-check-circle me-2"></i>
-                            Update User
-                        </button>
-                        <a href="{% url 'users:detail' object.pk %}" class="btn btn-outline-secondary">
-                            <i class="bi bi-x-circle me-2"></i>
-                            Cancel
-                        </a>
-                        {% if perms.auth.change_user %}
-                            <a href="{% url 'users:roles' object.pk %}" class="btn btn-outline-info">
-                                <i class="bi bi-shield-check me-2"></i>
-                                Manage Roles
-                            </a>
+                        {% else %}
+                            <span>Bangladesh Parliament Secretariat, Dhaka</span>
                         {% endif %}
                     </div>
                 </div>
-            </form>
+                
+                <div class="header-actions">
+                    <a href="{% url 'users:list' %}" class="btn-modern btn-outline">
+                        <i class="bi bi-arrow-left"></i>
+                        Back to Users
+                    </a>
+                    {% if form.instance.pk %}
+                        <a href="{% url 'users:detail' form.instance.pk %}" class="btn-modern btn-primary">
+                            <i class="bi bi-eye"></i>
+                            View Profile
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
+
+        <!-- PRP Sync Status (for PRP users only) -->
+        {% if form.instance.pk and form.instance.is_prp_managed %}
+        <div class="sync-status-section">
+            <div class="sync-status-header">
+                <h4 class="sync-status-title">
+                    <i class="bi bi-cloud-arrow-down"></i>
+                    PRP Synchronization Status
+                </h4>
+                {% if form.instance.prp_last_sync %}
+                    <div class="sync-timestamp">
+                        Last Sync: {{ form.instance.prp_last_sync|date:"M d, Y H:i" }} (Asia/Dhaka)
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="sync-info-grid">
+                <div class="sync-info-item">
+                    <div class="sync-info-label">Data Source</div>
+                    <div class="sync-info-value">Parliament Resource Portal (PRP)</div>
+                </div>
+                <div class="sync-info-item">
+                    <div class="sync-info-label">Employee ID</div>
+                    <div class="sync-info-value">{{ form.instance.employee_id }}</div>
+                </div>
+                <div class="sync-info-item">
+                    <div class="sync-info-label">Username Format</div>
+                    <div class="sync-info-value">{{ form.instance.username }}</div>
+                </div>
+                <div class="sync-info-item">
+                    <div class="sync-info-label">Edit Permissions</div>
+                    <div class="sync-info-value">Read-Only Fields (PRP-sourced data)</div>
+                </div>
+            </div>
+            
+            <div class="form-text prp-help" style="margin-top: 1rem;">
+                <strong>Note:</strong> Fields marked with orange indicators are managed by Parliament Resource Portal and cannot be edited directly. Only administrative fields like status and notes can be modified.
+            </div>
+        </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            
+            <!-- Basic Information Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="bi bi-person-badge"></i>
+                        Basic Information
+                    </h3>
+                </div>
+                <div class="section-content">
+                    <div class="form-grid two-column">
+                        <!-- Username Field -->
+                        <div class="form-group">
+                            <label for="{{ form.username.id_for_label }}" class="form-label required">Username</label>
+                            {% if form.instance.is_prp_managed %}
+                                <div class="prp-field-container">
+                                    <input type="text" 
+                                           id="{{ form.username.id_for_label }}" 
+                                           name="{{ form.username.name }}" 
+                                           value="{{ form.username.value|default:'' }}" 
+                                           class="form-control prp-readonly" 
+                                           readonly 
+                                           disabled
+                                           title="This field is managed by Parliament Resource Portal (PRP)">
+                                    <div class="prp-field-tooltip" title="PRP Managed Field">!</div>
+                                </div>
+                                <div class="form-text prp-help">
+                                    This username is automatically generated from PRP User ID and cannot be changed.
+                                </div>
+                            {% else %}
+                                {{ form.username }}
+                                {% if form.username.help_text %}
+                                    <div class="form-text">{{ form.username.help_text|safe }}</div>
+                                {% endif %}
+                            {% endif %}
+                            {% if form.username.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.username.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Employee ID Field -->
+                        <div class="form-group">
+                            <label for="{{ form.employee_id.id_for_label }}" class="form-label required">Employee ID</label>
+                            {% if form.instance.is_prp_managed %}
+                                <div class="prp-field-container">
+                                    <input type="text" 
+                                           id="{{ form.employee_id.id_for_label }}" 
+                                           name="{{ form.employee_id.name }}" 
+                                           value="{{ form.employee_id.value|default:'' }}" 
+                                           class="form-control prp-readonly" 
+                                           readonly 
+                                           disabled
+                                           title="This field is managed by Parliament Resource Portal (PRP)">
+                                    <div class="prp-field-tooltip" title="PRP Managed Field">!</div>
+                                </div>
+                                <div class="form-text prp-help">
+                                    This Employee ID comes from PRP system and cannot be modified.
+                                </div>
+                            {% else %}
+                                {{ form.employee_id }}
+                                {% if form.employee_id.help_text %}
+                                    <div class="form-text">{{ form.employee_id.help_text|safe }}</div>
+                                {% endif %}
+                            {% endif %}
+                            {% if form.employee_id.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.employee_id.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- First Name Field -->
+                        <div class="form-group">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label required">First Name</label>
+                            {% if form.instance.is_prp_managed %}
+                                <div class="prp-field-container">
+                                    <input type="text" 
+                                           id="{{ form.first_name.id_for_label }}" 
+                                           name="{{ form.first_name.name }}" 
+                                           value="{{ form.first_name.value|default:'' }}" 
+                                           class="form-control prp-readonly" 
+                                           readonly 
+                                           disabled
+                                           title="This field is managed by Parliament Resource Portal (PRP)">
+                                    <div class="prp-field-tooltip" title="PRP Managed Field">!</div>
+                                </div>
+                                <div class="form-text prp-help">
+                                    Name information is synchronized from PRP system.
+                                </div>
+                            {% else %}
+                                {{ form.first_name }}
+                                {% if form.first_name.help_text %}
+                                    <div class="form-text">{{ form.first_name.help_text|safe }}</div>
+                                {% endif %}
+                            {% endif %}
+                            {% if form.first_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.first_name.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Last Name Field -->
+                        <div class="form-group">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label required">Last Name</label>
+                            {% if form.instance.is_prp_managed %}
+                                <div class="prp-field-container">
+                                    <input type="text" 
+                                           id="{{ form.last_name.id_for_label }}" 
+                                           name="{{ form.last_name.name }}" 
+                                           value="{{ form.last_name.value|default:'' }}" 
+                                           class="form-control prp-readonly" 
+                                           readonly 
+                                           disabled
+                                           title="This field is managed by Parliament Resource Portal (PRP)">
+                                    <div class="prp-field-tooltip" title="PRP Managed Field">!</div>
+                                </div>
+                                <div class="form-text prp-help">
+                                    Name information is synchronized from PRP system.
+                                </div>
+                            {% else %}
+                                {{ form.last_name }}
+                                {% if form.last_name.help_text %}
+                                    <div class="form-text">{{ form.last_name.help_text|safe }}</div>
+                                {% endif %}
+                            {% endif %}
+                            {% if form.last_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.last_name.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Email Field -->
+                        <div class="form-group">
+                            <label for="{{ form.email.id_for_label }}" class="form-label required">Email Address</label>
+                            {% if form.instance.is_prp_managed %}
+                                <div class="prp-field-container">
+                                    <input type="email" 
+                                           id="{{ form.email.id_for_label }}" 
+                                           name="{{ form.email.name }}" 
+                                           value="{{ form.email.value|default:'' }}" 
+                                           class="form-control prp-readonly" 
+                                           readonly 
+                                           disabled
+                                           title="This field is managed by Parliament Resource Portal (PRP)">
+                                    <div class="prp-field-tooltip" title="PRP Managed Field">!</div>
+                                </div>
+                                <div class="form-text prp-help">
+                                    Email address is managed by PRP system and cannot be changed.
+                                </div>
+                            {% else %}
+                                {{ form.email }}
+                                {% if form.email.help_text %}
+                                    <div class="form-text">{{ form.email.help_text|safe }}</div>
+                                {% endif %}
+                            {% endif %}
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.email.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Phone Number Field -->
+                        <div class="form-group">
+                            <label for="{{ form.phone_number.id_for_label }}" class="form-label">Phone Number</label>
+                            {% if form.instance.is_prp_managed %}
+                                <div class="prp-field-container">
+                                    <input type="text" 
+                                           id="{{ form.phone_number.id_for_label }}" 
+                                           name="{{ form.phone_number.name }}" 
+                                           value="{{ form.phone_number.value|default:'' }}" 
+                                           class="form-control prp-readonly" 
+                                           readonly 
+                                           disabled
+                                           title="This field is managed by Parliament Resource Portal (PRP)">
+                                    <div class="prp-field-tooltip" title="PRP Managed Field">!</div>
+                                </div>
+                                <div class="form-text prp-help">
+                                    Phone number is synchronized from PRP mobile field.
+                                </div>
+                            {% else %}
+                                {{ form.phone_number }}
+                                {% if form.phone_number.help_text %}
+                                    <div class="form-text">{{ form.phone_number.help_text|safe }}</div>
+                                {% endif %}
+                            {% endif %}
+                            {% if form.phone_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.phone_number.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Professional Information Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="bi bi-building"></i>
+                        Professional Information
+                    </h3>
+                </div>
+                <div class="section-content">
+                    <div class="form-grid two-column">
+                        <!-- Designation Field -->
+                        <div class="form-group">
+                            <label for="{{ form.designation.id_for_label }}" class="form-label">Designation</label>
+                            {% if form.instance.is_prp_managed %}
+                                <div class="prp-field-container">
+                                    <input type="text" 
+                                           id="{{ form.designation.id_for_label }}" 
+                                           name="{{ form.designation.name }}" 
+                                           value="{{ form.designation.value|default:'' }}" 
+                                           class="form-control prp-readonly" 
+                                           readonly 
+                                           disabled
+                                           title="This field is managed by Parliament Resource Portal (PRP)">
+                                    <div class="prp-field-tooltip" title="PRP Managed Field">!</div>
+                                </div>
+                                <div class="form-text prp-help">
+                                    Designation comes from PRP designationEng field and cannot be modified.
+                                </div>
+                            {% else %}
+                                {{ form.designation }}
+                                {% if form.designation.help_text %}
+                                    <div class="form-text">{{ form.designation.help_text|safe }}</div>
+                                {% endif %}
+                            {% endif %}
+                            {% if form.designation.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.designation.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Office Field -->
+                        <div class="form-group">
+                            <label for="{{ form.office.id_for_label }}" class="form-label">Office/Department</label>
+                            {% if form.instance.is_prp_managed %}
+                                <div class="prp-field-container">
+                                    <input type="text" 
+                                           id="{{ form.office.id_for_label }}" 
+                                           name="{{ form.office.name }}" 
+                                           value="{{ form.office.value|default:'' }}" 
+                                           class="form-control prp-readonly" 
+                                           readonly 
+                                           disabled
+                                           title="This field is managed by Parliament Resource Portal (PRP)">
+                                    <div class="prp-field-tooltip" title="PRP Managed Field">!</div>
+                                </div>
+                                <div class="form-text prp-help">
+                                    Office/Department is mapped from PRP department nameEng field.
+                                </div>
+                            {% else %}
+                                {{ form.office }}
+                                {% if form.office.help_text %}
+                                    <div class="form-text">{{ form.office.help_text|safe }}</div>
+                                {% endif %}
+                            {% endif %}
+                            {% if form.office.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.office.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Image Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="bi bi-image"></i>
+                        Profile Image
+                    </h3>
+                </div>
+                <div class="section-content">
+                    {% if form.instance.profile_image %}
+                        <div class="current-image-container">
+                            <img src="{{ form.instance.profile_image.url }}" alt="Current Profile Image" class="current-profile-image">
+                            <div class="current-image-info">
+                                <h6>Current Profile Image</h6>
+                                <small>
+                                    {% if form.instance.is_prp_managed %}
+                                        <span class="prp-help">🏛️ Synchronized from PRP photo field</span>
+                                    {% else %}
+                                        Uploaded locally in PIMS
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if form.instance.is_prp_managed %}
+                        <div class="prp-field-container">
+                            <div class="file-upload-area" style="background-color: #f8f9fa; border-color: var(--primary-orange); cursor: not-allowed;">
+                                <div class="prp-field-tooltip" title="PRP Managed Field">!</div>
+                                <i class="bi bi-cloud-arrow-down" style="font-size: 2rem; color: var(--primary-orange); margin-bottom: 1rem;"></i>
+                                <h6 style="color: var(--primary-orange); font-weight: 600;">Profile Image Managed by PRP</h6>
+                                <p style="color: #6c757d; margin: 0;">Profile images for PRP users are automatically synchronized from Parliament Resource Portal and cannot be changed manually.</p>
+                            </div>
+                        </div>
+                        <div class="form-text prp-help">
+                            Profile image is synchronized from PRP photo field during user sync operations.
+                        </div>
+                    {% else %}
+                        <div class="file-upload-area">
+                            {{ form.profile_image }}
+                            <i class="bi bi-cloud-upload" style="font-size: 2rem; color: var(--text-secondary); margin-bottom: 1rem;"></i>
+                            <h6>Upload Profile Image</h6>
+                            <p style="color: var(--text-secondary); margin: 0;">Click to select or drag and drop an image file</p>
+                        </div>
+                        {% if form.profile_image.help_text %}
+                            <div class="form-text">{{ form.profile_image.help_text|safe }}</div>
+                        {% endif %}
+                    {% endif %}
+                    {% if form.profile_image.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.profile_image.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Administrative Settings Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="bi bi-gear"></i>
+                        Administrative Settings
+                    </h3>
+                </div>
+                <div class="section-content">
+                    <div class="form-grid">
+                        <!-- Active Employee Status -->
+                        <div class="form-group">
+                            <div class="form-check">
+                                {{ form.is_active_employee }}
+                                <label for="{{ form.is_active_employee.id_for_label }}" class="form-check-label">
+                                    Active Employee Status
+                                </label>
+                            </div>
+                            <div class="form-text">
+                                {% if form.instance.is_prp_managed %}
+                                    <span class="prp-help">
+                                        <strong>Admin Override:</strong> Even for PRP users, administrators can manually control active status. 
+                                        This setting takes precedence over PRP status during sync operations.
+                                    </span>
+                                {% else %}
+                                    Controls whether this employee is considered active in the system.
+                                {% endif %}
+                            </div>
+                            {% if form.is_active_employee.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.is_active_employee.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Administrative Notes -->
+                        <div class="form-group">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">Administrative Notes</label>
+                            {{ form.notes }}
+                            <div class="form-text">
+                                Internal notes for administrative purposes. This field is always editable regardless of user source.
+                            </div>
+                            {% if form.notes.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.notes.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRP Information Section (for PRP users only) -->
+            {% if form.instance.pk and form.instance.is_prp_managed %}
+            <div class="form-section prp-info">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="bi bi-building"></i>
+                        PRP Integration Information
+                    </h3>
+                </div>
+                <div class="section-content">
+                    <div class="form-grid two-column">
+                        <!-- PRP Managed Status -->
+                        <div class="form-group">
+                            <label for="{{ form.is_prp_managed.id_for_label }}" class="form-label">PRP Managed User</label>
+                            <div class="form-check">
+                                {{ form.is_prp_managed }}
+                                <label for="{{ form.is_prp_managed.id_for_label }}" class="form-check-label">
+                                    This user is managed by Parliament Resource Portal (PRP)
+                                </label>
+                            </div>
+                            <div class="form-text">
+                                This setting cannot be changed after user creation. PRP-managed users have their data synchronized from Parliament Resource Portal.
+                            </div>
+                            {% if form.is_prp_managed.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.is_prp_managed.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Last Sync Timestamp -->
+                        <div class="form-group">
+                            <label for="{{ form.prp_last_sync.id_for_label }}" class="form-label">Last PRP Synchronization</label>
+                            {{ form.prp_last_sync }}
+                            <div class="form-text">
+                                Timestamp of the last successful synchronization from Parliament Resource Portal (Asia/Dhaka timezone).
+                            </div>
+                            {% if form.prp_last_sync.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.prp_last_sync.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-text prp-help" style="margin-top: 1.5rem;">
+                        <strong>PRP Integration Details:</strong>
+                        <ul style="margin: 0.5rem 0 0 2rem; color: var(--text-secondary);">
+                            <li>User data originates from Parliament Resource Portal (PRP) API</li>
+                            <li>Fields marked with orange indicators are read-only and synchronized from PRP</li>
+                            <li>Only administrative settings (status, notes) can be modified by PIMS administrators</li>
+                            <li>All timestamps are displayed in Asia/Dhaka timezone (Bangladesh Parliament Secretariat)</li>
+                            <li>Sync operations are controlled by system administrators</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <div class="action-buttons">
+                    <button type="submit" class="btn-modern btn-save">
+                        <i class="bi bi-check-circle"></i>
+                        {% if form.instance.pk %}Update User{% else %}Create User{% endif %}
+                    </button>
+                    
+                    <a href="{% url 'users:list' %}" class="btn-modern btn-cancel">
+                        <i class="bi bi-x-circle"></i>
+                        Cancel
+                    </a>
+                </div>
+                
+                <div class="form-info">
+                    <small style="color: var(--text-secondary);">
+                        {% if form.instance.is_prp_managed %}
+                            <i class="bi bi-info-circle"></i>
+                            Fields with orange indicators are managed by Parliament Resource Portal and cannot be edited.
+                        {% else %}
+                            <i class="bi bi-info-circle"></i>
+                            All fields are editable for local users.
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Image preview functionality
-        const imageInput = document.getElementById('{{ form.profile_image.id_for_label }}');
-        const imagePreview = document.getElementById('imagePreview');
-        const previewImg = document.getElementById('previewImg');
-        
-        if (imageInput && imagePreview && previewImg) {
-            imageInput.addEventListener('change', function() {
-                const file = this.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        previewImg.src = e.target.result;
-                        imagePreview.style.display = 'block';
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    imagePreview.style.display = 'none';
-                }
-            });
-        }
+// User Edit Form Enhancement - Bangladesh Parliament Secretariat
+// Location: Dhaka, Bangladesh
 
-        // Employee ID validation
-        const employeeIdInput = document.getElementById('{{ form.employee_id.id_for_label }}');
-        if (employeeIdInput) {
-            employeeIdInput.addEventListener('input', function() {
-                const value = this.value;
-                const isValid = /^\d+$/.test(value) && value.length >= 3;
-                
-                this.setCustomValidity(isValid ? '' : 'Employee ID must contain only numbers and be at least 3 digits');
-                this.classList.toggle('is-valid', isValid && value.length > 0);
-                this.classList.toggle('is-invalid', !isValid && value.length > 0);
-            });
-        }
-
-        // Phone number validation
-        const phoneInput = document.getElementById('{{ form.phone_number.id_for_label }}');
-        if (phoneInput) {
-            phoneInput.addEventListener('input', function() {
-                const value = this.value;
-                const isValid = /^(\+?8801[3-9]\d{8}|01[3-9]\d{8})$/.test(value) || value === '';
-                
-                this.setCustomValidity(isValid ? '' : 'Enter a valid Bangladesh phone number');
-                this.classList.toggle('is-valid', isValid && value.length > 0);
-                this.classList.toggle('is-invalid', !isValid && value.length > 0);
-            });
-        }
-
-        // Email validation (check for uniqueness excluding current user)
-        const emailInput = document.getElementById('{{ form.email.id_for_label }}');
-        if (emailInput) {
-            const currentEmail = '{{ object.email|escapejs }}';
-            
-            emailInput.addEventListener('blur', function() {
-                const value = this.value;
-                if (value && value !== currentEmail) {
-                    // Check if email already exists via AJAX
-                    fetch(`/users/check-email/?email=${encodeURIComponent(value)}&exclude={{ object.pk }}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.exists) {
-                                this.setCustomValidity('This email is already registered');
-                                this.classList.add('is-invalid');
-                                this.classList.remove('is-valid');
-                            } else {
-                                this.setCustomValidity('');
-                                this.classList.remove('is-invalid');
-                                this.classList.add('is-valid');
-                            }
-                        })
-                        .catch(() => {
-                            this.setCustomValidity('');
-                        });
-                } else {
-                    this.setCustomValidity('');
-                    this.classList.remove('is-invalid');
-                    if (value) {
-                        this.classList.add('is-valid');
-                    }
-                }
-            });
-        }
-
-        // Username validation (check for uniqueness excluding current user)
-        const usernameInput = document.getElementById('{{ form.username.id_for_label }}');
-        if (usernameInput) {
-            const currentUsername = '{{ object.username|escapejs }}';
-            
-            usernameInput.addEventListener('blur', function() {
-                const value = this.value;
-                if (value && value !== currentUsername) {
-                    // Check if username already exists via AJAX
-                    fetch(`/users/check-username/?username=${encodeURIComponent(value)}&exclude={{ object.pk }}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.exists) {
-                                this.setCustomValidity('This username is already taken');
-                                this.classList.add('is-invalid');
-                                this.classList.remove('is-valid');
-                            } else {
-                                this.setCustomValidity('');
-                                this.classList.remove('is-invalid');
-                                this.classList.add('is-valid');
-                            }
-                        })
-                        .catch(() => {
-                            this.setCustomValidity('');
-                        });
-                } else {
-                    this.setCustomValidity('');
-                    this.classList.remove('is-invalid');
-                    if (value) {
-                        this.classList.add('is-valid');
-                    }
-                }
-            });
-        }
-
-        // Form validation
-        const form = document.querySelector('.needs-validation');
-        if (form) {
-            form.addEventListener('submit', function(e) {
-                if (!form.checkValidity()) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    // Focus on first invalid field
-                    const firstInvalid = form.querySelector('.is-invalid, :invalid');
-                    if (firstInvalid) {
-                        firstInvalid.focus();
-                    }
-                }
-                form.classList.add('was-validated');
-            });
-        }
-
-        // Show changes indicator
-        const originalValues = {};
-        const inputs = form.querySelectorAll('input, select, textarea');
-        
-        inputs.forEach(input => {
-            originalValues[input.name] = input.value;
-            
-            input.addEventListener('input', function() {
-                const hasChanges = Object.keys(originalValues).some(key => {
-                    const currentInput = form.querySelector(`[name="${key}"]`);
-                    return currentInput && currentInput.value !== originalValues[key];
-                });
-                
-                // Show/hide unsaved changes indicator
-                const indicator = document.getElementById('unsavedChanges');
-                if (hasChanges && !indicator) {
-                    const alertDiv = document.createElement('div');
-                    alertDiv.id = 'unsavedChanges';
-                    alertDiv.className = 'alert alert-warning position-fixed';
-                    alertDiv.style.cssText = 'top: 80px; right: 20px; z-index: 1050;';
-                    alertDiv.innerHTML = `
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        You have unsaved changes
-                    `;
-                    document.body.appendChild(alertDiv);
-                } else if (!hasChanges && indicator) {
-                    indicator.remove();
-                }
-            });
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation enhancement
+    const form = document.querySelector('form');
+    const submitBtn = document.querySelector('.btn-save');
+    
+    if (form && submitBtn) {
+        form.addEventListener('submit', function(e) {
+            // Add loading state
+            submitBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Saving...';
+            submitBtn.disabled = true;
         });
-
-        // Warn before leaving with unsaved changes
-        window.addEventListener('beforeunload', function(e) {
-            const indicator = document.getElementById('unsavedChanges');
-            if (indicator) {
-                e.preventDefault();
-                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+    }
+    
+    // File upload enhancement
+    const fileInput = document.querySelector('input[type="file"]');
+    const fileUploadArea = document.querySelector('.file-upload-area');
+    
+    if (fileInput && fileUploadArea && !fileUploadArea.style.cursor === 'not-allowed') {
+        // Add drag and drop functionality
+        fileUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+        
+        fileUploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
+        
+        fileUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                updateFileDisplay(files[0]);
             }
         });
-
-        // Remove warning when form is submitted
-        form.addEventListener('submit', function() {
-            window.removeEventListener('beforeunload', arguments.callee);
+        
+        fileUploadArea.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', function(e) {
+            if (this.files.length > 0) {
+                updateFileDisplay(this.files[0]);
+            }
+        });
+        
+        function updateFileDisplay(file) {
+            fileUploadArea.classList.add('has-file');
+            const fileName = fileUploadArea.querySelector('h6');
+            if (fileName) {
+                fileName.textContent = `Selected: ${file.name}`;
+            }
+        }
+    }
+    
+    // PRP field tooltip enhancement
+    const prpTooltips = document.querySelectorAll('.prp-field-tooltip');
+    prpTooltips.forEach(function(tooltip) {
+        tooltip.addEventListener('click', function(e) {
+            e.preventDefault();
+            alert('This field is managed by Parliament Resource Portal (PRP) and cannot be edited. Data is synchronized automatically during PRP sync operations.');
         });
     });
-</script>
-
-<style>
-    .form-label.required::after {
-        content: ' *';
-        color: var(--parliament-danger);
-    }
     
-    .current-image img {
-        border: 2px solid var(--parliament-primary);
-    }
-    
-    .image-preview {
-        margin-top: var(--spacing-md);
-    }
-    
-    .image-preview img {
-        border: 2px solid var(--parliament-success);
-    }
-    
-    .user-info .rounded-circle {
-        border: 3px solid var(--parliament-primary);
-    }
-    
-    .card {
-        box-shadow: var(--shadow);
-        border: none;
-    }
-    
-    .form-check {
-        padding: var(--spacing-md);
-        background-color: #f8f9fa;
-        border-radius: var(--border-radius);
-        border: 1px solid #e5e7eb;
-    }
-    
-    .form-check .form-check-input {
-        margin-top: 0.1rem;
-    }
-    
-    .form-check .form-check-label {
-        margin-left: 0.5rem;
-        font-weight: 500;
-    }
-    
-    @media (max-width: 767.98px) {
-        .btn-group {
-            flex-direction: column;
-            gap: var(--spacing-sm);
-        }
+    // Form field focus enhancement
+    const formControls = document.querySelectorAll('.form-control:not(.prp-readonly)');
+    formControls.forEach(function(control) {
+        control.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
         
-        .btn-group .btn {
-            width: 100%;
+        control.addEventListener('blur', function() {
+            this.parentElement.classList.remove('focused');
+        });
+    });
+    
+    // Responsive form adjustments
+    function handleResponsiveForm() {
+        const container = document.querySelector('.user-edit-container');
+        const formSections = document.querySelectorAll('.form-section');
+        
+        if (window.innerWidth <= 768) {
+            container.classList.add('mobile-view');
+            formSections.forEach(section => {
+                section.classList.add('mobile-section');
+            });
+        } else {
+            container.classList.remove('mobile-view');
+            formSections.forEach(section => {
+                section.classList.remove('mobile-section');
+            });
         }
     }
-</style>
+    
+    // Initial responsive check
+    handleResponsiveForm();
+    
+    // Handle window resize
+    window.addEventListener('resize', handleResponsiveForm);
+    
+    // Enhanced form validation feedback
+    const invalidFields = document.querySelectorAll('.is-invalid');
+    if (invalidFields.length > 0) {
+        // Scroll to first invalid field
+        invalidFields[0].scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+        });
+        
+        // Focus first invalid field that's not read-only
+        const firstEditableInvalid = Array.from(invalidFields).find(field => 
+            !field.classList.contains('prp-readonly')
+        );
+        
+        if (firstEditableInvalid) {
+            setTimeout(() => {
+                firstEditableInvalid.focus();
+            }, 500);
+        }
+    }
+    
+    // Print functionality
+    const printStyles = `
+        <style>
+            @media print {
+                .header-actions, .form-actions, .btn-modern { display: none !important; }
+                .prp-field-tooltip { display: none !important; }
+                .form-section { page-break-inside: avoid; }
+                .sync-status-section { border: 2px solid #ccc !important; }
+            }
+        </style>
+    `;
+    document.head.insertAdjacentHTML('beforeend', printStyles);
+    
+    console.log('User Edit Form initialized - Bangladesh Parliament Secretariat, Dhaka');
+});
+</script>
 {% endblock %}

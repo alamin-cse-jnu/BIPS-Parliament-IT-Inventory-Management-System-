@@ -1,0 +1,1377 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}PRP Sync Reports - PIMS - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'users:list' %}">Users</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'users:prp_sync_dashboard' %}">PRP Integration</a></li>
+    <li class="breadcrumb-item active">Sync Reports</li>
+{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+/* PRP Sync Reports Template - Bangladesh Parliament Secretariat PIMS */
+/* Location: Dhaka, Bangladesh - Flat Design with High Contrast */
+/* Following Template Design Pattern Rule - NO glass-morphism */
+
+:root {
+    --primary-teal: #14b8a6;
+    --primary-teal-hover: #0f9488;
+    --primary-orange: #f97316;
+    --primary-red: #ef4444;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --border-light: #e2e8f0;
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --prp-sync-bg: #ecfdf5;
+    --prp-indicator: #14b8a6;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: var(--bg-secondary);
+}
+
+/* Main Container */
+.reports-container {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+/* Page Header */
+.reports-header {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-card);
+    position: relative;
+    overflow: hidden;
+}
+
+.reports-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-orange) 100%);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.page-title-section h1 {
+    color: var(--text-primary);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.page-title-section h1 i {
+    color: var(--primary-teal);
+    background: rgba(20, 184, 166, 0.1);
+    padding: 0.75rem;
+    border-radius: 12px;
+}
+
+.page-subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 0;
+    font-size: 1.125rem;
+}
+
+.page-meta {
+    text-align: right;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.page-meta .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+/* Filter Controls */
+.filter-controls {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-card);
+}
+
+.filter-header {
+    margin-bottom: 1.5rem;
+}
+
+.filter-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.filter-title i {
+    color: var(--primary-orange);
+}
+
+.filter-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.filter-control {
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--border-light);
+    border-radius: 8px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.filter-control:focus {
+    outline: none;
+    border-color: var(--primary-teal);
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+.filter-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-filter {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-filter:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    color: white;
+}
+
+.btn-reset {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 2px solid var(--border-light);
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.btn-reset:hover {
+    border-color: var(--primary-orange);
+    color: var(--primary-orange);
+}
+
+/* Statistics Grid - Following Dashboard Design */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background-color: var(--bg-primary);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: var(--shadow-card);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* Color scheme matching reference design */
+.stat-card.prp-users {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, #0f766e 100%);
+    color: white;
+}
+
+.stat-card.sync-status {
+    background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+    color: white;
+}
+
+.stat-card.departments {
+    background: linear-gradient(135deg, var(--primary-orange) 0%, #ea580c 100%);
+    color: white;
+}
+
+.stat-card.api-status {
+    background: linear-gradient(135deg, var(--primary-red) 0%, #dc2626 100%);
+    color: white;
+}
+
+.stat-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.stat-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    backdrop-filter: blur(10px);
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    opacity: 0.9;
+}
+
+.stat-change {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+}
+
+.stat-change.positive {
+    background: rgba(16, 185, 129, 0.2);
+}
+
+.stat-change.negative {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+/* Report Sections */
+.reports-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.report-section {
+    background-color: var(--bg-primary);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border-light);
+}
+
+.section-header {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, #0f766e 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.section-content {
+    padding: 1.5rem;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+/* Sync History Table */
+.sync-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+.sync-table th,
+.sync-table td {
+    padding: 1rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-light);
+    vertical-align: middle;
+}
+
+.sync-table th {
+    background-color: var(--bg-secondary);
+    font-weight: 600;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+.sync-table tbody tr:hover {
+    background-color: var(--bg-secondary);
+}
+
+.sync-table td {
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-badge.success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-badge.warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.status-badge.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.status-badge.info {
+    background: rgba(20, 184, 166, 0.1);
+    color: #0f766e;
+    border: 1px solid rgba(20, 184, 166, 0.2);
+}
+
+/* Department Analysis */
+.department-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.department-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-light);
+    transition: all 0.3s ease;
+}
+
+.department-item:hover {
+    background-color: var(--bg-secondary);
+    margin: 0 -1.5rem;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+}
+
+.department-item:last-child {
+    border-bottom: none;
+}
+
+.department-info {
+    flex: 1;
+}
+
+.department-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    font-size: 0.95rem;
+}
+
+.department-stats {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.user-count {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* PRP Integration Status */
+.prp-status-section {
+    background: var(--prp-sync-bg);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.prp-status-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.prp-status-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--primary-teal);
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.prp-status-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.prp-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.prp-metric {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(20, 184, 166, 0.2);
+}
+
+.prp-metric-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.prp-metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-teal);
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.btn-action {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--text-primary);
+    border: 2px solid var(--border-light);
+}
+
+.btn-secondary:hover {
+    border-color: var(--primary-orange);
+    color: var(--primary-orange);
+    text-decoration: none;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary);
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .reports-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .reports-container {
+        padding: 1rem 0;
+    }
+    
+    .reports-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-title-section h1 {
+        font-size: 1.5rem;
+    }
+    
+    .page-subtitle {
+        font-size: 1rem;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .filter-form {
+        grid-template-columns: 1fr;
+    }
+    
+    .filter-actions {
+        flex-direction: column;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .stat-card {
+        padding: 1.5rem;
+    }
+    
+    .stat-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .reports-grid {
+        gap: 1.5rem;
+    }
+    
+    .section-content {
+        padding: 1rem;
+    }
+    
+    .prp-status-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .reports-header {
+        padding: 1rem;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .section-header {
+        padding: 1rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .sync-table th,
+    .sync-table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .department-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .stat-card,
+    .report-section,
+    .filter-controls,
+    .reports-header {
+        border-width: 2px;
+    }
+    
+    .status-badge,
+    .stat-icon {
+        filter: contrast(1.2);
+    }
+}
+
+/* Print styles */
+@media print {
+    .reports-container {
+        background: white;
+        padding: 0;
+    }
+    
+    .stat-card,
+    .report-section,
+    .filter-controls {
+        box-shadow: none;
+        border: 1px solid #ccc;
+        break-inside: avoid;
+        margin-bottom: 1rem;
+    }
+    
+    .section-header {
+        background: #f5f5f5 !important;
+        color: #000 !important;
+    }
+    
+    .action-buttons {
+        display: none;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reports-container">
+    <!-- Reports Header -->
+    <div class="reports-header">
+        <div class="header-content">
+            <div class="page-title-section">
+                <h1>
+                    <i class="bi bi-graph-up"></i>
+                    PRP Sync Reports
+                </h1>
+                <p class="page-subtitle">
+                    Comprehensive synchronization analytics and reporting for Bangladesh Parliament Secretariat
+                </p>
+            </div>
+            <div class="page-meta">
+                <div class="meta-item">
+                    <i class="bi bi-calendar3"></i>
+                    <span>Report Period: {{ report_period|default:"Last 30 days" }}</span>
+                </div>
+                <div class="meta-item">
+                    <i class="bi bi-clock"></i>
+                    <span>Generated: {{ report_generated|date:"M d, Y H:i" }} (Asia/Dhaka)</span>
+                </div>
+                {% if request.user.is_superuser %}
+                <div class="meta-item">
+                    <i class="bi bi-shield-check"></i>
+                    <span>Admin Access</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Controls -->
+    <div class="filter-controls">
+        <div class="filter-header">
+            <h3 class="filter-title">
+                <i class="bi bi-funnel"></i>
+                Report Filters
+            </h3>
+        </div>
+        
+        <form method="get" class="filter-form">
+            <div class="filter-group">
+                <label class="filter-label">Time Period</label>
+                <select name="days" class="filter-control">
+                    {% for option in days_options %}
+                    <option value="{{ option }}" {% if option == selected_days %}selected{% endif %}>
+                        Last {{ option }} day{{ option|pluralize }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Department</label>
+                <select name="department" class="filter-control">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.id }}">{{ dept.nameEng }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Sync Status</label>
+                <select name="status" class="filter-control">
+                    <option value="">All Status</option>
+                    <option value="success">Success</option>
+                    <option value="error">Error</option>
+                    <option value="pending">Pending</option>
+                </select>
+            </div>
+            
+            <div class="filter-actions">
+                <button type="submit" class="btn-filter">
+                    <i class="bi bi-search"></i>
+                    Apply Filters
+                </button>
+                <a href="{% url 'users:prp_sync_reports' %}" class="btn-reset">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- PRP Integration Status Overview -->
+    <div class="prp-status-section">
+        <div class="prp-status-header">
+            <div class="prp-status-icon">
+                <i class="bi bi-diagram-3"></i>
+            </div>
+            <h3 class="prp-status-title">PRP Integration Status</h3>
+        </div>
+        
+        <div class="prp-status-grid">
+            <div class="prp-metric">
+                <div class="prp-metric-label">API Connection</div>
+                <div class="prp-metric-value">
+                    {% if api_status.connected %}
+                        <i class="bi bi-check-circle text-success"></i> Online
+                    {% else %}
+                        <i class="bi bi-x-circle text-danger"></i> Offline
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="prp-metric">
+                <div class="prp-metric-label">Last Token Refresh</div>
+                <div class="prp-metric-value">
+                    {{ api_status.last_token_refresh|timesince|default:"Never" }}
+                </div>
+            </div>
+            
+            <div class="prp-metric">
+                <div class="prp-metric-label">Cached Departments</div>
+                <div class="prp-metric-value">
+                    {{ cached_departments_count|default:"0" }}
+                </div>
+            </div>
+            
+            <div class="prp-metric">
+                <div class="prp-metric-label">Cache Updated</div>
+                <div class="prp-metric-value">
+                    {{ dept_cache_time|timesince|default:"Never" }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Grid -->
+    <div class="stats-grid">
+        <div class="stat-card prp-users">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <div class="stat-number">{{ prp_users|default:0 }}</div>
+                    <div class="stat-label">PRP Users</div>
+                    <div class="stat-change">
+                        <i class="bi bi-diagram-3"></i>
+                        {{ prp_percentage|floatformat:1 }}% of total
+                    </div>
+                </div>
+                <div class="stat-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card sync-status">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <div class="stat-number">{{ successful_syncs|default:0 }}</div>
+                    <div class="stat-label">Successful Syncs</div>
+                    <div class="stat-change positive">
+                        <i class="bi bi-arrow-up"></i>
+                        {{ sync_success_rate|floatformat:1 }}% success rate
+                    </div>
+                </div>
+                <div class="stat-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card departments">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <div class="stat-number">{{ synced_departments|default:0 }}</div>
+                    <div class="stat-label">Active Departments</div>
+                    <div class="stat-change">
+                        <i class="bi bi-building"></i>
+                        {{ dept_coverage|floatformat:1 }}% coverage
+                    </div>
+                </div>
+                <div class="stat-icon">
+                    <i class="bi bi-diagram-2"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card api-status">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <div class="stat-number">{{ failed_syncs|default:0 }}</div>
+                    <div class="stat-label">Failed Syncs</div>
+                    <div class="stat-change {% if failed_syncs > 0 %}negative{% endif %}">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        {{ error_rate|floatformat:1 }}% error rate
+                    </div>
+                </div>
+                <div class="stat-icon">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports Grid -->
+    <div class="reports-grid">
+        <!-- Recent Sync Activity -->
+        <div class="report-section">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="bi bi-activity"></i>
+                    Recent Sync Activity
+                </h3>
+                <div class="section-actions">
+                    <a href="{% url 'users:prp_sync_history' %}" class="btn btn-sm btn-outline-light">
+                        <i class="bi bi-clock-history"></i>
+                        View All
+                    </a>
+                </div>
+            </div>
+            <div class="section-content">
+                {% if recent_syncs %}
+                    <div class="table-responsive">
+                        <table class="sync-table">
+                            <thead>
+                                <tr>
+                                    <th>Employee ID</th>
+                                    <th>Name</th>
+                                    <th>Department</th>
+                                    <th>Status</th>
+                                    <th>Sync Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sync in recent_syncs %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ sync.employee_id }}</strong>
+                                    </td>
+                                    <td>
+                                        {{ sync.user.get_full_name|default:sync.user.username }}
+                                        {% if sync.user.is_prp_managed %}
+                                            <span class="status-badge info">
+                                                <i class="bi bi-diagram-3"></i>
+                                                PRP
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="text-truncate" style="max-width: 150px;">
+                                            {{ sync.user.office|default:"No Department" }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if sync.status == 'success' %}
+                                            <span class="status-badge success">
+                                                <i class="bi bi-check"></i>
+                                                Success
+                                            </span>
+                                        {% elif sync.status == 'error' %}
+                                            <span class="status-badge error">
+                                                <i class="bi bi-x"></i>
+                                                Error
+                                            </span>
+                                        {% else %}
+                                            <span class="status-badge warning">
+                                                <i class="bi bi-clock"></i>
+                                                Pending
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">
+                                            {{ sync.sync_time|timesince }} ago
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <h3>No Recent Activity</h3>
+                        <p>No synchronization operations found for the selected period.</p>
+                        <a href="{% url 'users:prp_sync_trigger' %}" class="btn-primary">
+                            <i class="bi bi-arrow-repeat"></i>
+                            Start Sync Operation
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Department Analysis -->
+        <div class="report-section">
+            <div class="section-header" style="background: linear-gradient(135deg, var(--primary-orange) 0%, #ea580c 100%);">
+                <h3 class="section-title">
+                    <i class="bi bi-pie-chart"></i>
+                    Department Coverage
+                </h3>
+                <div class="section-actions">
+                    <a href="{% url 'users:prp_departments_api' %}" class="btn btn-sm btn-outline-light">
+                        <i class="bi bi-building"></i>
+                        Manage
+                    </a>
+                </div>
+            </div>
+            <div class="section-content">
+                {% if department_stats %}
+                    <div class="department-list">
+                        {% for dept in department_stats %}
+                        <div class="department-item">
+                            <div class="department-info">
+                                <div class="department-name">
+                                    {{ dept.name }}
+                                </div>
+                                <div class="department-stats">
+                                    <span>Last sync: {{ dept.last_sync|timesince|default:"Never" }}</span>
+                                    {% if dept.sync_errors %}
+                                        <span class="text-danger">{{ dept.sync_errors }} error{{ dept.sync_errors|pluralize }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="user-count">
+                                <i class="bi bi-person"></i>
+                                {{ dept.user_count|default:0 }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-building"></i>
+                        <h3>No Department Data</h3>
+                        <p>Department information is not available. Refresh department cache to load data.</p>
+                        <a href="{% url 'users:prp_departments_refresh' %}" class="btn-primary">
+                            <i class="bi bi-arrow-clockwise"></i>
+                            Refresh Departments
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Analysis Section -->
+    {% if sync_errors %}
+    <div class="report-section" style="margin-bottom: 2rem;">
+        <div class="section-header" style="background: linear-gradient(135deg, var(--primary-red) 0%, #dc2626 100%);">
+            <h3 class="section-title">
+                <i class="bi bi-exclamation-triangle"></i>
+                Sync Errors & Issues
+            </h3>
+            <div class="section-actions">
+                <button type="button" class="btn btn-sm btn-outline-light" onclick="exportErrors()">
+                    <i class="bi bi-download"></i>
+                    Export
+                </button>
+            </div>
+        </div>
+        <div class="section-content">
+            <div class="table-responsive">
+                <table class="sync-table">
+                    <thead>
+                        <tr>
+                            <th>Error Type</th>
+                            <th>Employee ID</th>
+                            <th>Description</th>
+                            <th>Count</th>
+                            <th>Last Occurrence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for error in sync_errors %}
+                        <tr>
+                            <td>
+                                <span class="status-badge error">
+                                    {{ error.error_type }}
+                                </span>
+                            </td>
+                            <td>{{ error.employee_id|default:"N/A" }}</td>
+                            <td class="text-truncate" style="max-width: 200px;">
+                                {{ error.description }}
+                            </td>
+                            <td>
+                                <strong>{{ error.count }}</strong>
+                            </td>
+                            <td class="text-muted">
+                                {{ error.last_occurrence|timesince }} ago
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Action Panel -->
+    <div class="action-buttons">
+        <a href="{% url 'users:prp_sync_dashboard' %}" class="btn-action btn-primary">
+            <i class="bi bi-speedometer2"></i>
+            Sync Dashboard
+        </a>
+        
+        <a href="{% url 'users:prp_sync_trigger' %}" class="btn-action btn-secondary">
+            <i class="bi bi-arrow-repeat"></i>
+            Trigger Sync
+        </a>
+        
+        <a href="{% url 'users:prp_sync_history' %}" class="btn-action btn-secondary">
+            <i class="bi bi-clock-history"></i>
+            Full History
+        </a>
+        
+        {% if request.user.is_superuser %}
+        <a href="{% url 'admin:index' %}" class="btn-action btn-secondary">
+            <i class="bi bi-gear"></i>
+            Admin Panel
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// PRP Sync Reports JavaScript - Bangladesh Parliament Secretariat
+// Location: Dhaka, Bangladesh - Asia/Dhaka Timezone
+
+// Auto-refresh functionality
+let autoRefreshInterval;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    initializeTooltips();
+    
+    // Setup auto-refresh
+    setupAutoRefresh();
+    
+    // Setup export functionality
+    setupExportFunctions();
+    
+    // Update timestamps periodically
+    updateTimestamps();
+    setInterval(updateTimestamps, 60000); // Update every minute
+});
+
+function initializeTooltips() {
+    // Initialize Bootstrap tooltips if available
+    if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+}
+
+function setupAutoRefresh() {
+    const refreshButton = document.querySelector('.btn-filter');
+    if (refreshButton) {
+        // Add loading state functionality
+        refreshButton.addEventListener('click', function() {
+            this.innerHTML = '<i class="spinner-border spinner-border-sm me-2"></i>Loading...';
+            this.disabled = true;
+        });
+    }
+}
+
+function setupExportFunctions() {
+    // Export errors function
+    window.exportErrors = function() {
+        const errors = [];
+        document.querySelectorAll('.sync-table tbody tr').forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 5) {
+                errors.push({
+                    type: cells[0].textContent.trim(),
+                    employee_id: cells[1].textContent.trim(),
+                    description: cells[2].textContent.trim(),
+                    count: cells[3].textContent.trim(),
+                    last_occurrence: cells[4].textContent.trim()
+                });
+            }
+        });
+        
+        // Convert to CSV
+        const csv = convertToCSV(errors);
+        downloadCSV(csv, 'prp_sync_errors.csv');
+    };
+}
+
+function convertToCSV(data) {
+    if (!data.length) return '';
+    
+    const headers = Object.keys(data[0]);
+    const csvContent = [
+        headers.join(','),
+        ...data.map(row => headers.map(header => {
+            const value = row[header];
+            return typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
+        }).join(','))
+    ].join('\n');
+    
+    return csvContent;
+}
+
+function downloadCSV(csv, filename) {
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}
+
+function updateTimestamps() {
+    // Update relative timestamps
+    document.querySelectorAll('[data-timestamp]').forEach(element => {
+        const timestamp = element.getAttribute('data-timestamp');
+        if (timestamp) {
+            element.textContent = formatRelativeTime(new Date(timestamp));
+        }
+    });
+}
+
+function formatRelativeTime(date) {
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+    if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+    return `${days} day${days !== 1 ? 's' : ''} ago`;
+}
+
+// Notification system for sync status updates
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show`;
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.reports-container');
+    container.insertBefore(notification, container.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
+// Connection status monitoring
+function checkAPIStatus() {
+    fetch('{% url "users:prp_api_status" %}', {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        updateAPIStatusIndicators(data);
+    })
+    .catch(error => {
+        console.warn('Could not check API status:', error);
+        updateAPIStatusIndicators({ connected: false });
+    });
+}
+
+function updateAPIStatusIndicators(status) {
+    const indicators = document.querySelectorAll('.api-status-indicator');
+    indicators.forEach(indicator => {
+        if (status.connected) {
+            indicator.className = 'api-status-indicator text-success';
+            indicator.innerHTML = '<i class="bi bi-check-circle"></i> Online';
+        } else {
+            indicator.className = 'api-status-indicator text-danger';
+            indicator.innerHTML = '<i class="bi bi-x-circle"></i> Offline';
+        }
+    });
+}
+
+// Check API status on page load and periodically
+document.addEventListener('DOMContentLoaded', function() {
+    checkAPIStatus();
+    setInterval(checkAPIStatus, 300000); // Check every 5 minutes
+});
+</script>
+{% endblock %}

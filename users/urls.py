@@ -48,7 +48,7 @@ prp_patterns = [
     
     # PRP User Lookup and Management
     path('lookup/<str:employee_id>/', views.prp_user_lookup, name='prp_user_lookup'),
-    # path('search/', views.prp_user_search, name='prp_user_search'),
+    #path('search/', views.prp_user_search, name='prp_user_search'),
     
     # Individual User Sync Operations
     path('<int:pk>/sync/', views.prp_sync_single_user, name='prp_sync_single_user'),

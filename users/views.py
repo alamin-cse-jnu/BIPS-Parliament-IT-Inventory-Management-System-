@@ -168,7 +168,7 @@ class UserListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         """Enhanced queryset with PRP support and filtering."""
         queryset = CustomUser.objects.select_related().annotate(
-            assigned_devices_count=Count('assignment_set', distinct=True)
+            assigned_devices_count=Count('device_assignments', distinct=True)
         )
         
         # Apply search and filtering

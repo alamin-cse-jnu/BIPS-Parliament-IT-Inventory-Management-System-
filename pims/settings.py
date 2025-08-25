@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'vendors',
     'assignments',
     'maintenance',
-    'dashboard',
+    
 ]
 
 MIDDLEWARE = [
@@ -82,7 +82,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': os.environ.get('DB_NAME', 'pims_db'),
         'USER': os.environ.get('DB_USER', 'pims_user'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'your-password'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
         'HOST': os.environ.get('DB_HOST', 'localhost'),
         'PORT': os.environ.get('DB_PORT', '3306'),
         'OPTIONS': {

@@ -123,7 +123,7 @@ auth_patterns = [
 search_reporting_patterns = [
     # User Search and Filtering
     path('search/', views.UserSearchView.as_view(), name='search'),
-    path('filter/', views.UserFilterView.as_view(), name='filter'),
+    #path('filter/', views.UserFilterView.as_view(), name='filter'),
     
     # Employee ID Lookup (AJAX endpoint - supports both local and PRP users)
     path('lookup/<str:employee_id>/', views.user_lookup_by_employee_id, name='lookup'),

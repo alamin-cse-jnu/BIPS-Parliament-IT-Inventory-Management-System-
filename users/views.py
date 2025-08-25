@@ -10,7 +10,8 @@ Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
 Project: PIMS-PRP Integration
 Purpose: Add PRP sync endpoints, user lookup APIs, and enhanced user management
 """
-
+import csv
+import io
 import json
 import logging
 import traceback
@@ -85,7 +86,8 @@ class CustomLoginView(LoginView):
     
     def form_valid(self, form):
         """Handle successful login with PRP user detection."""
-        user = form.cleaned_data['user']
+        # FIX: Use form.get_user() instead of form.cleaned_data['user']
+        user = form.get_user()
         login(self.request, user)
         
         # Set session timeout based on remember_me
@@ -141,9 +143,15 @@ class CustomPasswordResetView(PasswordResetView):
                     'Password reset will use the default PRP password.'
                 )
         except CustomUser.DoesNotExist:
-            pass  # User doesn't exist, let Django handle normally
+            pass
         
         return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        """Add Bangladesh context to password reset page."""
+        context = super().get_context_data(**kwargs)
+        context['location'] = 'Bangladesh Parliament Secretariat, Dhaka'
+        return context
 
 
 # ============================================================================
@@ -2050,17 +2058,35 @@ def user_export(request):
 
 
 def get_prp_sync_status_text(user, prp_sync):
-    """Helper function to get PRP sync status text for export."""
+    """
+    Helper function for PRP sync status display
+    Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
+    """
+    if not hasattr(user, 'is_prp_managed') or not getattr(user, 'is_prp_managed', False):
+        return 'N/A'
+    
     if not prp_sync:
         return 'Never Synced'
     
-    now = timezone.now()
-    time_diff = now - prp_sync
+    # Calculate time since last sync (Asia/Dhaka timezone)
+    from django.utils import timezone
+    import pytz
     
-    if time_diff < timedelta(hours=24):
-        return 'Recently Synced'
-    elif time_diff < timedelta(days=7):
-        return 'Synced'
+    dhaka_tz = pytz.timezone('Asia/Dhaka')
+    now = timezone.now().astimezone(dhaka_tz)
+    last_sync = prp_sync.astimezone(dhaka_tz)
+    
+    time_diff = now - last_sync
+    
+    if time_diff.days == 0:
+        if time_diff.seconds < 3600:  # Less than 1 hour
+            return 'Recently Synced'
+        else:
+            return 'Synced Today'
+    elif time_diff.days == 1:
+        return 'Synced Yesterday'
+    elif time_diff.days < 7:
+        return f'Synced {time_diff.days} days ago'
     else:
         return 'Needs Sync'
 

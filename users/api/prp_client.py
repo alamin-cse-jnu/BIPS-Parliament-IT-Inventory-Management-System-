@@ -55,28 +55,19 @@ from django.utils import timezone
 from django.core.cache import cache
 from django.core.files.base import ContentFile
 
+# Import PRP exceptions from the exceptions module
+from .exceptions import (
+    PRPException,
+    PRPConnectionError,
+    PRPAuthenticationError,
+    PRPDataValidationError,
+    PRPConfigurationError,
+    PRPBusinessRuleError,
+    wrap_external_exception
+)
+
 # Configure logging
 logger = logging.getLogger('pims.prp_integration.client')
-
-
-class PRPException(Exception):
-    """Base exception for PRP API errors."""
-    pass
-
-
-class PRPConnectionError(PRPException):
-    """Connection-related errors (network, HTTP, etc.)."""
-    pass
-
-
-class PRPAuthenticationError(PRPException):
-    """Authentication and authorization errors."""
-    pass
-
-
-class PRPDataValidationError(PRPException):
-    """Data format and validation errors."""
-    pass
 
 
 class PRPClient:
@@ -205,24 +196,24 @@ class PRPClient:
                         raise PRPAuthenticationError(f"PRP API Error: {error_msg}")
                         
                 except json.JSONDecodeError as e:
-                    error_msg = f"Invalid JSON response from PRP API: {e}"
-                    logger.error(f"❌ {error_msg}")
-                    logger.error(f"📄 Raw response: {response.text[:200]}...")
-                    raise PRPAuthenticationError(error_msg)
+                    raise wrap_external_exception(e, "authentication JSON parsing", {
+                        'response_text': response.text[:200],
+                        'url': auth_url
+                    })
             else:
                 error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
                 logger.error(f"❌ Auth HTTP error: {error_msg}")
                 raise PRPConnectionError(f"Authentication failed: {error_msg}")
                 
         except requests.exceptions.Timeout:
-            error_msg = f"Authentication timeout after {self.timeout}s"
-            logger.error(f"⏱️  {error_msg}")
-            raise PRPConnectionError(error_msg)
+            raise wrap_external_exception(
+                requests.exceptions.Timeout(f"Authentication timeout after {self.timeout}s"),
+                "PRP authentication",
+                {'timeout': self.timeout, 'url': f"{self.base_url}/api/authentication/external"}
+            )
             
         except requests.exceptions.ConnectionError as e:
-            error_msg = f"Connection error: {str(e)}"
-            logger.error(f"🔌 {error_msg}")
-            raise PRPConnectionError(error_msg)
+            raise wrap_external_exception(e, "PRP authentication connection", {'url': self.base_url})
             
         except (PRPAuthenticationError, PRPConnectionError):
             # Re-raise PRP exceptions as-is
@@ -362,24 +353,25 @@ class PRPClient:
                         raise PRPConnectionError(f"PRP API Error: {error_msg}")
                         
                 except json.JSONDecodeError as e:
-                    error_msg = f"Invalid JSON response: {e}"
-                    logger.error(f"❌ {error_msg}")
-                    logger.error(f"📄 Raw response: {response.text[:500]}...")
-                    raise PRPConnectionError(error_msg)
+                    raise wrap_external_exception(e, "PRP API response parsing", {
+                        'url': url,
+                        'response_text': response.text[:500],
+                        'status_code': response.status_code
+                    })
             else:
                 error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
                 logger.error(f"❌ Request failed: {error_msg}")
                 raise PRPConnectionError(error_msg)
                 
         except requests.exceptions.Timeout:
-            error_msg = f"Request timeout after {self.timeout}s"
-            logger.error(f"⏱️  {error_msg}")
-            raise PRPConnectionError(error_msg)
+            raise wrap_external_exception(
+                requests.exceptions.Timeout(f"Request timeout after {self.timeout}s"),
+                "PRP API request",
+                {'url': url, 'params': params, 'timeout': self.timeout}
+            )
             
         except requests.exceptions.ConnectionError as e:
-            error_msg = f"Connection error: {str(e)}"
-            logger.error(f"🔌 {error_msg}")
-            raise PRPConnectionError(error_msg)
+            raise wrap_external_exception(e, "PRP API connection", {'url': url, 'params': params})
             
         except (PRPAuthenticationError, PRPConnectionError):
             # Re-raise PRP exceptions as-is
@@ -723,9 +715,5 @@ def create_prp_client() -> PRPClient:
 # Export main classes
 __all__ = [
     'PRPClient',
-    'PRPException', 
-    'PRPConnectionError',
-    'PRPAuthenticationError', 
-    'PRPDataValidationError',
     'create_prp_client'
 ]

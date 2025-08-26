@@ -1,0 +1,1629 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}PRP User Synchronization Dashboard - PIMS - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'users:list' %}">Users</a></li>
+    <li class="breadcrumb-item active">PRP Sync Dashboard</li>
+{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+/* PRP Sync Dashboard - Bangladesh Parliament Secretariat PIMS */
+/* Location: Dhaka, Bangladesh - Flat Design with High Contrast */
+/* Following Template Design Pattern Rule - Teal, Orange, Red Color Scheme */
+
+:root {
+    --primary-teal: #14b8a6;
+    --primary-teal-hover: #0f9488;
+    --primary-orange: #f97316;
+    --primary-red: #ef4444;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --border-light: #e2e8f0;
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --prp-sync-bg: #ecfdf5;
+    --prp-indicator: #14b8a6;
+    --prp-status-bg: #f0fdfa;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: var(--bg-secondary);
+}
+
+/* Main Container */
+.prp-sync-container {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+/* Page Header */
+.prp-header {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-card);
+    position: relative;
+    overflow: hidden;
+}
+
+.prp-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-orange) 100%);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.page-title-section h1 {
+    color: var(--text-primary);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.page-title-section h1 i {
+    color: var(--primary-teal);
+    background: rgba(20, 184, 166, 0.1);
+    padding: 0.75rem;
+    border-radius: 12px;
+    font-size: 1.5rem;
+}
+
+.page-subtitle {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: 1.125rem;
+    line-height: 1.6;
+}
+
+.prp-status-indicator {
+    background: var(--prp-status-bg);
+    border: 1px solid var(--primary-teal);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 200px;
+}
+
+.status-icon {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--success);
+    animation: pulse 2s infinite;
+}
+
+.status-icon.disconnected {
+    background: var(--danger);
+}
+
+.status-icon.syncing {
+    background: var(--warning);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.status-text {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* PRP Statistics Grid */
+.prp-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.prp-stat-card {
+    background: var(--bg-primary);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: var(--shadow-card);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #f1f5f9;
+}
+
+.prp-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* PRP-specific card colors following dashboard design */
+.prp-stat-card.prp-users {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, #0f766e 100%);
+    color: white;
+}
+
+.prp-stat-card.sync-status {
+    background: linear-gradient(135deg, var(--success) 0%, #047857 100%);
+    color: white;
+}
+
+.prp-stat-card.department-sync {
+    background: linear-gradient(135deg, var(--primary-orange) 0%, #ea580c 100%);
+    color: white;
+}
+
+.prp-stat-card.sync-errors {
+    background: linear-gradient(135deg, var(--primary-red) 0%, #dc2626 100%);
+    color: white;
+}
+
+.stat-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.stat-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    backdrop-filter: blur(10px);
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    opacity: 0.9;
+}
+
+.stat-change {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+}
+
+/* Main Dashboard Grid */
+.prp-dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Sync Operations Panel */
+.sync-operations {
+    background: var(--bg-primary);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    border: 1px solid #f1f5f9;
+}
+
+.section-header {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, #0f766e 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-content {
+    padding: 2rem;
+}
+
+/* Department Selection */
+.department-selection {
+    margin-bottom: 2rem;
+}
+
+.department-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.department-card {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.department-card:hover {
+    border-color: var(--primary-teal);
+    background: var(--prp-sync-bg);
+    transform: translateY(-2px);
+}
+
+.department-card.selected {
+    border-color: var(--primary-teal);
+    background: var(--prp-sync-bg);
+}
+
+.department-card input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.department-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.department-user-count {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+/* Sync Control Buttons */
+.sync-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.sync-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.sync-btn-primary {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, #0f766e 100%);
+    color: white;
+}
+
+.sync-btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-teal-hover) 0%, #065f46 100%);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.sync-btn-secondary {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-light);
+    color: var(--text-primary);
+}
+
+.sync-btn-secondary:hover {
+    border-color: var(--primary-teal);
+    background: var(--prp-sync-bg);
+    color: var(--text-primary);
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+
+.sync-btn-danger {
+    background: linear-gradient(135deg, var(--primary-red) 0%, #dc2626 100%);
+    color: white;
+}
+
+.sync-btn-danger:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+
+.sync-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Quick Actions Panel */
+.quick-actions {
+    background: var(--bg-primary);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-card);
+    border: 1px solid #f1f5f9;
+    margin-bottom: 1.5rem;
+}
+
+.quick-actions .section-header {
+    background: transparent;
+    color: var(--text-primary);
+    padding: 0;
+    margin-bottom: 1.5rem;
+}
+
+.actions-grid {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.action-btn {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1rem;
+    text-decoration: none;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.action-btn:hover {
+    background: linear-gradient(135deg, var(--primary-teal), #0f766e);
+    color: white;
+    text-decoration: none;
+    transform: translateX(4px);
+    border-color: var(--primary-teal);
+}
+
+.action-btn i {
+    font-size: 1.125rem;
+}
+
+/* Sync Status Display */
+.sync-status-display {
+    background: var(--bg-primary);
+    border-radius: 16px;
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    border: 1px solid #f1f5f9;
+}
+
+.sync-status-display .section-header {
+    background: linear-gradient(135deg, var(--primary-orange) 0%, #ea580c 100%);
+}
+
+.status-content {
+    padding: 2rem;
+}
+
+.sync-progress {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 2px dashed var(--border-light);
+    text-align: center;
+}
+
+.progress-indicator {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.progress-indicator.active {
+    display: flex;
+}
+
+.progress-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--border-light);
+    border-top: 4px solid var(--primary-teal);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.progress-text {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.sync-results {
+    display: none;
+}
+
+.sync-results.active {
+    display: block;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.result-item:last-child {
+    border-bottom: none;
+}
+
+.result-label {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.result-value {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.result-value.success {
+    color: var(--success);
+}
+
+.result-value.error {
+    color: var(--danger);
+}
+
+/* Alerts and Messages */
+.prp-alert {
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.prp-alert.info {
+    background: rgba(20, 184, 166, 0.1);
+    border-color: var(--primary-teal);
+    color: #0f766e;
+}
+
+.prp-alert.warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: var(--warning);
+    color: #d97706;
+}
+
+.prp-alert.error {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--danger);
+    color: #dc2626;
+}
+
+.prp-alert.success {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: var(--success);
+    color: #047857;
+}
+
+.alert-icon {
+    font-size: 1.25rem;
+    margin-top: 0.125rem;
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.alert-message {
+    opacity: 0.9;
+    line-height: 1.5;
+}
+
+/* Location Badge */
+.location-badge {
+    background: rgba(20, 184, 166, 0.1);
+    border: 1px solid var(--primary-teal);
+    color: #0f766e;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .prp-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .prp-stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .prp-sync-container {
+        padding: 1rem 0;
+    }
+    
+    .prp-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .page-title-section h1 {
+        font-size: 1.5rem;
+    }
+    
+    .prp-stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .prp-stat-card {
+        padding: 1.5rem;
+    }
+    
+    .stat-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+    
+    .department-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .sync-controls {
+        flex-direction: column;
+    }
+    
+    .sync-btn {
+        justify-content: center;
+        padding: 1rem;
+    }
+    
+    .section-content {
+        padding: 1.5rem;
+    }
+    
+    .prp-dashboard-grid {
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .prp-header {
+        padding: 1rem;
+    }
+    
+    .prp-stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .section-header {
+        padding: 1rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .sync-btn {
+        padding: 0.75rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .prp-stat-card,
+    .sync-operations,
+    .quick-actions,
+    .sync-status-display {
+        border-width: 2px;
+    }
+    
+    .stat-icon,
+    .alert-icon {
+        filter: contrast(1.2);
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="prp-sync-container">
+    <!-- Page Header -->
+    <div class="prp-header">
+        <div class="header-content">
+            <div class="page-title-section">
+                <h1>
+                    <i class="bi bi-arrow-repeat"></i>
+                    PRP User Synchronization
+                </h1>
+                <p class="page-subtitle">
+                    Centralized control panel for synchronizing user data from Parliament Resource Portal (PRP) to PIMS
+                    <br>
+                    <span class="location-badge">
+                        <i class="bi bi-geo-alt me-1"></i>
+                        Bangladesh Parliament Secretariat, Dhaka
+                    </span>
+                </p>
+            </div>
+            <div class="prp-status-indicator" id="prpStatus">
+                <div class="status-icon" id="statusIcon"></div>
+                <div class="status-text" id="statusText">Checking connection...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRP Integration Alert -->
+    {% if not prp_integration_available %}
+    <div class="prp-alert error">
+        <i class="bi bi-exclamation-triangle alert-icon"></i>
+        <div class="alert-content">
+            <div class="alert-title">PRP Integration Not Available</div>
+            <div class="alert-message">
+                PRP integration is currently disabled. Please check configuration or contact system administrator.
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Statistics Grid -->
+    <div class="prp-stats-grid">
+        <div class="prp-stat-card prp-users">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <div class="stat-number" id="prpUsersCount">{{ prp_users|default:0 }}</div>
+                    <div class="stat-label">PRP Users</div>
+                    <div class="stat-change">
+                        <i class="bi bi-arrow-up"></i>
+                        <span>{{ prp_sync_rate|default:0 }}% Synced</span>
+                    </div>
+                </div>
+                <div class="stat-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="prp-stat-card sync-status">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <div class="stat-number" id="syncedUsersCount">{{ recently_synced|default:0 }}</div>
+                    <div class="stat-label">Recently Synced</div>
+                    <div class="stat-change">
+                        <i class="bi bi-clock"></i>
+                        <span>Last 24 hours</span>
+                    </div>
+                </div>
+                <div class="stat-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="prp-stat-card department-sync">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <div class="stat-number" id="departmentCount">{{ departments_count|default:0 }}</div>
+                    <div class="stat-label">Departments</div>
+                    <div class="stat-change">
+                        <i class="bi bi-building"></i>
+                        <span>Available</span>
+                    </div>
+                </div>
+                <div class="stat-icon">
+                    <i class="bi bi-diagram-3"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="prp-stat-card sync-errors">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <div class="stat-number" id="errorCount">{{ sync_errors|default:0 }}</div>
+                    <div class="stat-label">Sync Issues</div>
+                    <div class="stat-change">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span>Need Attention</span>
+                    </div>
+                </div>
+                <div class="stat-icon">
+                    <i class="bi bi-exclamation-diamond"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Grid -->
+    <div class="prp-dashboard-grid">
+        <!-- Sync Operations Panel -->
+        <div class="sync-operations">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="bi bi-gear"></i>
+                    Synchronization Operations
+                </div>
+            </div>
+            <div class="section-content">
+                <!-- Department Selection -->
+                <div class="department-selection">
+                    <h6 class="mb-3">
+                        <i class="bi bi-building me-2"></i>
+                        Select Departments to Sync
+                    </h6>
+                    
+                    <div class="department-grid" id="departmentGrid">
+                        <!-- Departments will be loaded via JavaScript -->
+                        <div class="department-card" data-department="all">
+                            <input type="checkbox" id="dept-all" name="departments" value="all">
+                            <div class="department-name">All Departments</div>
+                            <div class="department-user-count">Sync all available users</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sync Controls -->
+                <div class="sync-controls">
+                    <button class="sync-btn sync-btn-primary" id="syncSelectedBtn">
+                        <i class="bi bi-arrow-repeat"></i>
+                        Sync Selected Departments
+                    </button>
+                    
+                    <button class="sync-btn sync-btn-secondary" id="previewSyncBtn">
+                        <i class="bi bi-eye"></i>
+                        Preview Changes
+                    </button>
+                    
+                    <button class="sync-btn sync-btn-danger" id="forceSyncBtn">
+                        <i class="bi bi-lightning"></i>
+                        Force Sync (Ignore Cache)
+                    </button>
+                </div>
+
+                <!-- Sync Options -->
+                <div class="mt-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="syncPhotos" checked>
+                        <label class="form-check-label" for="syncPhotos">
+                            <i class="bi bi-image me-1"></i>
+                            Sync profile photos
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="overrideInactive" checked>
+                        <label class="form-check-label" for="overrideInactive">
+                            <i class="bi bi-person-x me-1"></i>
+                            Respect PIMS admin status overrides
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="emailNotification">
+                        <label class="form-check-label" for="emailNotification">
+                            <i class="bi bi-envelope me-1"></i>
+                            Send email notification on completion
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div>
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="bi bi-lightning-charge"></i>
+                        Quick Actions
+                    </div>
+                </div>
+                
+                <div class="actions-grid">
+                    <a href="{% url 'users:prp_departments_api' %}" class="action-btn">
+                        <i class="bi bi-building"></i>
+                        Manage Departments
+                    </a>
+                    
+                    <a href="{% url 'users:prp_sync_reports' %}" class="action-btn">
+                        <i class="bi bi-graph-up"></i>
+                        Sync Reports
+                    </a>
+                    
+                    <a href="{% url 'users:prp_sync_history' %}" class="action-btn">
+                        <i class="bi bi-clock-history"></i>
+                        Sync History
+                    </a>
+                    
+                    <a href="{% url 'users:list' %}?prp_managed=true" class="action-btn">
+                        <i class="bi bi-person-check"></i>
+                        View PRP Users
+                    </a>
+                    
+                    <button class="action-btn" id="refreshStatsBtn">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        Refresh Statistics
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sync Status Display -->
+            <div class="sync-status-display">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="bi bi-activity"></i>
+                        Sync Status & Progress
+                    </div>
+                </div>
+                <div class="status-content">
+                    <!-- Progress Indicator -->
+                    <div class="sync-progress">
+                        <div class="progress-indicator" id="progressIndicator">
+                            <div class="progress-spinner"></div>
+                            <div class="progress-text" id="progressText">Initializing sync...</div>
+                        </div>
+                        
+                        <div id="idleState">
+                            <i class="bi bi-pause-circle" style="font-size: 3rem; color: var(--text-secondary); opacity: 0.5;"></i>
+                            <p class="text-center text-muted mt-2">No active sync operations</p>
+                            <p class="text-center text-muted">
+                                <small>
+                                    Last sync: <span id="lastSyncTime">{{ last_sync_time|default:"Never" }}</span>
+                                </small>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Sync Results -->
+                    <div class="sync-results" id="syncResults">
+                        <h6 class="mb-3">Last Sync Results</h6>
+                        <div class="result-item">
+                            <span class="result-label">Users Created</span>
+                            <span class="result-value success" id="usersCreated">0</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Users Updated</span>
+                            <span class="result-value" id="usersUpdated">0</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Users Skipped</span>
+                            <span class="result-value" id="usersSkipped">0</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Sync Errors</span>
+                            <span class="result-value error" id="syncErrors">0</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Processing Time</span>
+                            <span class="result-value" id="processingTime">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Real-time Status Updates -->
+                    <div class="mt-3">
+                        <div class="d-flex align-items-center justify-content-between text-muted small">
+                            <span>
+                                <i class="bi bi-clock me-1"></i>
+                                Asia/Dhaka Time
+                            </span>
+                            <span id="currentTime">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="sync-status-display mt-3">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="bi bi-list-ul"></i>
+                        Recent Sync Activity
+                    </div>
+                </div>
+                <div class="status-content">
+                    <div id="recentActivity">
+                        <!-- Activity items will be loaded via JavaScript -->
+                        <div class="text-center text-muted">
+                            <i class="bi bi-hourglass-split"></i>
+                            <p class="mt-2">Loading recent activity...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Information -->
+    <div class="prp-alert info">
+        <i class="bi bi-info-circle alert-icon"></i>
+        <div class="alert-content">
+            <div class="alert-title">PRP Integration Information</div>
+            <div class="alert-message">
+                This dashboard manages one-way synchronization from Parliament Resource Portal (PRP) to PIMS. 
+                All user data originates from PRP and cannot be modified directly in PIMS. 
+                Sync operations are admin-controlled and logged for audit purposes.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="syncConfirmModal" tabindex="-1" aria-labelledby="syncConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border-radius: 16px; border: none;">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-teal) 0%, #0f766e 100%); color: white; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title" id="syncConfirmModalLabel">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Confirm PRP Synchronization
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="prp-alert warning">
+                    <i class="bi bi-info-circle alert-icon"></i>
+                    <div class="alert-content">
+                        <div class="alert-title">Important: Data Synchronization</div>
+                        <div class="alert-message">
+                            This operation will synchronize user data from PRP to PIMS. Existing PIMS user data for PRP-managed users will be overwritten with current PRP data.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <h6>Selected Departments:</h6>
+                    <ul id="selectedDepartmentsList" class="list-unstyled mt-2">
+                        <!-- Selected departments will be listed here -->
+                    </ul>
+                </div>
+
+                <div class="mt-3">
+                    <h6>Sync Options:</h6>
+                    <ul class="list-unstyled mt-2" id="syncOptionsList">
+                        <!-- Sync options will be listed here -->
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid var(--border-light);">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="confirmSyncBtn" style="background: linear-gradient(135deg, var(--primary-teal) 0%, #0f766e 100%); border: none;">
+                    <i class="bi bi-check-circle me-1"></i>
+                    Proceed with Sync
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+/**
+ * PRP Bulk Sync Users JavaScript
+ * Bangladesh Parliament Secretariat, Dhaka
+ * Location: Asia/Dhaka timezone
+ * Integration with PRP API for user synchronization
+ */
+
+class PRPSyncDashboard {
+    constructor() {
+        this.isActive = false;
+        this.syncInterval = null;
+        this.statusInterval = null;
+        this.selectedDepartments = [];
+        this.prpIntegrationAvailable = {{ prp_integration_available|yesno:"true,false" }};
+        
+        this.initializeEventListeners();
+        this.loadDepartments();
+        this.checkPRPStatus();
+        this.startStatusUpdates();
+        this.updateCurrentTime();
+    }
+
+    initializeEventListeners() {
+        // Sync operation buttons
+        document.getElementById('syncSelectedBtn')?.addEventListener('click', () => this.showSyncConfirmation());
+        document.getElementById('previewSyncBtn')?.addEventListener('click', () => this.previewSync());
+        document.getElementById('forceSyncBtn')?.addEventListener('click', () => this.showForceSyncConfirmation());
+        document.getElementById('confirmSyncBtn')?.addEventListener('click', () => this.startSync());
+        
+        // Quick action buttons
+        document.getElementById('refreshStatsBtn')?.addEventListener('click', () => this.refreshStatistics());
+        
+        // Department selection
+        document.addEventListener('change', (e) => {
+            if (e.target.name === 'departments') {
+                this.handleDepartmentSelection(e.target);
+            }
+        });
+
+        // Real-time updates
+        setInterval(() => this.updateCurrentTime(), 1000);
+    }
+
+    async loadDepartments() {
+        if (!this.prpIntegrationAvailable) {
+            this.showError('PRP integration is not available');
+            return;
+        }
+
+        try {
+            const response = await fetch('{% url "users:prp_departments_api" %}');
+            const data = await response.json();
+
+            if (data.success) {
+                this.renderDepartments(data.departments);
+            } else {
+                this.showError('Failed to load departments: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error loading departments:', error);
+            this.showError('Network error loading departments');
+        }
+    }
+
+    renderDepartments(departments) {
+        const grid = document.getElementById('departmentGrid');
+        const allCard = grid.querySelector('[data-department="all"]');
+        
+        // Clear existing department cards (except "All")
+        const existingCards = grid.querySelectorAll('.department-card:not([data-department="all"])');
+        existingCards.forEach(card => card.remove());
+
+        departments.forEach(dept => {
+            const card = document.createElement('div');
+            card.className = 'department-card';
+            card.setAttribute('data-department', dept.id);
+            
+            card.innerHTML = `
+                <input type="checkbox" id="dept-${dept.id}" name="departments" value="${dept.id}">
+                <div class="department-name">${dept.nameEng}</div>
+                <div class="department-user-count">${dept.user_count || 0} users</div>
+            `;
+            
+            card.addEventListener('click', (e) => {
+                if (e.target.type !== 'checkbox') {
+                    const checkbox = card.querySelector('input[type="checkbox"]');
+                    checkbox.checked = !checkbox.checked;
+                    this.handleDepartmentSelection(checkbox);
+                }
+            });
+            
+            grid.appendChild(card);
+        });
+    }
+
+    handleDepartmentSelection(checkbox) {
+        const card = checkbox.closest('.department-card');
+        const departmentId = checkbox.value;
+
+        if (checkbox.checked) {
+            card.classList.add('selected');
+            if (departmentId === 'all') {
+                // Select all departments
+                this.selectedDepartments = ['all'];
+                document.querySelectorAll('input[name="departments"]:not([value="all"])').forEach(cb => {
+                    cb.checked = false;
+                    cb.closest('.department-card').classList.remove('selected');
+                });
+            } else {
+                // Deselect "all" if individual department is selected
+                const allCheckbox = document.querySelector('input[value="all"]');
+                if (allCheckbox?.checked) {
+                    allCheckbox.checked = false;
+                    allCheckbox.closest('.department-card').classList.remove('selected');
+                }
+                
+                if (!this.selectedDepartments.includes(departmentId)) {
+                    this.selectedDepartments.push(departmentId);
+                }
+            }
+        } else {
+            card.classList.remove('selected');
+            if (departmentId === 'all') {
+                this.selectedDepartments = [];
+            } else {
+                this.selectedDepartments = this.selectedDepartments.filter(id => id !== departmentId);
+            }
+        }
+
+        this.updateSyncButtonStates();
+    }
+
+    updateSyncButtonStates() {
+        const hasSelection = this.selectedDepartments.length > 0;
+        const syncBtn = document.getElementById('syncSelectedBtn');
+        const previewBtn = document.getElementById('previewSyncBtn');
+        const forceBtn = document.getElementById('forceSyncBtn');
+
+        if (syncBtn) syncBtn.disabled = !hasSelection || !this.prpIntegrationAvailable;
+        if (previewBtn) previewBtn.disabled = !hasSelection || !this.prpIntegrationAvailable;
+        if (forceBtn) forceBtn.disabled = !hasSelection || !this.prpIntegrationAvailable;
+    }
+
+    async checkPRPStatus() {
+        const statusIcon = document.getElementById('statusIcon');
+        const statusText = document.getElementById('statusText');
+
+        if (!this.prpIntegrationAvailable) {
+            statusIcon.className = 'status-icon disconnected';
+            statusText.textContent = 'Integration Disabled';
+            return;
+        }
+
+        try {
+            const response = await fetch('{% url "users:prp_sync_status" %}');
+            const data = await response.json();
+
+            if (data.success && data.sync_status.api_status === 'connected') {
+                statusIcon.className = 'status-icon';
+                statusText.textContent = 'PRP Connected';
+                this.updateStatistics(data.sync_status);
+            } else {
+                statusIcon.className = 'status-icon disconnected';
+                statusText.textContent = 'Connection Failed';
+            }
+        } catch (error) {
+            console.error('Error checking PRP status:', error);
+            statusIcon.className = 'status-icon disconnected';
+            statusText.textContent = 'Connection Error';
+        }
+    }
+
+    updateStatistics(syncStatus) {
+        const elements = {
+            prpUsersCount: syncStatus.prp_users,
+            syncedUsersCount: syncStatus.recently_synced,
+            errorCount: syncStatus.needs_sync
+        };
+
+        Object.entries(elements).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                this.animateNumber(element, parseInt(element.textContent) || 0, value);
+            }
+        });
+
+        // Update last sync time
+        const lastSyncElement = document.getElementById('lastSyncTime');
+        if (lastSyncElement && syncStatus.last_sync_time) {
+            const syncTime = new Date(syncStatus.last_sync_time);
+            lastSyncElement.textContent = this.formatDateTime(syncTime);
+        }
+    }
+
+    animateNumber(element, from, to) {
+        const duration = 1000;
+        const startTime = performance.now();
+        
+        const animate = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            const current = Math.round(from + (to - from) * progress);
+            element.textContent = current.toLocaleString();
+            
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+        
+        requestAnimationFrame(animate);
+    }
+
+    showSyncConfirmation() {
+        if (this.selectedDepartments.length === 0) {
+            this.showError('Please select at least one department to sync');
+            return;
+        }
+
+        this.populateConfirmationModal();
+        const modal = new bootstrap.Modal(document.getElementById('syncConfirmModal'));
+        modal.show();
+    }
+
+    showForceSyncConfirmation() {
+        if (this.selectedDepartments.length === 0) {
+            this.showError('Please select at least one department to force sync');
+            return;
+        }
+
+        // Similar to regular sync but with force flag
+        this.populateConfirmationModal(true);
+        const modal = new bootstrap.Modal(document.getElementById('syncConfirmModal'));
+        modal.show();
+    }
+
+    populateConfirmationModal(isForceSync = false) {
+        const departmentsList = document.getElementById('selectedDepartmentsList');
+        const optionsList = document.getElementById('syncOptionsList');
+        const modalTitle = document.getElementById('syncConfirmModalLabel');
+
+        // Update modal title for force sync
+        if (isForceSync) {
+            modalTitle.innerHTML = `
+                <i class="bi bi-lightning me-2"></i>
+                Confirm Force Synchronization
+            `;
+        }
+
+        // Populate departments
+        departmentsList.innerHTML = '';
+        if (this.selectedDepartments.includes('all')) {
+            const li = document.createElement('li');
+            li.innerHTML = '<i class="bi bi-building me-2 text-primary"></i>All Departments';
+            departmentsList.appendChild(li);
+        } else {
+            this.selectedDepartments.forEach(deptId => {
+                const card = document.querySelector(`[data-department="${deptId}"]`);
+                if (card) {
+                    const deptName = card.querySelector('.department-name').textContent;
+                    const li = document.createElement('li');
+                    li.innerHTML = `<i class="bi bi-building me-2 text-primary"></i>${deptName}`;
+                    departmentsList.appendChild(li);
+                }
+            });
+        }
+
+        // Populate options
+        optionsList.innerHTML = '';
+        const options = [
+            { id: 'syncPhotos', label: 'Sync profile photos', icon: 'image' },
+            { id: 'overrideInactive', label: 'Respect admin status overrides', icon: 'person-x' },
+            { id: 'emailNotification', label: 'Send completion notification', icon: 'envelope' }
+        ];
+
+        options.forEach(option => {
+            const checkbox = document.getElementById(option.id);
+            if (checkbox?.checked) {
+                const li = document.createElement('li');
+                li.innerHTML = `<i class="bi bi-${option.icon} me-2 text-success"></i>${option.label}`;
+                optionsList.appendChild(li);
+            }
+        });
+
+        if (isForceSync) {
+            const li = document.createElement('li');
+            li.innerHTML = `<i class="bi bi-lightning me-2 text-warning"></i>Force sync (ignore cache)`;
+            optionsList.appendChild(li);
+        }
+    }
+
+    async startSync(isForceSync = false) {
+        // Hide confirmation modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('syncConfirmModal'));
+        modal?.hide();
+
+        this.showSyncProgress();
+
+        const syncData = {
+            departments: this.selectedDepartments,
+            options: {
+                sync_photos: document.getElementById('syncPhotos')?.checked || false,
+                respect_admin_overrides: document.getElementById('overrideInactive')?.checked || false,
+                email_notification: document.getElementById('emailNotification')?.checked || false,
+                force_sync: isForceSync
+            }
+        };
+
+        try {
+            const response = await fetch('{% url "users:prp_bulk_sync" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify(syncData)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showSyncResults(result);
+                this.refreshStatistics();
+            } else {
+                this.showError('Sync failed: ' + result.error);
+                this.hideSyncProgress();
+            }
+        } catch (error) {
+            console.error('Sync error:', error);
+            this.showError('Network error during sync operation');
+            this.hideSyncProgress();
+        }
+    }
+
+    async previewSync() {
+        if (this.selectedDepartments.length === 0) {
+            this.showError('Please select at least one department to preview');
+            return;
+        }
+
+        // Implementation for sync preview
+        this.showInfo('Preview functionality will show potential changes without making actual updates');
+    }
+
+    showSyncProgress() {
+        document.getElementById('idleState').style.display = 'none';
+        document.getElementById('progressIndicator').classList.add('active');
+        document.getElementById('syncResults').classList.remove('active');
+        
+        this.isActive = true;
+        this.updateSyncButtonStates();
+        
+        // Simulate progress updates
+        this.simulateProgress();
+    }
+
+    hideSyncProgress() {
+        document.getElementById('idleState').style.display = 'block';
+        document.getElementById('progressIndicator').classList.remove('active');
+        this.isActive = false;
+        this.updateSyncButtonStates();
+    }
+
+    showSyncResults(result) {
+        this.hideSyncProgress();
+        
+        document.getElementById('usersCreated').textContent = result.users_created || 0;
+        document.getElementById('usersUpdated').textContent = result.users_updated || 0;
+        document.getElementById('usersSkipped').textContent = result.users_skipped || 0;
+        document.getElementById('syncErrors').textContent = result.errors?.length || 0;
+        document.getElementById('processingTime').textContent = result.processing_time || '--';
+        
+        document.getElementById('syncResults').classList.add('active');
+        
+        if (result.errors?.length > 0) {
+            this.showError(`Sync completed with ${result.errors.length} errors. Check sync reports for details.`);
+        } else {
+            this.showSuccess(`Sync completed successfully! ${result.users_created || 0} created, ${result.users_updated || 0} updated.`);
+        }
+    }
+
+    simulateProgress() {
+        const progressText = document.getElementById('progressText');
+        const steps = [
+            'Connecting to PRP API...',
+            'Fetching department data...',
+            'Processing user information...',
+            'Updating PIMS database...',
+            'Synchronizing profile photos...',
+            'Finalizing sync operation...'
+        ];
+        
+        let stepIndex = 0;
+        const progressInterval = setInterval(() => {
+            if (!this.isActive || stepIndex >= steps.length) {
+                clearInterval(progressInterval);
+                return;
+            }
+            
+            progressText.textContent = steps[stepIndex];
+            stepIndex++;
+        }, 2000);
+    }
+
+    async refreshStatistics() {
+        try {
+            const response = await fetch('{% url "users:prp_sync_status" %}');
+            const data = await response.json();
+
+            if (data.success) {
+                this.updateStatistics(data.sync_status);
+                this.showSuccess('Statistics refreshed');
+            }
+        } catch (error) {
+            console.error('Error refreshing statistics:', error);
+            this.showError('Failed to refresh statistics');
+        }
+    }
+
+    startStatusUpdates() {
+        // Check status every 30 seconds
+        this.statusInterval = setInterval(() => {
+            if (!this.isActive) {
+                this.checkPRPStatus();
+            }
+        }, 30000);
+    }
+
+    updateCurrentTime() {
+        const timeElement = document.getElementById('currentTime');
+        if (timeElement) {
+            const now = new Date();
+            timeElement.textContent = this.formatDateTime(now);
+        }
+    }
+
+    formatDateTime(date) {
+        return date.toLocaleString('en-GB', {
+            timeZone: 'Asia/Dhaka',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    }
+
+    showError(message) {
+        this.showToast(message, 'error');
+    }
+
+    showSuccess(message) {
+        this.showToast(message, 'success');
+    }
+
+    showInfo(message) {
+        this.showToast(message, 'info');
+    }
+
+    showToast(message, type = 'info') {
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `prp-alert ${type} position-fixed`;
+        toast.style.cssText = `
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 400px;
+            animation: slideInRight 0.3s ease;
+        `;
+        
+        const icons = {
+            error: 'exclamation-triangle',
+            success: 'check-circle',
+            info: 'info-circle',
+            warning: 'exclamation-triangle'
+        };
+
+        toast.innerHTML = `
+            <i class="bi bi-${icons[type]} alert-icon"></i>
+            <div class="alert-content">
+                <div class="alert-message">${message}</div>
+            </div>
+            <button type="button" class="btn-close ms-auto" onclick="this.parentElement.remove()"></button>
+        `;
+
+        document.body.appendChild(toast);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }
+        }, 5000);
+    }
+
+    getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+               document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    }
+}
+
+// Add CSS animations for toasts
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+
+// Initialize dashboard when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    window.prpSyncDashboard = new PRPSyncDashboard();
+});
+
+// Handle page visibility changes
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && window.prpSyncDashboard) {
+        // Refresh status when page becomes visible
+        window.prpSyncDashboard.checkPRPStatus();
+    }
+});
+</script>
+{% endblock %}

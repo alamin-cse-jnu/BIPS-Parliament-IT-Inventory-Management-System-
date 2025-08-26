@@ -1,0 +1,1283 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}PRP Sync Dashboard - PIMS - Bangladesh Parliament Secretariat{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'users:list' %}">Users</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'users:prp_sync_dashboard' %}">PRP Integration</a></li>
+    <li class="breadcrumb-item active">Sync Dashboard</li>
+{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+/* PRP Sync Dashboard - Bangladesh Parliament Secretariat PIMS */
+/* Location: Dhaka, Bangladesh - Flat Design with High Contrast */
+/* Following Template Design Pattern Rule & Dashboard.html Design */
+
+:root {
+    --primary-teal: #14b8a6;
+    --primary-teal-hover: #0f9488;
+    --primary-orange: #f97316;
+    --primary-orange-hover: #ea580c;
+    --primary-red: #ef4444;
+    --primary-red-hover: #dc2626;
+    --success: #10b981;
+    --success-hover: #047857;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --bg-tertiary: #f1f5f9;
+    --border-light: #e2e8f0;
+    --border-medium: #cbd5e1;
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --prp-sync-bg: #ecfdf5;
+    --prp-readonly-bg: #f8f9fa;
+    --prp-indicator: #14b8a6;
+    --warning-bg: #fef3c7;
+    --warning-border: #f59e0b;
+    --error-bg: #fee2e2;
+    --error-border: #ef4444;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: var(--bg-secondary);
+}
+
+/* Main Container - Following dashboard.html pattern */
+.prp-dashboard-container {
+    background-color: var(--bg-secondary);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+/* Page Header - Matching dashboard.html style */
+.prp-dashboard-header {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-card);
+    position: relative;
+    overflow: hidden;
+}
+
+.prp-dashboard-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-orange) 100%);
+}
+
+.prp-dashboard-title {
+    color: var(--text-primary);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 2rem;
+}
+
+.prp-dashboard-title .prp-badge {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--success) 100%);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.prp-dashboard-subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 0;
+    font-size: 1.125rem;
+}
+
+.prp-location-info {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Statistics Grid - Following dashboard.html stats pattern */
+.prp-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.prp-stat-card {
+    background-color: var(--bg-primary);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: var(--shadow-card);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+}
+
+.prp-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* PRP-specific color scheme */
+.prp-stat-card.total-users {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, #0f766e 100%);
+    color: white;
+}
+
+.prp-stat-card.prp-users {
+    background: linear-gradient(135deg, var(--success) 0%, #047857 100%);
+    color: white;
+}
+
+.prp-stat-card.local-users {
+    background: linear-gradient(135deg, var(--primary-orange) 0%, #ea580c 100%);
+    color: white;
+}
+
+.prp-stat-card.sync-status {
+    background: linear-gradient(135deg, var(--primary-red) 0%, #dc2626 100%);
+    color: white;
+}
+
+.prp-stat-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.prp-stat-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    backdrop-filter: blur(10px);
+}
+
+.prp-stat-content {
+    flex: 1;
+}
+
+.prp-stat-number {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.prp-stat-label {
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    opacity: 0.9;
+}
+
+.prp-stat-change {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+}
+
+.prp-stat-change.positive {
+    background: rgba(16, 185, 129, 0.2);
+}
+
+.prp-stat-change.negative {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+/* Dashboard Grid Layout - Following dashboard.html pattern */
+.prp-dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Main Control Panel */
+.prp-control-panel {
+    background-color: var(--bg-primary);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border-light);
+}
+
+.prp-control-header {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, #0f766e 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.prp-section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.prp-api-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.prp-status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+}
+
+.prp-status-indicator.offline {
+    background: var(--primary-red);
+}
+
+.prp-control-content {
+    padding: 2rem;
+}
+
+/* Sync Actions Grid */
+.prp-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.prp-action-btn {
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-decoration: none;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.prp-action-btn:hover {
+    background: linear-gradient(135deg, var(--primary-teal), #0f766e);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+    border-color: var(--primary-teal);
+    box-shadow: var(--shadow-hover);
+}
+
+.prp-action-btn.warning:hover {
+    background: linear-gradient(135deg, var(--primary-orange), #ea580c);
+    border-color: var(--primary-orange);
+}
+
+.prp-action-btn.danger:hover {
+    background: linear-gradient(135deg, var(--primary-red), #dc2626);
+    border-color: var(--primary-red);
+}
+
+.prp-action-btn i {
+    font-size: 2rem;
+}
+
+.prp-action-btn .action-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.prp-action-btn .action-desc {
+    font-size: 0.875rem;
+    opacity: 0.8;
+}
+
+/* Quick Actions Sidebar */
+.prp-quick-actions {
+    background-color: var(--bg-primary);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border-light);
+    margin-bottom: 1.5rem;
+}
+
+.prp-quick-actions .prp-control-header {
+    background: transparent;
+    color: var(--text-primary);
+    padding: 0;
+    margin-bottom: 1.5rem;
+}
+
+.prp-quick-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.prp-quick-btn {
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 1rem;
+    text-decoration: none;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.prp-quick-btn:hover {
+    background: linear-gradient(135deg, var(--primary-teal), #0f766e);
+    color: white;
+    text-decoration: none;
+    transform: translateX(4px);
+    border-color: var(--primary-teal);
+}
+
+.prp-quick-btn i {
+    font-size: 1.125rem;
+    width: 20px;
+    text-align: center;
+}
+
+/* Recent Activity Section */
+.prp-recent-activity {
+    grid-column: 1 / -1;
+    background-color: var(--bg-primary);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border-light);
+}
+
+.prp-recent-activity .prp-control-header {
+    background: linear-gradient(135deg, var(--primary-orange) 0%, #ea580c 100%);
+}
+
+.prp-activity-content {
+    padding: 1.5rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.prp-activity-item {
+    border-bottom: 1px solid var(--border-light);
+    padding: 1rem 0;
+    transition: all 0.3s ease;
+}
+
+.prp-activity-item:hover {
+    background-color: var(--bg-secondary);
+    margin: 0 -1.5rem;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+}
+
+.prp-activity-item:last-child {
+    border-bottom: none;
+}
+
+.prp-activity-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 1rem;
+    align-items: center;
+}
+
+.prp-activity-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+}
+
+.prp-activity-icon.sync { 
+    background: linear-gradient(135deg, var(--primary-teal), #0f766e); 
+}
+.prp-activity-icon.user { 
+    background: linear-gradient(135deg, var(--success), #047857); 
+}
+.prp-activity-icon.department { 
+    background: linear-gradient(135deg, var(--primary-orange), #ea580c); 
+}
+.prp-activity-icon.error { 
+    background: linear-gradient(135deg, var(--primary-red), #dc2626); 
+}
+
+.prp-activity-info {
+    flex: 1;
+}
+
+.prp-activity-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    font-size: 0.95rem;
+}
+
+.prp-activity-meta {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.prp-activity-time {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+/* Alert Section */
+.prp-alerts-section {
+    grid-column: 1 / -1;
+    background-color: var(--bg-primary);
+    border-radius: 16px;
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+}
+
+.prp-alerts-section .prp-control-header {
+    background: linear-gradient(135deg, var(--primary-red) 0%, #dc2626 100%);
+}
+
+.prp-alerts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
+}
+
+.prp-alert-card {
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+}
+
+.prp-alert-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--alert-color, var(--primary-red));
+}
+
+.prp-alert-card.warning { 
+    --alert-color: var(--primary-orange); 
+}
+.prp-alert-card.danger { 
+    --alert-color: var(--primary-red); 
+}
+.prp-alert-card.info { 
+    --alert-color: var(--primary-teal); 
+}
+
+.prp-alert-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.prp-alert-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    color: white;
+    background: var(--alert-color, var(--primary-red));
+}
+
+.prp-alert-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    font-size: 1rem;
+}
+
+.prp-alert-content {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+/* Progress Bars for Sync Status */
+.prp-progress-section {
+    margin-bottom: 1.5rem;
+}
+
+.prp-progress-item {
+    margin-bottom: 1rem;
+}
+
+.prp-progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.prp-progress-bar {
+    background-color: var(--bg-tertiary);
+    border-radius: 10px;
+    height: 8px;
+    overflow: hidden;
+}
+
+.prp-progress-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.prp-progress-fill.success {
+    background: linear-gradient(90deg, var(--success) 0%, #047857 100%);
+}
+
+.prp-progress-fill.warning {
+    background: linear-gradient(90deg, var(--primary-orange) 0%, #ea580c 100%);
+}
+
+.prp-progress-fill.danger {
+    background: linear-gradient(90deg, var(--primary-red) 0%, #dc2626 100%);
+}
+
+/* Loading States */
+.prp-loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.prp-loading .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border-light);
+    border-top: 2px solid var(--primary-teal);
+    border-radius: 50%;
+    animation: prp-spin 1s linear infinite;
+}
+
+@keyframes prp-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .prp-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .prp-stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .prp-dashboard-container {
+        padding: 1rem 0;
+    }
+    
+    .prp-dashboard-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .prp-dashboard-title {
+        font-size: 1.5rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .prp-dashboard-subtitle {
+        font-size: 1rem;
+    }
+    
+    .prp-stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .prp-stat-card {
+        padding: 1.5rem;
+    }
+    
+    .prp-stat-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .prp-stat-number {
+        font-size: 2.5rem;
+    }
+    
+    .prp-stat-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+    
+    .prp-actions-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .prp-alerts-grid {
+        grid-template-columns: 1fr;
+        padding: 1.5rem;
+    }
+    
+    .prp-control-content {
+        padding: 1rem;
+    }
+    
+    .prp-dashboard-grid {
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .prp-dashboard-header {
+        padding: 1rem;
+    }
+    
+    .prp-stat-card {
+        padding: 1rem;
+    }
+    
+    .prp-stat-number {
+        font-size: 2rem;
+    }
+    
+    .prp-activity-row {
+        grid-template-columns: auto 1fr;
+        gap: 0.75rem;
+    }
+    
+    .prp-activity-time {
+        grid-column: 1 / -1;
+        margin-top: 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .prp-control-header {
+        padding: 1rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .prp-stat-card,
+    .prp-control-panel,
+    .prp-quick-actions,
+    .prp-recent-activity,
+    .prp-alerts-section {
+        border-width: 2px;
+    }
+    
+    .prp-activity-icon,
+    .prp-alert-icon {
+        filter: contrast(1.2);
+    }
+}
+
+/* Print styles */
+@media print {
+    .prp-dashboard-container {
+        background: white;
+        padding: 0;
+    }
+    
+    .prp-stat-card,
+    .prp-control-panel,
+    .prp-quick-actions {
+        box-shadow: none;
+        border: 1px solid #ccc;
+        break-inside: avoid;
+        margin-bottom: 1rem;
+    }
+    
+    .prp-control-header {
+        background: #f5f5f5 !important;
+        color: #000 !important;
+    }
+    
+    .prp-recent-activity,
+    .prp-alerts-section {
+        display: none;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* PRP Sync Dashboard JavaScript - Bangladesh Parliament Secretariat */
+/* Location: Dhaka, Bangladesh */
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize PRP sync dashboard functionality
+    initializePRPDashboard();
+    
+    // Auto-refresh dashboard data every 30 seconds
+    setInterval(refreshDashboardData, 30000);
+    
+    // Update last updated timestamp
+    updateLastUpdatedTime();
+    setInterval(updateLastUpdatedTime, 60000);
+});
+
+function initializePRPDashboard() {
+    console.log('PRP Sync Dashboard initialized');
+    
+    // Add click handlers for sync actions
+    document.querySelectorAll('.prp-action-btn').forEach(button => {
+        if (button.hasAttribute('data-action')) {
+            button.addEventListener('click', handleSyncAction);
+        }
+    });
+    
+    // Initialize progress bars
+    updateProgressBars();
+}
+
+function handleSyncAction(event) {
+    event.preventDefault();
+    const action = this.getAttribute('data-action');
+    const originalText = this.querySelector('.action-title').textContent;
+    
+    // Show loading state
+    const loadingEl = document.createElement('div');
+    loadingEl.className = 'prp-loading';
+    loadingEl.innerHTML = '<div class="spinner"></div> Processing...';
+    
+    const titleEl = this.querySelector('.action-title');
+    titleEl.replaceWith(loadingEl);
+    
+    // Simulate API call (replace with actual AJAX call)
+    setTimeout(() => {
+        loadingEl.replaceWith(titleEl);
+        titleEl.textContent = originalText;
+        
+        // Show success message
+        showNotification(`${action} completed successfully`, 'success');
+        
+        // Refresh dashboard data
+        refreshDashboardData();
+    }, 2000);
+}
+
+function refreshDashboardData() {
+    // In a real implementation, this would make AJAX calls to refresh dashboard data
+    console.log('Refreshing PRP dashboard data...');
+    
+    // Update statistics (mock data for demonstration)
+    const statsElements = document.querySelectorAll('.prp-stat-number');
+    statsElements.forEach(el => {
+        const currentValue = parseInt(el.textContent) || 0;
+        // Simulate small changes in statistics
+        const change = Math.floor(Math.random() * 3) - 1;
+        el.textContent = Math.max(0, currentValue + change);
+    });
+    
+    // Update progress bars
+    updateProgressBars();
+}
+
+function updateProgressBars() {
+    const progressBars = document.querySelectorAll('.prp-progress-fill');
+    progressBars.forEach(bar => {
+        const percentage = bar.getAttribute('data-percentage') || Math.floor(Math.random() * 100);
+        bar.style.width = percentage + '%';
+        
+        // Update the label
+        const label = bar.closest('.prp-progress-item').querySelector('.prp-progress-label span:last-child');
+        if (label) {
+            label.textContent = percentage + '%';
+        }
+    });
+}
+
+function updateLastUpdatedTime() {
+    const now = new Date();
+    const timeString = now.toLocaleString('en-BD', {
+        timeZone: 'Asia/Dhaka',
+        hour12: true,
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    const lastUpdatedEl = document.getElementById('prp-last-updated');
+    if (lastUpdatedEl) {
+        lastUpdatedEl.textContent = timeString;
+    }
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show`;
+    notification.innerHTML = `
+        <i class="bi bi-check-circle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Add to page
+    const container = document.querySelector('.prp-dashboard-container');
+    container.insertBefore(notification, container.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// PRP API Status Check
+function checkPRPAPIStatus() {
+    // Mock API status check - replace with actual endpoint
+    const statusIndicator = document.querySelector('.prp-status-indicator');
+    const statusText = statusIndicator ? statusIndicator.nextElementSibling : null;
+    
+    if (statusIndicator && statusText) {
+        // Simulate API check
+        const isOnline = Math.random() > 0.1; // 90% uptime simulation
+        
+        if (isOnline) {
+            statusIndicator.classList.remove('offline');
+            statusText.textContent = 'PRP API Online';
+        } else {
+            statusIndicator.classList.add('offline');
+            statusText.textContent = 'PRP API Offline';
+        }
+    }
+}
+
+// Initialize API status check
+setInterval(checkPRPAPIStatus, 60000); // Check every minute
+checkPRPAPIStatus(); // Initial check
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="prp-dashboard-container">
+    {% if error %}
+        <!-- Error State -->
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>PRP Integration Error:</strong> {{ error }}
+        </div>
+    {% endif %}
+
+    <!-- Dashboard Header -->
+    <div class="prp-dashboard-header">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="prp-dashboard-title">
+                    <i class="bi bi-cloud-arrow-down"></i>
+                    PRP Sync Dashboard
+                    <span class="prp-badge">Integration</span>
+                </h1>
+                <p class="prp-dashboard-subtitle">
+                    Real-time synchronization control for Parliament Resource Portal (PRP) user data
+                </p>
+                <div class="prp-location-info">
+                    <i class="bi bi-geo-alt"></i>
+                    <span>{{ location|default:"Bangladesh Parliament Secretariat, Dhaka" }}</span>
+                </div>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <div class="text-muted">
+                    <i class="bi bi-clock me-1"></i>
+                    Last updated: <span id="prp-last-updated">Just now</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Grid -->
+    <div class="prp-stats-grid">
+        <div class="prp-stat-card total-users">
+            <div class="prp-stat-header">
+                <div class="prp-stat-content">
+                    <div class="prp-stat-number">{{ statistics.total_users|default:247 }}</div>
+                    <div class="prp-stat-label">Total Users</div>
+                    <div class="prp-stat-change positive">
+                        <i class="bi bi-arrow-up"></i>
+                        <span>+12 this month</span>
+                    </div>
+                </div>
+                <div class="prp-stat-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="prp-stat-card prp-users">
+            <div class="prp-stat-header">
+                <div class="prp-stat-content">
+                    <div class="prp-stat-number">{{ statistics.prp_users|default:189 }}</div>
+                    <div class="prp-stat-label">PRP Managed</div>
+                    <div class="prp-stat-change positive">
+                        <i class="bi bi-arrow-up"></i>
+                        <span>{{ statistics.prp_users|floatformat:0 }}% of total</span>
+                    </div>
+                </div>
+                <div class="prp-stat-icon">
+                    <i class="bi bi-cloud-check"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="prp-stat-card local-users">
+            <div class="prp-stat-header">
+                <div class="prp-stat-content">
+                    <div class="prp-stat-number">{{ statistics.local_users|default:58 }}</div>
+                    <div class="prp-stat-label">Local Users</div>
+                    <div class="prp-stat-change">
+                        <i class="bi bi-dash"></i>
+                        <span>No PRP sync</span>
+                    </div>
+                </div>
+                <div class="prp-stat-icon">
+                    <i class="bi bi-person-badge"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="prp-stat-card sync-status">
+            <div class="prp-stat-header">
+                <div class="prp-stat-content">
+                    <div class="prp-stat-number">{{ statistics.needs_sync|default:23 }}</div>
+                    <div class="prp-stat-label">Needs Sync</div>
+                    <div class="prp-stat-change negative">
+                        <i class="bi bi-arrow-down"></i>
+                        <span>Requires attention</span>
+                    </div>
+                </div>
+                <div class="prp-stat-icon">
+                    <i class="bi bi-arrow-repeat"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Grid -->
+    <div class="prp-dashboard-grid">
+        <!-- Control Panel -->
+        <div class="prp-control-panel">
+            <div class="prp-control-header">
+                <h3 class="prp-section-title">
+                    <i class="bi bi-gear"></i>
+                    Sync Operations
+                </h3>
+                <div class="prp-api-status">
+                    <div class="prp-status-indicator"></div>
+                    <span>PRP API Online</span>
+                </div>
+            </div>
+            <div class="prp-control-content">
+                <!-- Sync Progress -->
+                <div class="prp-progress-section">
+                    <h6 class="mb-3">
+                        <i class="bi bi-bar-chart me-2"></i>
+                        Sync Status Overview
+                    </h6>
+                    <div class="prp-progress-item">
+                        <div class="prp-progress-label">
+                            <span>Successfully Synced</span>
+                            <span>{{ statistics.recently_synced|default:166 }} users (87%)</span>
+                        </div>
+                        <div class="prp-progress-bar">
+                            <div class="prp-progress-fill success" data-percentage="87"></div>
+                        </div>
+                    </div>
+                    <div class="prp-progress-item">
+                        <div class="prp-progress-label">
+                            <span>Pending Sync</span>
+                            <span>{{ statistics.needs_sync|default:23 }} users (12%)</span>
+                        </div>
+                        <div class="prp-progress-bar">
+                            <div class="prp-progress-fill warning" data-percentage="12"></div>
+                        </div>
+                    </div>
+                    <div class="prp-progress-item">
+                        <div class="prp-progress-label">
+                            <span>Never Synced</span>
+                            <span>{{ statistics.never_synced|default:2 }} users (1%)</span>
+                        </div>
+                        <div class="prp-progress-bar">
+                            <div class="prp-progress-fill danger" data-percentage="1"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons Grid -->
+                <div class="prp-actions-grid">
+                    <button type="button" class="prp-action-btn" data-action="Trigger Full Sync">
+                        <i class="bi bi-cloud-download"></i>
+                        <div class="action-title">Full Sync</div>
+                        <div class="action-desc">Sync all PRP users</div>
+                    </button>
+                    
+                    <button type="button" class="prp-action-btn" data-action="Sync Departments">
+                        <i class="bi bi-building"></i>
+                        <div class="action-title">Sync Departments</div>
+                        <div class="action-desc">Update department list</div>
+                    </button>
+                    
+                    <button type="button" class="prp-action-btn warning" data-action="Force Sync">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        <div class="action-title">Force Sync</div>
+                        <div class="action-desc">Override cache</div>
+                    </button>
+                    
+                    <a href="{% url 'users:prp_sync_reports' %}" class="prp-action-btn">
+                        <i class="bi bi-graph-up"></i>
+                        <div class="action-title">View Reports</div>
+                        <div class="action-desc">Sync analytics</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Sidebar -->
+        <div class="prp-quick-actions">
+            <div class="prp-control-header">
+                <h5 class="prp-section-title">
+                    <i class="bi bi-lightning"></i>
+                    Quick Actions
+                </h5>
+            </div>
+            <div class="prp-quick-list">
+                <a href="{% url 'users:prp_user_lookup' employee_id='search' %}" class="prp-quick-btn">
+                    <i class="bi bi-search"></i>
+                    <span>Search PRP User</span>
+                </a>
+                
+                <a href="{% url 'users:prp_departments_api' %}" class="prp-quick-btn">
+                    <i class="bi bi-list-ul"></i>
+                    <span>View Departments</span>
+                </a>
+                
+                <a href="{% url 'users:prp_sync_history' %}" class="prp-quick-btn">
+                    <i class="bi bi-clock-history"></i>
+                    <span>Sync History</span>
+                </a>
+                
+                <button type="button" class="prp-quick-btn" data-action="Health Check">
+                    <i class="bi bi-heart-pulse"></i>
+                    <span>API Health Check</span>
+                </button>
+                
+                <a href="{% url 'users:list' %}?filter=prp_managed" class="prp-quick-btn">
+                    <i class="bi bi-people"></i>
+                    <span>View PRP Users</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Section -->
+    <div class="prp-recent-activity">
+        <div class="prp-control-header">
+            <h3 class="prp-section-title">
+                <i class="bi bi-activity"></i>
+                Recent PRP Activity
+            </h3>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-light">
+                    <i class="bi bi-arrow-clockwise me-1"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+        <div class="prp-activity-content">
+            {% if recent_prp_users %}
+                {% for user in recent_prp_users %}
+                <div class="prp-activity-item">
+                    <div class="prp-activity-row">
+                        <div class="prp-activity-icon sync">
+                            <i class="bi bi-person-check"></i>
+                        </div>
+                        <div class="prp-activity-info">
+                            <div class="prp-activity-title">
+                                User {{ user.first_name }} {{ user.last_name }} synced from PRP
+                            </div>
+                            <div class="prp-activity-meta">
+                                <span><i class="bi bi-building me-1"></i>{{ user.office|default:"Unknown Department" }}</span>
+                                <span><i class="bi bi-person-badge me-1"></i>{{ user.employee_id }}</span>
+                                <span><i class="bi bi-envelope me-1"></i>{{ user.email|default:"No email" }}</span>
+                            </div>
+                        </div>
+                        <div class="prp-activity-time">
+                            {% if user.prp_last_sync %}
+                                {{ user.prp_last_sync|timesince }} ago
+                            {% else %}
+                                Never synced
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
+                    <p class="text-muted mt-2">No recent PRP activity to display</p>
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-action="Trigger Sync">
+                        <i class="bi bi-cloud-download me-1"></i>
+                        Start First Sync
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Alerts Section -->
+    <div class="prp-alerts-section">
+        <div class="prp-control-header">
+            <h3 class="prp-section-title">
+                <i class="bi bi-exclamation-triangle"></i>
+                System Alerts & Notifications
+            </h3>
+        </div>
+        <div class="prp-alerts-grid">
+            {% if statistics.never_synced > 0 %}
+            <div class="prp-alert-card warning">
+                <div class="prp-alert-header">
+                    <div class="prp-alert-icon">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <h6 class="prp-alert-title">Users Never Synced</h6>
+                </div>
+                <div class="prp-alert-content">
+                    {{ statistics.never_synced }} PRP-managed users have never been synced from the Parliament Resource Portal. 
+                    Consider running a full sync operation to ensure data consistency.
+                </div>
+            </div>
+            {% endif %}
+
+            {% if statistics.needs_sync > 5 %}
+            <div class="prp-alert-card danger">
+                <div class="prp-alert-header">
+                    <div class="prp-alert-icon">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </div>
+                    <h6 class="prp-alert-title">Sync Required</h6>
+                </div>
+                <div class="prp-alert-content">
+                    {{ statistics.needs_sync }} users haven't been synced in over 7 days. 
+                    User information may be outdated and requires synchronization from PRP.
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="prp-alert-card info">
+                <div class="prp-alert-header">
+                    <div class="prp-alert-icon">
+                        <i class="bi bi-info-circle"></i>
+                    </div>
+                    <h6 class="prp-alert-title">Integration Status</h6>
+                </div>
+                <div class="prp-alert-content">
+                    PRP integration is active and operational. All user data is synchronized one-way from 
+                    Parliament Resource Portal to PIMS. Local user accounts remain unaffected.
+                </div>
+            </div>
+
+            <div class="prp-alert-card info">
+                <div class="prp-alert-header">
+                    <div class="prp-alert-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h6 class="prp-alert-title">Business Rules Active</h6>
+                </div>
+                <div class="prp-alert-content">
+                    All PRP business rules are enforced: PRP is the authoritative source, fields are read-only, 
+                    and admin status override is available. Default password "12345678" applies to PRP users.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

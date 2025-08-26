@@ -2,39 +2,43 @@ amqp==5.3.1
 asgiref==3.9.1
 billiard==4.2.1
 celery==5.4.0
+certifi==2023.11.17
+cffi==1.17.1
 chardet==5.2.0
+charset-normalizer==3.4.3
 click==8.2.1
 click-didyoumean==0.3.1
 click-plugins==1.1.1.2
 click-repl==0.3.0
 colorama==0.4.6
 cron-descriptor==1.4.5
+cryptography==45.0.6
 Django==4.2.7
 django-celery-beat==2.6.0
 django-timezone-field==7.1
 et_xmlfile==2.0.0
+idna==3.10
 kombu==5.5.4
+oauthlib==3.3.1
 openpyxl==3.1.2
 packaging==25.0
 pillow==11.3.0
 prompt_toolkit==3.0.51
+pycparser==2.22
 PyMySQL==1.1.0
 pypng==0.20220715.0
 python-crontab==3.3.0
 python-dateutil==2.9.0.post0
+pytz==2023.3
 qrcode==7.4.2
 redis==5.0.7
 reportlab==4.2.2
+requests==2.31.0
+requests-oauthlib==1.3.1
 six==1.17.0
 sqlparse==0.5.3
 typing_extensions==4.14.1
 tzdata==2025.2
+urllib3==2.0.7
 vine==5.1.0
 wcwidth==0.2.13
-
-# NEW DEPENDENCIES FOR PRP INTEGRATION
-requests==2.31.0        # For PRP API HTTP requests
-requests-oauthlib==1.3.1  # OAuth support for requests
-urllib3==2.0.7          # HTTP library (requests dependency)
-pytz==2023.3            # Timezone handling for Bangladesh/Dhaka
-certifi==2023.11.17     # SSL certificate bundle

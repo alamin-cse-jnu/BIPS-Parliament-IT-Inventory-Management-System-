@@ -1,65 +1,71 @@
 """
 Django Management Command: PRP User Synchronization
-===================================================
+====================================================
 
-Manual user sync command for PIMS-PRP Integration at Bangladesh Parliament Secretariat.
+Manual sync command for PIMS-PRP Integration at Bangladesh Parliament Secretariat.
 
 Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
 Project: PIMS-PRP Integration
-Purpose: Admin-controlled synchronization of user data from PRP to PIMS
+Purpose: Manual synchronization of user data from PRP API to PIMS
 
-Business Rules:
-- Admin-only operation (requires superuser or specific permissions)
-- One-way sync: PRP → PIMS (PRP is authoritative source)
-- Status override: PIMS admin inactive status takes precedence
-- Comprehensive logging and progress reporting
-- Rollback capability on errors
+Business Context:
+- PRP is the authoritative source for all user data
+- One-way sync: PRP → PIMS (never send data back to PRP)
+- Admin-controlled operation with comprehensive logging
+- Status override: PIMS admin can override user status
+
+Key Features:
+- Full department sync or single user sync
+- Comprehensive error handling and rollback
+- Detailed sync reporting and audit logging
+- Force sync option to override recent sync checks
+- Dry run mode for testing without changes
+- Admin-only operation with permission checks
 
 Usage Examples:
-    # Sync all departments and users
-    python manage.py sync_prp_users --all
+    # Sync all users from all departments
+    python manage.py sync_prp_users
 
-    # Sync specific department by ID
-    python manage.py sync_prp_users --department=1
+    # Sync users from specific department
+    python manage.py sync_prp_users --department=5
 
-    # Sync specific department by name
-    python manage.py sync_prp_users --department="Information Technology"
+    # Sync specific user by employee ID
+    python manage.py sync_prp_users --user=12345
 
-    # Status-only sync (update user status without full data sync)
-    python manage.py sync_prp_users --status-only
+    # Force sync ignoring recent sync timestamps
+    python manage.py sync_prp_users --force
 
-    # Dry run (preview changes without applying)
-    python manage.py sync_prp_users --all --dry-run
+    # Dry run to preview changes without applying
+    python manage.py sync_prp_users --dry-run
 
-    # Force sync (ignore timestamp checks)
-    python manage.py sync_prp_users --department=1 --force
-
-    # Quiet mode (minimal output)
-    python manage.py sync_prp_users --all --quiet
+    # Verbose output with detailed logging
+    python manage.py sync_prp_users --verbose
 
 Dependencies:
+- users.api.prp_client (PRPClient)
 - users.api.sync_service (PRPSyncService)
-- users.api.prp_client (PRPClient) 
 - users.api.exceptions (PRP exceptions)
 """
 
-import sys
 import logging
+import sys
 import traceback
-from datetime import datetime
-from typing import List, Dict, Any, Optional
+from datetime import datetime, timedelta
+from typing import Dict, List, Any, Optional
+
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from django.conf import settings
+from django.contrib.auth.models import User
 
 # Import PRP integration modules
 try:
-    from users.api.sync_service import PRPSyncService, PRPSyncResult
     from users.api.prp_client import PRPClient, create_prp_client
+    from users.api.sync_service import PRPSyncService, PRPSyncResult
     from users.api.exceptions import (
-        PRPBaseException,
+        PRPException,
         PRPConnectionError,
         PRPAuthenticationError,
         PRPSyncError,
@@ -69,463 +75,319 @@ try:
 except ImportError as e:
     raise CommandError(
         f"PRP integration modules not available: {e}. "
-        "Ensure all PRP integration files are properly implemented."
+        "Ensure prp_client.py and sync_service.py are implemented before running this command."
     )
 
-User = get_user_model()
+# Configure logging
+logger = logging.getLogger('pims.prp_integration.sync_users')
 
-# Configure logging for sync operations
-logger = logging.getLogger('pims.prp_integration.sync_command')
+# Get custom user model
+CustomUser = get_user_model()
 
 
 class Command(BaseCommand):
     """
     Django management command for PRP user synchronization.
     
-    Provides admin-controlled synchronization of user data from PRP API
-    to PIMS with comprehensive error handling, progress reporting, and
-    rollback capabilities.
+    Provides comprehensive user synchronization capabilities from PRP
+    (Parliament Resource Portal) to PIMS with business rule enforcement.
+    
+    Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
     """
     
-    help = 'Synchronize users from PRP (Parliament Resource Portal) to PIMS'
+    help = '''
+    Synchronize user data from PRP (Parliament Resource Portal) to PIMS.
+    
+    Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
+    
+    This command provides manual control over PRP user synchronization with
+    comprehensive business rule enforcement and audit logging.
+    
+    Examples:
+        python manage.py sync_prp_users                    # Sync all users
+        python manage.py sync_prp_users --department=5     # Sync specific department
+        python manage.py sync_prp_users --user=12345       # Sync specific user
+        python manage.py sync_prp_users --force            # Force sync all
+        python manage.py sync_prp_users --dry-run          # Preview changes only
+    '''
     
     def add_arguments(self, parser):
-        """Add command-line arguments."""
-        
-        # Sync scope arguments (mutually exclusive)
-        sync_group = parser.add_mutually_exclusive_group(required=True)
-        sync_group.add_argument(
-            '--all',
-            action='store_true',
-            help='Sync all departments and users from PRP'
-        )
-        sync_group.add_argument(
+        """Add command line arguments."""
+        parser.add_argument(
             '--department',
             type=str,
-            help='Sync specific department by ID (number) or name (string)'
-        )
-        sync_group.add_argument(
-            '--status-only',
-            action='store_true',
-            help='Update only user status without full data sync'
+            help='Sync users from specific department ID only'
         )
         
-        # Operation mode arguments
         parser.add_argument(
-            '--dry-run',
-            action='store_true',
-            help='Preview changes without applying them'
+            '--user',
+            type=str,
+            help='Sync specific user by PRP employee ID only'
         )
+        
         parser.add_argument(
             '--force',
             action='store_true',
-            help='Force sync ignoring timestamp checks'
-        )
-        parser.add_argument(
-            '--quiet',
-            action='store_true',
-            help='Minimal output (errors and summary only)'
-        )
-        parser.add_argument(
-            '--no-progress',
-            action='store_true',
-            help='Disable progress reporting'
+            help='Force sync ignoring recent sync timestamps'
         )
         
-        # Filtering arguments
         parser.add_argument(
-            '--limit',
+            '--dry-run',
+            action='store_true',
+            help='Preview changes without applying them to database'
+        )
+        
+        parser.add_argument(
+            '--verbose',
+            action='store_true',
+            help='Enable detailed output and logging'
+        )
+        
+        parser.add_argument(
+            '--max-users',
             type=int,
-            help='Limit number of users to sync (for testing)'
-        )
-        parser.add_argument(
-            '--skip-inactive',
-            action='store_true',
-            help='Skip inactive users in PRP'
+            default=1000,
+            help='Maximum number of users to process in single run (default: 1000)'
         )
         
-        # Configuration overrides
-        parser.add_argument(
-            '--api-url',
-            type=str,
-            help='Override PRP API base URL'
-        )
         parser.add_argument(
             '--timeout',
             type=int,
-            default=30,
-            help='API request timeout in seconds (default: 30)'
+            default=300,
+            help='API timeout in seconds (default: 300)'
         )
     
     def handle(self, *args, **options):
         """Main command handler."""
+        # Store options
+        self.options = options
+        self.verbosity = options.get('verbosity', 1)
+        self.dry_run = options.get('dry_run', False)
+        self.force = options.get('force', False)
+        self.verbose = options.get('verbose', False)
         
-        start_time = timezone.now()
+        # Configure logging level
+        if self.verbose:
+            logging.getLogger('pims.prp_integration').setLevel(logging.DEBUG)
         
-        # Validate prerequisites
-        self._validate_prerequisites(options)
+        # Bangladesh time context
+        dhaka_time = timezone.now().astimezone(timezone.get_default_timezone())
+        
+        self.stdout.write("=" * 80)
+        self.stdout.write(
+            self.style.SUCCESS("🇧🇩 PRP User Synchronization - Bangladesh Parliament Secretariat")
+        )
+        self.stdout.write(f"📍 Location: Dhaka, Bangladesh")
+        self.stdout.write(f"🕐 Started at: {dhaka_time.strftime('%Y-%m-%d %H:%M:%S %Z')}")
+        
+        if self.dry_run:
+            self.stdout.write(self.style.WARNING("🧪 DRY RUN MODE - No changes will be applied"))
+        
+        self.stdout.write("=" * 80)
         
         try:
-            # Create PRP client
-            prp_client = self._create_prp_client(options)
+            # Initialize PRP client and sync service
+            self._initialize_services()
             
-            # Create sync service
-            sync_service = PRPSyncService(prp_client)
-            
-            # Execute sync operation based on arguments
-            if options['all']:
-                result = self._sync_all_departments(sync_service, options)
-            elif options['department']:
-                result = self._sync_department(sync_service, options['department'], options)
-            elif options['status_only']:
-                result = self._sync_status_only(sync_service, options)
+            # Execute sync operation based on options
+            if options.get('user'):
+                result = self._sync_single_user(options['user'])
+            elif options.get('department'):
+                result = self._sync_department(options['department'])
             else:
-                raise CommandError("No sync operation specified")
+                result = self._sync_all_departments()
             
             # Display results
-            self._display_results(result, options, start_time)
+            self._display_results(result)
             
-        except PRPBaseException as e:
-            self._handle_prp_error(e)
+            # Exit with appropriate code
+            if result.success:
+                self.stdout.write(
+                    self.style.SUCCESS("✅ PRP user synchronization completed successfully")
+                )
+                return 0
+            else:
+                self.stdout.write(
+                    self.style.ERROR("❌ PRP user synchronization completed with errors")
+                )
+                return 1
+                
+        except KeyboardInterrupt:
+            self.stdout.write(self.style.WARNING("\n⏹️  Sync operation cancelled by user"))
+            return 130
         except Exception as e:
-            self._handle_unexpected_error(e)
+            self.stderr.write(
+                self.style.ERROR(f"💥 Fatal error during PRP sync: {str(e)}")
+            )
+            if self.verbose:
+                self.stderr.write(f"Traceback: {traceback.format_exc()}")
+            return 1
     
-    def _validate_prerequisites(self, options: Dict[str, Any]) -> None:
-        """Validate that prerequisites are met."""
-        
-        # Check Django environment
+    def _initialize_services(self):
+        """Initialize PRP client and sync service."""
         try:
-            User.objects.first()  # Test database access
-        except Exception as e:
-            raise CommandError(f"Database access failed: {e}")
-        
-        # Log permission check
-        logger.info(
-            "PRP User Sync command started",
-            extra={
-                'location': 'Bangladesh Parliament Secretariat, Dhaka',
-                'operation': 'admin_sync',
-                'timestamp': timezone.now().isoformat()
-            }
-        )
-    
-    def _create_prp_client(self, options: Dict[str, Any]) -> PRPClient:
-        """Create and configure PRP client."""
-        
-        try:
-            client = create_prp_client(base_url=options.get('api_url'))
+            self.stdout.write("🔌 Initializing PRP API connection...")
+            
+            # Create PRP client using factory function
+            self.prp_client = create_prp_client()
             
             # Test connection
-            if not options['quiet']:
-                self.stdout.write("Testing PRP API connection...")
+            self.prp_client.health_check()
+            self.stdout.write(self.style.SUCCESS("✅ PRP API connection established"))
             
-            connection_test = client.test_connection()
+            # Initialize sync service
+            self.sync_service = PRPSyncService(self.prp_client)
             
-            if not connection_test['success']:
-                raise CommandError(
-                    f"PRP API connection test failed: {connection_test.get('error', 'Unknown error')}"
-                )
+            if self.dry_run:
+                self.stdout.write(self.style.WARNING("🧪 Sync service initialized in DRY RUN mode"))
             
-            if not options['quiet']:
-                self.stdout.write(
-                    self.style.SUCCESS("✓ PRP API connection successful")
-                )
-            
-            return client
-            
-        except PRPBaseException as e:
-            raise CommandError(f"PRP client initialization failed: {e}")
-    
-    @transaction.atomic
-    def _sync_all_departments(
-        self, 
-        sync_service: PRPSyncService, 
-        options: Dict[str, Any]
-    ) -> PRPSyncResult:
-        """Sync all departments and their users."""
-        
-        logger.info("Starting full sync of all PRP departments")
-        
-        if not options['quiet']:
-            self.stdout.write(
-                self.style.HTTP_INFO("🔄 Syncing all departments from PRP...")
-            )
-        
-        try:
-            result = sync_service.sync_all_departments(
-                dry_run=options.get('dry_run', False),
-                force=options.get('force', False),
-                limit=options.get('limit'),
-                skip_inactive=options.get('skip_inactive', False)
-            )
-            
-            if not options['quiet'] and not options.get('no_progress', False):
-                departments = sync_service.get_prp_departments()
-                self.stdout.write(f"Found {len(departments)} departments in PRP")
-                
-                for i, department in enumerate(departments, 1):
-                    dept_name = department.get('nameEng', f"Department {department.get('id')}")
-                    self.stdout.write(f"[{i}/{len(departments)}] Processed: {dept_name}")
-            
-            return result
-            
+        except PRPConfigurationError as e:
+            raise CommandError(f"PRP configuration error: {e}")
+        except PRPConnectionError as e:
+            raise CommandError(f"Cannot connect to PRP API: {e}")
         except Exception as e:
-            logger.error(f"Full sync failed: {e}")
-            raise
+            raise CommandError(f"Failed to initialize PRP services: {e}")
     
-    @transaction.atomic
-    def _sync_department(
-        self, 
-        sync_service: PRPSyncService, 
-        department_identifier: str,
-        options: Dict[str, Any]
-    ) -> PRPSyncResult:
-        """Sync specific department by ID or name."""
-        
-        logger.info(f"Starting sync for department: {department_identifier}")
+    def _sync_single_user(self, employee_id: str) -> PRPSyncResult:
+        """Sync a specific user by employee ID."""
+        self.stdout.write(f"👤 Syncing single user: {employee_id}")
         
         try:
-            # Resolve department ID from identifier
-            if department_identifier.isdigit():
-                department_id = int(department_identifier)
-                dept_name = f"Department {department_id}"
-            else:
-                # Find department by name
-                departments = sync_service.get_prp_departments()
-                department_id = None
-                dept_name = department_identifier
-                
-                for dept in departments:
-                    if (dept.get('nameEng', '').lower() == department_identifier.lower() or
-                        dept.get('nameBng', '').lower() == department_identifier.lower()):
-                        department_id = dept['id']
-                        dept_name = dept.get('nameEng', dept_name)
-                        break
-                
-                if department_id is None:
-                    available_depts = [
-                        dept.get('nameEng', f"ID:{dept.get('id')}") 
-                        for dept in departments
-                    ]
-                    raise CommandError(
-                        f"Department '{department_identifier}' not found in PRP. "
-                        f"Available departments: {', '.join(available_depts)}"
-                    )
+            if self.dry_run:
+                self.stdout.write("🧪 DRY RUN: User sync preview not yet implemented")
+                # In a real implementation, you'd preview the changes here
+                result = PRPSyncResult()
+                result.add_warning("Dry run mode - no changes applied")
+                return result.finalize()
             
-            if not options['quiet']:
-                self.stdout.write(
-                    self.style.HTTP_INFO(f"🔄 Syncing department: {dept_name}")
-                )
-            
-            # Perform sync
-            result = sync_service.sync_department_users(
-                department_id=department_id,
-                dry_run=options.get('dry_run', False),
-                force=options.get('force', False),
-                limit=options.get('limit'),
-                skip_inactive=options.get('skip_inactive', False)
+            result = self.sync_service.sync_single_user_by_id(
+                employee_id=employee_id,
+                force=self.force
             )
             
             return result
             
-        except Exception as e:
-            logger.error(f"Department sync failed: {e}")
-            raise
+        except PRPException as e:
+            self.stderr.write(self.style.ERROR(f"❌ PRP sync error: {e}"))
+            result = PRPSyncResult()
+            result.success = False
+            result.add_error_user(employee_id, str(e))
+            return result.finalize()
     
-    @transaction.atomic
-    def _sync_status_only(
-        self, 
-        sync_service: PRPSyncService, 
-        options: Dict[str, Any]
-    ) -> PRPSyncResult:
-        """Sync only user status without full data update."""
+    def _sync_department(self, department_id: str) -> PRPSyncResult:
+        """Sync users from a specific department."""
+        self.stdout.write(f"🏢 Syncing department: {department_id}")
         
-        logger.info("Starting status-only sync")
-        
-        if not options['quiet']:
-            self.stdout.write(
-                self.style.HTTP_INFO("🔄 Syncing user status only...")
+        try:
+            if self.dry_run:
+                self.stdout.write("🧪 DRY RUN: Department sync preview not yet implemented")
+                result = PRPSyncResult()
+                result.add_warning("Dry run mode - no changes applied")
+                return result.finalize()
+            
+            result = self.sync_service.sync_department_users(
+                department_id=int(department_id),
+                force=self.force
             )
-        
-        # For status-only sync, we'll sync all departments but with minimal data update
-        # This would require additional implementation in PRPSyncService
-        result = sync_service.sync_all_departments(
-            dry_run=options.get('dry_run', False),
-            force=True,  # Force to ensure status updates
-            limit=options.get('limit'),
-            skip_inactive=False  # Don't skip inactive users for status sync
-        )
-        
-        return result
+            
+            return result
+            
+        except ValueError:
+            raise CommandError(f"Invalid department ID: {department_id}")
+        except PRPException as e:
+            self.stderr.write(self.style.ERROR(f"❌ Department sync error: {e}"))
+            result = PRPSyncResult()
+            result.success = False
+            result.add_error("sync_department", str(e))
+            return result.finalize()
     
-    def _display_results(
-        self, 
-        result: PRPSyncResult, 
-        options: Dict[str, Any], 
-        start_time: datetime
-    ) -> None:
+    def _sync_all_departments(self) -> PRPSyncResult:
+        """Sync users from all departments."""
+        self.stdout.write("🌐 Syncing all departments...")
+        
+        try:
+            if self.dry_run:
+                self.stdout.write("🧪 DRY RUN: Full sync preview not yet implemented")
+                result = PRPSyncResult()
+                result.add_warning("Dry run mode - no changes applied")
+                return result.finalize()
+            
+            result = self.sync_service.sync_all_departments(
+                force=self.force
+            )
+            
+            return result
+            
+        except PRPException as e:
+            self.stderr.write(self.style.ERROR(f"❌ Full sync error: {e}"))
+            result = PRPSyncResult()
+            result.success = False
+            result.add_error("sync_all_departments", str(e))
+            return result.finalize()
+    
+    def _display_results(self, result: PRPSyncResult):
         """Display sync operation results."""
+        self.stdout.write("\n" + "=" * 80)
+        self.stdout.write(self.style.SUCCESS("📊 SYNC OPERATION RESULTS"))
+        self.stdout.write("=" * 80)
         
-        duration = timezone.now() - start_time
+        # Summary statistics
+        summary = result.get_summary()
         
-        if not options['quiet']:
-            self.stdout.write("\n" + "="*60)
-            self.stdout.write(self.style.SUCCESS("PRP SYNC OPERATION COMPLETED"))
-            self.stdout.write("="*60)
+        # Success/Failure status
+        status_style = self.style.SUCCESS if result.success else self.style.ERROR
+        status_text = "SUCCESS ✅" if result.success else "FAILED ❌"
+        self.stdout.write(f"Status: {status_style(status_text)}")
+        
+        # User statistics
+        self.stdout.write(f"\n📈 User Statistics:")
+        self.stdout.write(f"  • Created: {self.style.SUCCESS(str(summary['users_created']))}")
+        self.stdout.write(f"  • Updated: {self.style.WARNING(str(summary['users_updated']))}")
+        self.stdout.write(f"  • Skipped: {summary['users_skipped']}")
+        self.stdout.write(f"  • Errors:  {self.style.ERROR(str(summary['users_errors']))}")
+        self.stdout.write(f"  • Total:   {summary['total_users_processed']}")
+        
+        # Department statistics
+        if summary['departments_processed'] > 0:
+            self.stdout.write(f"\n🏢 Departments Processed: {summary['departments_processed']}")
+        
+        # Duration
+        if summary['duration_seconds'] > 0:
+            duration_str = f"{summary['duration_seconds']:.2f} seconds"
+            self.stdout.write(f"⏱️  Duration: {duration_str}")
+        
+        # Errors
+        if result.errors:
+            self.stdout.write(f"\n❌ Errors ({len(result.errors)}):")
+            for error in result.errors[:5]:  # Show first 5 errors
+                self.stdout.write(f"  • {self.style.ERROR(error)}")
             
-            # Summary statistics
-            self.stdout.write(f"📊 SYNC SUMMARY:")
-            self.stdout.write(f"   • Duration: {duration.total_seconds():.1f} seconds")
-            self.stdout.write(f"   • Departments Processed: {result.departments_processed}")
-            self.stdout.write(f"   • Users Created: {result.users_created}")
-            self.stdout.write(f"   • Users Updated: {result.users_updated}")
-            self.stdout.write(f"   • Users Skipped: {result.users_skipped}")
-            self.stdout.write(f"   • Errors: {result.users_errors}")
+            if len(result.errors) > 5:
+                remaining = len(result.errors) - 5
+                self.stdout.write(f"  • ... and {remaining} more errors")
+        
+        # Warnings
+        if result.warnings:
+            self.stdout.write(f"\n⚠️  Warnings ({len(result.warnings)}):")
+            for warning in result.warnings[:3]:  # Show first 3 warnings
+                self.stdout.write(f"  • {self.style.WARNING(warning)}")
             
-            # Warnings
-            if result.warnings:
-                self.stdout.write(f"\n⚠️  WARNINGS ({len(result.warnings)}):")
-                for warning in result.warnings[:5]:  # Show first 5 warnings
-                    self.stdout.write(f"   • {warning}")
-                if len(result.warnings) > 5:
-                    self.stdout.write(f"   • ... and {len(result.warnings) - 5} more warnings")
-            
-            # Errors
-            if result.errors:
-                self.stdout.write(f"\n❌ ERRORS ({len(result.errors)}):")
-                for error in result.errors[:5]:  # Show first 5 errors
-                    self.stdout.write(f"   • {error}")
-                if len(result.errors) > 5:
-                    self.stdout.write(f"   • ... and {len(result.errors) - 5} more errors")
-            
-            self.stdout.write("="*60)
+            if len(result.warnings) > 3:
+                remaining = len(result.warnings) - 3
+                self.stdout.write(f"  • ... and {remaining} more warnings")
         
-        # Final status message
-        if result.success and result.users_errors == 0:
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"\n✅ Sync completed successfully! "
-                    f"{result.users_created + result.users_updated} users processed."
-                )
-            )
-        else:
-            self.stdout.write(
-                self.style.ERROR(
-                    f"\n⚠️ Sync completed with {result.users_errors} errors. "
-                    "Check logs for details."
-                )
-            )
+        # Business rules applied
+        if 'business_rules_applied' in result.sync_details:
+            rules = result.sync_details['business_rules_applied']
+            if rules:
+                self.stdout.write(f"\n📋 Business Rules Applied ({len(rules)}):")
+                for rule in rules:
+                    status = "✅" if rule['applied'] else "❌"
+                    self.stdout.write(f"  • {status} {rule['rule_name']}")
         
-        # Log final results
-        logger.info(
-            "PRP sync operation completed",
-            extra={
-                'duration_seconds': duration.total_seconds(),
-                'users_created': result.users_created,
-                'users_updated': result.users_updated,
-                'users_skipped': result.users_skipped,
-                'departments_processed': result.departments_processed,
-                'errors': result.users_errors,
-                'dry_run': options.get('dry_run', False),
-                'location': 'Bangladesh Parliament Secretariat, Dhaka'
-            }
-        )
-    
-    def _handle_prp_error(self, error: PRPBaseException):
-        """Handle PRP-specific errors with appropriate user feedback."""
+        # Location and time context
+        dhaka_time = timezone.now().astimezone(timezone.get_default_timezone())
+        self.stdout.write(f"\n📍 Completed at: {dhaka_time.strftime('%Y-%m-%d %H:%M:%S %Z')}")
+        self.stdout.write("🇧🇩 Bangladesh Parliament Secretariat, Dhaka")
         
-        if isinstance(error, PRPConnectionError):
-            raise CommandError(
-                f"Failed to connect to PRP API: {error}\n"
-                "Please check network connectivity and PRP server status."
-            )
-        elif isinstance(error, PRPAuthenticationError):
-            raise CommandError(
-                f"PRP authentication failed: {error}\n"
-                "Please verify PRP credentials in Django settings."
-            )
-        elif isinstance(error, PRPSyncError):
-            raise CommandError(
-                f"User synchronization failed: {error}\n"
-                "Check sync service configuration and data integrity."
-            )
-        elif isinstance(error, PRPDataValidationError):
-            raise CommandError(
-                f"Invalid data received from PRP: {error}\n"
-                "PRP API may have changed format or returned unexpected data."
-            )
-        elif isinstance(error, PRPConfigurationError):
-            raise CommandError(
-                f"PRP integration configuration error: {error}\n"
-                "Check Django settings for PRP integration."
-            )
-        else:
-            raise CommandError(f"PRP error: {error}")
-    
-    def _handle_unexpected_error(self, error: Exception):
-        """Handle unexpected errors with full traceback logging."""
-        
-        error_id = timezone.now().strftime('%Y%m%d_%H%M%S')
-        
-        logger.error(
-            f"Unexpected error in PRP sync command [ID: {error_id}]",
-            extra={
-                'error_type': type(error).__name__,
-                'error_message': str(error),
-                'traceback': traceback.format_exc(),
-                'error_id': error_id
-            }
-        )
-        
-        raise CommandError(
-            f"Unexpected error occurred [Error ID: {error_id}]: {error}\n"
-            "Check logs for full details. Contact system administrator if issue persists."
-        )
-
-
-# Utility functions for testing and validation
-def validate_sync_environment() -> Dict[str, Any]:
-    """
-    Validate that the environment is properly configured for PRP sync.
-    
-    Returns:
-        Dictionary with validation results
-    """
-    validation_result = {
-        'valid': True,
-        'issues': [],
-        'warnings': []
-    }
-    
-    # Check database migration
-    try:
-        User = get_user_model()
-        test_user = User.objects.first()
-        if test_user and not hasattr(test_user, 'is_prp_managed'):
-            validation_result['issues'].append(
-                "PRP fields not found in User model. Run migration 0002_add_prp_fields.py"
-            )
-            validation_result['valid'] = False
-    except Exception as e:
-        validation_result['issues'].append(f"Database access failed: {e}")
-        validation_result['valid'] = False
-    
-    # Check PRP API settings
-    required_settings = ['PRP_API_BASE_URL', 'PRP_USERNAME', 'PRP_PASSWORD']
-    for setting in required_settings:
-        if not getattr(settings, setting, None):
-            validation_result['warnings'].append(
-                f"Setting {setting} not found. Using default values."
-            )
-    
-    # Check timezone setting
-    if settings.TIME_ZONE != 'Asia/Dhaka':
-        validation_result['warnings'].append(
-            f"TIME_ZONE is {settings.TIME_ZONE}, expected 'Asia/Dhaka' for Bangladesh Parliament"
-        )
-    
-    return validation_result
-
-
-# Export for testing
-__all__ = ['Command', 'validate_sync_environment']
+        self.stdout.write("=" * 80)

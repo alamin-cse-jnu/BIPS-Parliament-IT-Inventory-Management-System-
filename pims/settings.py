@@ -11,8 +11,31 @@ import json
 from pathlib import Path
 from django.core.exceptions import ImproperlyConfigured
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    
+    # Build paths inside the project
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    
+    # Load .env file from project root
+    env_path = BASE_DIR / '.env'
+    load_dotenv(env_path)
+    
+    print(f"🔧 Environment variables loaded from: {env_path}")
+    print(f"📍 Bangladesh Parliament Secretariat, Dhaka")
+    
+    # Verify PRP integration is loaded
+    prp_status = os.environ.get('PRP_INTEGRATION_AVAILABLE', 'Not Found')
+    print(f"🏛️  PRP Integration Status: {prp_status}")
+    
+except ImportError:
+    print("⚠️  python-dotenv not installed. Install with: pip install python-dotenv")
+except Exception as e:
+    print(f"⚠️  Error loading .env file: {e}")
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+# BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-%ppx4se)89yo@lrgb056*t$1^kr7qd@__)(x*@6#^$peycaho1')

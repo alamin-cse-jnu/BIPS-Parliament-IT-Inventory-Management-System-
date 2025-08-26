@@ -1339,9 +1339,13 @@ body {
 
 {% block extra_js %}
 <script>
-// PRP Integration JavaScript for Bangladesh Parliament Secretariat
-// Location: Dhaka, Bangladesh
-// Purpose: Handle PRP sync functionality in user creation
+const PRP_CONFIG = {
+    lookupUrl: '/users/prp/lookup/',
+    syncUrl: '/users/prp/sync/trigger/',
+    departmentsUrl: '/users/prp/departments/',
+    userDetailUrl: '/users/',
+    userListUrl: '/users/'
+};
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize PRP options
@@ -1352,6 +1356,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize PRP lookup functionality
     initializePRPLookup();
+    
+    // Load PRP departments
+    loadPRPDepartments();
+    
+    // Initialize tooltips
+    initializeTooltips();
 });
 
 function initializePRPOptions() {
@@ -1392,92 +1402,290 @@ function lookupPRPEmployee() {
     
     if (!employeeId) {
         showAlert('warning', 'Please enter an Employee ID to search.');
+        document.getElementById('employee-id-lookup').focus();
+        return;
+    }
+    
+    // Validate employee ID format (should be numbers)
+    if (!/^\d+$/.test(employeeId)) {
+        showAlert('warning', 'Employee ID should contain numbers only.');
+        document.getElementById('employee-id-lookup').focus();
         return;
     }
     
     // Show loading state
     const lookupBtn = document.querySelector('.btn-sync');
-    lookupBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Searching...';
+    const originalHTML = lookupBtn.innerHTML;
+    lookupBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Searching PRP Database...';
     lookupBtn.disabled = true;
     
-    // Simulate API call to PRP
-    setTimeout(() => {
-        // Mock PRP data for demonstration
-        const mockPRPData = {
-            userId: employeeId,
-            nameEng: 'Ahmed Rahman Khan',
-            email: `employee.${employeeId}@parliament.gov.bd`,
-            designationEng: 'Senior System Administrator',
-            department: 'IT Department',
-            mobile: '+880 1712-345678',
-            status: 'active'
-        };
-        
-        displayPRPUserPreview(mockPRPData);
-        
-        // Reset button
-        lookupBtn.innerHTML = '<i class="bi bi-search"></i> Lookup Employee';
+    // Hide any existing preview
+    document.getElementById('prp-preview').classList.remove('active');
+    
+    // Make REAL API call to PRP lookup endpoint
+    fetch(`${PRP_CONFIG.lookupUrl}${employeeId}/`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Reset button state
+        lookupBtn.innerHTML = originalHTML;
         lookupBtn.disabled = false;
         
-        showAlert('success', 'Employee found in PRP database. Review details below and click Import to proceed.');
-    }, 1500);
+        console.log('PRP Lookup Response:', data);
+        
+        if (data.success) {
+            if (data.found_in_prp && data.prp_data) {
+                // Display PRP user data
+                displayPRPUserPreview({
+                    userId: data.prp_data.userId,
+                    nameEng: data.prp_data.nameEng,
+                    email: data.prp_data.email,
+                    designationEng: data.prp_data.designation,
+                    department: getDepartmentName(data.prp_data.departmentId),
+                    mobile: data.prp_data.mobile,
+                    status: data.prp_data.status,
+                    departmentId: data.prp_data.departmentId
+                });
+                
+                // Check if user already exists in PIMS
+                if (data.found_in_pims) {
+                    showAlert('info', `Employee found in PRP! This user already exists in PIMS as: ${data.full_name}. Consider syncing instead of creating.`);
+                    
+                    // Add link to existing user if profile URL is available
+                    if (data.profile_url) {
+                        const existingUserLink = `<a href="${data.profile_url}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                            <i class="bi bi-person-check"></i> View Existing User
+                        </a>`;
+                        setTimeout(() => {
+                            const actionsDiv = document.querySelector('#prp-preview .preview-actions');
+                            if (actionsDiv && !actionsDiv.querySelector('.btn-outline-primary')) {
+                                actionsDiv.insertAdjacentHTML('beforeend', existingUserLink);
+                            }
+                        }, 100);
+                    }
+                } else {
+                    showAlert('success', 'Employee found in PRP database! Review details and click Import to create user account.');
+                }
+            } else if (data.found_in_pims && !data.found_in_prp) {
+                showAlert('warning', `Employee ID ${employeeId} exists in PIMS but not found in PRP database. This might be a local user.`);
+                
+                if (data.profile_url) {
+                    showAlert('info', `<a href="${data.profile_url}" target="_blank">View existing local user</a>`);
+                }
+            } else {
+                showAlert('error', `Employee ID ${employeeId} not found in PRP database. Please verify the ID and try again.`);
+            }
+        } else {
+            // Handle API errors
+            const errorMsg = data.error || 'Failed to lookup employee in PRP database.';
+            
+            if (errorMsg.includes('not available')) {
+                showAlert('warning', 'PRP integration is currently unavailable. Please contact system administrator.');
+            } else if (errorMsg.includes('authentication')) {
+                showAlert('error', 'PRP authentication failed. Please contact system administrator.');
+            } else {
+                showAlert('error', `PRP Lookup Error: ${errorMsg}`);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('PRP Lookup Network Error:', error);
+        
+        // Reset button state
+        lookupBtn.innerHTML = originalHTML;
+        lookupBtn.disabled = false;
+        
+        // Show appropriate error message
+        if (error.message.includes('HTTP 503')) {
+            showAlert('error', 'PRP service is currently unavailable. Please try again later.');
+        } else if (error.message.includes('HTTP 401')) {
+            showAlert('error', 'Authentication failed. Please contact system administrator.');
+        } else if (error.message.includes('HTTP 404')) {
+            showAlert('error', 'PRP lookup endpoint not found. Please contact system administrator.');
+        } else {
+            showAlert('error', 'Network error while searching PRP database. Please check your connection and try again.');
+        }
+    });
 }
 
 function displayPRPUserPreview(userData) {
     const preview = document.getElementById('prp-preview');
     
-    // Update preview data
-    document.getElementById('preview-name').textContent = userData.nameEng;
-    document.getElementById('preview-designation').textContent = userData.designationEng;
-    document.getElementById('preview-employee-id').textContent = userData.userId;
-    document.getElementById('preview-email').textContent = userData.email;
-    document.getElementById('preview-department').textContent = userData.department;
-    document.getElementById('preview-mobile').textContent = userData.mobile;
-    
-    // Update status
-    const statusElement = document.getElementById('preview-status');
-    if (userData.status === 'active') {
-        statusElement.className = 'sync-status synced';
-        statusElement.innerHTML = '<i class="bi bi-check-circle"></i> Active';
-    } else {
-        statusElement.className = 'sync-status error';
-        statusElement.innerHTML = '<i class="bi bi-x-circle"></i> Inactive';
+    if (!preview) {
+        console.error('PRP preview element not found');
+        return;
     }
     
-    // Show preview
+    // Update preview data safely
+    updateElementText('preview-name', userData.nameEng || 'Unknown Name');
+    updateElementText('preview-designation', userData.designationEng || 'Unknown Designation');
+    updateElementText('preview-employee-id', userData.userId || '');
+    updateElementText('preview-email', userData.email || 'No email');
+    updateElementText('preview-department', userData.department || 'Unknown Department');
+    updateElementText('preview-mobile', userData.mobile || 'No mobile');
+    
+    // Update avatar if photo exists (placeholder for future enhancement)
+    const avatarElement = preview.querySelector('.preview-avatar');
+    if (avatarElement) {
+        avatarElement.innerHTML = '<i class="bi bi-person-circle"></i>';
+    }
+    
+    // Update status with proper styling
+    const statusElement = document.getElementById('preview-status');
+    if (statusElement) {
+        if (userData.status === 'active') {
+            statusElement.className = 'sync-status synced';
+            statusElement.innerHTML = '<i class="bi bi-check-circle"></i> Active Employee';
+        } else {
+            statusElement.className = 'sync-status error';
+            statusElement.innerHTML = '<i class="bi bi-x-circle"></i> Inactive Employee';
+        }
+    }
+    
+    // Show preview with animation
     preview.classList.add('active');
+    
+    // Scroll to preview if needed
+    setTimeout(() => {
+        preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 300);
+}
+
+function updateElementText(elementId, text) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = text;
+    }
 }
 
 function importPRPUser() {
     const employeeId = document.getElementById('employee-id-lookup').value.trim();
     
+    if (!employeeId) {
+        showAlert('error', 'Employee ID is required for import.');
+        return;
+    }
+    
     // Show loading state
     const importBtn = document.querySelector('.preview-actions .btn-sync');
-    importBtn.innerHTML = '<i class="bi bi-download"></i> Importing...';
+    if (!importBtn) {
+        showAlert('error', 'Import button not found.');
+        return;
+    }
+    
+    const originalHTML = importBtn.innerHTML;
+    importBtn.innerHTML = '<i class="bi bi-download"></i> Importing from PRP...';
     importBtn.disabled = true;
     
-    // Simulate PRP import process
-    setTimeout(() => {
-        showAlert('success', 'User successfully imported from PRP! Redirecting to user list...');
+    // Disable other buttons
+    const otherButtons = document.querySelectorAll('.preview-actions button:not(.btn-sync)');
+    otherButtons.forEach(btn => btn.disabled = true);
+    
+    // Make API call to import/sync user from PRP
+    fetch(PRP_CONFIG.syncUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+            sync_type: 'user',
+            employee_id: employeeId,
+            force: true
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('PRP Import Response:', data);
         
-        // Redirect to user list after successful import
-        setTimeout(() => {
-            window.location.href = "{% url 'users:list' %}";
-        }, 2000);
-    }, 2000);
+        if (data.success) {
+            showAlert('success', `User successfully imported from PRP! ${data.result.users_created > 0 ? 'New user created.' : 'User updated.'} Redirecting...`);
+            
+            // Redirect to appropriate page
+            setTimeout(() => {
+                if (data.user_id) {
+                    // Redirect to user detail page
+                    window.location.href = `${PRP_CONFIG.userDetailUrl}${data.user_id}/`;
+                } else if (data.result && data.result.users_created > 0) {
+                    // Redirect to user list
+                    window.location.href = PRP_CONFIG.userListUrl;
+                } else {
+                    // Refresh current page
+                    window.location.reload();
+                }
+            }, 2000);
+        } else {
+            // Reset button states
+            importBtn.innerHTML = originalHTML;
+            importBtn.disabled = false;
+            otherButtons.forEach(btn => btn.disabled = false);
+            
+            const errorMsg = data.error || 'Failed to import user from PRP.';
+            
+            if (errorMsg.includes('already exists')) {
+                showAlert('warning', `${errorMsg} Consider updating the existing user instead.`);
+            } else {
+                showAlert('error', `Import Failed: ${errorMsg}`);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('PRP Import Network Error:', error);
+        
+        // Reset button states
+        importBtn.innerHTML = originalHTML;
+        importBtn.disabled = false;
+        otherButtons.forEach(btn => btn.disabled = false);
+        
+        if (error.message.includes('HTTP 503')) {
+            showAlert('error', 'PRP service is currently unavailable. Please try again later.');
+        } else if (error.message.includes('HTTP 401')) {
+            showAlert('error', 'Authentication failed. Please contact system administrator.');
+        } else {
+            showAlert('error', 'Network error during PRP import. Please check your connection and try again.');
+        }
+    });
 }
 
 function clearPRPLookup() {
     document.getElementById('employee-id-lookup').value = '';
     document.getElementById('department-select').value = '';
-    document.getElementById('prp-preview').classList.remove('active');
+    const preview = document.getElementById('prp-preview');
+    if (preview) {
+        preview.classList.remove('active');
+    }
+    
+    // Remove any existing user links
+    const existingLinks = document.querySelectorAll('.preview-actions .btn-outline-primary');
+    existingLinks.forEach(link => link.remove());
     
     showAlert('info', 'Search form cleared. Enter Employee ID to lookup PRP user.');
+    
+    // Focus on employee ID field
+    setTimeout(() => {
+        document.getElementById('employee-id-lookup').focus();
+    }, 100);
 }
 
 function searchAnotherEmployee() {
     clearPRPLookup();
-    document.getElementById('employee-id-lookup').focus();
 }
 
 function initializeFormValidation() {
@@ -1505,13 +1713,13 @@ function initializeFormValidation() {
         });
     }
     
-    // Real-time validation for phone number
+    // Real-time validation for phone number (Bangladesh format)
     const phoneField = form.querySelector('[name="phone_number"]');
     if (phoneField) {
         phoneField.addEventListener('input', function() {
             const bdPhonePattern = /^(\+880|880)?[1-9]\d{8,10}$/;
             if (this.value && !bdPhonePattern.test(this.value.replace(/[-\s]/g, ''))) {
-                this.setCustomValidity('Please enter a valid Bangladesh phone number');
+                this.setCustomValidity('Please enter a valid Bangladesh phone number (e.g., +880 1712-345678)');
             } else {
                 this.setCustomValidity('');
             }
@@ -1520,16 +1728,100 @@ function initializeFormValidation() {
 }
 
 function initializePRPLookup() {
-    // Initialize department dropdown (could be populated from API)
-    const departmentSelect = document.getElementById('department-select');
-    
     // Add keypress enter support for lookup
-    document.getElementById('employee-id-lookup').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            lookupPRPEmployee();
+    const employeeIdInput = document.getElementById('employee-id-lookup');
+    if (employeeIdInput) {
+        employeeIdInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                lookupPRPEmployee();
+            }
+        });
+        
+        // Add input formatting
+        employeeIdInput.addEventListener('input', function() {
+            // Remove non-numeric characters
+            this.value = this.value.replace(/\D/g, '');
+        });
+    }
+}
+
+function loadPRPDepartments() {
+    const departmentSelect = document.getElementById('department-select');
+    if (!departmentSelect) return;
+    
+    // Show loading option
+    departmentSelect.innerHTML = '<option value="">Loading departments...</option>';
+    
+    fetch(PRP_CONFIG.departmentsUrl, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+            'X-Requested-With': 'XMLHttpRequest'
         }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Reset select options
+        departmentSelect.innerHTML = '<option value="">Select Department (Optional)</option>';
+        
+        if (data.success && data.departments) {
+            // Add PRP departments
+            data.departments.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept.id;
+                option.textContent = dept.nameEng;
+                option.title = dept.nameBng || dept.nameEng; // Tooltip with Bangla name
+                departmentSelect.appendChild(option);
+            });
+            
+            console.log(`Loaded ${data.departments.length} departments from PRP`);
+        } else {
+            // Add fallback departments if PRP fails
+            addFallbackDepartments(departmentSelect);
+        }
+    })
+    .catch(error => {
+        console.error('Failed to load PRP departments:', error);
+        // Add fallback departments
+        addFallbackDepartments(departmentSelect);
     });
+}
+
+function addFallbackDepartments(selectElement) {
+    const fallbackDepartments = [
+        { id: '1', name: 'Administration' },
+        { id: '2', name: 'IT Department' },
+        { id: '3', name: 'Finance' },
+        { id: '4', name: 'Human Resources' },
+        { id: '5', name: 'Security' },
+        { id: '6', name: 'Library' },
+        { id: '7', name: 'Transport' }
+    ];
+    
+    selectElement.innerHTML = '<option value="">Select Department (Optional)</option>';
+    
+    fallbackDepartments.forEach(dept => {
+        const option = document.createElement('option');
+        option.value = dept.id;
+        option.textContent = dept.name;
+        selectElement.appendChild(option);
+    });
+}
+
+function getDepartmentName(departmentId) {
+    if (!departmentId) return 'Unknown Department';
+    
+    const departmentSelect = document.getElementById('department-select');
+    if (departmentSelect) {
+        const option = departmentSelect.querySelector(`option[value="${departmentId}"]`);
+        if (option) {
+            return option.textContent;
+        }
+    }
+    
+    return `Department ${departmentId}`;
 }
 
 function showAlert(type, message) {
@@ -1539,63 +1831,141 @@ function showAlert(type, message) {
     
     // Create new alert
     const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show dynamic-alert`;
+    alertDiv.className = `alert alert-${type === 'danger' ? 'danger' : type} alert-dismissible fade show dynamic-alert`;
     alertDiv.setAttribute('role', 'alert');
     
     let icon;
     switch(type) {
         case 'success': icon = 'bi-check-circle-fill'; break;
-        case 'danger': icon = 'bi-exclamation-triangle-fill'; break;
+        case 'danger': 
+        case 'error': icon = 'bi-exclamation-triangle-fill'; break;
         case 'warning': icon = 'bi-exclamation-circle-fill'; break;
         default: icon = 'bi-info-circle-fill';
     }
     
     alertDiv.innerHTML = `
         <i class="bi ${icon}"></i>
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <span class="alert-message">${message}</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
     
     // Insert alert at the top of the container
-    const container = document.querySelector('.create-container .container-fluid');
-    const firstChild = container.firstElementChild.nextElementSibling;
-    container.insertBefore(alertDiv, firstChild);
+    const container = document.querySelector('.create-container .container-fluid') || 
+                     document.querySelector('.container-fluid') || 
+                     document.body;
     
-    // Auto-dismiss after 5 seconds
+    if (container.firstElementChild) {
+        container.insertBefore(alertDiv, container.firstElementChild);
+    } else {
+        container.appendChild(alertDiv);
+    }
+    
+    // Auto-dismiss after 8 seconds (longer for error messages)
+    const dismissTime = type === 'error' ? 10000 : 8000;
     setTimeout(() => {
         if (alertDiv.parentNode) {
             alertDiv.classList.remove('show');
-            setTimeout(() => alertDiv.remove(), 300);
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 300);
         }
-    }, 5000);
+    }, dismissTime);
+    
+    // Scroll to alert
+    alertDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// Handle page visibility for PRP connection status
+function getCSRFToken() {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (csrfToken) {
+        return csrfToken.value;
+    }
+    
+    // Fallback: try to get from meta tag
+    const csrfMeta = document.querySelector('meta[name=csrf-token]');
+    if (csrfMeta) {
+        return csrfMeta.getAttribute('content');
+    }
+    
+    // Last fallback: try from cookie
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'csrftoken') {
+            return value;
+        }
+    }
+    
+    console.warn('CSRF token not found');
+    return '';
+}
+
+function checkPRPConnectionStatus() {
+    fetch(PRP_CONFIG.departmentsUrl, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const statusElements = document.querySelectorAll('.prp-connection-status');
+        statusElements.forEach(element => {
+            if (data.success) {
+                element.innerHTML = '<i class="bi bi-check-circle text-success"></i> PRP Connected';
+                element.className = 'prp-connection-status text-success';
+            } else {
+                element.innerHTML = '<i class="bi bi-exclamation-triangle text-warning"></i> PRP Issues';
+                element.className = 'prp-connection-status text-warning';
+            }
+        });
+    })
+    .catch(() => {
+        const statusElements = document.querySelectorAll('.prp-connection-status');
+        statusElements.forEach(element => {
+            element.innerHTML = '<i class="bi bi-x-circle text-danger"></i> PRP Disconnected';
+            element.className = 'prp-connection-status text-danger';
+        });
+    });
+}
+
+function initializeTooltips() {
+    // Initialize Bootstrap tooltips if available
+    if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+}
+
+// Handle page visibility for connection status updates
 document.addEventListener('visibilitychange', function() {
     if (!document.hidden) {
         // Check PRP connection status when page becomes visible
-        checkPRPConnectionStatus();
+        setTimeout(checkPRPConnectionStatus, 1000);
     }
 });
 
-function checkPRPConnectionStatus() {
-    // Simulate PRP connection check
-    const statusElement = document.querySelector('.sync-status.synced');
-    if (statusElement) {
-        statusElement.innerHTML = '<i class="bi bi-hourglass-split"></i> Checking...';
-        
-        setTimeout(() => {
-            statusElement.innerHTML = '<i class="bi bi-check-circle"></i> PRP Connected';
-        }, 1000);
+// Handle form submission for manual mode
+document.addEventListener('submit', function(event) {
+    const form = event.target;
+    if (form.id === 'user-form') {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Creating User...';
+        }
     }
-}
+});
 
-// Initialize tooltips for better UX
-if (typeof bootstrap !== 'undefined') {
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
+// Debug mode logging
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    console.log('PRP Integration JavaScript loaded for Bangladesh Parliament Secretariat, Dhaka');
+    console.log('PRP Config:', PRP_CONFIG);
 }
 </script>
 {% endblock %}

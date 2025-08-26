@@ -1,1243 +1,731 @@
 """
-PRP API Client Module
-=====================
+PRP (Parliament Resource Portal) API Client
+============================================
 
-Core API client for PRP (Parliament Resource Portal) communication in PIMS
-(Parliament IT Inventory Management System).
+Complete API client for PRP integration with PIMS at Bangladesh Parliament Secretariat, Dhaka.
+
+This module provides comprehensive PRP API integration including:
+- Authentication with token management
+- User lookup and synchronization
+- Department management
+- Error handling and logging
+- Mock mode for development
 
 Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
 Project: PIMS-PRP Integration
-Purpose: Handle PRP API authentication, token management, and data requests
+Purpose: Complete PRP API client with production and development support
 
-Template Design Pattern: Flat Design, High Contrast (NO glassmorphism)
-Color Scheme: Teal (#28a745), Orange (#fd7e14), Red (#dc3545)
-Timezone: Asia/Dhaka (Bangladesh Parliament Secretariat)
+Usage Example:
+--------------
+from users.api.prp_client import create_prp_client
 
-Key Features:
-- Token-based authentication with automatic refresh
-- Rate limiting and API failure recovery
-- Comprehensive logging and error handling
-- Secure credential management for Bangladesh Parliament
-- Support for employee and department data retrieval
-- Asia/Dhaka timezone consistency
+# Create client (automatically handles settings)
+client = create_prp_client()
 
-Dependencies:
-- users.api.exceptions (custom PRP exceptions)
-
-API Endpoints (Official PRP API v1.0):
-- Authentication: POST /api/authentication/external?action=token
-- Token Refresh: GET /api/authentication/external?action=refresh-token
-- Employee Details: GET /api/secure/external?action=employee_details&departmentId={departmentId}
-- Departments: GET /api/secure/external?action=departments
-
-Usage:
-    from users.api.prp_client import PRPClient
+# Authenticate
+if client.authenticate():
+    # Lookup user
+    user_data = client.lookup_user_by_employee_id('110100092')
     
-    client = PRPClient(
-        base_url='https://prp.parliament.gov.bd',
-        username='ezzetech',
-        password='${Fty#3a'
-    )
-    
-    # Get all departments
+    # Get departments
     departments = client.get_departments()
-    
-    # Get employees from specific department
-    employees = client.get_employee_details(department_id=1)
 """
 
+import os
 import json
 import logging
-import time
-import pytz
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union
-from dataclasses import dataclass
-from urllib.parse import urljoin
-import base64
-
 import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+from datetime import datetime, timedelta
+from typing import Dict, List, Any, Optional, Union
 from django.conf import settings
 from django.utils import timezone
+from django.core.cache import cache
 
 from .exceptions import (
-    PRPBaseException,
+    PRPException,
     PRPConnectionError,
     PRPAuthenticationError,
-    PRPSyncError,
-    PRPRateLimitError,
     PRPDataValidationError,
-    PRPConfigurationError,
-    wrap_external_exception
+    PRPConfigurationError
 )
 
-# Configure timezone for Bangladesh Parliament Secretariat
-BD_TIMEZONE = pytz.timezone('Asia/Dhaka')
-
-# Configure logging for PRP operations
+# Configure logging
 logger = logging.getLogger('pims.prp_integration.client')
-
-
-@dataclass
-class PRPAPIConfig:
-    """
-    Configuration class for PRP API settings.
-    
-    Centralizes all PRP API configuration with secure defaults
-    and validation for required settings for Bangladesh Parliament Secretariat.
-    
-    Template Design Pattern: Simple, functional configuration
-    Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
-    """
-    
-    # API Connection Settings (Bangladesh Parliament specific)
-    base_url: str = "https://prp.parliament.gov.bd"
-    timeout: int = 30
-    max_retries: int = 3
-    retry_delay: float = 1.0
-    batch_size: int = 50
-    rate_limit_delay: float = 0.5
-    
-    # Authentication Settings (Official PRP API credentials)
-    username: str = "ezzetech"
-    password: str = "${Fty#3a"
-    
-    # API Endpoints (from official PRP API v1.0)
-    token_endpoint: str = "/api/authentication/external?action=token"
-    refresh_endpoint: str = "/api/authentication/external?action=refresh-token"
-    employee_details_endpoint: str = "/api/secure/external?action=employee_details&departmentId={departmentId}"
-    departments_endpoint: str = "/api/secure/external?action=departments"
-    
-    # Response validation settings
-    success_code: int = 200
-    success_message: str = "Success"
-    payload_key: str = "payload"
-    message_key: str = "msg"
-    response_code_key: str = "responseCode"
-    
-    # Token management
-    token_refresh_buffer: int = 300  # Refresh token 5 minutes before expiry
-    max_token_refresh_attempts: int = 3
-    
-    def __post_init__(self):
-        """Validate configuration after initialization."""
-        if not self.base_url:
-            raise PRPConfigurationError(
-                "PRP_API_BASE_URL is required for Bangladesh Parliament integration",
-                config_key="base_url"
-            )
-        
-        if not self.username or not self.password:
-            raise PRPConfigurationError(
-                "PRP API credentials (username/password) are required for Parliament authentication",
-                config_key="credentials"
-            )
-        
-        # Ensure base_url doesn't end with slash
-        self.base_url = self.base_url.rstrip('/')
-
-
-@dataclass
-class PRPTokenInfo:
-    """
-    Container for PRP API token information.
-    
-    Manages token lifecycle including expiry tracking
-    and refresh scheduling for Bangladesh Parliament operations.
-    """
-    
-    token: str
-    issued_at: datetime
-    expires_at: Optional[datetime] = None
-    refresh_attempts: int = 0
-    
-    def __post_init__(self):
-        """Initialize token expiry if not provided."""
-        if self.expires_at is None:
-            # Default token lifetime: 30 minutes (1800 seconds)
-            # Based on typical JWT token patterns for government systems
-            self.expires_at = self.issued_at + timedelta(seconds=1800)
-    
-    @property
-    def is_expired(self) -> bool:
-        """Check if token is expired (Bangladesh time)."""
-        current_time = timezone.now()
-        if timezone.is_naive(current_time):
-            current_time = BD_TIMEZONE.localize(current_time)
-        return current_time >= self.expires_at
-    
-    @property
-    def needs_refresh(self) -> bool:
-        """Check if token needs refresh (within buffer time)."""
-        current_time = timezone.now()
-        if timezone.is_naive(current_time):
-            current_time = BD_TIMEZONE.localize(current_time)
-        buffer_time = current_time + timedelta(seconds=300)  # 5 minutes buffer
-        return buffer_time >= self.expires_at
-    
-    @property
-    def bearer_token(self) -> str:
-        """Get formatted bearer token for API calls."""
-        return f"Bearer {self.token}"
 
 
 class PRPClient:
     """
-    Core PRP API client for PIMS integration at Bangladesh Parliament Secretariat.
+    Complete PRP (Parliament Resource Portal) API Client.
     
-    Handles all communication with PRP (Parliament Resource Portal) API
-    including authentication, token management, and data retrieval.
-    
-    Features:
-    - Automatic token refresh with Bangladesh timezone handling
-    - Rate limiting appropriate for government systems
-    - Comprehensive error handling and logging
-    - Request/response logging for audit trails
-    - Connection pooling with retries
-    - Template design consistency (flat design, high contrast)
-    
-    Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
-    
-    Example:
-        client = PRPClient()
-        departments = client.get_departments()
-        employees = client.get_employee_details(department_id=1)
+    Handles authentication, user lookup, department sync, and all PRP operations
+    with comprehensive error handling and caching for Bangladesh Parliament Secretariat.
     """
     
     def __init__(
         self, 
-        config: Optional[PRPAPIConfig] = None,
-        base_url: Optional[str] = None,
-        username: Optional[str] = None,
-        password: Optional[str] = None
+        base_url: str = None, 
+        username: str = None, 
+        password: str = None, 
+        timeout: int = 30,
+        enable_caching: bool = True
     ):
         """
-        Initialize PRP API client for Bangladesh Parliament Secretariat.
+        Initialize PRP client with configuration.
         
         Args:
-            config: Custom configuration object
-            base_url: Override default PRP API base URL
-            username: Override default username
-            password: Override default password
+            base_url: PRP API base URL
+            username: PRP API username
+            password: PRP API password  
+            timeout: Request timeout in seconds
+            enable_caching: Enable response caching
         """
-        # Initialize configuration
-        if config:
-            self.config = config
-        else:
-            self.config = PRPAPIConfig(
-                base_url=base_url or getattr(settings, 'PRP_API_BASE_URL', 'https://prp.parliament.gov.bd'),
-                username=username or getattr(settings, 'PRP_USERNAME', 'ezzetech'),
-                password=password or getattr(settings, 'PRP_PASSWORD', '${Fty#3a')
-            )
+        # Set configuration with fallbacks
+        self.base_url = (base_url or 
+                        os.environ.get('PRP_API_BASE_URL') or 
+                        'https://prp.parliament.gov.bd')
         
-        # Initialize session with connection pooling and retries
-        self.session = self._create_session()
+        self.username = (username or 
+                        os.environ.get('PRP_API_USERNAME') or 
+                        'ezzetech')
         
-        # Token management
-        self._token_info: Optional[PRPTokenInfo] = None
-        self._token_lock = False
+        self.password = (password or 
+                        os.environ.get('PRP_API_PASSWORD') or 
+                        '${Fty#3a')
         
-        # Rate limiting
-        self._last_request_time: Optional[datetime] = None
+        self.timeout = timeout
+        self.enable_caching = enable_caching
         
-        logger.info(
-            f"PRP Client initialized for Bangladesh Parliament Secretariat, Dhaka",
-            extra={
-                'base_url': self.config.base_url,
-                'username': self.config.username,
-                'location': 'Bangladesh Parliament Secretariat, Dhaka',
-                'timezone': 'Asia/Dhaka'
-            }
-        )
+        # Clean up base URL
+        self.base_url = self.base_url.rstrip('/')
+        if self.base_url.endswith('/api'):
+            self.base_url = self.base_url[:-4]
+        
+        # Initialize state
+        self.token = None
+        self.token_expires = None
+        self.session = None
+        self.last_auth_time = None
+        
+        # Setup session
+        self._setup_session()
+        
+        logger.info(f"PRP Client initialized for Bangladesh Parliament Secretariat")
+        logger.info(f"Base URL: {self.base_url}, Username: {self.username}")
     
-    def _create_session(self) -> requests.Session:
-        """
-        Create configured requests session with retries and timeouts.
+    def _setup_session(self):
+        """Setup requests session with proper configuration."""
+        self.session = requests.Session()
         
-        Returns:
-            Configured requests.Session instance for Bangladesh Parliament operations
-        """
-        session = requests.Session()
+        # Configure session
+        self.session.timeout = self.timeout
         
-        # Configure retry strategy for government network reliability
-        retry_strategy = Retry(
-            total=self.config.max_retries,
-            status_forcelist=[429, 500, 502, 503, 504],
-            backoff_factor=self.config.retry_delay,
-            allowed_methods=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE", "POST"]
-        )
-        
-        # Mount adapter with retry strategy
-        adapter = HTTPAdapter(max_retries=retry_strategy)
-        session.mount("http://", adapter)
-        session.mount("https://", adapter)
-        
-        # Set default headers with Bangladesh Parliament identification
-        session.headers.update({
+        # Set headers
+        self.session.headers.update({
             'Content-Type': 'application/json',
-            'User-Agent': 'PIMS-PRP-Integration-BD-Parliament/1.0',
             'Accept': 'application/json',
-            'X-Location': 'Dhaka-Bangladesh',
-            'X-Client': 'Bangladesh-Parliament-Secretariat'
+            'User-Agent': 'PIMS-PRP-Integration/1.0 (Bangladesh Parliament Secretariat)',
+            'X-Client-Location': 'Dhaka, Bangladesh',
+            'X-Client-System': 'PIMS'
         })
         
-        return session
-    
-    def _apply_rate_limiting(self):
-        """Apply rate limiting between API requests (government-appropriate)."""
-        if self._last_request_time:
-            current_time = timezone.now()
-            if timezone.is_naive(current_time):
-                current_time = BD_TIMEZONE.localize(current_time)
-            
-            elapsed = (current_time - self._last_request_time).total_seconds()
-            if elapsed < self.config.rate_limit_delay:
-                sleep_time = self.config.rate_limit_delay - elapsed
-                logger.debug(f"Rate limiting: sleeping {sleep_time:.2f}s for Parliament API")
-                time.sleep(sleep_time)
+        # Configure retries
+        from requests.adapters import HTTPAdapter
+        from requests.packages.urllib3.util.retry import Retry
         
-        current_time = timezone.now()
-        if timezone.is_naive(current_time):
-            current_time = BD_TIMEZONE.localize(current_time)
-        self._last_request_time = current_time
-    
-    def _validate_response(self, response_data: Dict[str, Any], operation: str) -> Dict[str, Any]:
-        """
-        Validate PRP API response structure and content.
-        
-        Args:
-            response_data: Raw response data from API
-            operation: Description of the operation for error context
-            
-        Returns:
-            Validated response data
-            
-        Raises:
-            PRPDataValidationError: If response format is invalid
-        """
-        # Check required response structure
-        if not isinstance(response_data, dict):
-            raise PRPDataValidationError(
-                f"Invalid response format for {operation} from Bangladesh Parliament PRP: expected dict, got {type(response_data)}",
-                details={'response_type': str(type(response_data)), 'location': 'Bangladesh Parliament Secretariat'}
-            )
-        
-        # Validate response code
-        response_code = response_data.get(self.config.response_code_key)
-        if response_code != self.config.success_code:
-            error_msg = response_data.get(self.config.message_key, "Unknown error")
-            raise PRPDataValidationError(
-                f"{operation} failed at Bangladesh Parliament PRP with response code {response_code}: {error_msg}",
-                details={
-                    'response_code': response_code,
-                    'error_message': error_msg,
-                    'operation': operation,
-                    'location': 'Bangladesh Parliament Secretariat'
-                }
-            )
-        
-        # Validate message
-        message = response_data.get(self.config.message_key)
-        if message != self.config.success_message:
-            logger.warning(
-                f"Unexpected response message for {operation} from Parliament PRP: {message}",
-                extra={
-                    'expected': self.config.success_message, 
-                    'actual': message,
-                    'location': 'Bangladesh Parliament Secretariat'
-                }
-            )
-        
-        # Extract and validate payload
-        payload = response_data.get(self.config.payload_key)
-        if payload is None:
-            raise PRPDataValidationError(
-                f"Missing payload in {operation} response from Bangladesh Parliament PRP",
-                field_name=self.config.payload_key,
-                details={
-                    'response_keys': list(response_data.keys()),
-                    'location': 'Bangladesh Parliament Secretariat'
-                }
-            )
-        
-        logger.debug(
-            f"Response validated for {operation} at Bangladesh Parliament",
-            extra={
-                'response_code': response_code,
-                'message': message,
-                'payload_type': type(payload).__name__,
-                'location': 'Bangladesh Parliament Secretariat'
-            }
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=1,
+            status_forcelist=[429, 500, 502, 503, 504],
+            method_whitelist=["HEAD", "GET", "OPTIONS"]
         )
         
-        return response_data
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
     
-    def _make_request(
+    def _is_token_valid(self) -> bool:
+        """Check if current token is valid and not expired."""
+        if not self.token:
+            return False
+            
+        if not self.token_expires:
+            # If no expiry info, consider valid for 1 hour from last auth
+            if self.last_auth_time:
+                return (timezone.now() - self.last_auth_time).total_seconds() < 3600
+            return False
+            
+        return timezone.now() < self.token_expires
+    
+    def authenticate(self) -> bool:
+        """
+        Authenticate with PRP API and obtain access token.
+        
+        Returns:
+            bool: True if authentication successful, False otherwise
+            
+        Raises:
+            PRPAuthenticationError: If authentication fails
+            PRPConnectionError: If network connection fails
+        """
+        # Check if current token is still valid
+        if self._is_token_valid():
+            logger.debug("Using existing valid token")
+            return True
+        
+        auth_url = f"{self.base_url}/api/authentication/external"
+        
+        auth_payload = {
+            "action": "token",
+            "username": self.username,
+            "password": self.password
+        }
+        
+        try:
+            logger.info(f"Authenticating with PRP API: {auth_url}")
+            
+            response = self.session.post(
+                auth_url,
+                json=auth_payload,
+                timeout=self.timeout
+            )
+            
+            logger.debug(f"Auth response status: {response.status_code}")
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    
+                    if data.get('responseCode') == 200 and 'payload' in data:
+                        token_data = data['payload']
+                        
+                        if isinstance(token_data, dict) and 'token' in token_data:
+                            self.token = token_data['token']
+                            
+                            # Set token expiry (default to 24 hours)
+                            expires_in = token_data.get('expiresIn', 86400)  # 24 hours default
+                            self.token_expires = timezone.now() + timedelta(seconds=expires_in)
+                            
+                            # Update session headers
+                            self.session.headers['Authorization'] = f'Bearer {self.token}'
+                            self.last_auth_time = timezone.now()
+                            
+                            logger.info("PRP authentication successful")
+                            return True
+                        else:
+                            error_msg = "Invalid token format in response"
+                            logger.error(f"Auth error: {error_msg}")
+                            raise PRPAuthenticationError(error_msg, details=token_data)
+                    else:
+                        error_msg = data.get('msg', 'Authentication failed')
+                        logger.error(f"Auth failed: {error_msg}")
+                        raise PRPAuthenticationError(error_msg, details=data)
+                        
+                except json.JSONDecodeError as e:
+                    error_msg = f"Invalid JSON response: {e}"
+                    logger.error(f"Auth JSON error: {error_msg}")
+                    logger.error(f"Response content: {response.text[:500]}")
+                    raise PRPAuthenticationError(error_msg)
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
+                logger.error(f"Auth HTTP error: {error_msg}")
+                raise PRPConnectionError(f"Authentication failed: {error_msg}")
+                
+        except requests.exceptions.Timeout:
+            error_msg = f"Authentication timeout after {self.timeout}s"
+            logger.error(error_msg)
+            raise PRPConnectionError(error_msg)
+            
+        except requests.exceptions.ConnectionError as e:
+            error_msg = f"Connection error: {str(e)}"
+            logger.error(error_msg)
+            raise PRPConnectionError(error_msg)
+            
+        except (PRPAuthenticationError, PRPConnectionError):
+            # Re-raise PRP exceptions as-is
+            raise
+            
+        except Exception as e:
+            error_msg = f"Unexpected authentication error: {str(e)}"
+            logger.error(error_msg)
+            raise PRPAuthenticationError(error_msg)
+    
+    def _make_authenticated_request(
         self, 
-        method: str, 
         endpoint: str, 
-        data: Optional[Dict[str, Any]] = None,
-        authenticated: bool = True,
-        operation: str = "API request"
+        params: Dict[str, Any] = None,
+        method: str = 'GET',
+        data: Dict[str, Any] = None
     ) -> Dict[str, Any]:
         """
-        Make HTTP request to PRP API with error handling.
+        Make an authenticated request to PRP API.
         
         Args:
-            method: HTTP method (GET, POST, etc.)
             endpoint: API endpoint path
-            data: Request payload (for POST requests)
-            authenticated: Whether request requires authentication
-            operation: Operation description for logging
+            params: URL parameters
+            method: HTTP method
+            data: Request body data
             
         Returns:
-            Parsed JSON response data
+            dict: API response data
             
         Raises:
-            PRPConnectionError: On connection issues
-            PRPAuthenticationError: On auth failures
-            PRPRateLimitError: On rate limiting
-            PRPDataValidationError: On invalid responses
+            PRPConnectionError: If request fails
+            PRPAuthenticationError: If authentication fails
         """
-        # Apply rate limiting
-        self._apply_rate_limiting()
+        # Ensure we're authenticated
+        if not self.authenticate():
+            raise PRPAuthenticationError("Failed to authenticate with PRP API")
         
-        # Prepare request
-        url = urljoin(self.config.base_url, endpoint)
-        headers = {}
-        
-        # Add authentication if required
-        if authenticated:
-            token_info = self._get_valid_token()
-            headers['Authorization'] = token_info.bearer_token
-        
-        logger.debug(
-            f"Making {method} request to Bangladesh Parliament PRP: {url}",
-            extra={
-                'operation': operation,
-                'authenticated': authenticated,
-                'has_data': data is not None,
-                'location': 'Bangladesh Parliament Secretariat'
-            }
-        )
+        url = f"{self.base_url}/api/secure/external"
         
         try:
-            # Make request
-            response = self.session.request(
-                method=method,
-                url=url,
-                json=data,
-                headers=headers,
-                timeout=self.config.timeout
-            )
+            if method.upper() == 'GET':
+                response = self.session.get(url, params=params, timeout=self.timeout)
+            elif method.upper() == 'POST':
+                response = self.session.post(url, params=params, json=data, timeout=self.timeout)
+            else:
+                raise ValueError(f"Unsupported HTTP method: {method}")
             
-            # Handle HTTP errors with Bangladesh Parliament context
+            logger.debug(f"API request: {method} {url} - Status: {response.status_code}")
+            
             if response.status_code == 401:
-                raise PRPAuthenticationError(
-                    f"Authentication failed for {operation} at Bangladesh Parliament PRP",
-                    details={
-                        'status_code': response.status_code, 
-                        'url': url,
-                        'location': 'Bangladesh Parliament Secretariat'
-                    }
-                )
-            elif response.status_code == 429:
-                retry_after = response.headers.get('Retry-After', '60')
-                raise PRPRateLimitError(
-                    f"Rate limit exceeded for {operation} at Bangladesh Parliament PRP",
-                    retry_after_seconds=int(retry_after),
-                    details={
-                        'status_code': response.status_code, 
-                        'url': url,
-                        'location': 'Bangladesh Parliament Secretariat'
-                    }
-                )
-            elif response.status_code >= 400:
-                raise PRPConnectionError(
-                    f"HTTP {response.status_code} error for {operation} at Bangladesh Parliament PRP: {response.text[:200]}",
-                    url=url,
-                    details={
-                        'status_code': response.status_code, 
-                        'response_text': response.text[:500],
-                        'location': 'Bangladesh Parliament Secretariat'
-                    }
-                )
+                # Token might be expired, clear it and retry once
+                logger.warning("Got 401, clearing token and retrying")
+                self.token = None
+                self.token_expires = None
+                self.session.headers.pop('Authorization', None)
+                
+                # Retry authentication
+                if self.authenticate():
+                    # Retry the original request
+                    if method.upper() == 'GET':
+                        response = self.session.get(url, params=params, timeout=self.timeout)
+                    else:
+                        response = self.session.post(url, params=params, json=data, timeout=self.timeout)
+                else:
+                    raise PRPAuthenticationError("Re-authentication failed")
             
-            # Parse JSON response
-            try:
-                response_data = response.json()
-            except json.JSONDecodeError as e:
-                raise PRPDataValidationError(
-                    f"Invalid JSON response for {operation} from Bangladesh Parliament PRP",
-                    details={
-                        'response_text': response.text[:500], 
-                        'json_error': str(e),
-                        'location': 'Bangladesh Parliament Secretariat'
-                    }
-                )
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    
+                    if data.get('responseCode') == 200:
+                        return data.get('payload', {})
+                    else:
+                        error_msg = data.get('msg', f'API error: {data.get("responseCode")}')
+                        logger.error(f"API error response: {error_msg}")
+                        raise PRPException(error_msg, details=data)
+                        
+                except json.JSONDecodeError as e:
+                    error_msg = f"Invalid JSON response: {e}"
+                    logger.error(error_msg)
+                    logger.error(f"Response content: {response.text[:500]}")
+                    raise PRPException(error_msg)
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
+                logger.error(f"API HTTP error: {error_msg}")
+                raise PRPConnectionError(error_msg)
+                
+        except requests.exceptions.Timeout:
+            error_msg = f"Request timeout after {self.timeout}s"
+            logger.error(error_msg)
+            raise PRPConnectionError(error_msg)
             
-            # Validate response structure
-            validated_response = self._validate_response(response_data, operation)
-            
-            logger.info(
-                f"Successful {method} request to {operation} at Bangladesh Parliament",
-                extra={
-                    'status_code': response.status_code,
-                    'response_time': response.elapsed.total_seconds(),
-                    'location': 'Bangladesh Parliament Secretariat'
-                }
-            )
-            
-            return validated_response
-            
-        except requests.exceptions.Timeout as e:
-            raise PRPConnectionError(
-                f"Timeout connecting to Bangladesh Parliament PRP API for {operation}",
-                url=url,
-                timeout_seconds=self.config.timeout,
-                details={
-                    'error': str(e),
-                    'location': 'Bangladesh Parliament Secretariat'
-                }
-            )
         except requests.exceptions.ConnectionError as e:
-            raise PRPConnectionError(
-                f"Connection error for {operation} to Bangladesh Parliament PRP",
-                url=url,
-                details={
-                    'error': str(e),
-                    'location': 'Bangladesh Parliament Secretariat'
-                }
-            )
-        except requests.exceptions.RequestException as e:
-            raise wrap_external_exception(
-                e, 
-                operation, 
-                {
-                    'url': url,
-                    'location': 'Bangladesh Parliament Secretariat'
-                }
-            )
-    
-    def _get_valid_token(self) -> PRPTokenInfo:
-        """
-        Get valid authentication token, refreshing if necessary.
-        
-        Returns:
-            Valid PRPTokenInfo instance
-            
-        Raises:
-            PRPAuthenticationError: If token acquisition/refresh fails
-        """
-        # Check if we need to acquire initial token
-        if not self._token_info or self._token_info.is_expired:
-            logger.info("Acquiring new PRP authentication token for Bangladesh Parliament")
-            self._acquire_token()
-        # Check if token needs refresh
-        elif self._token_info.needs_refresh:
-            logger.info("Refreshing PRP authentication token for Bangladesh Parliament")
-            self._refresh_token()
-        
-        return self._token_info
-    
-    def _acquire_token(self):
-        """
-        Acquire new authentication token from PRP API.
-        
-        Raises:
-            PRPAuthenticationError: If token acquisition fails
-        """
-        if self._token_lock:
-            # Prevent concurrent token requests
-            time.sleep(1)
-            if self._token_info and not self._token_info.is_expired:
-                return
-        
-        self._token_lock = True
-        
-        try:
-            logger.info(
-                f"Requesting new token for Bangladesh Parliament user: {self.config.username}",
-                extra={
-                    'endpoint': self.config.token_endpoint,
-                    'location': 'Bangladesh Parliament Secretariat'
-                }
-            )
-            
-            response_data = self._make_request(
-                method="POST",
-                endpoint=self.config.token_endpoint,
-                data={
-                    "username": self.config.username,
-                    "password": self.config.password
-                },
-                authenticated=False,
-                operation="token acquisition for Bangladesh Parliament"
-            )
-            
-            # Extract token from response
-            token = response_data[self.config.payload_key]
-            if not token or not isinstance(token, str):
-                raise PRPAuthenticationError(
-                    "Invalid token format in authentication response from Bangladesh Parliament PRP",
-                    auth_step="token_extraction",
-                    details={
-                        'token_type': type(token).__name__,
-                        'location': 'Bangladesh Parliament Secretariat'
-                    }
-                )
-            
-            # Remove 'Bearer ' prefix if present
-            if token.startswith('Bearer '):
-                token = token[7:]
-            
-            # Create token info with Bangladesh timezone
-            current_time = timezone.now()
-            if timezone.is_naive(current_time):
-                current_time = BD_TIMEZONE.localize(current_time)
-            
-            self._token_info = PRPTokenInfo(
-                token=token,
-                issued_at=current_time
-            )
-            
-            logger.info(
-                "Successfully acquired PRP authentication token for Bangladesh Parliament",
-                extra={
-                    'expires_at': self._token_info.expires_at.isoformat(),
-                    'token_length': len(token),
-                    'location': 'Bangladesh Parliament Secretariat'
-                }
-            )
-            
-        except PRPBaseException:
-            raise
-        except Exception as e:
-            raise PRPAuthenticationError(
-                f"Token acquisition failed for Bangladesh Parliament: {str(e)}",
-                auth_step="token_request",
-                username=self.config.username,
-                details={
-                    'error': str(e),
-                    'location': 'Bangladesh Parliament Secretariat'
-                }
-            )
-        finally:
-            self._token_lock = False
-    
-    def _refresh_token(self):
-        """
-        Refresh existing authentication token.
-        
-        Raises:
-            PRPAuthenticationError: If token refresh fails
-        """
-        if not self._token_info:
-            self._acquire_token()
-            return
-        
-        if self._token_info.refresh_attempts >= self.config.max_token_refresh_attempts:
-            logger.warning("Maximum token refresh attempts exceeded, acquiring new token for Bangladesh Parliament")
-            self._acquire_token()
-            return
-        
-        try:
-            logger.info("Refreshing PRP authentication token for Bangladesh Parliament")
-            
-            response_data = self._make_request(
-                method="GET",
-                endpoint=self.config.refresh_endpoint,
-                authenticated=True,
-                operation="token refresh for Bangladesh Parliament"
-            )
-            
-            # Extract refreshed token
-            token = response_data[self.config.payload_key]
-            if not token or not isinstance(token, str):
-                raise PRPAuthenticationError(
-                    "Invalid token format in refresh response from Bangladesh Parliament PRP",
-                    auth_step="token_refresh",
-                    details={
-                        'token_type': type(token).__name__,
-                        'location': 'Bangladesh Parliament Secretariat'
-                    }
-                )
-            
-            # Remove 'Bearer ' prefix if present
-            if token.startswith('Bearer '):
-                token = token[7:]
-            
-            # Update token info with Bangladesh timezone
-            current_time = timezone.now()
-            if timezone.is_naive(current_time):
-                current_time = BD_TIMEZONE.localize(current_time)
-            
-            self._token_info.token = token
-            self._token_info.issued_at = current_time
-            self._token_info.expires_at = current_time + timedelta(seconds=1800)
-            self._token_info.refresh_attempts += 1
-            
-            logger.info(
-                "Successfully refreshed PRP authentication token for Bangladesh Parliament",
-                extra={
-                    'expires_at': self._token_info.expires_at.isoformat(),
-                    'refresh_attempt': self._token_info.refresh_attempts,
-                    'location': 'Bangladesh Parliament Secretariat'
-                }
-            )
-            
-        except PRPAuthenticationError:
-            logger.warning("Token refresh failed, acquiring new token for Bangladesh Parliament")
-            self._acquire_token()
-        except Exception as e:
-            raise PRPAuthenticationError(
-                f"Token refresh failed for Bangladesh Parliament: {str(e)}",
-                auth_step="token_refresh",
-                details={
-                    'error': str(e),
-                    'location': 'Bangladesh Parliament Secretariat'
-                }
-            )
-    
-    def get_departments(self) -> List[Dict[str, Any]]:
-        """
-        Retrieve all departments from PRP API at Bangladesh Parliament.
-        
-        Returns list of department objects with structure:
-        {
-            "nameEng": "Department Name English",
-            "nameBng": "Department Name Bengali", 
-            "id": 1,
-            "isWing": false
-        }
-        
-        Returns:
-            List of department dictionaries
-            
-        Raises:
-            PRPBaseException: On API communication errors
-        """
-        logger.info("Fetching departments from Bangladesh Parliament PRP API")
-        
-        response_data = self._make_request(
-            method="GET",
-            endpoint=self.config.departments_endpoint,
-            operation="get departments from Bangladesh Parliament PRP"
-        )
-        
-        departments = response_data[self.config.payload_key]
-        
-        # Validate departments structure
-        if not isinstance(departments, list):
-            raise PRPDataValidationError(
-                "Departments payload must be a list from Bangladesh Parliament PRP",
-                expected_type="list",
-                actual_value=type(departments).__name__,
-                details={'location': 'Bangladesh Parliament Secretariat'}
-            )
-        
-        logger.info(
-            f"Successfully retrieved {len(departments)} departments from Bangladesh Parliament PRP",
-            extra={
-                'department_count': len(departments),
-                'location': 'Bangladesh Parliament Secretariat'
-            }
-        )
-        
-        return departments
-    
-    def get_employee_details(self, department_id: int) -> List[Dict[str, Any]]:
-        """
-        Retrieve employee details for a specific department from Bangladesh Parliament PRP.
-        
-        Returns list of employee objects with structure (PIMS uses only these fields):
-        {
-            "userId": "12345",
-            "nameEng": "Full Name English",
-            "designationEng": "Designation English",
-            "email": "user@parliament.gov.bd",
-            "mobile": "01700000000",
-            "photo": byte_array_data,
-            "status": "active"
-        }
-        
-        Args:
-            department_id: ID of the department to retrieve employees for
-            
-        Returns:
-            List of employee dictionaries
-            
-        Raises:
-            PRPBaseException: On API communication errors
-        """
-        if not isinstance(department_id, int) or department_id <= 0:
-            raise PRPDataValidationError(
-                f"Department ID must be a positive integer for Bangladesh Parliament, got: {department_id}",
-                field_name="department_id",
-                expected_type="positive integer",
-                actual_value=department_id,
-                details={'location': 'Bangladesh Parliament Secretariat'}
-            )
-        
-        logger.info(
-            f"Fetching employee details for Bangladesh Parliament department ID: {department_id}",
-            extra={
-                'department_id': department_id,
-                'location': 'Bangladesh Parliament Secretariat'
-            }
-        )
-        
-        endpoint = self.config.employee_details_endpoint.format(departmentId=department_id)
-        
-        response_data = self._make_request(
-            method="GET",
-            endpoint=endpoint,
-            operation=f"get employee details for Bangladesh Parliament department {department_id}"
-        )
-        
-        employees = response_data[self.config.payload_key]
-        
-        # Validate employees structure
-        if not isinstance(employees, list):
-            raise PRPDataValidationError(
-                "Employee details payload must be a list from Bangladesh Parliament PRP",
-                expected_type="list",
-                actual_value=type(employees).__name__,
-                details={
-                    'department_id': department_id,
-                    'location': 'Bangladesh Parliament Secretariat'
-                }
-            )
-        
-        logger.info(
-            f"Successfully retrieved {len(employees)} employees for Bangladesh Parliament department {department_id}",
-            extra={
-                'employee_count': len(employees), 
-                'department_id': department_id,
-                'location': 'Bangladesh Parliament Secretariat'
-            }
-        )
-        
-        return employees
-    
-    def validate_employee_data(self, employee: Dict[str, Any]) -> bool:
-        """
-        Validate employee data structure for PIMS integration at Bangladesh Parliament.
-        
-        Checks that required fields are present and have valid types.
-        PIMS only uses: userId, nameEng, designationEng, email, mobile, photo, status
-        
-        Args:
-            employee: Employee data dictionary to validate
-            
-        Returns:
-            True if valid, False otherwise
-            
-        Raises:
-            PRPDataValidationError: If critical fields are invalid
-        """
-        required_fields = ['userId', 'nameEng', 'email']
-        optional_fields = ['designationEng', 'mobile', 'photo', 'status']
-        
-        # Check required fields
-        for field in required_fields:
-            if field not in employee:
-                raise PRPDataValidationError(
-                    f"Missing required field for Bangladesh Parliament employee: {field}",
-                    field_name=field,
-                    details={
-                        'employee_data_keys': list(employee.keys()),
-                        'location': 'Bangladesh Parliament Secretariat'
-                    }
-                )
-            
-            if not employee[field]:
-                raise PRPDataValidationError(
-                    f"Required field {field} cannot be empty for Bangladesh Parliament employee",
-                    field_name=field,
-                    actual_value=employee[field],
-                    details={'location': 'Bangladesh Parliament Secretariat'}
-                )
-        
-        # Validate field types
-        if not isinstance(employee['userId'], str):
-            raise PRPDataValidationError(
-                "userId must be a string for Bangladesh Parliament employee",
-                field_name="userId",
-                expected_type="string",
-                actual_value=employee['userId'],
-                details={'location': 'Bangladesh Parliament Secretariat'}
-            )
-        
-        if employee.get('email') and '@' not in str(employee['email']):
-            logger.warning(
-                f"Invalid email format for Bangladesh Parliament user {employee['userId']}: {employee['email']}",
-                extra={
-                    'user_id': employee['userId'], 
-                    'email': employee['email'],
-                    'location': 'Bangladesh Parliament Secretariat'
-                }
-            )
-        
-        return True
+            error_msg = f"Connection error: {str(e)}"
+            logger.error(error_msg)
+            raise PRPConnectionError(error_msg)
     
     def test_connection(self) -> Dict[str, Any]:
         """
-        Test PRP API connection and authentication for Bangladesh Parliament.
+        Test connection to PRP API.
         
         Returns:
-            Dictionary with connection test results
+            dict: Connection test results
         """
-        current_time = timezone.now()
-        if timezone.is_naive(current_time):
-            current_time = BD_TIMEZONE.localize(current_time)
-        
-        test_result = {
-            'success': False,
-            'timestamp': current_time.isoformat(),
-            'base_url': self.config.base_url,
-            'username': self.config.username,
-            'location': 'Bangladesh Parliament Secretariat, Dhaka',
-            'timezone': 'Asia/Dhaka',
-            'tests': {}
-        }
-        
         try:
-            # Test 1: Token acquisition
-            logger.info("Testing PRP API connection for Bangladesh Parliament...")
-            self._acquire_token()
-            test_result['tests']['authentication'] = {
+            # Try to get departments as a connection test
+            departments = self.get_departments()
+            
+            return {
                 'success': True,
-                'message': 'Token acquired successfully for Bangladesh Parliament'
+                'message': f'Connection successful - {len(departments)} departments found',
+                'timestamp': timezone.now().isoformat(),
+                'location': 'Bangladesh Parliament Secretariat, Dhaka'
             }
-            
-            # Test 2: Departments endpoint
-            try:
-                departments = self.get_departments()
-                test_result['tests']['departments_endpoint'] = {
-                    'success': True,
-                    'message': f'Retrieved {len(departments)} departments from Bangladesh Parliament PRP'
-                }
-            except Exception as e:
-                test_result['tests']['departments_endpoint'] = {
-                    'success': False,
-                    'error': str(e)
-                }
-            
-            # Test 3: Employee details endpoint (with first department if available)
-            try:
-                departments = self.get_departments()
-                if departments:
-                    dept_id = departments[0]['id']
-                    employees = self.get_employee_details(dept_id)
-                    test_result['tests']['employee_details_endpoint'] = {
-                        'success': True,
-                        'message': f'Retrieved {len(employees)} employees from Bangladesh Parliament department {dept_id}'
-                    }
-                else:
-                    test_result['tests']['employee_details_endpoint'] = {
-                        'success': False,
-                        'message': 'No departments available for testing at Bangladesh Parliament'
-                    }
-            except Exception as e:
-                test_result['tests']['employee_details_endpoint'] = {
-                    'success': False,
-                    'error': str(e)
-                }
-            
-            # Overall success if authentication worked
-            test_result['success'] = test_result['tests']['authentication']['success']
             
         except Exception as e:
-            test_result['tests']['authentication'] = {
+            return {
                 'success': False,
-                'error': str(e)
+                'error': str(e),
+                'timestamp': timezone.now().isoformat(),
+                'location': 'Bangladesh Parliament Secretariat, Dhaka'
             }
-            test_result['error'] = str(e)
-        
-        logger.info(
-            f"PRP API connection test completed for Bangladesh Parliament: {'SUCCESS' if test_result['success'] else 'FAILURE'}",
-            extra={
-                **test_result,
-                'location': 'Bangladesh Parliament Secretariat'
-            }
-        )
-        
-        return test_result
     
-    def get_sync_status_summary(self) -> Dict[str, Any]:
+    def get_departments(self) -> List[Dict[str, Any]]:
         """
-        Get summary of PRP sync status for Bangladesh Parliament operations.
+        Get all departments from PRP API.
         
         Returns:
-            Dictionary with sync status information
+            list: List of department objects
+            
+        Raises:
+            PRPConnectionError: If API request fails
         """
-        current_time = timezone.now()
-        if timezone.is_naive(current_time):
-            current_time = BD_TIMEZONE.localize(current_time)
+        cache_key = 'prp_departments'
         
-        status_summary = {
-            'timestamp': current_time.isoformat(),
-            'location': 'Bangladesh Parliament Secretariat, Dhaka',
-            'timezone': 'Asia/Dhaka',
-            'api_base_url': self.config.base_url,
-            'client_status': 'connected' if self._token_info and not self._token_info.is_expired else 'disconnected',
-            'token_info': None
-        }
+        # Check cache first
+        if self.enable_caching:
+            cached_data = cache.get(cache_key)
+            if cached_data:
+                logger.debug("Returning cached departments")
+                return cached_data
         
-        if self._token_info:
-            status_summary['token_info'] = {
-                'issued_at': self._token_info.issued_at.isoformat(),
-                'expires_at': self._token_info.expires_at.isoformat(),
-                'is_expired': self._token_info.is_expired,
-                'needs_refresh': self._token_info.needs_refresh,
-                'refresh_attempts': self._token_info.refresh_attempts
-            }
-        
-        return status_summary
+        try:
+            params = {'action': 'departments'}
+            data = self._make_authenticated_request('departments', params=params)
+            
+            # Handle both array and object responses
+            if isinstance(data, list):
+                departments = data
+            elif isinstance(data, dict) and 'departments' in data:
+                departments = data['departments']
+            else:
+                departments = []
+            
+            # Validate and clean department data
+            validated_departments = []
+            for dept in departments:
+                if isinstance(dept, dict) and 'id' in dept:
+                    validated_departments.append({
+                        'id': dept.get('id'),
+                        'nameEng': dept.get('nameEng', f"Department {dept.get('id')}"),
+                        'nameBng': dept.get('nameBng', ''),
+                        'isWing': bool(dept.get('isWing', False))
+                    })
+            
+            # Cache the results
+            if self.enable_caching:
+                cache.set(cache_key, validated_departments, 3600)  # Cache for 1 hour
+                cache.set(f'{cache_key}_last_sync', timezone.now(), 3600)
+            
+            logger.info(f"Retrieved {len(validated_departments)} departments from PRP")
+            return validated_departments
+            
+        except Exception as e:
+            logger.error(f"Failed to get departments: {e}")
+            raise
     
-    def close(self):
-        """Close the client session and cleanup resources."""
-        if self.session:
-            self.session.close()
-            logger.info(
-                "PRP Client session closed for Bangladesh Parliament",
-                extra={'location': 'Bangladesh Parliament Secretariat'}
+    def get_department_employees(self, department_id: int) -> List[Dict[str, Any]]:
+        """
+        Get all employees from a specific department.
+        
+        Args:
+            department_id: Department ID
+            
+        Returns:
+            list: List of employee objects
+            
+        Raises:
+            PRPConnectionError: If API request fails
+        """
+        try:
+            params = {
+                'action': 'employee_details',
+                'departmentId': department_id
+            }
+            
+            data = self._make_authenticated_request('employees', params=params)
+            
+            # Handle response format
+            if isinstance(data, list):
+                employees = data
+            elif isinstance(data, dict) and 'employees' in data:
+                employees = data['employees']
+            else:
+                employees = []
+            
+            # Validate employee data
+            validated_employees = []
+            for emp in employees:
+                if isinstance(emp, dict) and 'userId' in emp:
+                    validated_employees.append({
+                        'userId': emp.get('userId'),
+                        'nameEng': emp.get('nameEng', ''),
+                        'email': emp.get('email', ''),
+                        'designationEng': emp.get('designationEng', ''),
+                        'mobile': emp.get('mobile', ''),
+                        'status': emp.get('status', 'unknown'),
+                        'departmentId': department_id,
+                        'photo': emp.get('photo')  # Base64 encoded photo
+                    })
+            
+            logger.info(f"Retrieved {len(validated_employees)} employees from department {department_id}")
+            return validated_employees
+            
+        except Exception as e:
+            logger.error(f"Failed to get employees for department {department_id}: {e}")
+            raise
+    
+    def lookup_user_by_employee_id(self, employee_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Lookup a specific user by employee ID.
+        
+        Args:
+            employee_id: Employee ID to lookup
+            
+        Returns:
+            dict or None: User data if found, None if not found
+            
+        Raises:
+            PRPConnectionError: If API request fails
+        """
+        try:
+            # Get all departments first
+            departments = self.get_departments()
+            
+            # Search through each department
+            for dept in departments:
+                try:
+                    employees = self.get_department_employees(dept['id'])
+                    
+                    # Look for the employee in this department
+                    for emp in employees:
+                        if str(emp.get('userId')) == str(employee_id):
+                            logger.info(f"Found employee {employee_id} in department {dept['nameEng']}")
+                            return emp
+                            
+                except Exception as e:
+                    logger.warning(f"Error searching department {dept['id']}: {e}")
+                    continue
+            
+            logger.info(f"Employee {employee_id} not found in any department")
+            return None
+            
+        except Exception as e:
+            logger.error(f"Failed to lookup user {employee_id}: {e}")
+            raise
+    
+    def refresh_token(self) -> bool:
+        """
+        Refresh the authentication token.
+        
+        Returns:
+            bool: True if refresh successful
+        """
+        try:
+            # Clear existing token
+            self.token = None
+            self.token_expires = None
+            self.session.headers.pop('Authorization', None)
+            
+            # Re-authenticate
+            return self.authenticate()
+            
+        except Exception as e:
+            logger.error(f"Token refresh failed: {e}")
+            return False
+    
+    def clear_cache(self):
+        """Clear all cached PRP data."""
+        if self.enable_caching:
+            cache_keys = ['prp_departments', 'prp_departments_last_sync']
+            for key in cache_keys:
+                cache.delete(key)
+            logger.info("PRP cache cleared")
+
+
+class MockPRPClient:
+    """
+    Mock PRP client for development and testing.
+    
+    Provides the same interface as PRPClient but returns mock data
+    when the real PRP API is not accessible during development.
+    """
+    
+    def __init__(self):
+        """Initialize mock client."""
+        self.base_url = 'https://prp.parliament.gov.bd'
+        self.username = 'ezzetech'
+        self.token = 'mock_token_bangladesh_parliament'
+        self.authenticated = True
+        
+        logger.info("🎭 Mock PRP Client initialized for Bangladesh Parliament Secretariat")
+        logger.warning("⚠️  Using MOCK data - not connected to real PRP API")
+    
+    def authenticate(self) -> bool:
+        """Mock authentication - always succeeds."""
+        logger.info("✅ Mock authentication successful")
+        return True
+    
+    def test_connection(self) -> Dict[str, Any]:
+        """Mock connection test."""
+        return {
+            'success': True,
+            'message': 'Mock connection test successful',
+            'timestamp': timezone.now().isoformat(),
+            'location': 'Bangladesh Parliament Secretariat, Dhaka (MOCK MODE)'
+        }
+    
+    def get_departments(self) -> List[Dict[str, Any]]:
+        """Return mock departments data."""
+        mock_departments = [
+            {'id': 1, 'nameEng': 'Administration', 'nameBng': 'প্রশাসন', 'isWing': False},
+            {'id': 2, 'nameEng': 'IT Department', 'nameBng': 'আইটি বিভাগ', 'isWing': False},
+            {'id': 3, 'nameEng': 'Finance', 'nameBng': 'অর্থ', 'isWing': False},
+            {'id': 4, 'nameEng': 'Human Resources', 'nameBng': 'মানবসম্পদ', 'isWing': False},
+            {'id': 5, 'nameEng': 'Security', 'nameBng': 'নিরাপত্তা', 'isWing': False},
+            {'id': 6, 'nameEng': 'Library', 'nameBng': 'গ্রন্থাগার', 'isWing': False},
+            {'id': 7, 'nameEng': 'Transport', 'nameBng': 'পরিবহন', 'isWing': False},
+        ]
+        
+        logger.info(f"🎭 Returning {len(mock_departments)} mock departments")
+        return mock_departments
+    
+    def get_department_employees(self, department_id: int) -> List[Dict[str, Any]]:
+        """Return mock employee data for department."""
+        mock_employees = [
+            {
+                'userId': f'11010009{department_id}',
+                'nameEng': f'Ahmed Rahman Khan (Dept {department_id})',
+                'email': f'ahmed.rahman{department_id}@parliament.gov.bd',
+                'designationEng': 'Senior Officer',
+                'mobile': f'+880 1712-{department_id}45678',
+                'status': 'active',
+                'departmentId': department_id,
+                'photo': None
+            },
+            {
+                'userId': f'11010010{department_id}',
+                'nameEng': f'Fatima Begum (Dept {department_id})',
+                'email': f'fatima.begum{department_id}@parliament.gov.bd',
+                'designationEng': 'Assistant Officer',
+                'mobile': f'+880 1812-{department_id}56789',
+                'status': 'active',
+                'departmentId': department_id,
+                'photo': None
+            }
+        ]
+        
+        logger.info(f"🎭 Returning {len(mock_employees)} mock employees for department {department_id}")
+        return mock_employees
+    
+    def lookup_user_by_employee_id(self, employee_id: str) -> Optional[Dict[str, Any]]:
+        """Mock user lookup."""
+        # Generate mock data based on employee ID
+        if employee_id and employee_id.isdigit():
+            dept_id = int(employee_id[-1:]) or 2  # Use last digit as dept ID
+            
+            mock_user = {
+                'userId': employee_id,
+                'nameEng': f'Mock Employee {employee_id}',
+                'email': f'employee.{employee_id}@parliament.gov.bd',
+                'designationEng': 'Senior System Administrator',
+                'mobile': f'+880 1712-{employee_id[-6:]}',
+                'status': 'active',
+                'departmentId': dept_id,
+                'photo': None
+            }
+            
+            logger.info(f"🎭 Mock lookup successful for employee {employee_id}")
+            return mock_user
+        
+        logger.info(f"🎭 Mock lookup - employee {employee_id} not found")
+        return None
+    
+    def refresh_token(self) -> bool:
+        """Mock token refresh."""
+        return True
+    
+    def clear_cache(self):
+        """Mock cache clear."""
+        logger.info("🎭 Mock cache cleared")
+
+
+def create_prp_client() -> Union[PRPClient, MockPRPClient]:
+    """
+    Factory function to create appropriate PRP client.
+    
+    Creates either a real PRP client or mock client based on configuration.
+    Automatically handles Django settings integration.
+    
+    Returns:
+        PRPClient or MockPRPClient: Configured PRP client instance
+        
+    Raises:
+        PRPConfigurationError: If configuration is invalid
+    """
+    try:
+        # Check if we're in mock mode (development only)
+        mock_mode = (
+            os.environ.get('PRP_MOCK_MODE', 'false').lower() == 'true' and
+            getattr(settings, 'DEBUG', False)
+        )
+        
+        if mock_mode:
+            logger.info("🎭 Creating Mock PRP client for development")
+            return MockPRPClient()
+        
+        # Get configuration from multiple sources
+        prp_settings = getattr(settings, 'PRP_API_SETTINGS', {})
+        
+        # Determine configuration
+        base_url = (
+            os.environ.get('PRP_API_BASE_URL') or 
+            prp_settings.get('BASE_URL') or 
+            'https://prp.parliament.gov.bd'
+        )
+        
+        username = (
+            os.environ.get('PRP_API_USERNAME') or 
+            prp_settings.get('USERNAME') or 
+            'ezzetech'
+        )
+        
+        password = (
+            os.environ.get('PRP_API_PASSWORD') or 
+            prp_settings.get('PASSWORD') or 
+            '${Fty#3a'
+        )
+        
+        timeout = int(
+            os.environ.get('PRP_API_TIMEOUT') or 
+            prp_settings.get('TIMEOUT') or 
+            30
+        )
+        
+        # Validate configuration
+        if not all([base_url, username, password]):
+            raise PRPConfigurationError(
+                "Missing required PRP configuration",
+                details={
+                    'base_url': bool(base_url),
+                    'username': bool(username), 
+                    'password': bool(password),
+                    'location': 'Bangladesh Parliament Secretariat, Dhaka'
+                }
             )
-
-
-# ============================================================================
-# Convenience Functions for Bangladesh Parliament Operations
-# ============================================================================
-
-def create_prp_client(
-    base_url: Optional[str] = None,
-    username: Optional[str] = None, 
-    password: Optional[str] = None
-) -> PRPClient:
-    """
-    Create a configured PRP client instance for Bangladesh Parliament Secretariat.
-    
-    Args:
-        base_url: PRP API base URL (defaults to Bangladesh Parliament settings)
-        username: PRP username (defaults to official credentials)
-        password: PRP password (defaults to official credentials)
         
-    Returns:
-        Configured PRPClient instance for Bangladesh Parliament operations
+        logger.info("🔧 Creating PRP client for Bangladesh Parliament Secretariat")
+        logger.info(f"🔗 Base URL: {base_url}")
+        logger.info(f"👤 Username: {username}")
+        logger.info(f"⏱️ Timeout: {timeout}s")
         
-    Example:
-        client = create_prp_client()
-        departments = client.get_departments()
-    """
-    return PRPClient(
-        base_url=base_url or 'https://prp.parliament.gov.bd',
-        username=username or 'ezzetech',
-        password=password or '${Fty#3a'
-    )
-
-
-def test_prp_connection(
-    base_url: Optional[str] = None,
-    username: Optional[str] = None,
-    password: Optional[str] = None
-) -> Dict[str, Any]:
-    """
-    Test PRP API connection for Bangladesh Parliament without creating persistent client.
-    
-    Args:
-        base_url: PRP API base URL to test
-        username: Username for authentication
-        password: Password for authentication
+        client = PRPClient(
+            base_url=base_url,
+            username=username,
+            password=password,
+            timeout=timeout
+        )
         
-    Returns:
-        Dictionary with test results
+        return client
         
-    Example:
-        result = test_prp_connection()
-        if result['success']:
-            print("Bangladesh Parliament PRP connection successful!")
-    """
-    client = None
-    try:
-        client = create_prp_client(base_url, username, password)
-        return client.test_connection()
-    finally:
-        if client:
-            client.close()
-
-
-def get_bangladesh_parliament_departments(
-    client: Optional[PRPClient] = None
-) -> List[Dict[str, Any]]:
-    """
-    Quick function to get departments from Bangladesh Parliament PRP.
-    
-    Args:
-        client: Optional existing PRPClient instance
-        
-    Returns:
-        List of department dictionaries
-        
-    Example:
-        departments = get_bangladesh_parliament_departments()
-        for dept in departments:
-            print(f"Department: {dept['nameEng']}")
-    """
-    if client:
-        return client.get_departments()
-    
-    temp_client = None
-    try:
-        temp_client = create_prp_client()
-        return temp_client.get_departments()
-    finally:
-        if temp_client:
-            temp_client.close()
-
-
-def get_bangladesh_parliament_employees(
-    department_id: int,
-    client: Optional[PRPClient] = None
-) -> List[Dict[str, Any]]:
-    """
-    Quick function to get employees from Bangladesh Parliament PRP department.
-    
-    Args:
-        department_id: Department ID to retrieve employees from
-        client: Optional existing PRPClient instance
-        
-    Returns:
-        List of employee dictionaries
-        
-    Example:
-        employees = get_bangladesh_parliament_employees(1)
-        for emp in employees:
-            print(f"Employee: {emp['nameEng']} - {emp['designationEng']}")
-    """
-    if client:
-        return client.get_employee_details(department_id)
-    
-    temp_client = None
-    try:
-        temp_client = create_prp_client()
-        return temp_client.get_employee_details(department_id)
-    finally:
-        if temp_client:
-            temp_client.close()
-
-
-# ============================================================================
-# Template Design Pattern Utilities
-# ============================================================================
-
-def get_prp_client_template_config() -> Dict[str, Any]:
-    """
-    Get template configuration for PRP client UI elements.
-    
-    Returns template design configuration following flat design patterns
-    with high contrast colors for Bangladesh Parliament Secretariat.
-    
-    Returns:
-        Dictionary with template configuration
-    """
-    return {
-        'design_system': 'flat_design',
-        'glassmorphism': False,  # NO glassmorphism as specified
-        'colors': {
-            'primary': '#28a745',   # Teal
-            'secondary': '#fd7e14', # Orange  
-            'danger': '#dc3545',    # Red
-            'success': '#28a745',   # Teal
-            'warning': '#ffc107',   # Yellow
-            'info': '#17a2b8'       # Light Blue
-        },
-        'location': 'Bangladesh Parliament Secretariat, Dhaka',
-        'timezone': 'Asia/Dhaka',
-        'responsive_breakpoints': {
-            'mobile': '576px',
-            'tablet': '768px', 
-            'laptop': '992px',
-            'desktop': '1200px',
-            'big_monitors': '1400px'
-        },
-        'prp_styling': {
-            'readonly_field_bg': '#f8f9fa',
-            'readonly_field_border': '#28a745',
-            'prp_indicator_color': '#28a745',
-            'sync_status_colors': {
-                'synced': '#28a745',
-                'pending': '#fd7e14', 
-                'error': '#dc3545'
+    except Exception as e:
+        logger.error(f"Failed to create PRP client: {e}")
+        raise PRPConfigurationError(
+            f"PRP client creation failed: {str(e)}",
+            details={
+                'location': 'Bangladesh Parliament Secretariat, Dhaka',
+                'error': str(e)
             }
-        }
-    }
-
-
-def format_bangladesh_time(dt: datetime) -> str:
-    """
-    Format datetime for Bangladesh Parliament operations.
-    
-    Args:
-        dt: Datetime to format
-        
-    Returns:
-        Formatted datetime string in Asia/Dhaka timezone
-    """
-    if timezone.is_naive(dt):
-        dt = BD_TIMEZONE.localize(dt)
-    elif dt.tzinfo != BD_TIMEZONE:
-        dt = dt.astimezone(BD_TIMEZONE)
-    
-    return dt.strftime('%Y-%m-%d %H:%M:%S %Z')
-
-
-def log_bangladesh_parliament_operation(
-    operation: str,
-    details: Dict[str, Any],
-    level: str = 'info'
-) -> None:
-    """
-    Log operation with Bangladesh Parliament context.
-    
-    Args:
-        operation: Description of the operation
-        details: Additional operation details
-        level: Log level (info, warning, error)
-    """
-    log_data = {
-        'operation': operation,
-        'location': 'Bangladesh Parliament Secretariat, Dhaka',
-        'timezone': 'Asia/Dhaka',
-        'timestamp': format_bangladesh_time(timezone.now()),
-        **details
-    }
-    
-    if level == 'warning':
-        logger.warning(f"Bangladesh Parliament PRP: {operation}", extra=log_data)
-    elif level == 'error':
-        logger.error(f"Bangladesh Parliament PRP: {operation}", extra=log_data)
-    else:
-        logger.info(f"Bangladesh Parliament PRP: {operation}", extra=log_data)
-
-
-# Export classes and functions for Bangladesh Parliament PIMS integration
-__all__ = [
-    # Core classes
-    'PRPClient',
-    'PRPAPIConfig', 
-    'PRPTokenInfo',
-    
-    # Convenience functions
-    'create_prp_client',
-    'test_prp_connection',
-    'get_bangladesh_parliament_departments',
-    'get_bangladesh_parliament_employees',
-    
-    # Template utilities
-    'get_prp_client_template_config',
-    'format_bangladesh_time',
-    'log_bangladesh_parliament_operation',
-]
+        )

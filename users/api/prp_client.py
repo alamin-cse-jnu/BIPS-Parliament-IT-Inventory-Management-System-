@@ -1,37 +1,50 @@
 """
-PRP (Parliament Resource Portal) API Client
-============================================
+REAL PRP (Parliament Resource Portal) API Client - NO MOCK DATA
+===============================================================
 
-Complete API client for PRP integration with PIMS at Bangladesh Parliament Secretariat, Dhaka.
-
-This module provides comprehensive PRP API integration including:
-- Authentication with token management
-- User lookup and synchronization
-- Department management
-- Error handling and logging
-- Mock mode for development
+Complete API client for real PRP integration with PIMS at Bangladesh Parliament Secretariat.
+This replaces ALL mock functionality with actual PRP API calls.
 
 Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
 Project: PIMS-PRP Integration
-Purpose: Complete PRP API client with production and development support
+Purpose: Real PRP API client with production authentication and data retrieval
+
+API Details (From Official PRP Documentation):
+- Base URL: https://prp.parliament.gov.bd
+- Authentication: Bearer token (username: "ezzetech", password: "${Fty#3a")
+- Response Format: {responseCode: 200, payload: [...], msg: "Success"}
+
+Key Endpoints:
+1. Authentication: POST /api/authentication/external?action=token
+2. Employee Details: GET /api/secure/external?action=employee_details&departmentId={id}
+3. Departments: GET /api/secure/external?action=departments
+4. Token Refresh: GET /api/authentication/external?action=refresh-token
+
+Data Models (PIMS Integration Scope):
+- EmployeeDetails: {userId, nameEng, designationEng, email, mobile, photo, status}
+- DepartmentModel: {id, nameEng, nameBng, isWing}
 
 Usage Example:
 --------------
-from users.api.prp_client import create_prp_client
+from users.api.prp_client import PRPClient
 
-# Create client (automatically handles settings)
-client = create_prp_client()
+# Create real PRP client
+client = PRPClient()
 
-# Authenticate
+# Authenticate with PRP
 if client.authenticate():
-    # Lookup user
-    user_data = client.lookup_user_by_employee_id('110100092')
-    
     # Get departments
     departments = client.get_departments()
+    
+    # Get employees from specific department
+    employees = client.get_department_employees(department_id=1)
+    
+    # Lookup specific user
+    user = client.lookup_user_by_employee_id('110100091')
 """
 
-import os
+import base64
+import io
 import json
 import logging
 import requests
@@ -40,13 +53,17 @@ from typing import Dict, List, Any, Optional, Union
 from django.conf import settings
 from django.utils import timezone
 from django.core.cache import cache
+from django.core.files.base import ContentFile
 
+# Import PRP exceptions from the exceptions module
 from .exceptions import (
     PRPException,
     PRPConnectionError,
     PRPAuthenticationError,
     PRPDataValidationError,
-    PRPConfigurationError
+    PRPConfigurationError,
+    PRPBusinessRuleError,
+    wrap_external_exception
 )
 
 # Configure logging
@@ -55,10 +72,10 @@ logger = logging.getLogger('pims.prp_integration.client')
 
 class PRPClient:
     """
-    Complete PRP (Parliament Resource Portal) API Client.
+    Real PRP (Parliament Resource Portal) API Client.
     
-    Handles authentication, user lookup, department sync, and all PRP operations
-    with comprehensive error handling and caching for Bangladesh Parliament Secretariat.
+    Handles all communication with the live PRP API at Bangladesh Parliament Secretariat.
+    NO MOCK DATA - all operations use real API endpoints.
     """
     
     def __init__(
@@ -70,175 +87,133 @@ class PRPClient:
         enable_caching: bool = True
     ):
         """
-        Initialize PRP client with configuration.
+        Initialize PRP client with production configuration.
         
         Args:
-            base_url: PRP API base URL
-            username: PRP API username
-            password: PRP API password  
+            base_url: PRP API base URL (defaults to production URL)
+            username: PRP API username (defaults to production credentials)
+            password: PRP API password (defaults to production credentials)
             timeout: Request timeout in seconds
             enable_caching: Enable response caching
         """
-        # Set configuration with fallbacks
-        self.base_url = (base_url or 
-                        os.environ.get('PRP_API_BASE_URL') or 
-                        'https://prp.parliament.gov.bd')
-        
-        self.username = (username or 
-                        os.environ.get('PRP_API_USERNAME') or 
-                        'ezzetech')
-        
-        self.password = (password or 
-                        os.environ.get('PRP_API_PASSWORD') or 
-                        '${Fty#3a')
-        
+        # Production PRP API Configuration (Bangladesh Parliament Secretariat)
+        self.base_url = base_url or getattr(settings, 'PRP_BASE_URL', 'https://prp.parliament.gov.bd')
+        self.username = username or getattr(settings, 'PRP_USERNAME', 'ezzetech')
+        self.password = password or getattr(settings, 'PRP_PASSWORD', '${Fty#3a')
         self.timeout = timeout
         self.enable_caching = enable_caching
         
-        # Clean up base URL
-        self.base_url = self.base_url.rstrip('/')
-        if self.base_url.endswith('/api'):
-            self.base_url = self.base_url[:-4]
-        
-        # Initialize state
+        # Authentication state
         self.token = None
         self.token_expires = None
-        self.session = None
         self.last_auth_time = None
         
-        # Setup session
-        self._setup_session()
-        
-        logger.info(f"PRP Client initialized for Bangladesh Parliament Secretariat")
-        logger.info(f"Base URL: {self.base_url}, Username: {self.username}")
-    
-    def _setup_session(self):
-        """Setup requests session with proper configuration."""
+        # HTTP session for connection pooling
         self.session = requests.Session()
-        
-        # Configure session
-        self.session.timeout = self.timeout
-        
-        # Set headers
         self.session.headers.update({
             'Content-Type': 'application/json',
-            'Accept': 'application/json',
             'User-Agent': 'PIMS-PRP-Integration/1.0 (Bangladesh Parliament Secretariat)',
-            'X-Client-Location': 'Dhaka, Bangladesh',
-            'X-Client-System': 'PIMS'
+            'Accept': 'application/json'
         })
         
-        # Configure retries
-        from requests.adapters import HTTPAdapter
-        from requests.packages.urllib3.util.retry import Retry
-        
-        retry_strategy = Retry(
-            total=3,
-            backoff_factor=1,
-            status_forcelist=[429, 500, 502, 503, 504],
-            method_whitelist=["HEAD", "GET", "OPTIONS"]
-        )
-        
-        adapter = HTTPAdapter(max_retries=retry_strategy)
-        self.session.mount("http://", adapter)
-        self.session.mount("https://", adapter)
-    
-    def _is_token_valid(self) -> bool:
-        """Check if current token is valid and not expired."""
-        if not self.token:
-            return False
-            
-        if not self.token_expires:
-            # If no expiry info, consider valid for 1 hour from last auth
-            if self.last_auth_time:
-                return (timezone.now() - self.last_auth_time).total_seconds() < 3600
-            return False
-            
-        return timezone.now() < self.token_expires
+        logger.info(f"🏛️  Real PRP Client initialized for Bangladesh Parliament Secretariat")
+        logger.info(f"🌐 API Base URL: {self.base_url}")
+        logger.info(f"👤 Username: {self.username}")
+        logger.info(f"📍 Location: Dhaka, Bangladesh")
     
     def authenticate(self) -> bool:
         """
-        Authenticate with PRP API and obtain access token.
+        Authenticate with PRP API using real credentials.
         
         Returns:
             bool: True if authentication successful, False otherwise
             
         Raises:
+            PRPConnectionError: If network/HTTP error occurs
             PRPAuthenticationError: If authentication fails
-            PRPConnectionError: If network connection fails
         """
-        # Check if current token is still valid
-        if self._is_token_valid():
+        # Check if we already have a valid token
+        if self.token and self.token_expires and timezone.now() < self.token_expires:
             logger.debug("Using existing valid token")
             return True
         
-        auth_url = f"{self.base_url}/api/authentication/external"
-        
-        auth_payload = {
-            "action": "token",
-            "username": self.username,
-            "password": self.password
-        }
+        logger.info("🔐 Authenticating with PRP API...")
         
         try:
-            logger.info(f"Authenticating with PRP API: {auth_url}")
+            # Prepare authentication request (Real PRP API format)
+            auth_url = f"{self.base_url}/api/authentication/external"
+            auth_payload = {
+                "username": self.username,
+                "password": self.password
+            }
+            auth_params = {"action": "token"}
             
+            # Make authentication request
             response = self.session.post(
                 auth_url,
+                params=auth_params,
                 json=auth_payload,
                 timeout=self.timeout
             )
             
-            logger.debug(f"Auth response status: {response.status_code}")
+            logger.info(f"🔗 Auth request to: {auth_url}")
+            logger.info(f"📊 Response status: {response.status_code}")
             
             if response.status_code == 200:
                 try:
                     data = response.json()
+                    logger.debug(f"📋 Response structure: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
                     
-                    if data.get('responseCode') == 200 and 'payload' in data:
-                        token_data = data['payload']
+                    # Check PRP API response format
+                    if data.get('responseCode') == 200:
+                        # Extract token from payload
+                        token_payload = data.get('payload', '')
                         
-                        if isinstance(token_data, dict) and 'token' in token_data:
-                            self.token = token_data['token']
+                        if token_payload and isinstance(token_payload, str):
+                            # Handle different token formats
+                            if token_payload.startswith('Bearer '):
+                                self.token = token_payload[7:]  # Remove 'Bearer ' prefix
+                            else:
+                                self.token = token_payload
                             
-                            # Set token expiry (default to 24 hours)
-                            expires_in = token_data.get('expiresIn', 86400)  # 24 hours default
-                            self.token_expires = timezone.now() + timedelta(seconds=expires_in)
+                            # Set token expiry (estimate 24 hours for PRP tokens)
+                            self.token_expires = timezone.now() + timedelta(hours=24)
+                            self.last_auth_time = timezone.now()
                             
                             # Update session headers
                             self.session.headers['Authorization'] = f'Bearer {self.token}'
-                            self.last_auth_time = timezone.now()
                             
-                            logger.info("PRP authentication successful")
+                            logger.info("✅ PRP authentication successful")
+                            logger.info(f"🎫 Token received (length: {len(self.token)} chars)")
                             return True
                         else:
-                            error_msg = "Invalid token format in response"
-                            logger.error(f"Auth error: {error_msg}")
-                            raise PRPAuthenticationError(error_msg, details=token_data)
+                            error_msg = "No token in PRP response payload"
+                            logger.error(f"❌ {error_msg}")
+                            raise PRPAuthenticationError(error_msg)
                     else:
                         error_msg = data.get('msg', 'Authentication failed')
-                        logger.error(f"Auth failed: {error_msg}")
-                        raise PRPAuthenticationError(error_msg, details=data)
+                        logger.error(f"❌ PRP auth failed: {error_msg}")
+                        raise PRPAuthenticationError(f"PRP API Error: {error_msg}")
                         
                 except json.JSONDecodeError as e:
-                    error_msg = f"Invalid JSON response: {e}"
-                    logger.error(f"Auth JSON error: {error_msg}")
-                    logger.error(f"Response content: {response.text[:500]}")
-                    raise PRPAuthenticationError(error_msg)
+                    raise wrap_external_exception(e, "authentication JSON parsing", {
+                        'response_text': response.text[:200],
+                        'url': auth_url
+                    })
             else:
                 error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
-                logger.error(f"Auth HTTP error: {error_msg}")
+                logger.error(f"❌ Auth HTTP error: {error_msg}")
                 raise PRPConnectionError(f"Authentication failed: {error_msg}")
                 
         except requests.exceptions.Timeout:
-            error_msg = f"Authentication timeout after {self.timeout}s"
-            logger.error(error_msg)
-            raise PRPConnectionError(error_msg)
+            raise wrap_external_exception(
+                requests.exceptions.Timeout(f"Authentication timeout after {self.timeout}s"),
+                "PRP authentication",
+                {'timeout': self.timeout, 'url': f"{self.base_url}/api/authentication/external"}
+            )
             
         except requests.exceptions.ConnectionError as e:
-            error_msg = f"Connection error: {str(e)}"
-            logger.error(error_msg)
-            raise PRPConnectionError(error_msg)
+            raise wrap_external_exception(e, "PRP authentication connection", {'url': self.base_url})
             
         except (PRPAuthenticationError, PRPConnectionError):
             # Re-raise PRP exceptions as-is
@@ -246,27 +221,78 @@ class PRPClient:
             
         except Exception as e:
             error_msg = f"Unexpected authentication error: {str(e)}"
-            logger.error(error_msg)
+            logger.error(f"💥 {error_msg}")
             raise PRPAuthenticationError(error_msg)
+    
+    def refresh_token(self) -> bool:
+        """
+        Refresh the authentication token.
+        
+        Returns:
+            bool: True if token refresh successful
+            
+        Raises:
+            PRPConnectionError: If refresh fails
+        """
+        logger.info("🔄 Refreshing PRP token...")
+        
+        try:
+            refresh_url = f"{self.base_url}/api/authentication/external"
+            refresh_params = {"action": "refresh-token"}
+            
+            response = self.session.get(
+                refresh_url,
+                params=refresh_params,
+                timeout=self.timeout
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if data.get('responseCode') == 200:
+                    token_payload = data.get('payload', '')
+                    
+                    if token_payload:
+                        if token_payload.startswith('Bearer '):
+                            self.token = token_payload[7:]
+                        else:
+                            self.token = token_payload
+                        
+                        self.token_expires = timezone.now() + timedelta(hours=24)
+                        self.session.headers['Authorization'] = f'Bearer {self.token}'
+                        
+                        logger.info("✅ Token refresh successful")
+                        return True
+                    else:
+                        logger.error("❌ No token in refresh response")
+                        return False
+                else:
+                    logger.error(f"❌ Token refresh failed: {data.get('msg', 'Unknown error')}")
+                    return False
+            else:
+                logger.error(f"❌ HTTP {response.status_code} during token refresh")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Token refresh error: {e}")
+            return False
     
     def _make_authenticated_request(
         self, 
         endpoint: str, 
         params: Dict[str, Any] = None,
-        method: str = 'GET',
-        data: Dict[str, Any] = None
+        method: str = 'GET'
     ) -> Dict[str, Any]:
         """
         Make an authenticated request to PRP API.
         
         Args:
-            endpoint: API endpoint path
+            endpoint: API endpoint identifier
             params: URL parameters
             method: HTTP method
-            data: Request body data
             
         Returns:
-            dict: API response data
+            dict: API response payload data
             
         Raises:
             PRPConnectionError: If request fails
@@ -276,64 +302,84 @@ class PRPClient:
         if not self.authenticate():
             raise PRPAuthenticationError("Failed to authenticate with PRP API")
         
+        # Build URL for secure endpoints
         url = f"{self.base_url}/api/secure/external"
         
         try:
+            logger.debug(f"🌐 Making {method} request to PRP: {url}")
+            logger.debug(f"📋 Parameters: {params}")
+            
             if method.upper() == 'GET':
                 response = self.session.get(url, params=params, timeout=self.timeout)
             elif method.upper() == 'POST':
-                response = self.session.post(url, params=params, json=data, timeout=self.timeout)
+                response = self.session.post(url, params=params, timeout=self.timeout)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
             
-            logger.debug(f"API request: {method} {url} - Status: {response.status_code}")
+            logger.debug(f"📊 Response status: {response.status_code}")
             
+            # Handle token expiry
             if response.status_code == 401:
-                # Token might be expired, clear it and retry once
-                logger.warning("Got 401, clearing token and retrying")
+                logger.warning("🔓 Got 401, token might be expired. Trying to refresh...")
+                
+                # Clear current token and try refresh
                 self.token = None
                 self.token_expires = None
                 self.session.headers.pop('Authorization', None)
                 
-                # Retry authentication
-                if self.authenticate():
+                # Try to refresh token
+                if self.refresh_token() or self.authenticate():
                     # Retry the original request
+                    logger.info("🔄 Retrying request with new token...")
                     if method.upper() == 'GET':
                         response = self.session.get(url, params=params, timeout=self.timeout)
                     else:
-                        response = self.session.post(url, params=params, json=data, timeout=self.timeout)
+                        response = self.session.post(url, params=params, timeout=self.timeout)
                 else:
-                    raise PRPAuthenticationError("Re-authentication failed")
+                    raise PRPAuthenticationError("Failed to refresh or re-authenticate")
             
             if response.status_code == 200:
                 try:
                     data = response.json()
                     
+                    # Validate PRP response format
                     if data.get('responseCode') == 200:
-                        return data.get('payload', {})
+                        payload = data.get('payload', {})
+                        logger.debug(f"✅ Successful API response: {data.get('msg', 'Success')}")
+                        return payload
                     else:
                         error_msg = data.get('msg', f'API error: {data.get("responseCode")}')
-                        logger.error(f"API error response: {error_msg}")
-                        raise PRPException(error_msg, details=data)
+                        logger.error(f"❌ PRP API error: {error_msg}")
+                        raise PRPConnectionError(f"PRP API Error: {error_msg}")
                         
                 except json.JSONDecodeError as e:
-                    error_msg = f"Invalid JSON response: {e}"
-                    logger.error(error_msg)
-                    logger.error(f"Response content: {response.text[:500]}")
-                    raise PRPException(error_msg)
+                    raise wrap_external_exception(e, "PRP API response parsing", {
+                        'url': url,
+                        'response_text': response.text[:500],
+                        'status_code': response.status_code
+                    })
             else:
                 error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
-                logger.error(f"API HTTP error: {error_msg}")
+                logger.error(f"❌ Request failed: {error_msg}")
                 raise PRPConnectionError(error_msg)
                 
         except requests.exceptions.Timeout:
-            error_msg = f"Request timeout after {self.timeout}s"
-            logger.error(error_msg)
-            raise PRPConnectionError(error_msg)
+            raise wrap_external_exception(
+                requests.exceptions.Timeout(f"Request timeout after {self.timeout}s"),
+                "PRP API request",
+                {'url': url, 'params': params, 'timeout': self.timeout}
+            )
             
         except requests.exceptions.ConnectionError as e:
-            error_msg = f"Connection error: {str(e)}"
-            logger.error(error_msg)
+            raise wrap_external_exception(e, "PRP API connection", {'url': url, 'params': params})
+            
+        except (PRPAuthenticationError, PRPConnectionError):
+            # Re-raise PRP exceptions as-is
+            raise
+            
+        except Exception as e:
+            error_msg = f"Unexpected request error: {str(e)}"
+            logger.error(f"💥 {error_msg}")
             raise PRPConnectionError(error_msg)
     
     def test_connection(self) -> Dict[str, Any]:
@@ -343,28 +389,80 @@ class PRPClient:
         Returns:
             dict: Connection test results
         """
+        logger.info("🔍 Testing PRP API connection...")
+        
         try:
-            # Try to get departments as a connection test
-            departments = self.get_departments()
+            # Test authentication
+            auth_success = self.authenticate()
             
-            return {
-                'success': True,
-                'message': f'Connection successful - {len(departments)} departments found',
-                'timestamp': timezone.now().isoformat(),
-                'location': 'Bangladesh Parliament Secretariat, Dhaka'
-            }
-            
+            if auth_success:
+                # Test a simple API call (departments)
+                try:
+                    departments = self.get_departments()
+                    
+                    return {
+                        'success': True,
+                        'message': 'PRP connection successful',
+                        'timestamp': timezone.now().isoformat(),
+                        'location': 'Bangladesh Parliament Secretariat, Dhaka',
+                        'api_url': self.base_url,
+                        'departments_count': len(departments),
+                        'token_valid': bool(self.token),
+                        'details': {
+                            'authentication': 'SUCCESS',
+                            'api_access': 'SUCCESS',
+                            'data_retrieval': 'SUCCESS'
+                        }
+                    }
+                    
+                except Exception as e:
+                    return {
+                        'success': False,
+                        'message': f'API access failed: {str(e)}',
+                        'timestamp': timezone.now().isoformat(),
+                        'location': 'Bangladesh Parliament Secretariat, Dhaka',
+                        'api_url': self.base_url,
+                        'token_valid': bool(self.token),
+                        'details': {
+                            'authentication': 'SUCCESS',
+                            'api_access': 'FAILED',
+                            'error': str(e)
+                        }
+                    }
+            else:
+                return {
+                    'success': False,
+                    'message': 'PRP authentication failed',
+                    'timestamp': timezone.now().isoformat(),
+                    'location': 'Bangladesh Parliament Secretariat, Dhaka',
+                    'api_url': self.base_url,
+                    'token_valid': False,
+                    'details': {
+                        'authentication': 'FAILED',
+                        'api_access': 'NOT_TESTED'
+                    }
+                }
+                
         except Exception as e:
             return {
                 'success': False,
-                'error': str(e),
+                'message': f'Connection test failed: {str(e)}',
                 'timestamp': timezone.now().isoformat(),
-                'location': 'Bangladesh Parliament Secretariat, Dhaka'
+                'location': 'Bangladesh Parliament Secretariat, Dhaka',
+                'api_url': self.base_url,
+                'token_valid': False,
+                'details': {
+                    'error': str(e),
+                    'error_type': type(e).__name__
+                }
             }
     
     def get_departments(self) -> List[Dict[str, Any]]:
         """
-        Get all departments from PRP API.
+        Get list of departments from PRP API.
+        
+        API Endpoint: GET /api/secure/external?action=departments
+        Response Model: DepartmentModel{id, nameEng, nameBng, isWing}
         
         Returns:
             list: List of department objects
@@ -378,58 +476,68 @@ class PRPClient:
         if self.enable_caching:
             cached_data = cache.get(cache_key)
             if cached_data:
-                logger.debug("Returning cached departments")
+                logger.debug(f"📦 Returning {len(cached_data)} cached departments")
                 return cached_data
         
         try:
+            logger.info("🏢 Fetching departments from PRP API...")
+            
             params = {'action': 'departments'}
             data = self._make_authenticated_request('departments', params=params)
             
-            # Handle both array and object responses
+            # Handle response format - PRP returns array directly in payload
             if isinstance(data, list):
                 departments = data
-            elif isinstance(data, dict) and 'departments' in data:
-                departments = data['departments']
             else:
+                # Fallback for different response structures
                 departments = []
+                logger.warning(f"⚠️  Unexpected departments response format: {type(data)}")
             
-            # Validate and clean department data
+            # Validate and clean department data according to PRP DepartmentModel
             validated_departments = []
             for dept in departments:
                 if isinstance(dept, dict) and 'id' in dept:
                     validated_departments.append({
-                        'id': dept.get('id'),
+                        'id': int(dept.get('id')),
                         'nameEng': dept.get('nameEng', f"Department {dept.get('id')}"),
                         'nameBng': dept.get('nameBng', ''),
                         'isWing': bool(dept.get('isWing', False))
                     })
+                else:
+                    logger.warning(f"⚠️  Invalid department data: {dept}")
             
-            # Cache the results
-            if self.enable_caching:
+            # Cache the validated results
+            if self.enable_caching and validated_departments:
                 cache.set(cache_key, validated_departments, 3600)  # Cache for 1 hour
                 cache.set(f'{cache_key}_last_sync', timezone.now(), 3600)
+                logger.debug(f"📦 Cached {len(validated_departments)} departments")
             
-            logger.info(f"Retrieved {len(validated_departments)} departments from PRP")
+            logger.info(f"✅ Retrieved {len(validated_departments)} departments from PRP")
             return validated_departments
             
         except Exception as e:
-            logger.error(f"Failed to get departments: {e}")
-            raise
+            logger.error(f"❌ Failed to get departments: {e}")
+            raise PRPConnectionError(f"Department retrieval failed: {str(e)}")
     
     def get_department_employees(self, department_id: int) -> List[Dict[str, Any]]:
         """
         Get all employees from a specific department.
         
+        API Endpoint: GET /api/secure/external?action=employee_details&departmentId={departmentId}
+        Response Model: EmployeeDetails{userId, nameEng, designationEng, email, mobile, photo, status, ...}
+        
         Args:
-            department_id: Department ID
+            department_id: Department ID from DepartmentModel
             
         Returns:
-            list: List of employee objects
+            list: List of employee objects (PIMS integration fields only)
             
         Raises:
             PRPConnectionError: If API request fails
         """
         try:
+            logger.info(f"👥 Fetching employees from department {department_id}...")
+            
             params = {
                 'action': 'employee_details',
                 'departmentId': department_id
@@ -437,50 +545,67 @@ class PRPClient:
             
             data = self._make_authenticated_request('employees', params=params)
             
-            # Handle response format
+            # Handle response format - PRP returns array directly in payload
             if isinstance(data, list):
                 employees = data
-            elif isinstance(data, dict) and 'employees' in data:
-                employees = data['employees']
             else:
                 employees = []
+                logger.warning(f"⚠️  Unexpected employees response format: {type(data)}")
             
-            # Validate employee data
+            # Validate and extract only PIMS-required fields from EmployeeDetails
             validated_employees = []
             for emp in employees:
                 if isinstance(emp, dict) and 'userId' in emp:
-                    validated_employees.append({
-                        'userId': emp.get('userId'),
-                        'nameEng': emp.get('nameEng', ''),
-                        'email': emp.get('email', ''),
-                        'designationEng': emp.get('designationEng', ''),
-                        'mobile': emp.get('mobile', ''),
-                        'status': emp.get('status', 'unknown'),
+                    # Map only the fields used by PIMS (per integration requirements)
+                    validated_employee = {
+                        'userId': str(emp.get('userId', '')),
+                        'nameEng': str(emp.get('nameEng', '')),
+                        'email': str(emp.get('email', '')),
+                        'designationEng': str(emp.get('designationEng', '')),
+                        'mobile': str(emp.get('mobile', '')),
+                        'status': str(emp.get('status', 'unknown')),
                         'departmentId': department_id,
-                        'photo': emp.get('photo')  # Base64 encoded photo
-                    })
+                        'photo': emp.get('photo')  # byte[] from PRP - will be converted later
+                    }
+                    
+                    # Only include employees with valid userId
+                    if validated_employee['userId']:
+                        validated_employees.append(validated_employee)
+                    else:
+                        logger.warning(f"⚠️  Skipping employee with missing userId: {emp}")
+                else:
+                    logger.warning(f"⚠️  Invalid employee data: {emp}")
             
-            logger.info(f"Retrieved {len(validated_employees)} employees from department {department_id}")
+            logger.info(f"✅ Retrieved {len(validated_employees)} employees from department {department_id}")
             return validated_employees
             
         except Exception as e:
-            logger.error(f"Failed to get employees for department {department_id}: {e}")
-            raise
+            logger.error(f"❌ Failed to get employees for department {department_id}: {e}")
+            raise PRPConnectionError(f"Employee retrieval failed: {str(e)}")
     
     def lookup_user_by_employee_id(self, employee_id: str) -> Optional[Dict[str, Any]]:
         """
-        Lookup a specific user by employee ID.
+        Lookup a specific user by employee ID across all departments.
+        
+        Note: PRP API doesn't have direct employee lookup by ID, so we search through departments.
+        This is less efficient but necessary for the current PRP API structure.
         
         Args:
-            employee_id: Employee ID to lookup
+            employee_id: Employee ID (PRP userId field)
             
         Returns:
-            dict or None: User data if found, None if not found
+            dict: Employee data if found, None if not found
             
         Raises:
             PRPConnectionError: If API request fails
         """
+        if not employee_id or not isinstance(employee_id, str):
+            logger.warning(f"⚠️  Invalid employee ID: {employee_id}")
+            return None
+        
         try:
+            logger.info(f"🔍 Looking up employee: {employee_id}")
+            
             # Get all departments first
             departments = self.get_departments()
             
@@ -489,243 +614,106 @@ class PRPClient:
                 try:
                     employees = self.get_department_employees(dept['id'])
                     
-                    # Look for the employee in this department
-                    for emp in employees:
-                        if str(emp.get('userId')) == str(employee_id):
-                            logger.info(f"Found employee {employee_id} in department {dept['nameEng']}")
-                            return emp
+                    # Look for matching employee ID
+                    for employee in employees:
+                        if employee.get('userId') == employee_id:
+                            logger.info(f"✅ Found employee {employee_id} in department {dept['nameEng']}")
+                            # Add department info to employee data
+                            employee['department'] = dept
+                            return employee
                             
                 except Exception as e:
-                    logger.warning(f"Error searching department {dept['id']}: {e}")
+                    logger.warning(f"⚠️  Error searching department {dept['id']}: {e}")
                     continue
             
-            logger.info(f"Employee {employee_id} not found in any department")
+            logger.info(f"❌ Employee {employee_id} not found in any department")
             return None
             
         except Exception as e:
-            logger.error(f"Failed to lookup user {employee_id}: {e}")
-            raise
+            logger.error(f"❌ Employee lookup failed for {employee_id}: {e}")
+            raise PRPConnectionError(f"Employee lookup failed: {str(e)}")
     
-    def refresh_token(self) -> bool:
+    def convert_photo_to_django_file(self, photo_data: Union[bytes, str, None]) -> Optional[ContentFile]:
         """
-        Refresh the authentication token.
+        Convert PRP photo data (byte array) to Django ContentFile.
         
-        Returns:
-            bool: True if refresh successful
-        """
-        try:
-            # Clear existing token
-            self.token = None
-            self.token_expires = None
-            self.session.headers.pop('Authorization', None)
+        Args:
+            photo_data: Photo data from PRP API (byte array or base64 string)
             
-            # Re-authenticate
-            return self.authenticate()
+        Returns:
+            ContentFile: Django file object or None if conversion fails
+        """
+        if not photo_data:
+            return None
+        
+        try:
+            # Handle different photo data formats
+            if isinstance(photo_data, str):
+                # Assume base64 encoded string
+                try:
+                    photo_bytes = base64.b64decode(photo_data)
+                except Exception as e:
+                    logger.warning(f"⚠️  Failed to decode base64 photo: {e}")
+                    return None
+            elif isinstance(photo_data, (bytes, bytearray)):
+                photo_bytes = bytes(photo_data)
+            else:
+                logger.warning(f"⚠️  Unsupported photo data type: {type(photo_data)}")
+                return None
+            
+            # Create ContentFile for Django
+            if photo_bytes:
+                # Generate filename with timestamp
+                filename = f"prp_photo_{int(timezone.now().timestamp())}.jpg"
+                content_file = ContentFile(photo_bytes, name=filename)
+                logger.debug(f"📸 Converted photo to Django file: {filename} ({len(photo_bytes)} bytes)")
+                return content_file
+            
+            return None
             
         except Exception as e:
-            logger.error(f"Token refresh failed: {e}")
-            return False
+            logger.error(f"❌ Photo conversion failed: {e}")
+            return None
     
     def clear_cache(self):
-        """Clear all cached PRP data."""
-        if self.enable_caching:
-            cache_keys = ['prp_departments', 'prp_departments_last_sync']
-            for key in cache_keys:
-                cache.delete(key)
-            logger.info("PRP cache cleared")
-
-
-class MockPRPClient:
-    """
-    Mock PRP client for development and testing.
-    
-    Provides the same interface as PRPClient but returns mock data
-    when the real PRP API is not accessible during development.
-    """
-    
-    def __init__(self):
-        """Initialize mock client."""
-        self.base_url = 'https://prp.parliament.gov.bd'
-        self.username = 'ezzetech'
-        self.token = 'mock_token_bangladesh_parliament'
-        self.authenticated = True
-        
-        logger.info("🎭 Mock PRP Client initialized for Bangladesh Parliament Secretariat")
-        logger.warning("⚠️  Using MOCK data - not connected to real PRP API")
-    
-    def authenticate(self) -> bool:
-        """Mock authentication - always succeeds."""
-        logger.info("✅ Mock authentication successful")
-        return True
-    
-    def test_connection(self) -> Dict[str, Any]:
-        """Mock connection test."""
-        return {
-            'success': True,
-            'message': 'Mock connection test successful',
-            'timestamp': timezone.now().isoformat(),
-            'location': 'Bangladesh Parliament Secretariat, Dhaka (MOCK MODE)'
-        }
-    
-    def get_departments(self) -> List[Dict[str, Any]]:
-        """Return mock departments data."""
-        mock_departments = [
-            {'id': 1, 'nameEng': 'Administration', 'nameBng': 'প্রশাসন', 'isWing': False},
-            {'id': 2, 'nameEng': 'IT Department', 'nameBng': 'আইটি বিভাগ', 'isWing': False},
-            {'id': 3, 'nameEng': 'Finance', 'nameBng': 'অর্থ', 'isWing': False},
-            {'id': 4, 'nameEng': 'Human Resources', 'nameBng': 'মানবসম্পদ', 'isWing': False},
-            {'id': 5, 'nameEng': 'Security', 'nameBng': 'নিরাপত্তা', 'isWing': False},
-            {'id': 6, 'nameEng': 'Library', 'nameBng': 'গ্রন্থাগার', 'isWing': False},
-            {'id': 7, 'nameEng': 'Transport', 'nameBng': 'পরিবহন', 'isWing': False},
+        """Clear all PRP-related cached data."""
+        cache_keys = [
+            'prp_departments',
+            'prp_departments_last_sync'
         ]
         
-        logger.info(f"🎭 Returning {len(mock_departments)} mock departments")
-        return mock_departments
-    
-    def get_department_employees(self, department_id: int) -> List[Dict[str, Any]]:
-        """Return mock employee data for department."""
-        mock_employees = [
-            {
-                'userId': f'11010009{department_id}',
-                'nameEng': f'Ahmed Rahman Khan (Dept {department_id})',
-                'email': f'ahmed.rahman{department_id}@parliament.gov.bd',
-                'designationEng': 'Senior Officer',
-                'mobile': f'+880 1712-{department_id}45678',
-                'status': 'active',
-                'departmentId': department_id,
-                'photo': None
-            },
-            {
-                'userId': f'11010010{department_id}',
-                'nameEng': f'Fatima Begum (Dept {department_id})',
-                'email': f'fatima.begum{department_id}@parliament.gov.bd',
-                'designationEng': 'Assistant Officer',
-                'mobile': f'+880 1812-{department_id}56789',
-                'status': 'active',
-                'departmentId': department_id,
-                'photo': None
-            }
-        ]
+        for key in cache_keys:
+            cache.delete(key)
         
-        logger.info(f"🎭 Returning {len(mock_employees)} mock employees for department {department_id}")
-        return mock_employees
-    
-    def lookup_user_by_employee_id(self, employee_id: str) -> Optional[Dict[str, Any]]:
-        """Mock user lookup."""
-        # Generate mock data based on employee ID
-        if employee_id and employee_id.isdigit():
-            dept_id = int(employee_id[-1:]) or 2  # Use last digit as dept ID
-            
-            mock_user = {
-                'userId': employee_id,
-                'nameEng': f'Mock Employee {employee_id}',
-                'email': f'employee.{employee_id}@parliament.gov.bd',
-                'designationEng': 'Senior System Administrator',
-                'mobile': f'+880 1712-{employee_id[-6:]}',
-                'status': 'active',
-                'departmentId': dept_id,
-                'photo': None
-            }
-            
-            logger.info(f"🎭 Mock lookup successful for employee {employee_id}")
-            return mock_user
-        
-        logger.info(f"🎭 Mock lookup - employee {employee_id} not found")
-        return None
-    
-    def refresh_token(self) -> bool:
-        """Mock token refresh."""
-        return True
-    
-    def clear_cache(self):
-        """Mock cache clear."""
-        logger.info("🎭 Mock cache cleared")
+        logger.info("🗑️  PRP cache cleared")
 
 
-def create_prp_client() -> Union[PRPClient, MockPRPClient]:
+def create_prp_client() -> PRPClient:
     """
-    Factory function to create appropriate PRP client.
+    Factory function to create PRP client with Django settings integration.
     
-    Creates either a real PRP client or mock client based on configuration.
-    Automatically handles Django settings integration.
+    This replaces the old mock client factory - now always returns real PRP client.
     
     Returns:
-        PRPClient or MockPRPClient: Configured PRP client instance
-        
-    Raises:
-        PRPConfigurationError: If configuration is invalid
+        PRPClient: Real PRP API client instance
     """
-    try:
-        # Check if we're in mock mode (development only)
-        mock_mode = (
-            os.environ.get('PRP_MOCK_MODE', 'false').lower() == 'true' and
-            getattr(settings, 'DEBUG', False)
-        )
-        
-        if mock_mode:
-            logger.info("🎭 Creating Mock PRP client for development")
-            return MockPRPClient()
-        
-        # Get configuration from multiple sources
-        prp_settings = getattr(settings, 'PRP_API_SETTINGS', {})
-        
-        # Determine configuration
-        base_url = (
-            os.environ.get('PRP_API_BASE_URL') or 
-            prp_settings.get('BASE_URL') or 
-            'https://prp.parliament.gov.bd'
-        )
-        
-        username = (
-            os.environ.get('PRP_API_USERNAME') or 
-            prp_settings.get('USERNAME') or 
-            'ezzetech'
-        )
-        
-        password = (
-            os.environ.get('PRP_API_PASSWORD') or 
-            prp_settings.get('PASSWORD') or 
-            '${Fty#3a'
-        )
-        
-        timeout = int(
-            os.environ.get('PRP_API_TIMEOUT') or 
-            prp_settings.get('TIMEOUT') or 
-            30
-        )
-        
-        # Validate configuration
-        if not all([base_url, username, password]):
-            raise PRPConfigurationError(
-                "Missing required PRP configuration",
-                details={
-                    'base_url': bool(base_url),
-                    'username': bool(username), 
-                    'password': bool(password),
-                    'location': 'Bangladesh Parliament Secretariat, Dhaka'
-                }
-            )
-        
-        logger.info("🔧 Creating PRP client for Bangladesh Parliament Secretariat")
-        logger.info(f"🔗 Base URL: {base_url}")
-        logger.info(f"👤 Username: {username}")
-        logger.info(f"⏱️ Timeout: {timeout}s")
-        
-        client = PRPClient(
-            base_url=base_url,
-            username=username,
-            password=password,
-            timeout=timeout
-        )
-        
-        return client
-        
-    except Exception as e:
-        logger.error(f"Failed to create PRP client: {e}")
-        raise PRPConfigurationError(
-            f"PRP client creation failed: {str(e)}",
-            details={
-                'location': 'Bangladesh Parliament Secretariat, Dhaka',
-                'error': str(e)
-            }
-        )
+    logger.info("🏭 Creating REAL PRP client (NO MOCK DATA)")
+    
+    # Always create real client - no mock mode
+    client = PRPClient(
+        base_url=getattr(settings, 'PRP_BASE_URL', 'https://prp.parliament.gov.bd'),
+        username=getattr(settings, 'PRP_USERNAME', 'ezzetech'),
+        password=getattr(settings, 'PRP_PASSWORD', '${Fty#3a'),
+        timeout=getattr(settings, 'PRP_TIMEOUT', 30),
+        enable_caching=getattr(settings, 'PRP_ENABLE_CACHING', True)
+    )
+    
+    logger.info("✅ Real PRP client created successfully")
+    return client
+
+
+# Export main classes
+__all__ = [
+    'PRPClient',
+    'create_prp_client'
+]

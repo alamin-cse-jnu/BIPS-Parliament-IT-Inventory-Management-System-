@@ -205,6 +205,9 @@ class CustomUserAdmin(UserAdmin):
     
     def get_prp_status_display(self, obj):
         """Display PRP management status with visual indicators."""
+        if not hasattr(obj, 'is_prp_managed'):
+            return format_html('<span style="color: #6c757d;">🏢 Local User</span>')
+            
         if obj.is_prp_managed:
             return format_html(
                 '<span style="color: #28a745; font-weight: bold;">📡 PRP Managed</span>'
@@ -217,374 +220,350 @@ class CustomUserAdmin(UserAdmin):
     
     def get_sync_status_display(self, obj):
         """Display PRP sync status with timestamp information."""
-        if not obj.is_prp_managed:
-            return format_html('<span style="color: #6c757d;">N/A</span>')
+        if not hasattr(obj, 'is_prp_managed') or not obj.is_prp_managed:
+            return format_html('<span style="color: #6c757d;">N/A (Local User)</span>')
+            
+        if not hasattr(obj, 'prp_last_sync') or not obj.prp_last_sync:
+            return format_html('<span style="color: #dc3545;">⚠️ Never Synced</span>')
+            
+        # Convert to Dhaka timezone for display
+        dhaka_time = obj.prp_last_sync.astimezone(timezone.get_current_timezone())
+        time_ago = timezone.now() - obj.prp_last_sync
         
-        if obj.prp_last_sync is None:
-            return format_html(
-                '<span style="color: #dc3545; font-weight: bold;">⚠️ Never Synced</span>'
-            )
-        
-        # Calculate time since last sync (Asia/Dhaka timezone)
-        now = timezone.now()
-        time_diff = now - obj.prp_last_sync
-        
-        if time_diff.days > 7:
-            color = '#dc3545'  # Red for old sync
-            status = f'🕐 {time_diff.days}d ago'
-        elif time_diff.days > 1:
-            color = '#ffc107'  # Yellow for moderate sync
-            status = f'🕐 {time_diff.days}d ago'
-        elif time_diff.seconds > 3600:
-            hours = time_diff.seconds // 3600
-            color = '#28a745'  # Green for recent sync
-            status = f'🕐 {hours}h ago'
+        if time_ago.days > 30:
+            status_color = '#dc3545'  # Red for old sync
+            status_icon = '🔴'
+        elif time_ago.days > 7:
+            status_color = '#ffc107'  # Yellow for week-old sync
+            status_icon = '🟡'
         else:
-            color = '#28a745'  # Green for very recent
-            status = '✅ Recent'
-        
+            status_color = '#28a745'  # Green for recent sync
+            status_icon = '🟢'
+            
         return format_html(
-            '<span style="color: {}; font-weight: bold;">{}</span>',
-            color, status
+            '<span style="color: {};">{} {}</span>',
+            status_color,
+            status_icon,
+            dhaka_time.strftime('%Y-%m-%d %H:%M:%S')
         )
-    get_sync_status_display.short_description = 'Last Sync'
+    get_sync_status_display.short_description = 'Last PRP Sync'
     get_sync_status_display.admin_order_field = 'prp_last_sync'
     
     def get_prp_sync_status_display(self, obj):
-        """Detailed PRP sync status for form display."""
-        if not obj.is_prp_managed:
-            return "This user is managed locally (not from PRP)"
+        """Detailed PRP sync status for form view."""
+        if not hasattr(obj, 'is_prp_managed') or not obj.is_prp_managed:
+            return format_html(
+                '<div style="background: #f8f9fa; padding: 12px; border-radius: 8px; border-left: 4px solid #6c757d;">'
+                '<strong>Local PIMS User</strong><br>'
+                'This user was created directly in PIMS and is not managed by PRP.'
+                '</div>'
+            )
+            
+        if not hasattr(obj, 'prp_last_sync') or not obj.prp_last_sync:
+            return format_html(
+                '<div style="background: #fff3cd; padding: 12px; border-radius: 8px; border-left: 4px solid #ffc107;">'
+                '<strong>⚠️ PRP User - Never Synced</strong><br>'
+                'This user is managed by PRP but has never been synchronized.<br>'
+                '<em>Consider running a manual sync operation.</em>'
+                '</div>'
+            )
         
-        if obj.prp_last_sync is None:
-            return "⚠️ This user has never been synced from PRP"
+        # Convert to Dhaka timezone
+        dhaka_time = obj.prp_last_sync.astimezone(timezone.get_current_timezone())
+        time_ago = timezone.now() - obj.prp_last_sync
         
-        # Format last sync time in Asia/Dhaka timezone
-        local_time = obj.prp_last_sync.astimezone(timezone.get_current_timezone())
-        formatted_time = local_time.strftime("%Y-%m-%d %H:%M:%S %Z")
-        
-        return f"✅ Last synced: {formatted_time}"
+        if time_ago.days > 30:
+            bg_color = '#f8d7da'
+            border_color = '#dc3545'
+            status_text = f'🔴 Last synced {time_ago.days} days ago'
+            recommendation = 'Consider running a fresh sync to ensure data accuracy.'
+        elif time_ago.days > 7:
+            bg_color = '#fff3cd'
+            border_color = '#ffc107'
+            status_text = f'🟡 Last synced {time_ago.days} days ago'
+            recommendation = 'Sync is moderately outdated.'
+        else:
+            bg_color = '#d4edda'
+            border_color = '#28a745'
+            status_text = '🟢 Recently synced'
+            recommendation = 'Sync status is current.'
+            
+        return format_html(
+            '<div style="background: {}; padding: 12px; border-radius: 8px; border-left: 4px solid {};">'
+            '<strong>📡 PRP Managed User</strong><br>'
+            '{}<br>'
+            'Last sync: {}<br>'
+            '<em>{}</em>'
+            '</div>',
+            bg_color, border_color, status_text, 
+            dhaka_time.strftime('%Y-%m-%d %H:%M:%S (%Z)'), 
+            recommendation
+        )
     get_prp_sync_status_display.short_description = 'PRP Sync Status'
-    
-    # ========================================================================
-    # EXISTING DISPLAY METHODS (PRESERVED)
-    # ========================================================================
     
     def get_full_name(self, obj):
         """Display user's full name with PRP indicator."""
         full_name = obj.get_full_name() or obj.username
-        if obj.is_prp_managed:
+        if hasattr(obj, 'is_prp_managed') and obj.is_prp_managed:
             return format_html(
-                '<strong>{}</strong> <small style="color: #28a745;">[PRP]</small>',
+                '{} <span style="background: #14b8a6; color: white; padding: 2px 6px; '
+                'border-radius: 4px; font-size: 0.75em;">PRP</span>',
                 full_name
             )
         return full_name
     get_full_name.short_description = 'Full Name'
+    get_full_name.admin_order_field = 'first_name'
     
     def get_groups_display(self, obj):
-        """Display user's groups/roles."""
+        """Display user groups with count."""
         groups = obj.groups.all()
-        if groups:
-            group_links = []
-            for group in groups:
-                url = reverse('admin:auth_group_change', args=[group.pk])
-                group_links.append(f'<a href="{url}" target="_blank">{group.name}</a>')
-            return format_html(', '.join(group_links))
-        return '-'
-    get_groups_display.short_description = 'Groups'
+        if not groups:
+            return format_html('<span style="color: #6c757d;">No roles</span>')
+        
+        group_list = ', '.join([group.name for group in groups[:3]])
+        if len(groups) > 3:
+            group_list += f' (+{len(groups) - 3} more)'
+        
+        return format_html('<span title="{}">{}</span>', group_list, group_list)
+    get_groups_display.short_description = 'Roles'
     
     def get_profile_image_display(self, obj):
         """Display profile image thumbnail."""
         if obj.profile_image:
             return format_html(
-                '<img src="{}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" />',
+                '<img src="{}" style="width: 40px; height: 40px; border-radius: 50%; '
+                'object-fit: cover;" alt="Profile">',
                 obj.profile_image.url
             )
-        return '👤'
-    get_profile_image_display.short_description = 'Image'
+        return format_html('<span style="color: #6c757d;">No image</span>')
+    get_profile_image_display.short_description = 'Photo'
     
     # ========================================================================
-    # QUERYSET OPTIMIZATION
+    # ADMIN ACTIONS FOR PRP SYNC
     # ========================================================================
     
-    def get_queryset(self, request):
-        """Optimize queries with prefetch_related."""
-        return super().get_queryset(request).prefetch_related(
-            'groups'
-        ).select_related()
+    actions = ['sync_selected_from_prp', 'force_sync_selected_from_prp', 'mark_as_prp_managed']
     
-    # ========================================================================
-    # FORM CUSTOMIZATION FOR PRP USERS
-    # ========================================================================
-    
-    def get_readonly_fields(self, request, obj=None):
-        """Make PRP-sourced fields read-only for PRP users."""
-        readonly_fields = list(super().get_readonly_fields(request, obj))
-        
-        if obj and obj.is_prp_managed:
-            # Add PRP-sourced fields to readonly for PRP users
-            prp_readonly_fields = [
-                'employee_id',      # PRP userId
-                'first_name',       # PRP nameEng (split)
-                'last_name',        # PRP nameEng (split)
-                'email',            # PRP email
-                'designation',      # PRP designationEng
-                'office',           # PRP department nameEng
-                'phone_number',     # PRP mobile
-                'profile_image',    # PRP photo (converted)
-                'is_prp_managed',   # PRP management flag
-                'prp_last_sync'     # PRP sync timestamp
-            ]
-            readonly_fields.extend(prp_readonly_fields)
-        
-        return readonly_fields
-    
-    def get_form(self, request, obj=None, **kwargs):
-        """Customize form for PRP users."""
-        form = super().get_form(request, obj, **kwargs)
-        
-        if obj and obj.is_prp_managed:
-            # Add help text for PRP users
-            for field_name in obj.get_prp_readonly_fields():
-                if field_name in form.base_fields:
-                    current_help = form.base_fields[field_name].help_text
-                    prp_help = "This field is managed by PRP and cannot be edited."
-                    form.base_fields[field_name].help_text = f"{current_help} {prp_help}".strip()
-        
-        return form
-    
-    # ========================================================================
-    # PRP ADMIN ACTIONS
-    # ========================================================================
-    
-    actions = [
-        'activate_users',
-        'deactivate_users',
-        'make_staff',
-        'remove_staff',
-        'sync_selected_prp_users',
-        'bulk_sync_all_prp_users',
-        'check_prp_sync_status'
-    ]
-    
-    # Existing actions (preserved)
-    def activate_users(self, request, queryset):
-        """Activate selected users."""
-        updated = queryset.update(is_active=True, is_active_employee=True)
-        self.message_user(request, f'{updated} users were successfully activated.')
-    activate_users.short_description = 'Activate selected users'
-    
-    def deactivate_users(self, request, queryset):
-        """Deactivate selected users."""
-        updated = queryset.update(is_active=False, is_active_employee=False)
-        self.message_user(request, f'{updated} users were successfully deactivated.')
-    deactivate_users.short_description = 'Deactivate selected users'
-    
-    def make_staff(self, request, queryset):
-        """Make selected users staff members."""
-        updated = queryset.update(is_staff=True)
-        self.message_user(request, f'{updated} users were granted staff status.')
-    make_staff.short_description = 'Grant staff status'
-    
-    def remove_staff(self, request, queryset):
-        """Remove staff status from selected users."""
-        updated = queryset.filter(is_superuser=False).update(is_staff=False)
-        self.message_user(request, f'{updated} users had staff status removed.')
-    remove_staff.short_description = 'Remove staff status'
-    
-    # ========================================================================
-    # NEW PRP SYNC ACTIONS
-    # ========================================================================
-    
-    def sync_selected_prp_users(self, request, queryset):
-        """Sync selected PRP users from Parliament Resource Portal."""
+    def sync_selected_from_prp(self, request, queryset):
+        """Bulk sync selected users from PRP."""
         if not PRP_INTEGRATION_AVAILABLE:
             self.message_user(
-                request, 
-                'PRP integration is not available. Please check the sync service configuration.',
+                request,
+                'PRP integration is not available. Please ensure sync_service.py is implemented.',
                 level=messages.ERROR
             )
             return
-        
-        # Filter for PRP-managed users only
+            
         prp_users = queryset.filter(is_prp_managed=True)
-        non_prp_count = queryset.count() - prp_users.count()
-        
-        if non_prp_count > 0:
-            self.message_user(
-                request,
-                f'Skipped {non_prp_count} non-PRP users. Only PRP-managed users can be synced.',
-                level=messages.WARNING
-            )
-        
         if not prp_users.exists():
             self.message_user(
                 request,
-                'No PRP-managed users selected for synchronization.',
+                'No PRP-managed users selected. Only PRP-managed users can be synced.',
                 level=messages.WARNING
             )
             return
         
         try:
-            # Initialize PRP sync service
             prp_client = create_prp_client()
             sync_service = PRPSyncService(prp_client)
             
-            synced_count = 0
+            success_count = 0
             error_count = 0
             
             with transaction.atomic():
                 for user in prp_users:
                     try:
-                        # Sync individual user by employee_id (PRP userId)
                         result = sync_service.sync_user_by_employee_id(user.employee_id)
-                        if result and result.success:
-                            synced_count += 1
+                        if result.success:
+                            success_count += 1
                         else:
                             error_count += 1
                     except Exception as e:
-                        logger.error(f"Failed to sync user {user.employee_id}: {e}")
                         error_count += 1
+                        logger.error(f"Failed to sync user {user.employee_id}: {e}")
             
-            # Report results
-            if synced_count > 0 and error_count == 0:
+            if success_count:
                 self.message_user(
                     request,
-                    f'Successfully synced {synced_count} PRP users from Parliament Resource Portal.',
+                    f'Successfully synced {success_count} user(s) from PRP.',
                     level=messages.SUCCESS
                 )
-            elif synced_count > 0 and error_count > 0:
+            if error_count:
                 self.message_user(
                     request,
-                    f'Synced {synced_count} users successfully, {error_count} users had errors.',
+                    f'Failed to sync {error_count} user(s). Check logs for details.',
                     level=messages.WARNING
                 )
-            else:
-                self.message_user(
-                    request,
-                    f'Failed to sync users. Please check the PRP connection and try again.',
-                    level=messages.ERROR
-                )
                 
-        except (PRPConnectionError, PRPAuthenticationError) as e:
-            self.message_user(
-                request,
-                f'PRP connection failed: {str(e)}. Please check the Parliament Resource Portal connection.',
-                level=messages.ERROR
-            )
         except Exception as e:
-            logger.error(f"Unexpected error in PRP sync: {e}")
             self.message_user(
                 request,
-                f'Unexpected error during sync: {str(e)}',
+                f'PRP sync operation failed: {str(e)}',
                 level=messages.ERROR
             )
+            logger.error(f"Bulk PRP sync failed: {e}")
     
-    sync_selected_prp_users.short_description = '📡 Sync selected PRP users from Parliament Portal'
+    sync_selected_from_prp.short_description = "🔄 Sync selected users from PRP"
     
-    def bulk_sync_all_prp_users(self, request, queryset):
-        """Bulk sync all PRP users from all departments."""
+    def force_sync_selected_from_prp(self, request, queryset):
+        """Force sync selected users from PRP (ignores recent sync timestamps)."""
         if not PRP_INTEGRATION_AVAILABLE:
             self.message_user(
-                request, 
-                'PRP integration is not available. Please check the sync service configuration.',
+                request,
+                'PRP integration is not available.',
+                level=messages.ERROR
+            )
+            return
+            
+        prp_users = queryset.filter(is_prp_managed=True)
+        if not prp_users.exists():
+            self.message_user(
+                request,
+                'No PRP-managed users selected.',
+                level=messages.WARNING
+            )
+            return
+        
+        try:
+            prp_client = create_prp_client()
+            sync_service = PRPSyncService(prp_client)
+            
+            success_count = 0
+            error_count = 0
+            
+            with transaction.atomic():
+                for user in prp_users:
+                    try:
+                        result = sync_service.sync_user_by_employee_id(
+                            user.employee_id,
+                            force_refresh=True
+                        )
+                        if result.success:
+                            success_count += 1
+                        else:
+                            error_count += 1
+                    except Exception as e:
+                        error_count += 1
+                        logger.error(f"Failed to force sync user {user.employee_id}: {e}")
+            
+            if success_count:
+                self.message_user(
+                    request,
+                    f'Force synced {success_count} user(s) from PRP.',
+                    level=messages.SUCCESS
+                )
+            if error_count:
+                self.message_user(
+                    request,
+                    f'Failed to force sync {error_count} user(s).',
+                    level=messages.WARNING
+                )
+                
+        except Exception as e:
+            self.message_user(
+                request,
+                f'PRP force sync failed: {str(e)}',
+                level=messages.ERROR
+            )
+    
+    force_sync_selected_from_prp.short_description = "🔄 Force sync from PRP (ignore cache)"
+    
+    def mark_as_prp_managed(self, request, queryset):
+        """Mark selected users as PRP-managed (admin override)."""
+        if not hasattr(CustomUser, 'is_prp_managed'):
+            self.message_user(
+                request,
+                'PRP management fields are not available in the user model.',
                 level=messages.ERROR
             )
             return
         
-        # Confirmation required for bulk operations
-        if 'confirmed' not in request.POST:
-            return render(request, 'admin/users/bulk_sync_confirmation.html', {
-                'title': 'Bulk Sync All PRP Users',
-                'message': 'This will sync all users from Parliament Resource Portal (PRP). This operation may take several minutes.',
-                'action': 'bulk_sync_all_prp_users'
-            })
-        
-        try:
-            # Initialize PRP sync service
-            prp_client = create_prp_client()
-            sync_service = PRPSyncService(prp_client)
-            
-            # Perform bulk sync
-            with transaction.atomic():
-                result = sync_service.sync_all_departments()
-            
-            if result and result.success:
-                self.message_user(
-                    request,
-                    f'Bulk sync completed successfully. '
-                    f'Processed {result.total_processed} users, '
-                    f'{result.created_count} created, '
-                    f'{result.updated_count} updated, '
-                    f'{result.error_count} errors.',
-                    level=messages.SUCCESS
-                )
-            else:
-                self.message_user(
-                    request,
-                    'Bulk sync completed with errors. Please check the logs for details.',
-                    level=messages.WARNING
-                )
-                
-        except (PRPConnectionError, PRPAuthenticationError) as e:
-            self.message_user(
-                request,
-                f'PRP connection failed: {str(e)}. Please verify Parliament Resource Portal connectivity.',
-                level=messages.ERROR
-            )
-        except Exception as e:
-            logger.error(f"Bulk sync error: {e}")
-            self.message_user(
-                request,
-                f'Bulk sync failed: {str(e)}',
-                level=messages.ERROR
-            )
-    
-    bulk_sync_all_prp_users.short_description = '🔄 Bulk sync ALL users from Parliament Portal'
-    
-    def check_prp_sync_status(self, request, queryset):
-        """Check PRP sync status for selected users."""
-        prp_users = queryset.filter(is_prp_managed=True)
-        non_prp_users = queryset.filter(is_prp_managed=False)
-        
-        never_synced = prp_users.filter(prp_last_sync__isnull=True).count()
-        recently_synced = prp_users.filter(
-            prp_last_sync__gte=timezone.now() - timedelta(hours=24)
-        ).count()
-        needs_sync = prp_users.filter(
-            prp_last_sync__lt=timezone.now() - timedelta(days=7)
-        ).count()
-        
-        status_message = (
-            f'PRP Sync Status Report:\n'
-            f'• Total selected: {queryset.count()} users\n'
-            f'• PRP-managed: {prp_users.count()} users\n'
-            f'• Local users: {non_prp_users.count()} users\n'
-            f'• Never synced: {never_synced} users\n'
-            f'• Recently synced (24h): {recently_synced} users\n'
-            f'• Needs sync (>7 days): {needs_sync} users'
+        updated = queryset.update(is_prp_managed=True)
+        self.message_user(
+            request,
+            f'Marked {updated} user(s) as PRP-managed. '
+            'These users will now be subject to PRP sync operations.',
+            level=messages.SUCCESS
         )
+    
+    mark_as_prp_managed.short_description = "📡 Mark as PRP-managed"
+    
+    # ========================================================================
+    # FORM CUSTOMIZATION FOR PRP
+    # ========================================================================
+    
+    def get_readonly_fields(self, request, obj=None):
+        """Make PRP-sourced fields read-only."""
+        readonly = list(self.readonly_fields)
         
-        self.message_user(request, status_message)
+        if obj and hasattr(obj, 'is_prp_managed') and obj.is_prp_managed:
+            # Make PRP-sourced fields read-only
+            readonly.extend([
+                'employee_id',
+                'first_name',
+                'last_name',
+                'email',
+                'designation',
+                'office',
+                'phone_number',
+                'profile_image',
+                'is_prp_managed',
+                'prp_last_sync'
+            ])
+        
+        return readonly
     
-    check_prp_sync_status.short_description = '📊 Check PRP sync status'
+    def get_form(self, request, obj=None, **kwargs):
+        """Customize form for PRP users."""
+        form = super().get_form(request, obj, **kwargs)
+        
+        if obj and hasattr(obj, 'is_prp_managed') and obj.is_prp_managed:
+            # Add help text for PRP-managed users
+            form.base_fields['employee_id'].help_text = (
+                'Employee ID from PRP. This field cannot be modified as it is synced from PRP.'
+            )
+            form.base_fields['email'].help_text = (
+                'Email from PRP. This field is automatically synced and cannot be modified.'
+            )
+            if 'first_name' in form.base_fields:
+                form.base_fields['first_name'].help_text = (
+                    'Name from PRP. This field is automatically synced.'
+                )
+        
+        return form
     
     # ========================================================================
-    # FORM WIDGET CUSTOMIZATIONS
+    # SAVE OPERATIONS WITH PRP LOGIC
     # ========================================================================
-    
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows': 3, 'cols': 80})},
-    }
     
     def save_model(self, request, obj, form, change):
-        """Custom save logic with PRP considerations."""
+        """Enhanced save with PRP integration logic."""
+        # Set default timezone for timestamps
+        if not change:  # Creating new user
+            obj.created_at = timezone.now()
+        
+        # Prevent manual editing of PRP-managed user core fields
+        if change and hasattr(obj, 'is_prp_managed') and obj.is_prp_managed:
+            protected_fields = [
+                'employee_id', 'first_name', 'last_name', 'email',
+                'designation', 'office', 'phone_number'
+            ]
+            
+            for field in protected_fields:
+                if field in form.changed_data:
+                    messages.warning(
+                        request,
+                        f'Warning: {field.replace("_", " ").title()} is managed by PRP. '
+                        'Changes may be overwritten during the next sync.'
+                    )
+        
         # Preserve admin modification tracking
         if not change:  # Creating new user
-            if not obj.is_prp_managed:
+            if not hasattr(obj, 'is_prp_managed') or not obj.is_prp_managed:
                 obj.notes = f"Created by {request.user.username} on {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}"
         
         # Prevent accidental PRP flag changes
-        if change and obj.is_prp_managed and 'is_prp_managed' in form.changed_data:
+        if change and hasattr(obj, 'is_prp_managed') and obj.is_prp_managed and 'is_prp_managed' in form.changed_data:
             messages.warning(
                 request,
                 'Warning: Changing PRP management status can affect sync behavior. '
@@ -615,11 +594,11 @@ class CustomUserAdmin(UserAdmin):
         context = {
             'title': 'PRP Sync Dashboard',
             'prp_integration_available': PRP_INTEGRATION_AVAILABLE,
-            'total_prp_users': CustomUser.objects.filter(is_prp_managed=True).count(),
+            'total_prp_users': CustomUser.objects.filter(is_prp_managed=True).count() if hasattr(CustomUser, 'is_prp_managed') else 0,
             'never_synced': CustomUser.objects.filter(
                 is_prp_managed=True, 
                 prp_last_sync__isnull=True
-            ).count()
+            ).count() if hasattr(CustomUser, 'is_prp_managed') else 0
         }
         
         return render(request, 'admin/users/prp_sync_dashboard.html', context)
@@ -651,53 +630,37 @@ class GroupAdminCustom(admin.ModelAdmin):
     get_users_count.short_description = 'Users'
 
 
-class PermissionAdminCustom(admin.ModelAdmin):
-    """
-    Custom admin interface for Permissions.
-    Preserved from existing implementation.
-    """
-    list_display = ('name', 'content_type', 'codename')
-    list_filter = ('content_type',)
-    search_fields = ('name', 'codename', 'content_type__model')
-    ordering = ('content_type', 'codename')
-
-
 # ============================================================================
 # ADMIN REGISTRATION
 # ============================================================================
 
-# Register enhanced CustomUser admin
-admin.site.register(CustomUser, CustomUserAdmin)
-
-# Unregister and re-register Group admin with custom version
+# Unregister default User and Group admin if they exist
 admin.site.unregister(Group)
-admin.site.register(Group, GroupAdminCustom)
 
-# Optional: Register Permission with custom admin
-# admin.site.register(Permission, PermissionAdminCustom)
+# Register enhanced admin interfaces
+admin.site.register(CustomUser, CustomUserAdmin)
+admin.site.register(Group, GroupAdminCustom)
 
 # ============================================================================
 # ADMIN SITE CUSTOMIZATION
 # ============================================================================
 
-# Customize admin site headers for Bangladesh Parliament Secretariat
-admin.site.site_header = 'PIMS Administration - Parliament Secretariat'
-admin.site.site_title = 'PIMS Admin'
-admin.site.index_title = 'Bangladesh Parliament Secretariat - IT Inventory Management System'
+admin.site.site_header = "PIMS Administration - Bangladesh Parliament Secretariat"
+admin.site.site_title = "PIMS Admin - Parliament IT Management"
+admin.site.index_title = "Parliament IT Inventory Management System"
 
-# Add PRP integration status to admin index
-if hasattr(admin.site, 'each_context'):
-    original_each_context = admin.site.each_context
-    
-    def enhanced_each_context(request):
-        """Add PRP integration status to admin context."""
-        context = original_each_context(request)
-        context.update({
-            'prp_integration_available': PRP_INTEGRATION_AVAILABLE,
-            'prp_users_count': CustomUser.objects.filter(is_prp_managed=True).count() if CustomUser.objects.exists() else 0,
-            'local_users_count': CustomUser.objects.filter(is_prp_managed=False).count() if CustomUser.objects.exists() else 0,
-            'location': 'Bangladesh Parliament Secretariat, Dhaka'
-        })
-        return context
-    
-    admin.site.each_context = enhanced_each_context
+# Add custom CSS for admin interface
+admin.site.site_url = None  # Remove "View site" link
+
+# ============================================================================
+# LOGGING CONFIGURATION
+# ============================================================================
+
+# Ensure PRP admin operations are logged
+def log_prp_admin_action(action, user_id, admin_user, details=""):
+    """Log PRP admin actions for audit trail."""
+    logger.info(
+        f"PRP Admin Action: {action} | User ID: {user_id} | "
+        f"Admin: {admin_user} | Details: {details} | "
+        f"Timestamp: {timezone.now().strftime('%Y-%m-%d %H:%M:%S %Z')}"
+    )

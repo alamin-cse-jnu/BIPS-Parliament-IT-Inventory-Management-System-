@@ -126,8 +126,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'core.context_processors.site_context',         # PIMS site context
-                'users.context_processors.prp_context',         # PRP integration context
+                #'core.context_processors.site_context',         # PIMS site context
+                #'users.context_processors.prp_context',         # PRP integration context
             ],
         },
     },
@@ -143,8 +143,8 @@ WSGI_APPLICATION = 'pims.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('DB_NAME', 'pims_parliament'),
-        'USER': os.environ.get('DB_USER', 'pims_user'),
+        'NAME': os.environ.get('DB_NAME', 'pims_db'),
+        'USER': os.environ.get('DB_USER', 'root'),
         'PASSWORD': os.environ.get('DB_PASSWORD', ''),
         'HOST': os.environ.get('DB_HOST', 'localhost'),
         'PORT': os.environ.get('DB_PORT', '3306'),
@@ -220,8 +220,6 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
-    BASE_DIR / 'users' / 'static',
-    BASE_DIR / 'dashboard' / 'static',
 ]
 
 # Media files (User uploads, PRP profile images)

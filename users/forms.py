@@ -625,3 +625,148 @@ class PRPConnectionTestForm(forms.Form):
             raise ValidationError('Employee ID is required for user lookup test.')
         
         return cleaned_data
+    
+    # Alias for backwards compatibility
+CustomUserUpdateForm = CustomUserChangeForm  # Use existing CustomUserChangeForm
+
+
+class UserRoleForm(forms.Form):
+    """
+    Form for managing user roles and group assignments.
+    
+    Used for bulk role assignments and individual user role management
+    in PIMS with PRP integration support.
+    """
+    
+    users = forms.ModelMultipleChoiceField(
+        queryset=CustomUser.objects.all(),
+        required=True,
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        help_text='Select users to assign roles'
+    )
+    
+    groups = forms.ModelMultipleChoiceField(
+        queryset=Group.objects.all(),
+        required=True,
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        help_text='Select roles to assign to users'
+    )
+    
+    action = forms.ChoiceField(
+        choices=[
+            ('add', 'Add Roles'),
+            ('remove', 'Remove Roles'),
+            ('replace', 'Replace All Roles')
+        ],
+        required=True,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        help_text='Choose how to apply the selected roles'
+    )
+
+    def clean(self):
+        """Validate role assignment for PRP users."""
+        cleaned_data = super().clean()
+        users = cleaned_data.get('users', [])
+        
+        # Check if any selected users are PRP-managed
+        prp_users = [user for user in users if hasattr(user, 'is_prp_managed') and user.is_prp_managed]
+        
+        if prp_users and cleaned_data.get('action') == 'replace':
+            prp_usernames = [user.username for user in prp_users]
+            raise ValidationError(
+                f'Cannot replace all roles for PRP-managed users: {", ".join(prp_usernames)}. '
+                'Only add/remove individual roles is allowed for PRP users.'
+            )
+        
+        return cleaned_data
+
+
+class CustomLoginForm(forms.Form):
+    """
+    Enhanced custom login form for PIMS with PRP User ID support.
+    
+    Features:
+    - Support for PRP User ID login (prp_{userId} format)
+    - Regular username/email login for local users
+    - Default password handling for PRP users
+    """
+    
+    username = forms.CharField(
+        max_length=150,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Username or PRP User ID',
+            'id': 'id_username'
+        }),
+        help_text='Enter your username or PRP User ID (format: prp_12345)'
+    )
+    
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Password',
+            'id': 'id_password'
+        }),
+        help_text='Default password for PRP users: 12345678'
+    )
+    
+    remember_me = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input',
+            'id': 'id_remember_me'
+        }),
+        label='Remember me'
+    )
+
+    def clean_username(self):
+        """Enhanced username validation for PRP format."""
+        username = self.cleaned_data['username']
+        
+        # Check if it's a PRP User ID format
+        if username.startswith('prp_'):
+            # Extract the user ID part
+            user_id_part = username[4:]  # Remove 'prp_' prefix
+            if not user_id_part.isdigit():
+                raise ValidationError(
+                    'Invalid PRP User ID format. Should be: prp_{userId} (e.g., prp_12345)'
+                )
+        
+        return username
+
+
+class CustomPasswordResetForm(forms.Form):
+    """
+    Custom password reset form with PRP user awareness.
+    
+    Note: PRP users cannot reset passwords (they use default "12345678")
+    """
+    
+    email = forms.EmailField(
+        max_length=254,
+        required=True,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter your email address',
+            'id': 'id_email'
+        }),
+        help_text='Enter the email address associated with your account'
+    )
+
+    def clean_email(self):
+        """Check if email belongs to PRP user."""
+        email = self.cleaned_data['email']
+        
+        try:
+            user = CustomUser.objects.get(email=email)
+            if hasattr(user, 'is_prp_managed') and user.is_prp_managed:
+                raise ValidationError(
+                    'PRP-managed users cannot reset passwords. '
+                    'Please use your default PRP password (12345678) or contact admin.'
+                )
+        except CustomUser.DoesNotExist:
+            # User doesn't exist - let Django handle this in the view
+            pass
+        
+        return email

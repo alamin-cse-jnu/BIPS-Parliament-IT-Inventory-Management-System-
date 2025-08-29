@@ -51,7 +51,7 @@ from django.views.generic import (
 
 from .models import CustomUser
 from .forms import (
-    CustomUserCreationForm, CustomUserUpdateForm, UserRoleForm,
+    CustomUserCreationForm, CustomUserChangeForm as CustomUserUpdateForm, UserRoleForm,
     CustomLoginForm, CustomPasswordResetForm, PRPSyncForm
 )
 
@@ -466,7 +466,7 @@ class UserDeleteView(DeleteView):
     Business Rule: Consider implications of deleting PRP users.
     """
     model = CustomUser
-    template_name = 'users/user_confirm_delete.html'
+    template_name = 'users/users_delete.html'
     success_url = reverse_lazy('users:list')
     
     def get_context_data(self, **kwargs):

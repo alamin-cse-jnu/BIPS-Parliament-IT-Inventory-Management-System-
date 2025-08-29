@@ -2,24 +2,31 @@
 Views for Users app in PIMS (Parliament IT Inventory Management System)
 Bangladesh Parliament Secretariat, Dhaka
 
-Enhanced with PRP (Parliament Resource Portal) Integration
-This module extends existing user management views with PRP sync endpoints,
-maintaining backwards compatibility while adding comprehensive PRP functionality.
+This module provides complete user management with real PRP (Parliament Resource Portal) integration.
+It combines core user management functionality with real-time PRP API synchronization,
+removing all mock data functionality and adhering to specified business rules.
 
 Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
 Project: PIMS-PRP Integration
-Purpose: Add PRP sync endpoints, user lookup APIs, and enhanced user management
+Purpose: Manage user authentication, CRUD operations, and PRP synchronization
+Business Rules:
+- No user creation from PIMS: All users originate from PRP
+- Read-only PRP data: Information from PRP API cannot be edited in PIMS
+- Admin sync control: Only admin can update/sync users from PRP
+- Status override: PIMS admin inactive status takes precedence
+- Username format: prp_{userId} for Django username field
+- Default password: "12345678" for all PRP-created users
 """
+
 import csv
 import io
 import json
 import logging
-import traceback
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.views import LoginView, PasswordResetView, PasswordChangeView
+from django.contrib.auth.views import LoginView, PasswordResetView
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.views.generic import (
@@ -34,59 +41,86 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.auth import login
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
 from django.utils import timezone
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.contrib.admin.views.decorators import staff_member_required
 from django.utils.safestring import mark_safe
+from django.conf import settings
 
 from .models import CustomUser
+from devices.models import Device
+from assignments.models import Assignment
 from .forms import (
-    CustomUserCreationForm, CustomUserChangeForm, UserRoleForm,
-    UserSearchForm, UserLoginForm, PasswordResetForm
+    CustomUserCreationForm, CustomUserChangeForm, UserProfileForm,
+    UserSearchForm, UserLoginForm, PasswordResetForm, BulkUserActionForm,
+    UserDeactivationForm
 )
-
-# Import PRP integration modules (with graceful fallback)
-PRP_INTEGRATION_AVAILABLE = False
-try:
-    from .api.sync_service import PRPSyncService, PRPSyncResult
-    from .api.prp_client import PRPClient, create_prp_client
-    from .api.exceptions import (
-        PRPException,
-        PRPConnectionError,
-        PRPAuthenticationError,
-        PRPSyncError,
-        PRPDataValidationError,
-        PRPConfigurationError
-    )
-    PRP_INTEGRATION_AVAILABLE = True
-except ImportError as e:
-    # PRP modules not available - development mode
-    PRPException = Exception
-    PRPConnectionError = Exception
-    PRPAuthenticationError = Exception
-    PRPSyncError = Exception
-    PRPDataValidationError = Exception
-    PRPConfigurationError = Exception
+from .api.prp_client import PRPClient, create_prp_client
+from .api.sync_service import PRPSyncService, PRPSyncResult
+from .api.exceptions import (
+    PRPException, PRPConnectionError, PRPAuthenticationError,
+    PRPSyncError, PRPDataValidationError, PRPBusinessRuleError, PRPConfigurationError
+)
 
 # Configure logging
 logger = logging.getLogger('pims.users.views')
 
+# ============================================================================
+# Base Classes and Mixins
+# ============================================================================
+
+class PRPAwareMixin:
+    """Mixin to provide PRP integration context to views."""
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'prp_integration_enabled': True,
+            'location_context': 'Bangladesh Parliament Secretariat, Dhaka',
+            'current_time_dhaka': timezone.now().astimezone(timezone.get_current_timezone()),
+        })
+        
+        # Add PRP statistics
+        if hasattr(CustomUser, 'is_prp_managed'):
+            total_users = CustomUser.objects.count()
+            prp_users = CustomUser.objects.filter(is_prp_managed=True).count()
+            local_users = total_users - prp_users
+            
+            context.update({
+                'prp_stats': {
+                    'total_users': total_users,
+                    'prp_users': prp_users,
+                    'local_users': local_users,
+                    'prp_percentage': round((prp_users / total_users * 100), 1) if total_users > 0 else 0
+                }
+            })
+        
+        return context
+
+
+class AdminOnlyMixin(PermissionRequiredMixin):
+    """Restrict access to admin users only for PRP operations."""
+    permission_required = 'auth.add_user'
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_staff:
+            raise PermissionDenied("Only admin users can perform PRP operations.")
+        return super().dispatch(request, *args, **kwargs)
+
 
 # ============================================================================
-# Authentication Views (ENHANCED FOR PRP)
+# Authentication Views
 # ============================================================================
 
 class CustomLoginView(LoginView):
-    """Enhanced custom login view supporting PRP User ID login."""
+    """Custom login view supporting PRP User ID login."""
     form_class = UserLoginForm
     template_name = 'users/login.html'
     redirect_authenticated_user = True
     
     def form_valid(self, form):
         """Handle successful login with PRP user detection."""
-        # FIX: Use form.get_user() instead of form.cleaned_data['user']
         user = form.get_user()
         login(self.request, user)
         
@@ -95,21 +129,22 @@ class CustomLoginView(LoginView):
             self.request.session.set_expiry(0)  # Session expires when browser closes
         
         # Enhanced welcome message for PRP users
-        if hasattr(user, 'is_prp_managed') and user.is_prp_managed:
-            welcome_msg = f'Welcome back, {user.get_display_name()}! (PRP User)'
-            # Log PRP user login for audit
-            logger.info(
-                f"PRP user login: {user.username} ({user.employee_id})",
-                extra={
-                    'user_id': user.id,
-                    'employee_id': user.employee_id,
-                    'is_prp_managed': True,
-                    'login_time': timezone.now().isoformat(),
-                    'location': 'Bangladesh Parliament Secretariat, Dhaka'
-                }
-            )
-        else:
-            welcome_msg = f'Welcome back, {user.get_display_name()}!'
+        welcome_msg = (
+            f'Welcome back, {user.get_display_name()}! (PRP User)'
+            if getattr(user, 'is_prp_managed', False)
+            else f'Welcome back, {user.get_display_name()}!'
+        )
+        
+        logger.info(
+            f"User login: {user.username} ({user.employee_id})",
+            extra={
+                'user_id': user.id,
+                'employee_id': user.employee_id,
+                'is_prp_managed': getattr(user, 'is_prp_managed', False),
+                'login_time': timezone.now().isoformat(),
+                'location': 'Bangladesh Parliament Secretariat, Dhaka'
+            }
+        )
         
         messages.success(self.request, welcome_msg)
         return super().form_valid(form)
@@ -117,8 +152,10 @@ class CustomLoginView(LoginView):
     def get_context_data(self, **kwargs):
         """Add PRP integration context to login page."""
         context = super().get_context_data(**kwargs)
-        context['prp_integration_available'] = PRP_INTEGRATION_AVAILABLE
-        context['location'] = 'Bangladesh Parliament Secretariat, Dhaka'
+        context.update({
+            'prp_integration_enabled': True,
+            'location': 'Bangladesh Parliament Secretariat, Dhaka'
+        })
         return context
 
 
@@ -130,17 +167,15 @@ class CustomPasswordResetView(PasswordResetView):
     success_url = reverse_lazy('users:password_reset_done')
 
     def form_valid(self, form):
-        """Override to handle PRP users appropriately."""
+        """Handle PRP users appropriately."""
         email = form.cleaned_data['email']
         
-        # Check if this is a PRP user
         try:
             user = CustomUser.objects.get(email=email)
-            if hasattr(user, 'is_prp_managed') and user.is_prp_managed:
+            if getattr(user, 'is_prp_managed', False):
                 messages.warning(
                     self.request,
-                    'Note: This user is managed by Parliament Resource Portal (PRP). '
-                    'Password reset will use the default PRP password.'
+                    'Note: This user is managed by PRP. Password reset will use the default PRP password.'
                 )
         except CustomUser.DoesNotExist:
             pass
@@ -150,28 +185,35 @@ class CustomPasswordResetView(PasswordResetView):
     def get_context_data(self, **kwargs):
         """Add Bangladesh context to password reset page."""
         context = super().get_context_data(**kwargs)
-        context['location'] = 'Bangladesh Parliament Secretariat, Dhaka'
+        context.update({
+            'prp_integration_enabled': True,
+            'location': 'Bangladesh Parliament Secretariat, Dhaka'
+        })
         return context
 
 
 # ============================================================================
-# User CRUD Views (ENHANCED FOR PRP)
+# User Management Views
 # ============================================================================
 
-class UserListView(LoginRequiredMixin, ListView):
-    """Enhanced user list view with PRP filtering and sync status."""
+class UserListView(LoginRequiredMixin, PRPAwareMixin, ListView):
+    """User list view with PRP filtering and sync status."""
     model = CustomUser
     template_name = 'users/users_list.html'
     context_object_name = 'users'
     paginate_by = 20
     
     def get_queryset(self):
-        """Enhanced queryset with PRP support and filtering."""
+        """Enhanced queryset with PRP status and filtering."""
         queryset = CustomUser.objects.select_related().annotate(
-            assigned_devices_count=Count('device_assignments', distinct=True)
+            assigned_devices_count=Count('device_assignments', distinct=True),
+            is_prp_user=Case(
+                When(is_prp_managed=True, then=1),
+                default=0,
+                output_field=IntegerField()
+            )
         )
         
-        # Apply search and filtering
         form = UserSearchForm(self.request.GET)
         if form.is_valid():
             search = form.cleaned_data.get('search')
@@ -241,21 +283,19 @@ class UserListView(LoginRequiredMixin, ListView):
                         prp_last_sync__lt=week_ago
                     )
         
-        return queryset.order_by('-date_joined')
+        return queryset.order_by('-is_prp_user', '-date_joined')
     
     def get_context_data(self, **kwargs):
         """Enhanced context with PRP statistics."""
         context = super().get_context_data(**kwargs)
         context['search_form'] = UserSearchForm(self.request.GET)
-        context['prp_integration_available'] = PRP_INTEGRATION_AVAILABLE
         
-        # Add PRP statistics if available
+        # Add PRP sync statistics
         if hasattr(CustomUser, 'is_prp_managed'):
             total_users = CustomUser.objects.count()
             prp_users = CustomUser.objects.filter(is_prp_managed=True).count()
             local_users = total_users - prp_users
             
-            # PRP sync statistics
             now = timezone.now()
             never_synced = CustomUser.objects.filter(
                 is_prp_managed=True,
@@ -281,52 +321,43 @@ class UserListView(LoginRequiredMixin, ListView):
                 }
             })
         
-        context['location'] = 'Bangladesh Parliament Secretariat, Dhaka'
         return context
 
 
-class UserDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
-    """Enhanced user detail view with PRP sync information."""
+class UserDetailView(LoginRequiredMixin, PRPAwareMixin, DetailView):
+    """User detail view with PRP sync information."""
     model = CustomUser
     template_name = 'users/users_detail.html'
-    context_object_name = 'user_obj'
+    context_object_name = 'user'
     permission_required = 'auth.view_user'
     
     def get_context_data(self, **kwargs):
-        """Enhanced context with PRP sync status and assignment information."""
+        """Enhanced context with PRP sync status and assignments."""
         context = super().get_context_data(**kwargs)
         user = self.object
         
-        # Basic user information
-        context['assigned_devices_count'] = user.get_assigned_devices_count()
-        context['user_groups'] = user.groups.all()
-        context['user_permissions'] = user.user_permissions.all()
-        context['prp_integration_available'] = PRP_INTEGRATION_AVAILABLE
-        
         # PRP-specific context
-        if hasattr(user, 'is_prp_managed') and user.is_prp_managed:
-            context['is_prp_user'] = True
-            context['prp_sync_status'] = self._get_prp_sync_status(user)
-        else:
-            context['is_prp_user'] = False
+        context.update({
+            'is_prp_user': getattr(user, 'is_prp_managed', False),
+            'prp_last_sync': getattr(user, 'prp_last_sync', None),
+            'readonly_fields': [
+                'employee_id', 'first_name', 'last_name', 'email',
+                'designation', 'office', 'phone_number'
+            ] if getattr(user, 'is_prp_managed', False) else []
+        })
         
-        # Enhanced assignment context
+        # Assignment information
         try:
-            from assignments.models import Assignment
-            
-            # Get active assignments
             active_assignments = Assignment.objects.filter(
                 assigned_to=user,
                 is_active=True,
                 status='ASSIGNED'
             ).select_related('device', 'assigned_location').order_by('-assigned_date')
             
-            # Get assignment history (last 10)
             assignment_history = Assignment.objects.filter(
                 assigned_to=user
             ).select_related('device', 'assigned_location').order_by('-assigned_date')[:10]
             
-            # Assignment statistics
             total_assignments = Assignment.objects.filter(assigned_to=user).count()
             returned_assignments = Assignment.objects.filter(
                 assigned_to=user, 
@@ -345,9 +376,7 @@ class UserDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
                 'returned_assignments': returned_assignments,
                 'overdue_assignments': overdue_assignments,
             })
-            
         except ImportError:
-            # Graceful fallback if assignments app not available
             context.update({
                 'active_assignments': [],
                 'assignment_history': [],
@@ -356,51 +385,11 @@ class UserDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
                 'overdue_assignments': 0,
             })
         
-        context['location'] = 'Bangladesh Parliament Secretariat, Dhaka'
         return context
-    
-    def _get_prp_sync_status(self, user):
-        """Get detailed PRP sync status for user."""
-        if not user.prp_last_sync:
-            return {
-                'status': 'never_synced',
-                'message': 'User has never been synced from PRP',
-                'last_sync': None,
-                'needs_sync': True,
-                'css_class': 'text-warning'
-            }
-        
-        now = timezone.now()
-        time_diff = now - user.prp_last_sync
-        
-        if time_diff < timedelta(hours=24):
-            return {
-                'status': 'recently_synced',
-                'message': 'Recently synced from PRP',
-                'last_sync': user.prp_last_sync,
-                'needs_sync': False,
-                'css_class': 'text-success'
-            }
-        elif time_diff < timedelta(days=7):
-            return {
-                'status': 'synced',
-                'message': 'Synced from PRP',
-                'last_sync': user.prp_last_sync,
-                'needs_sync': False,
-                'css_class': 'text-info'
-            }
-        else:
-            return {
-                'status': 'needs_sync',
-                'message': 'Sync needed (last synced over 7 days ago)',
-                'last_sync': user.prp_last_sync,
-                'needs_sync': True,
-                'css_class': 'text-warning'
-            }
 
 
-class UserCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
-    """Enhanced user creation view with PRP prevention."""
+class UserCreateView(LoginRequiredMixin, AdminOnlyMixin, PRPAwareMixin, CreateView):
+    """User creation view restricted to local PIMS users."""
     model = CustomUser
     form_class = CustomUserCreationForm
     template_name = 'users/users_create.html'
@@ -410,43 +399,54 @@ class UserCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         """Add PRP context to creation form."""
         context = super().get_context_data(**kwargs)
-        context['prp_integration_available'] = PRP_INTEGRATION_AVAILABLE
-        context['location'] = 'Bangladesh Parliament Secretariat, Dhaka'
+        context.update({
+            'page_title': 'Create Local PIMS User',
+            'prp_warning': 'PRP users must be synced through the admin interface.',
+            'creation_mode': 'local_only'
+        })
         return context
     
     def form_valid(self, form):
-        """Enhanced form validation with PRP prevention."""
-        # Additional validation to prevent PRP user creation
-        if form.cleaned_data.get('is_prp_managed', False):
-            form.add_error('is_prp_managed', 
-                'PRP-managed users cannot be created manually. '
-                'They are automatically created during PRP synchronization.'
+        """Prevent PRP user creation and log local user creation."""
+        try:
+            user = form.save(commit=False)
+            if form.cleaned_data.get('is_prp_managed', False):
+                form.add_error(
+                    None,
+                    'PRP-managed users cannot be created manually. Use PRP synchronization.'
+                )
+                return self.form_invalid(form)
+            
+            user.is_prp_managed = False
+            user.save()
+            
+            logger.info(
+                f"Local user created: {user.username} ({user.employee_id})",
+                extra={
+                    'user_id': user.id,
+                    'created_by': self.request.user.username,
+                    'is_prp_managed': False,
+                    'creation_time': timezone.now().isoformat(),
+                    'location': 'Bangladesh Parliament Secretariat, Dhaka'
+                }
             )
+            
+            messages.success(
+                self.request,
+                f'Local user "{user.get_display_name()}" created successfully.'
+            )
+            return super().form_valid(form)
+        except IntegrityError as e:
+            form.add_error(None, f"User creation failed: {str(e)}")
             return self.form_invalid(form)
-        
-        response = super().form_valid(form)
-        
-        # Log local user creation
-        logger.info(
-            f"Local user created: {self.object.username} ({self.object.employee_id})",
-            extra={
-                'user_id': self.object.id,
-                'created_by': self.request.user.username,
-                'is_prp_managed': False,
-                'creation_time': timezone.now().isoformat(),
-                'location': 'Bangladesh Parliament Secretariat, Dhaka'
-            }
-        )
-        
-        messages.success(
-            self.request, 
-            f'Local user {self.object.get_display_name()} created successfully!'
-        )
-        return response
+        except Exception as e:
+            logger.error(f"Error creating local user: {e}")
+            form.add_error(None, f"Unexpected error: {str(e)}")
+            return self.form_invalid(form)
 
 
-class UserUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
-    """Enhanced user update view with PRP field protection."""
+class UserUpdateView(LoginRequiredMixin, AdminOnlyMixin, PRPAwareMixin, UpdateView):
+    """User update view with PRP field protection."""
     model = CustomUser
     form_class = CustomUserChangeForm
     template_name = 'users/users_edit.html'
@@ -458,22 +458,26 @@ class UserUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         """Add PRP context to edit form."""
         context = super().get_context_data(**kwargs)
-        context['prp_integration_available'] = PRP_INTEGRATION_AVAILABLE
-        context['location'] = 'Bangladesh Parliament Secretariat, Dhaka'
+        user = self.get_object()
         
-        # Add PRP user indicators
-        if hasattr(self.object, 'is_prp_managed') and self.object.is_prp_managed:
-            context['is_prp_user'] = True
-            context['prp_sync_status'] = self._get_prp_sync_status(self.object)
+        if getattr(user, 'is_prp_managed', False):
+            context.update({
+                'is_prp_user': True,
+                'readonly_warning': True,
+                'prp_last_sync': getattr(user, 'prp_last_sync', None),
+                'readonly_fields': [
+                    'employee_id', 'first_name', 'last_name', 'email',
+                    'designation', 'office', 'phone_number'
+                ]
+            })
         
         return context
     
     def form_valid(self, form):
-        """Enhanced form validation with PRP business rules."""
-        user = self.object
+        """Enforce PRP field restrictions."""
+        user = form.instance
         
-        # Log significant changes for PRP users
-        if hasattr(user, 'is_prp_managed') and user.is_prp_managed:
+        if getattr(user, 'is_prp_managed', False):
             logger.info(
                 f"PRP user modified: {user.username} ({user.employee_id})",
                 extra={
@@ -484,113 +488,67 @@ class UserUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
                     'location': 'Bangladesh Parliament Secretariat, Dhaka'
                 }
             )
-        
-        response = super().form_valid(form)
-        
-        # Enhanced success message
-        if hasattr(user, 'is_prp_managed') and user.is_prp_managed:
-            messages.success(
-                self.request, 
-                f'PRP user {self.object.get_display_name()} updated successfully! '
-                '(Some fields are managed by Parliament Resource Portal)'
+            messages.warning(
+                self.request,
+                f'PRP user "{user.get_display_name()}" updated. Only administrative fields modified.'
             )
         else:
             messages.success(
-                self.request, 
-                f'Local user {self.object.get_display_name()} updated successfully!'
+                self.request,
+                f'Local user "{user.get_display_name()}" updated successfully.'
             )
         
-        return response
-    
-    def _get_prp_sync_status(self, user):
-        """Get PRP sync status (same as UserDetailView)."""
-        if not user.prp_last_sync:
-            return {
-                'status': 'never_synced',
-                'message': 'User has never been synced from PRP',
-                'last_sync': None,
-                'needs_sync': True,
-                'css_class': 'text-warning'
-            }
-        
-        now = timezone.now()
-        time_diff = now - user.prp_last_sync
-        
-        if time_diff < timedelta(hours=24):
-            return {
-                'status': 'recently_synced',
-                'message': 'Recently synced from PRP',
-                'last_sync': user.prp_last_sync,
-                'needs_sync': False,
-                'css_class': 'text-success'
-            }
-        elif time_diff < timedelta(days=7):
-            return {
-                'status': 'synced',
-                'message': 'Synced from PRP',
-                'last_sync': user.prp_last_sync,
-                'needs_sync': False,
-                'css_class': 'text-info'
-            }
-        else:
-            return {
-                'status': 'needs_sync',
-                'message': 'Sync needed (last synced over 7 days ago)',
-                'last_sync': user.prp_last_sync,
-                'needs_sync': True,
-                'css_class': 'text-warning'
-            }
+        return super().form_valid(form)
 
 
-class UserDeleteView(LoginRequiredMixin, PermissionRequiredMixin, View):
-    """Enhanced delete view with PRP user protection and self-action protection."""
+class UserDeleteView(LoginRequiredMixin, AdminOnlyMixin, View):
+    """User deletion view with PRP protection."""
     permission_required = 'auth.delete_user'
     
     def get(self, request, pk):
-        """Display delete confirmation page with enhanced protection."""
+        """Display delete confirmation page."""
         user = get_object_or_404(CustomUser, pk=pk)
         
-        # PROTECTION: Prevent self-deletion
-        if user.username == request.user.username:
+        if user == request.user:
             messages.error(
-                request, 
-                '⚠️ You cannot delete your own account. This would permanently remove your access.'
+                request,
+                'You cannot delete your own account.'
             )
             return redirect('users:list')
         
-        # PROTECTION: Warn about PRP user deletion
         context = {
             'object': user,
-            'prp_integration_available': PRP_INTEGRATION_AVAILABLE,
-            'location': 'Bangladesh Parliament Secretariat, Dhaka'
-        }
-        
-        if hasattr(user, 'is_prp_managed') and user.is_prp_managed:
-            context['is_prp_user'] = True
-            context['prp_warning'] = (
+            'is_prp_user': getattr(user, 'is_prp_managed', False),
+            'prp_warning': (
                 'This is a PRP-managed user. Deletion will remove them from PIMS, '
                 'but they may be recreated during the next PRP synchronization.'
-            )
+            ) if getattr(user, 'is_prp_managed', False) else None,
+            'location': 'Bangladesh Parliament Secretariat, Dhaka'
+        }
         
         return render(request, 'users/users_delete.html', context)
     
     def post(self, request, pk):
-        """Handle user deletion with enhanced protection."""
+        """Handle user deletion with PRP protection."""
         try:
             user = get_object_or_404(CustomUser, pk=pk)
             
-            # PROTECTION: Prevent self-deletion
-            if user.username == request.user.username:
+            if user == request.user:
                 messages.error(
-                    request, 
-                    '⚠️ You cannot delete your own account. This would permanently remove your access.'
+                    request,
+                    'You cannot delete your own account.'
                 )
                 return redirect('users:list')
             
-            user_name = user.get_display_name()
-            is_prp_user = hasattr(user, 'is_prp_managed') and user.is_prp_managed
+            is_prp_user = getattr(user, 'is_prp_managed', False)
+            if is_prp_user:
+                messages.error(
+                    request,
+                    'Cannot delete PRP-managed user. Use deactivation instead.'
+                )
+                return redirect('users:detail', pk=user.pk)
             
-            # Log deletion for audit
+            user_name = user.get_display_name()
             logger.warning(
                 f"User deleted: {user.username} ({user.employee_id})",
                 extra={
@@ -603,338 +561,447 @@ class UserDeleteView(LoginRequiredMixin, PermissionRequiredMixin, View):
             )
             
             user.delete()
-            
-            # Enhanced success message
-            if is_prp_user:
-                messages.success(
-                    request, 
-                    f'✅ PRP user {user_name} has been deleted from PIMS! '
-                    'Note: They may be recreated during the next PRP sync.'
-                )
-            else:
-                messages.success(
-                    request, 
-                    f'✅ Local user {user_name} has been permanently deleted!'
-                )
-            
+            messages.success(
+                request,
+                f'Local user "{user_name}" has been permanently deleted.'
+            )
             return redirect('users:list')
             
         except Exception as e:
-            logger.error(f"Error deleting user: {str(e)}")
-            messages.error(request, f'❌ Error deleting user: {str(e)}')
+            logger.error(f"Error deleting user: {e}")
+            messages.error(request, f'Error deleting user: {str(e)}')
             return redirect('users:list')
 
 
+class UserDeactivateView(LoginRequiredMixin, AdminOnlyMixin, UpdateView):
+    """User deactivation view with PRP business rule handling."""
+    model = CustomUser
+    template_name = 'users/user_deactivate_confirm.html'
+    permission_required = 'auth.change_user'
+    fields = []
+    
+    def get_success_url(self):
+        return reverse('users:detail', kwargs={'pk': self.object.pk})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.get_object()
+        
+        context.update({
+            'page_title': f'Deactivate User: {user.get_display_name()}',
+            'is_prp_user': getattr(user, 'is_prp_managed', False),
+            'prp_last_sync': getattr(user, 'prp_last_sync', None),
+            'admin_override_note': getattr(user, 'is_prp_managed', False)
+        })
+        
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        """Handle user deactivation with PRP business rules."""
+        user = self.get_object()
+        
+        try:
+            if user == request.user:
+                messages.error(
+                    request,
+                    'You cannot deactivate your own account.'
+                )
+                return redirect('users:detail', pk=user.pk)
+            
+            user.is_active = False
+            user.save(update_fields=['is_active'])
+            
+            is_prp_user = getattr(user, 'is_prp_managed', False)
+            logger.info(
+                f"User deactivated: {user.username} ({user.employee_id})",
+                extra={
+                    'user_id': user.id,
+                    'deactivated_by': request.user.username,
+                    'is_prp_managed': is_prp_user,
+                    'admin_override': is_prp_user,
+                    'deactivation_time': timezone.now().isoformat(),
+                    'location': 'Bangladesh Parliament Secretariat, Dhaka'
+                }
+            )
+            
+            message = f'User "{user.get_display_name()}" has been deactivated.'
+            if is_prp_user:
+                message += ' Note: This is an admin override for a PRP-managed user.'
+            
+            messages.success(request, message)
+            return redirect('users:detail', pk=user.pk)
+            
+        except Exception as e:
+            logger.error(f"Error deactivating user: {e}")
+            messages.error(request, f'Error deactivating user: {str(e)}')
+            return redirect('users:detail', pk=user.pk)
+
+
+class UserProfileView(LoginRequiredMixin, PRPAwareMixin, UpdateView):
+    """User profile view with PRP integration awareness."""
+    model = CustomUser
+    form_class = UserProfileForm
+    template_name = 'users/profile.html'
+    
+    def get_object(self):
+        return self.request.user
+    
+    def get_success_url(self):
+        return reverse('users:profile')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.get_object()
+        
+        if getattr(user, 'is_prp_managed', False):
+            context.update({
+                'is_prp_user': True,
+                'prp_last_sync': getattr(user, 'prp_last_sync', None),
+                'readonly_fields': [
+                    'employee_id', 'first_name', 'last_name', 'email',
+                    'designation', 'office', 'phone_number'
+                ],
+                'profile_note': 'Your profile data is managed by PRP. Contact system administrator for updates.'
+            })
+        
+        context.update({
+            'assigned_devices_count': Device.objects.filter(
+                assignments__user=user,
+                assignments__is_active=True
+            ).distinct().count(),
+            'total_assignments_count': Assignment.objects.filter(user=user).count(),
+            'last_login_formatted': user.last_login.strftime('%B %d, %Y at %I:%M %p') if user.last_login else 'Never'
+        })
+        
+        return context
+    
+    def form_valid(self, form):
+        """Handle PRP user profile restrictions."""
+        user = form.instance
+        
+        if getattr(user, 'is_prp_managed', False):
+            logger.info(
+                f"PRP user profile modified: {user.username} ({user.employee_id})",
+                extra={
+                    'user_id': user.id,
+                    'is_prp_managed': True,
+                    'modification_time': timezone.now().isoformat(),
+                    'modified_fields': form.changed_data,
+                    'location': 'Bangladesh Parliament Secretariat, Dhaka'
+                }
+            )
+            messages.info(
+                self.request,
+                'Profile updated. Note: Core information is managed by PRP and cannot be changed here.'
+            )
+        else:
+            messages.success(
+                self.request,
+                'Your profile has been updated successfully.'
+            )
+        
+        return super().form_valid(form)
+
+
 # ============================================================================
-# PRP SYNC ENDPOINTS 
+# PRP Synchronization Views
 # ============================================================================
 
-@method_decorator([login_required, staff_member_required], name='dispatch')
-class PRPSyncDashboardView(TemplateView):
+class PRPSyncDashboardView(LoginRequiredMixin, AdminOnlyMixin, PRPAwareMixin, TemplateView):
     """PRP synchronization dashboard for admin users."""
     template_name = 'users/prp_sync_dashboard.html'
     
     def get_context_data(self, **kwargs):
         """Provide comprehensive PRP sync dashboard context."""
         context = super().get_context_data(**kwargs)
-        
-        if not PRP_INTEGRATION_AVAILABLE:
-            context['error'] = 'PRP integration modules are not available.'
-            return context
+        context['page_title'] = 'PRP Sync Dashboard - Bangladesh Parliament Secretariat'
         
         try:
-            # Basic statistics
-            total_users = CustomUser.objects.count()
-            prp_users = CustomUser.objects.filter(is_prp_managed=True).count()
-            local_users = total_users - prp_users
+            prp_client = PRPClient()
+            sync_service = PRPSyncService(prp_client)
             
-            # Sync status statistics
-            now = timezone.now()
-            never_synced = CustomUser.objects.filter(
-                is_prp_managed=True,
-                prp_last_sync__isnull=True
-            ).count()
-            
-            recently_synced = CustomUser.objects.filter(
-                is_prp_managed=True,
-                prp_last_sync__gte=now - timedelta(hours=24)
-            ).count()
-            
-            needs_sync = CustomUser.objects.filter(
-                is_prp_managed=True,
-                prp_last_sync__lt=now - timedelta(days=7)
-            ).count()
-            
-            # Recent sync activity
-            recent_prp_users = CustomUser.objects.filter(
-                is_prp_managed=True
-            ).order_by('-prp_last_sync')[:10]
+            api_status = sync_service.check_api_health()
+            sync_stats = sync_service.get_sync_statistics()
+            recent_operations = sync_service.get_recent_operations(limit=10)
             
             context.update({
-                'prp_integration_available': True,
-                'statistics': {
-                    'total_users': total_users,
-                    'prp_users': prp_users,
-                    'local_users': local_users,
-                    'never_synced': never_synced,
-                    'recently_synced': recently_synced,
-                    'needs_sync': needs_sync,
-                },
-                'recent_prp_users': recent_prp_users,
-                'location': 'Bangladesh Parliament Secretariat, Dhaka'
+                'api_status': api_status,
+                'sync_stats': sync_stats,
+                'recent_operations': recent_operations,
+                'prp_base_url': settings.PRP_API_BASE_URL,
+                'last_update': timezone.now(),
+                'cached_departments_count': len(sync_service.get_departments()),
+                'last_sync_time': sync_service.get_last_sync_time()
             })
             
+        except PRPConnectionError as e:
+            logger.error(f"PRP connection error in dashboard: {e}")
+            context.update({
+                'api_status': {'connected': False, 'error': str(e)},
+                'connection_error': True
+            })
         except Exception as e:
-            logger.error(f"Error loading PRP sync dashboard: {e}")
-            context['error'] = f'Error loading PRP sync data: {str(e)}'
+            logger.error(f"Unexpected error in PRP dashboard: {e}")
+            context.update({
+                'system_error': True,
+                'error_message': str(e)
+            })
         
         return context
 
 
-@require_http_methods(["POST"])
-@login_required
-@staff_member_required  
-def prp_sync_trigger(request):
-    """AJAX endpoint to trigger PRP synchronization."""
-    if not PRP_INTEGRATION_AVAILABLE:
-        return JsonResponse({
-            'success': False,
-            'error': 'PRP integration is not available.'
-        }, status=503)
+class PRPSyncUsersView(LoginRequiredMixin, AdminOnlyMixin, PRPAwareMixin, TemplateView):
+    """PRP user synchronization interface."""
+    template_name = 'users/prp_sync_users.html'
     
-    try:
-        # Parse request data
-        data = json.loads(request.body.decode('utf-8'))
-        sync_type = data.get('sync_type', 'all')  # 'all', 'department', 'status_only'
-        department_id = data.get('department_id')
-        dry_run = data.get('dry_run', False)
-        force = data.get('force', False)
+    def get_context_data(self, **kwargs):
+        """Provide context for sync interface."""
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'PRP User Synchronization'
         
-        # Initialize PRP client and sync service
         try:
-            prp_client = create_prp_client()
+            prp_client = PRPClient()
             sync_service = PRPSyncService(prp_client)
+            departments = sync_service.get_departments()
+            
+            context.update({
+                'departments': departments,
+                'sync_options': {
+                    'dry_run': True,
+                    'force_update': False,
+                    'sync_inactive': True
+                }
+            })
+            
+        except PRPConnectionError as e:
+            logger.error(f"PRP connection error: {e}")
+            context['connection_error'] = str(e)
         except Exception as e:
-            logger.error(f"Failed to initialize PRP client: {e}")
+            logger.error(f"Error loading sync interface: {e}")
+            context['system_error'] = str(e)
+        
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        """Handle PRP sync operations."""
+        try:
+            sync_type = request.POST.get('sync_type', 'department')
+            department_id = request.POST.get('department_id')
+            dry_run = request.POST.get('dry_run') == 'on'
+            force_update = request.POST.get('force_update') == 'on'
+            
+            prp_client = PRPClient()
+            sync_service = PRPSyncService(prp_client)
+            
+            with transaction.atomic():
+                savepoint = transaction.savepoint()
+                try:
+                    if sync_type == 'all_departments':
+                        result = sync_service.sync_all_departments(
+                            dry_run=dry_run,
+                            force_update=force_update
+                        )
+                    elif sync_type == 'department' and department_id:
+                        result = sync_service.sync_department_users(
+                            department_id=int(department_id),
+                            dry_run=dry_run,
+                            force_update=force_update
+                        )
+                    else:
+                        raise PRPBusinessRuleError('Invalid sync parameters')
+                    
+                    if not dry_run and not result.success:
+                        transaction.savepoint_rollback(savepoint)
+                        raise PRPSyncError("Sync failed", details=result.errors)
+                    
+                    message = (
+                        f"Dry Run: Would process {result.users_created + result.users_updated} users"
+                        if dry_run else
+                        f"Sync completed: Created {result.users_created}, Updated {result.users_updated}"
+                    )
+                    messages.success(request, message)
+                    
+                    if not dry_run:
+                        transaction.savepoint_commit(savepoint)
+                    
+                    logger.info(
+                        f"PRP sync completed: {sync_type}",
+                        extra={
+                            'sync_type': sync_type,
+                            'department_id': department_id,
+                            'dry_run': dry_run,
+                            'initiated_by': request.user.username,
+                            'result': {
+                                'users_created': result.users_created,
+                                'users_updated': result.users_updated,
+                                'errors': result.errors
+                            },
+                            'sync_time': timezone.now().isoformat(),
+                            'location': 'Bangladesh Parliament Secretariat, Dhaka'
+                        }
+                    )
+                    
+                    return JsonResponse({
+                        'success': True,
+                        'message': message,
+                        'result': {
+                            'users_created': result.users_created,
+                            'users_updated': result.users_updated,
+                            'users_unchanged': result.users_unchanged,
+                            'errors': result.errors,
+                            'departments_processed': getattr(result, 'departments_processed', 1)
+                        }
+                    })
+                    
+                except Exception as e:
+                    if not dry_run:
+                        transaction.savepoint_rollback(savepoint)
+                    raise
+                
+        except PRPConnectionError as e:
+            logger.error(f"PRP connection error during sync: {e}")
+            messages.error(request, f'PRP connection failed: {str(e)}')
             return JsonResponse({
                 'success': False,
-                'error': f'Failed to connect to PRP API: {str(e)}'
+                'error': f'PRP connection failed: {str(e)}'
+            }, status=503)
+        except PRPBusinessRuleError as e:
+            logger.warning(f"PRP business rule violation: {e}")
+            messages.error(request, f'Business rule violation: {str(e)}')
+            return JsonResponse({
+                'success': False,
+                'error': f'Business rule violation: {str(e)}'
+            }, status=400)
+        except Exception as e:
+            logger.error(f"Unexpected error during PRP sync: {e}")
+            messages.error(request, f'Sync operation failed: {str(e)}')
+            return JsonResponse({
+                'success': False,
+                'error': f'Sync operation failed: {str(e)}'
             }, status=500)
+
+
+@require_POST
+@login_required
+@staff_member_required
+def prp_trigger_sync_ajax(request):
+    """AJAX endpoint for PRP sync operations."""
+    try:
+        data = json.loads(request.body)
+        operation = data.get('operation')
+        params = data.get('params', {})
         
-        # Execute sync based on type
-        with transaction.atomic():
-            if sync_type == 'all':
-                result = sync_service.sync_all_departments(
-                    dry_run=dry_run,
-                    force=force
-                )
-            elif sync_type == 'department' and department_id:
-                result = sync_service.sync_department_users(
-                    department_id=int(department_id),
-                    dry_run=dry_run,
-                    force=force
-                )
-            elif sync_type == 'status_only':
-                result = sync_service.sync_user_status_only(
-                    dry_run=dry_run,
-                    force=force
-                )
-            else:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Invalid sync type specified.'
-                }, status=400)
+        prp_client = PRPClient()
+        sync_service = PRPSyncService(prp_client)
         
-        # Log sync operation
+        if operation == 'health_check':
+            result = sync_service.check_api_health()
+        elif operation == 'sync_department':
+            department_id = params.get('department_id')
+            result = sync_service.sync_department_users(
+                department_id=department_id,
+                dry_run=params.get('dry_run', False)
+            )
+        elif operation == 'sync_all':
+            result = sync_service.sync_all_departments(
+                dry_run=params.get('dry_run', False)
+            )
+        elif operation == 'get_departments':
+            result = sync_service.get_departments()
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': f'Unknown operation: {operation}'
+            }, status=400)
+        
         logger.info(
-            f"PRP sync triggered by {request.user.username}: {sync_type}",
+            f"PRP AJAX sync operation: {operation}",
             extra={
-                'sync_type': sync_type,
-                'department_id': department_id,
-                'dry_run': dry_run,
-                'force': force,
-                'triggered_by': request.user.username,
-                'result_summary': {
-                    'users_created': result.users_created,
-                    'users_updated': result.users_updated,
-                    'errors': result.errors
-                },
+                'operation': operation,
+                'params': params,
+                'initiated_by': request.user.username,
                 'sync_time': timezone.now().isoformat(),
                 'location': 'Bangladesh Parliament Secretariat, Dhaka'
             }
         )
         
-        # Return success response
         return JsonResponse({
             'success': True,
-            'message': 'PRP synchronization completed successfully!',
-            'result': {
-                'users_created': result.users_created,
-                'users_updated': result.users_updated,
-                'users_unchanged': result.users_unchanged,
-                'errors': result.errors,
-                'departments_processed': getattr(result, 'departments_processed', 1),
-                'dry_run': dry_run,
-                'sync_type': sync_type,
-                'sync_time': timezone.now().isoformat()
-            }
+            'data': result,
+            'timestamp': timezone.now().isoformat()
         })
-        
-    except PRPConnectionError as e:
-        logger.error(f"PRP connection error during sync: {e}")
-        return JsonResponse({
-            'success': False,
-            'error': f'PRP connection failed: {str(e)}. Please check network connectivity and API status.'
-        }, status=503)
-        
-    except PRPAuthenticationError as e:
-        logger.error(f"PRP authentication error during sync: {e}")
-        return JsonResponse({
-            'success': False,
-            'error': f'PRP authentication failed: {str(e)}. Please check API credentials.'
-        }, status=401)
-        
-    except PRPSyncError as e:
-        logger.error(f"PRP sync error: {e}")
-        return JsonResponse({
-            'success': False,
-            'error': f'Synchronization failed: {str(e)}'
-        }, status=500)
         
     except json.JSONDecodeError:
         return JsonResponse({
             'success': False,
-            'error': 'Invalid JSON data in request.'
+            'error': 'Invalid JSON data'
         }, status=400)
-        
-    except Exception as e:
-        logger.error(f"Unexpected error during PRP sync: {e}")
-        logger.error(traceback.format_exc())
+    except PRPConnectionError as e:
+        logger.error(f"PRP connection error in AJAX: {e}")
         return JsonResponse({
             'success': False,
-            'error': f'Unexpected error occurred: {str(e)}'
+            'error': f'PRP connection failed: {str(e)}'
+        }, status=503)
+    except Exception as e:
+        logger.error(f"Error in PRP AJAX operation: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': f'Operation failed: {str(e)}'
         }, status=500)
 
 
 @require_http_methods(["GET"])
 @login_required
 @staff_member_required
-def prp_departments_api(request):
-    """AJAX endpoint to get PRP departments list."""
-    if not PRP_INTEGRATION_AVAILABLE:
-        return JsonResponse({
-            'success': False,
-            'error': 'PRP integration is not available.'
-        }, status=503)
-    
+def prp_user_lookup_ajax(request):
+    """AJAX endpoint for PRP user lookup."""
     try:
-        # Initialize PRP client
-        prp_client = create_prp_client()
-        sync_service = PRPSyncService(prp_client)
+        employee_id = request.GET.get('employee_id')
+        if not employee_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'Employee ID required'
+            }, status=400)
         
-        # Get departments from PRP
-        departments = sync_service.get_prp_departments()
+        prp_client = PRPClient()
+        prp_user_data = prp_client.lookup_user_by_employee_id(employee_id)
         
-        # Format for frontend
-        formatted_departments = [
-            {
-                'id': dept['id'],
-                'nameEng': dept.get('nameEng', f"Department {dept['id']}"),
-                'nameBng': dept.get('nameBng', ''),
-                'isWing': dept.get('isWing', False)
-            }
-            for dept in departments
-        ]
-        
-        return JsonResponse({
-            'success': True,
-            'departments': formatted_departments,
-            'count': len(formatted_departments)
-        })
-        
+        if prp_user_data:
+            try:
+                local_user = CustomUser.objects.get(employee_id=employee_id)
+                user_data = {
+                    'exists_locally': True,
+                    'local_user': {
+                        'id': local_user.id,
+                        'username': local_user.username,
+                        'is_prp_managed': getattr(local_user, 'is_prp_managed', False),
+                        'last_sync': getattr(local_user, 'prp_last_sync', None),
+                        'is_active': local_user.is_active
+                    },
+                    'prp_data': prp_user_data
+                }
+            except CustomUser.DoesNotExist:
+                user_data = {
+                    'exists_locally': False,
+                    'prp_data': prp_user_data
+                }
+            
+            return JsonResponse({
+                'success': True,
+                'data': user_data
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': f'Employee ID {employee_id} not found in PRP'
+            }, status=404)
+            
     except PRPConnectionError as e:
-        logger.error(f"PRP connection error getting departments: {e}")
+        logger.error(f"PRP connection error in lookup: {e}")
         return JsonResponse({
             'success': False,
-            'error': f'Failed to connect to PRP API: {str(e)}'
+            'error': f'PRP connection failed: {str(e)}'
         }, status=503)
-        
-    except Exception as e:
-        logger.error(f"Error getting PRP departments: {e}")
-        return JsonResponse({
-            'success': False,
-            'error': f'Error retrieving departments: {str(e)}'
-        }, status=500)
-
-
-@require_http_methods(["GET"])
-@login_required
-def prp_user_lookup(request, employee_id):
-    """AJAX endpoint for PRP user lookup by employee ID."""
-    if not PRP_INTEGRATION_AVAILABLE:
-        return JsonResponse({
-            'success': False,
-            'error': 'PRP integration is not available.'
-        }, status=503)
-    
-    try:
-        # Look up user in PIMS first
-        try:
-            local_user = CustomUser.objects.get(employee_id=employee_id)
-            user_data = {
-                'found_in_pims': True,
-                'user_id': local_user.id,
-                'username': local_user.username,
-                'full_name': local_user.get_full_name(),
-                'email': local_user.email,
-                'designation': local_user.designation,
-                'office': local_user.office,
-                'is_prp_managed': getattr(local_user, 'is_prp_managed', False),
-                'is_active': local_user.is_active,
-                'last_sync': getattr(local_user, 'prp_last_sync', None),
-                'profile_url': reverse('users:detail', kwargs={'pk': local_user.pk})
-            }
-            
-            if user_data['last_sync']:
-                user_data['last_sync'] = user_data['last_sync'].isoformat()
-                
-        except CustomUser.DoesNotExist:
-            user_data = {'found_in_pims': False}
-        
-        # Look up user in PRP
-        try:
-            prp_client = create_prp_client()
-            sync_service = PRPSyncService(prp_client)
-            
-            prp_user_data = sync_service.lookup_user_by_employee_id(employee_id)
-            
-            if prp_user_data:
-                user_data.update({
-                    'found_in_prp': True,
-                    'prp_data': {
-                        'userId': prp_user_data.get('userId'),
-                        'nameEng': prp_user_data.get('nameEng'),
-                        'email': prp_user_data.get('email'),
-                        'designation': prp_user_data.get('designationEng'),
-                        'mobile': prp_user_data.get('mobile'),
-                        'status': prp_user_data.get('status'),
-                        'departmentId': prp_user_data.get('departmentId')
-                    }
-                })
-            else:
-                user_data['found_in_prp'] = False
-                
-        except Exception as e:
-            logger.warning(f"PRP lookup failed for employee {employee_id}: {e}")
-            user_data['found_in_prp'] = False
-            user_data['prp_error'] = str(e)
-        
-        return JsonResponse({
-            'success': True,
-            'employee_id': employee_id,
-            **user_data
-        })
-        
     except Exception as e:
         logger.error(f"Error in PRP user lookup: {e}")
         return JsonResponse({
@@ -943,1249 +1010,11 @@ def prp_user_lookup(request, employee_id):
         }, status=500)
 
 
-@require_http_methods(["GET"])
-@login_required
-@staff_member_required
-def prp_sync_status(request):
-    """AJAX endpoint to get current PRP sync status."""
-    if not PRP_INTEGRATION_AVAILABLE:
-        return JsonResponse({
-            'success': False,
-            'error': 'PRP integration is not available.'
-        }, status=503)
-    
-    try:
-        # Get basic sync statistics
-        now = timezone.now()
-        total_users = CustomUser.objects.count()
-        prp_users = CustomUser.objects.filter(is_prp_managed=True).count()
-        
-        # Detailed sync status
-        never_synced = CustomUser.objects.filter(
-            is_prp_managed=True,
-            prp_last_sync__isnull=True
-        ).count()
-        
-        recently_synced = CustomUser.objects.filter(
-            is_prp_managed=True,
-            prp_last_sync__gte=now - timedelta(hours=24)
-        ).count()
-        
-        needs_sync = CustomUser.objects.filter(
-            is_prp_managed=True,
-            prp_last_sync__lt=now - timedelta(days=7)
-        ).count()
-        
-        # Last sync information
-        last_synced_user = CustomUser.objects.filter(
-            is_prp_managed=True,
-            prp_last_sync__isnull=False
-        ).order_by('-prp_last_sync').first()
-        
-        # Test PRP API connection
-        try:
-            prp_client = create_prp_client()
-            connection_test = prp_client.test_connection()
-            api_status = 'connected' if connection_test['success'] else 'failed'
-            api_error = connection_test.get('error')
-        except Exception as e:
-            api_status = 'error'
-            api_error = str(e)
-        
-        return JsonResponse({
-            'success': True,
-            'sync_status': {
-                'total_users': total_users,
-                'prp_users': prp_users,
-                'local_users': total_users - prp_users,
-                'never_synced': never_synced,
-                'recently_synced': recently_synced,
-                'needs_sync': needs_sync,
-                'last_sync_time': last_synced_user.prp_last_sync.isoformat() if last_synced_user and last_synced_user.prp_last_sync else None,
-                'last_synced_user': last_synced_user.get_display_name() if last_synced_user else None,
-                'api_status': api_status,
-                'api_error': api_error,
-                'check_time': now.isoformat()
-            }
-        })
-        
-    except Exception as e:
-        logger.error(f"Error getting PRP sync status: {e}")
-        return JsonResponse({
-            'success': False,
-            'error': f'Status check failed: {str(e)}'
-        }, status=500)
-
-
-@require_http_methods(["POST"])
-@login_required
-@staff_member_required
-def prp_sync_single_user(request, pk):
-    """AJAX endpoint to sync a single user from PRP."""
-    if not PRP_INTEGRATION_AVAILABLE:
-        return JsonResponse({
-            'success': False,
-            'error': 'PRP integration is not available.'
-        }, status=503)
-    
-    try:
-        user = get_object_or_404(CustomUser, pk=pk)
-        
-        # Verify this is a PRP user
-        if not getattr(user, 'is_prp_managed', False):
-            return JsonResponse({
-                'success': False,
-                'error': 'This is not a PRP-managed user.'
-            }, status=400)
-        
-        # Parse request options
-        try:
-            data = json.loads(request.body.decode('utf-8'))
-            force = data.get('force', False)
-        except json.JSONDecodeError:
-            force = False
-        
-        # Initialize sync service
-        prp_client = create_prp_client()
-        sync_service = PRPSyncService(prp_client)
-        
-        # Sync single user
-        with transaction.atomic():
-            result = sync_service.sync_single_user(
-                employee_id=user.employee_id,
-                force=force
-            )
-        
-        # Log operation
-        logger.info(
-            f"Single PRP user sync: {user.username} ({user.employee_id})",
-            extra={
-                'user_id': user.id,
-                'synced_by': request.user.username,
-                'force': force,
-                'sync_time': timezone.now().isoformat(),
-                'location': 'Bangladesh Parliament Secretariat, Dhaka'
-            }
-        )
-        
-        return JsonResponse({
-            'success': True,
-            'message': f'User {user.get_display_name()} synced successfully!',
-            'result': {
-                'user_updated': result.users_updated > 0,
-                'user_created': result.users_created > 0,
-                'errors': result.errors,
-                'sync_time': timezone.now().isoformat()
-            }
-        })
-        
-    except CustomUser.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'error': 'User not found.'
-        }, status=404)
-        
-    except PRPException as e:
-        logger.error(f"PRP error syncing single user: {e}")
-        return JsonResponse({
-            'success': False,
-            'error': f'PRP sync failed: {str(e)}'
-        }, status=500)
-        
-    except Exception as e:
-        logger.error(f"Error syncing single user: {e}")
-        return JsonResponse({
-            'success': False,
-            'error': f'Sync failed: {str(e)}'
-        }, status=500)
-
-
-# ============================================================================
-# User Role and Permission Management (ENHANCED FOR PRP)
-# ============================================================================
-
-class UserRoleUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
-    """Enhanced user roles update with PRP user handling."""
-    model = CustomUser
-    form_class = UserRoleForm
-    template_name = 'users/users_roles.html'
-    permission_required = 'auth.change_user'
-    
-    def get_success_url(self):
-        return reverse('users:detail', kwargs={'pk': self.object.pk})
-    
-    def get_context_data(self, **kwargs):
-        """Add PRP context to roles form."""
-        context = super().get_context_data(**kwargs)
-        context['prp_integration_available'] = PRP_INTEGRATION_AVAILABLE
-        context['location'] = 'Bangladesh Parliament Secretariat, Dhaka'
-        
-        if hasattr(self.object, 'is_prp_managed') and self.object.is_prp_managed:
-            context['is_prp_user'] = True
-            context['prp_note'] = (
-                'This user is managed by Parliament Resource Portal (PRP). '
-                'Role assignments are preserved during PRP synchronization.'
-            )
-        
-        return context
-    
-    def form_valid(self, form):
-        """Handle successful role assignment with PRP logging."""
-        user = self.object
-        
-        # Log role changes for PRP users
-        if hasattr(user, 'is_prp_managed') and user.is_prp_managed:
-            logger.info(
-                f"PRP user roles updated: {user.username} ({user.employee_id})",
-                extra={
-                    'user_id': user.id,
-                    'modified_by': self.request.user.username,
-                    'is_prp_managed': True,
-                    'modification_time': timezone.now().isoformat(),
-                    'location': 'Bangladesh Parliament Secretariat, Dhaka'
-                }
-            )
-        
-        response = super().form_valid(form)
-        
-        # Enhanced success message
-        if hasattr(user, 'is_prp_managed') and user.is_prp_managed:
-            messages.success(
-                self.request, 
-                f'Roles updated for PRP user {self.object.get_display_name()}! '
-                'Role assignments are preserved during sync.'
-            )
-        else:
-            messages.success(
-                self.request, 
-                f'Roles updated for {self.object.get_display_name()}!'
-            )
-        
-        return response
-
-
-class UserPermissionView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
-    """Enhanced user permissions view with PRP context."""
-    model = CustomUser
-    template_name = 'users/users_permissions.html'
-    permission_required = 'auth.view_user'
-    context_object_name = 'user_obj'
-    
-    def get_context_data(self, **kwargs):
-        """Enhanced permission context with PRP information."""
-        context = super().get_context_data(**kwargs)
-        user = self.object
-        
-        # Get all permissions (direct and through groups)
-        all_permissions = user.get_all_permissions()
-        group_permissions = user.get_group_permissions()
-        direct_permissions = user.user_permissions.all()
-        
-        context.update({
-            'all_permissions': sorted(all_permissions),
-            'group_permissions': sorted(group_permissions),
-            'direct_permissions': direct_permissions,
-            'prp_integration_available': PRP_INTEGRATION_AVAILABLE,
-            'location': 'Bangladesh Parliament Secretariat, Dhaka'
-        })
-        
-        # Add PRP context
-        if hasattr(user, 'is_prp_managed') and user.is_prp_managed:
-            context['is_prp_user'] = True
-            context['prp_note'] = (
-                'This user is managed by Parliament Resource Portal (PRP). '
-                'Permissions are managed locally and preserved during sync.'
-            )
-        
-        return context
-
-
-# ============================================================================
-# User Profile Management (ENHANCED FOR PRP)
-# ============================================================================
-
-class UserProfileView(LoginRequiredMixin, DetailView):
-    """Enhanced user profile view with PRP status."""
-    model = CustomUser
-    template_name = 'users/users_profile.html'
-    context_object_name = 'user_obj'
-    
-    def get_object(self):
-        """Return current user."""
-        return self.request.user
-    
-    def get_context_data(self, **kwargs):
-        """Enhanced profile context with PRP information."""
-        context = super().get_context_data(**kwargs)
-        user = self.object
-        
-        context.update({
-            'prp_integration_available': PRP_INTEGRATION_AVAILABLE,
-            'location': 'Bangladesh Parliament Secretariat, Dhaka'
-        })
-        
-        # Add PRP-specific context
-        if hasattr(user, 'is_prp_managed') and user.is_prp_managed:
-            context['is_prp_user'] = True
-            context['prp_sync_status'] = self._get_prp_sync_status(user)
-            context['prp_profile_note'] = (
-                'Your profile is managed by Parliament Resource Portal (PRP). '
-                'Some information is automatically synchronized and cannot be edited.'
-            )
-        
-        return context
-    
-    def _get_prp_sync_status(self, user):
-        """Get PRP sync status for profile view."""
-        if not hasattr(user, 'prp_last_sync') or not user.prp_last_sync:
-            return {
-                'status': 'never_synced',
-                'message': 'Profile has never been synced from PRP',
-                'css_class': 'text-warning'
-            }
-        
-        now = timezone.now()
-        time_diff = now - user.prp_last_sync
-        
-        if time_diff < timedelta(hours=24):
-            return {
-                'status': 'recently_synced',
-                'message': 'Profile recently synced from PRP',
-                'last_sync': user.prp_last_sync,
-                'css_class': 'text-success'
-            }
-        elif time_diff < timedelta(days=7):
-            return {
-                'status': 'synced',
-                'message': 'Profile synced from PRP',
-                'last_sync': user.prp_last_sync,
-                'css_class': 'text-info'
-            }
-        else:
-            return {
-                'status': 'needs_sync',
-                'message': 'Profile sync needed',
-                'last_sync': user.prp_last_sync,
-                'css_class': 'text-warning'
-            }
-
-
-class UserProfileEditView(LoginRequiredMixin, UpdateView):
-    """Enhanced profile edit view with PRP field protection."""
-    model = CustomUser
-    form_class = CustomUserChangeForm
-    template_name = 'users/users_profile_edit.html'
-    success_url = reverse_lazy('users:profile')
-    
-    def get_object(self):
-        """Return current user."""
-        return self.request.user
-    
-    def get_context_data(self, **kwargs):
-        """Enhanced profile edit context with PRP information."""
-        context = super().get_context_data(**kwargs)
-        user = self.object
-        
-        context.update({
-            'prp_integration_available': PRP_INTEGRATION_AVAILABLE,
-            'location': 'Bangladesh Parliament Secretariat, Dhaka'
-        })
-        
-        # Add PRP context
-        if hasattr(user, 'is_prp_managed') and user.is_prp_managed:
-            context['is_prp_user'] = True
-            context['prp_edit_note'] = (
-                'Some fields are managed by Parliament Resource Portal (PRP) '
-                'and cannot be edited. Changes to editable fields will be preserved.'
-            )
-        
-        return context
-    
-    def form_valid(self, form):
-        """Handle successful profile update with PRP considerations."""
-        user = self.object
-        
-        # Log profile changes for PRP users
-        if hasattr(user, 'is_prp_managed') and user.is_prp_managed:
-            logger.info(
-                f"PRP user profile updated: {user.username} ({user.employee_id})",
-                extra={
-                    'user_id': user.id,
-                    'self_modified': True,
-                    'is_prp_managed': True,
-                    'modification_time': timezone.now().isoformat(),
-                    'location': 'Bangladesh Parliament Secretariat, Dhaka'
-                }
-            )
-        
-        response = super().form_valid(form)
-        
-        # Enhanced success message
-        if hasattr(user, 'is_prp_managed') and user.is_prp_managed:
-            messages.success(
-                self.request, 
-                'Your profile has been updated! PRP-managed fields remain protected.'
-            )
-        else:
-            messages.success(
-                self.request, 
-                'Your profile has been updated successfully!'
-            )
-        
-        return response
-
-
-class UserPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
-    """Enhanced password change view with PRP user handling."""
-    template_name = 'users/password_change.html'
-    success_url = reverse_lazy('users:profile')
-    
-    def get_context_data(self, **kwargs):
-        """Add PRP context to password change form."""
-        context = super().get_context_data(**kwargs)
-        user = self.request.user
-        
-        context.update({
-            'prp_integration_available': PRP_INTEGRATION_AVAILABLE,
-            'location': 'Bangladesh Parliament Secretariat, Dhaka'
-        })
-        
-        # Add PRP warning
-        if hasattr(user, 'is_prp_managed') and user.is_prp_managed:
-            context['is_prp_user'] = True
-            context['prp_password_note'] = (
-                'You are a PRP-managed user. Password changes will be preserved, '
-                'but the default PRP password (12345678) can always be used for login.'
-            )
-        
-        return context
-    
-    def form_valid(self, form):
-        """Handle successful password change with PRP logging."""
-        user = self.request.user
-        
-        # Log password changes for PRP users
-        if hasattr(user, 'is_prp_managed') and user.is_prp_managed:
-            logger.info(
-                f"PRP user password changed: {user.username} ({user.employee_id})",
-                extra={
-                    'user_id': user.id,
-                    'self_modified': True,
-                    'is_prp_managed': True,
-                    'modification_time': timezone.now().isoformat(),
-                    'location': 'Bangladesh Parliament Secretariat, Dhaka'
-                }
-            )
-        
-        response = super().form_valid(form)
-        
-        # Enhanced success message
-        if hasattr(user, 'is_prp_managed') and user.is_prp_managed:
-            messages.success(
-                self.request, 
-                'Your password has been changed! You can still use the default PRP password (12345678) to login.'
-            )
-        else:
-            messages.success(
-                self.request, 
-                'Your password has been changed successfully!'
-            )
-        
-        return response
-
-
-# ============================================================================
-# User Search and Filtering (ENHANCED FOR PRP)
-# ============================================================================
-
-class UserSearchView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
-    """Enhanced user search view with comprehensive PRP filtering."""
-    model = CustomUser
-    template_name = 'users/users_search.html'
-    context_object_name = 'users'
-    paginate_by = 15
-    permission_required = 'auth.view_user'
-    
-    def get_queryset(self):
-        """Enhanced search queryset with PRP support."""
-        queryset = CustomUser.objects.select_related().annotate(
-            assigned_devices_count=Count('assignment_set', distinct=True)
-        )
-        
-        # Apply advanced search filters
-        form = UserSearchForm(self.request.GET)
-        if form.is_valid():
-            search = form.cleaned_data.get('search')
-            office = form.cleaned_data.get('office')
-            designation = form.cleaned_data.get('designation')
-            group = form.cleaned_data.get('group')
-            is_active = form.cleaned_data.get('is_active')
-            is_staff = form.cleaned_data.get('is_staff')
-            user_source = form.cleaned_data.get('user_source')
-            sync_status = form.cleaned_data.get('sync_status')
-            
-            # Multi-field search
-            if search:
-                queryset = queryset.filter(
-                    Q(first_name__icontains=search) |
-                    Q(last_name__icontains=search) |
-                    Q(username__icontains=search) |
-                    Q(email__icontains=search) |
-                    Q(employee_id__icontains=search) |
-                    Q(designation__icontains=search) |
-                    Q(office__icontains=search)
-                )
-            
-            # Specific field filters
-            if office:
-                queryset = queryset.filter(office__icontains=office)
-            if designation:
-                queryset = queryset.filter(designation__icontains=designation)
-            if group:
-                queryset = queryset.filter(groups=group)
-            if is_active:
-                queryset = queryset.filter(is_active=(is_active == 'true'))
-            if is_staff:
-                queryset = queryset.filter(is_staff=(is_staff == 'true'))
-            
-            # PRP-specific filters
-            if user_source:
-                if user_source == 'prp':
-                    queryset = queryset.filter(is_prp_managed=True)
-                elif user_source == 'local':
-                    queryset = queryset.filter(is_prp_managed=False)
-            
-            # PRP sync status filter
-            if sync_status and hasattr(CustomUser, 'is_prp_managed'):
-                now = timezone.now()
-                if sync_status == 'never_synced':
-                    queryset = queryset.filter(
-                        is_prp_managed=True,
-                        prp_last_sync__isnull=True
-                    )
-                elif sync_status == 'recently_synced':
-                    yesterday = now - timedelta(hours=24)
-                    queryset = queryset.filter(
-                        is_prp_managed=True,
-                        prp_last_sync__gte=yesterday
-                    )
-                elif sync_status == 'needs_sync':
-                    week_ago = now - timedelta(days=7)
-                    queryset = queryset.filter(
-                        is_prp_managed=True,
-                        prp_last_sync__lt=week_ago
-                    )
-        
-        return queryset.order_by('-date_joined')
-    
-    def get_context_data(self, **kwargs):
-        """Enhanced search context with PRP statistics."""
-        context = super().get_context_data(**kwargs)
-        context['search_form'] = UserSearchForm(self.request.GET)
-        context['prp_integration_available'] = PRP_INTEGRATION_AVAILABLE
-        context['location'] = 'Bangladesh Parliament Secretariat, Dhaka'
-        
-        # Search result statistics
-        if self.object_list:
-            total_results = self.object_list.count() if hasattr(self.object_list, 'count') else len(self.object_list)
-            
-            if hasattr(CustomUser, 'is_prp_managed'):
-                prp_results = sum(1 for user in self.object_list if getattr(user, 'is_prp_managed', False))
-                local_results = total_results - prp_results
-                
-                context['search_stats'] = {
-                    'total_results': total_results,
-                    'prp_results': prp_results,
-                    'local_results': local_results
-                }
-        
-        return context
-
-
-# ============================================================================
-# AJAX Employee ID Lookup (ENHANCED FOR PRP)
-# ============================================================================
-
-@require_http_methods(["GET"])
-@login_required
-def user_lookup_by_employee_id(request, employee_id):
-    """Enhanced AJAX endpoint for employee ID lookup with PRP support."""
-    try:
-        # Look up user in PIMS
-        try:
-            user = CustomUser.objects.get(employee_id=employee_id)
-            user_data = {
-                'found': True,
-                'id': user.id,
-                'username': user.username,
-                'full_name': user.get_full_name(),
-                'display_name': user.get_display_name(),
-                'email': user.email,
-                'designation': user.designation,
-                'office': user.office,
-                'phone_number': user.phone_number,
-                'is_active': user.is_active,
-                'is_staff': user.is_staff,
-                'is_prp_managed': getattr(user, 'is_prp_managed', False),
-                'date_joined': user.date_joined.isoformat(),
-                'profile_url': reverse('users:detail', kwargs={'pk': user.pk}),
-                'edit_url': reverse('users:edit', kwargs={'pk': user.pk})
-            }
-            
-            # Add PRP-specific data
-            if getattr(user, 'is_prp_managed', False):
-                user_data['prp_last_sync'] = getattr(user, 'prp_last_sync', None)
-                if user_data['prp_last_sync']:
-                    user_data['prp_last_sync'] = user_data['prp_last_sync'].isoformat()
-                
-                # Add sync status
-                user_data['prp_sync_status'] = 'never_synced'
-                if user_data['prp_last_sync']:
-                    now = timezone.now()
-                    last_sync = timezone.datetime.fromisoformat(user_data['prp_last_sync'].replace('Z', '+00:00'))
-                    time_diff = now - last_sync
-                    
-                    if time_diff < timedelta(hours=24):
-                        user_data['prp_sync_status'] = 'recently_synced'
-                    elif time_diff < timedelta(days=7):
-                        user_data['prp_sync_status'] = 'synced'
-                    else:
-                        user_data['prp_sync_status'] = 'needs_sync'
-            
-            # Add assignment information
-            try:
-                from assignments.models import Assignment
-                active_assignments = Assignment.objects.filter(
-                    assigned_to=user,
-                    is_active=True,
-                    status='ASSIGNED'
-                ).count()
-                user_data['active_assignments'] = active_assignments
-            except ImportError:
-                user_data['active_assignments'] = 0
-                
-        except CustomUser.DoesNotExist:
-            user_data = {'found': False}
-        
-        return JsonResponse({
-            'success': True,
-            'employee_id': employee_id,
-            **user_data
-        })
-        
-    except Exception as e:
-        logger.error(f"Error in user lookup by employee ID: {e}")
-        return JsonResponse({
-            'success': False,
-            'error': f'Lookup failed: {str(e)}'
-        }, status=500)
-
-
-# ============================================================================
-# User Status Management (ENHANCED FOR PRP)
-# ============================================================================
-
-@method_decorator([login_required, staff_member_required], name='dispatch')
-class UserActivateView(View):
-    """Enhanced user activation view with PRP business rules."""
-    
-    def post(self, request, pk):
-        """Activate user with PRP considerations."""
-        try:
-            user = get_object_or_404(CustomUser, pk=pk)
-            
-            # Prevent self-modification of active status
-            if user.pk == request.user.pk:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'You cannot modify your own active status.'
-                }, status=400)
-            
-            user.is_active = True
-            user.save(update_fields=['is_active'])
-            
-            # Log activation
-            logger.info(
-                f"User activated: {user.username} ({user.employee_id})",
-                extra={
-                    'user_id': user.id,
-                    'activated_by': request.user.username,
-                    'is_prp_managed': getattr(user, 'is_prp_managed', False),
-                    'activation_time': timezone.now().isoformat(),
-                    'location': 'Bangladesh Parliament Secretariat, Dhaka'
-                }
-            )
-            
-            # Enhanced success message for PRP users
-            if getattr(user, 'is_prp_managed', False):
-                message = f'PRP user {user.get_display_name()} has been activated! This override will be preserved during PRP sync.'
-            else:
-                message = f'User {user.get_display_name()} has been activated!'
-            
-            if request.headers.get('Content-Type') == 'application/json':
-                return JsonResponse({
-                    'success': True,
-                    'message': message,
-                    'user_status': 'active'
-                })
-            else:
-                messages.success(request, message)
-                return redirect('users:detail', pk=pk)
-                
-        except Exception as e:
-            logger.error(f"Error activating user: {e}")
-            error_msg = f'Failed to activate user: {str(e)}'
-            
-            if request.headers.get('Content-Type') == 'application/json':
-                return JsonResponse({
-                    'success': False,
-                    'error': error_msg
-                }, status=500)
-            else:
-                messages.error(request, error_msg)
-                return redirect('users:list')
-
-
-@method_decorator([login_required, staff_member_required], name='dispatch')
-class UserDeactivateView(View):
-    """Enhanced user deactivation view with PRP business rules."""
-    
-    def post(self, request, pk):
-        """Deactivate user with PRP considerations."""
-        try:
-            user = get_object_or_404(CustomUser, pk=pk)
-            
-            # Prevent self-deactivation
-            if user.pk == request.user.pk:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'You cannot deactivate your own account.'
-                }, status=400)
-            
-            # Prevent deactivating superusers
-            if user.is_superuser:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Superuser accounts cannot be deactivated.'
-                }, status=400)
-            
-            user.is_active = False
-            user.save(update_fields=['is_active'])
-            
-            # Log deactivation
-            logger.info(
-                f"User deactivated: {user.username} ({user.employee_id})",
-                extra={
-                    'user_id': user.id,
-                    'deactivated_by': request.user.username,
-                    'is_prp_managed': getattr(user, 'is_prp_managed', False),
-                    'deactivation_time': timezone.now().isoformat(),
-                    'location': 'Bangladesh Parliament Secretariat, Dhaka'
-                }
-            )
-            
-            # Enhanced success message for PRP users
-            if getattr(user, 'is_prp_managed', False):
-                message = f'PRP user {user.get_display_name()} has been deactivated! This override will be preserved during PRP sync.'
-            else:
-                message = f'User {user.get_display_name()} has been deactivated!'
-            
-            if request.headers.get('Content-Type') == 'application/json':
-                return JsonResponse({
-                    'success': True,
-                    'message': message,
-                    'user_status': 'inactive'
-                })
-            else:
-                messages.success(request, message)
-                return redirect('users:detail', pk=pk)
-                
-        except Exception as e:
-            logger.error(f"Error deactivating user: {e}")
-            error_msg = f'Failed to deactivate user: {str(e)}'
-            
-            if request.headers.get('Content-Type') == 'application/json':
-                return JsonResponse({
-                    'success': False,
-                    'error': error_msg
-                }, status=500)
-            else:
-                messages.error(request, error_msg)
-                return redirect('users:list')
-
-
-# ============================================================================
-# Bulk Operations (ENHANCED FOR PRP)
-# ============================================================================
-
-@require_http_methods(["POST"])
-@login_required
-@staff_member_required
-def bulk_user_action(request):
-    """Enhanced bulk user operations with PRP awareness."""
-    try:
-        data = json.loads(request.body.decode('utf-8'))
-        action = data.get('action')
-        user_ids = data.get('user_ids', [])
-        
-        if not action or not user_ids:
-            return JsonResponse({
-                'success': False,
-                'error': 'Action and user IDs are required.'
-            }, status=400)
-        
-        # Get users
-        users = CustomUser.objects.filter(id__in=user_ids)
-        if not users.exists():
-            return JsonResponse({
-                'success': False,
-                'error': 'No valid users found.'
-            }, status=400)
-        
-        # Prevent self-modification in bulk actions
-        if request.user.id in user_ids:
-            return JsonResponse({
-                'success': False,
-                'error': 'You cannot perform bulk actions on your own account.'
-            }, status=400)
-        
-        results = {
-            'total_users': users.count(),
-            'prp_users': 0,
-            'local_users': 0,
-            'success_count': 0,
-            'error_count': 0,
-            'errors': []
-        }
-        
-        with transaction.atomic():
-            for user in users:
-                try:
-                    is_prp_user = getattr(user, 'is_prp_managed', False)
-                    if is_prp_user:
-                        results['prp_users'] += 1
-                    else:
-                        results['local_users'] += 1
-                    
-                    if action == 'activate':
-                        if not user.is_active:
-                            user.is_active = True
-                            user.save(update_fields=['is_active'])
-                            results['success_count'] += 1
-                            
-                            # Log activation
-                            logger.info(
-                                f"Bulk user activation: {user.username} ({user.employee_id})",
-                                extra={
-                                    'user_id': user.id,
-                                    'activated_by': request.user.username,
-                                    'is_prp_managed': is_prp_user,
-                                    'bulk_operation': True,
-                                    'activation_time': timezone.now().isoformat()
-                                }
-                            )
-                    
-                    elif action == 'deactivate':
-                        if user.is_active and not user.is_superuser:
-                            user.is_active = False
-                            user.save(update_fields=['is_active'])
-                            results['success_count'] += 1
-                            
-                            # Log deactivation
-                            logger.info(
-                                f"Bulk user deactivation: {user.username} ({user.employee_id})",
-                                extra={
-                                    'user_id': user.id,
-                                    'deactivated_by': request.user.username,
-                                    'is_prp_managed': is_prp_user,
-                                    'bulk_operation': True,
-                                    'deactivation_time': timezone.now().isoformat()
-                                }
-                            )
-                        elif user.is_superuser:
-                            results['errors'].append(f"Cannot deactivate superuser: {user.get_display_name()}")
-                            results['error_count'] += 1
-                    
-                    elif action == 'delete' and not user.is_superuser:
-                        user_name = user.get_display_name()
-                        user.delete()
-                        results['success_count'] += 1
-                        
-                        # Log deletion
-                        logger.warning(
-                            f"Bulk user deletion: {user.username} ({user.employee_id})",
-                            extra={
-                                'user_id': user.id,
-                                'deleted_by': request.user.username,
-                                'is_prp_managed': is_prp_user,
-                                'bulk_operation': True,
-                                'deletion_time': timezone.now().isoformat()
-                            }
-                        )
-                    
-                    else:
-                        results['errors'].append(f"Invalid action or protected user: {user.get_display_name()}")
-                        results['error_count'] += 1
-                        
-                except Exception as e:
-                    results['errors'].append(f"Error processing {user.get_display_name()}: {str(e)}")
-                    results['error_count'] += 1
-        
-        # Generate success message
-        action_past_tense = {
-            'activate': 'activated',
-            'deactivate': 'deactivated',
-            'delete': 'deleted'
-        }.get(action, action)
-        
-        message = f"Bulk operation completed: {results['success_count']} users {action_past_tense}"
-        if results['prp_users'] > 0:
-            message += f" ({results['prp_users']} PRP users, {results['local_users']} local users)"
-        
-        return JsonResponse({
-            'success': True,
-            'message': message,
-            'results': results
-        })
-        
-    except json.JSONDecodeError:
-        return JsonResponse({
-            'success': False,
-            'error': 'Invalid JSON data.'
-        }, status=400)
-        
-    except Exception as e:
-        logger.error(f"Error in bulk user action: {e}")
-        return JsonResponse({
-            'success': False,
-            'error': f'Bulk operation failed: {str(e)}'
-        }, status=500)
-
-
-# ============================================================================
-# Reports and Analytics (ENHANCED FOR PRP)
-# ============================================================================
-
-class UserReportsView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
-    """Enhanced user analytics and reports with PRP insights."""
-    template_name = 'users/users_reports.html'
-    permission_required = 'auth.view_user'
-    
-    def get_context_data(self, **kwargs):
-        """Enhanced report data with comprehensive PRP analytics."""
-        context = super().get_context_data(**kwargs)
-        
-        # Basic user statistics
-        total_users = CustomUser.objects.count()
-        active_users = CustomUser.objects.filter(is_active=True).count()
-        inactive_users = total_users - active_users
-        staff_users = CustomUser.objects.filter(is_staff=True, is_active=True).count()
-        admin_users = CustomUser.objects.filter(is_superuser=True, is_active=True).count()
-        
-        # PRP-specific statistics
-        prp_stats = {}
-        if hasattr(CustomUser, 'is_prp_managed'):
-            prp_users = CustomUser.objects.filter(is_prp_managed=True).count()
-            local_users = total_users - prp_users
-            prp_active = CustomUser.objects.filter(is_prp_managed=True, is_active=True).count()
-            prp_inactive = prp_users - prp_active
-            
-            # Sync statistics
-            now = timezone.now()
-            never_synced = CustomUser.objects.filter(
-                is_prp_managed=True,
-                prp_last_sync__isnull=True
-            ).count()
-            
-            recently_synced = CustomUser.objects.filter(
-                is_prp_managed=True,
-                prp_last_sync__gte=now - timedelta(hours=24)
-            ).count()
-            
-            needs_sync = CustomUser.objects.filter(
-                is_prp_managed=True,
-                prp_last_sync__lt=now - timedelta(days=7)
-            ).count()
-            
-            # Department breakdown for PRP users
-            prp_departments = CustomUser.objects.filter(
-                is_prp_managed=True
-            ).values('office').annotate(
-                count=Count('id')
-            ).order_by('-count')[:10]
-            
-            prp_stats = {
-                'total_prp_users': prp_users,
-                'total_local_users': local_users,
-                'prp_active': prp_active,
-                'prp_inactive': prp_inactive,
-                'never_synced': never_synced,
-                'recently_synced': recently_synced,
-                'needs_sync': needs_sync,
-                'top_departments': list(prp_departments)
-            }
-        
-        # Role distribution
-        role_distribution = Group.objects.annotate(
-            user_count=Count('user')
-        ).order_by('-user_count')
-        
-        # Recent activity
-        recent_users = CustomUser.objects.order_by('-date_joined')[:10]
-        
-        # Device assignment statistics (if available)
-        assignment_stats = {}
-        try:
-            from assignments.models import Assignment
-            total_assignments = Assignment.objects.count()
-            active_assignments = Assignment.objects.filter(
-                is_active=True,
-                status='ASSIGNED'
-            ).count()
-            
-            # Top users by assignments
-            top_assigned_users = CustomUser.objects.annotate(
-                assignment_count=Count('assignment_set')
-            ).filter(
-                assignment_count__gt=0
-            ).order_by('-assignment_count')[:10]
-            
-            assignment_stats = {
-                'total_assignments': total_assignments,
-                'active_assignments': active_assignments,
-                'top_assigned_users': top_assigned_users
-            }
-        except ImportError:
-            pass
-        
-        context.update({
-            'statistics': {
-                'total_users': total_users,
-                'active_users': active_users,
-                'inactive_users': inactive_users,
-                'staff_users': staff_users,
-                'admin_users': admin_users,
-                'activation_rate': round((active_users / total_users * 100), 2) if total_users > 0 else 0
-            },
-            'prp_stats': prp_stats,
-            'role_distribution': role_distribution,
-            'recent_users': recent_users,
-            'assignment_stats': assignment_stats,
-            'prp_integration_available': PRP_INTEGRATION_AVAILABLE,
-            'location': 'Bangladesh Parliament Secretariat, Dhaka'
-        })
-        
-        return context
-
-
-@require_http_methods(["GET"])
-@login_required
-@staff_member_required
-def user_export(request):
-    """Enhanced user export with PRP data included."""
-    try:
-        export_format = request.GET.get('format', 'csv')
-        include_prp_data = request.GET.get('include_prp', 'true').lower() == 'true'
-        
-        # Get users queryset
-        users = CustomUser.objects.select_related().order_by('employee_id')
-        
-        if export_format == 'csv':
-            response = HttpResponse(content_type='text/csv')
-            response['Content-Disposition'] = f'attachment; filename="pims_users_export_{timezone.now().strftime("%Y%m%d_%H%M%S")}.csv"'
-            
-            import csv
-            writer = csv.writer(response)
-            
-            # CSV Headers
-            headers = [
-                'Employee ID', 'Username', 'First Name', 'Last Name', 'Full Name',
-                'Email', 'Designation', 'Office', 'Phone', 'Is Active', 'Is Staff',
-                'Date Joined', 'Last Login'
-            ]
-            
-            if include_prp_data and hasattr(CustomUser, 'is_prp_managed'):
-                headers.extend([
-                    'Is PRP Managed', 'PRP Last Sync', 'PRP Sync Status'
-                ])
-            
-            writer.writerow(headers)
-            
-            # CSV Data
-            for user in users:
-                row = [
-                    user.employee_id,
-                    user.username,
-                    user.first_name,
-                    user.last_name,
-                    user.get_full_name(),
-                    user.email,
-                    user.designation,
-                    user.office,
-                    user.phone_number,
-                    'Yes' if user.is_active else 'No',
-                    'Yes' if user.is_staff else 'No',
-                    user.date_joined.strftime('%Y-%m-%d %H:%M:%S') if user.date_joined else '',
-                    user.last_login.strftime('%Y-%m-%d %H:%M:%S') if user.last_login else 'Never'
-                ]
-                
-                if include_prp_data and hasattr(user, 'is_prp_managed'):
-                    is_prp = getattr(user, 'is_prp_managed', False)
-                    prp_sync = getattr(user, 'prp_last_sync', None)
-                    
-                    row.extend([
-                        'Yes' if is_prp else 'No',
-                        prp_sync.strftime('%Y-%m-%d %H:%M:%S') if prp_sync else 'Never',
-                        get_prp_sync_status_text(user, prp_sync) if is_prp else 'N/A'
-                    ])
-                
-                writer.writerow(row)
-            
-            return response
-            
-        else:
-            return JsonResponse({
-                'success': False,
-                'error': 'Unsupported export format. Only CSV is currently supported.'
-            }, status=400)
-            
-    except Exception as e:
-        logger.error(f"Error exporting users: {e}")
-        return JsonResponse({
-            'success': False,
-            'error': f'Export failed: {str(e)}'
-        }, status=500)
-
-
-def get_prp_sync_status_text(user, prp_sync):
-    """
-    Helper function for PRP sync status display
-    Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
-    """
-    if not hasattr(user, 'is_prp_managed') or not getattr(user, 'is_prp_managed', False):
-        return 'N/A'
-    
-    if not prp_sync:
-        return 'Never Synced'
-    
-    # Calculate time since last sync (Asia/Dhaka timezone)
-    from django.utils import timezone
-    import pytz
-    
-    dhaka_tz = pytz.timezone('Asia/Dhaka')
-    now = timezone.now().astimezone(dhaka_tz)
-    last_sync = prp_sync.astimezone(dhaka_tz)
-    
-    time_diff = now - last_sync
-    
-    if time_diff.days == 0:
-        if time_diff.seconds < 3600:  # Less than 1 hour
-            return 'Recently Synced'
-        else:
-            return 'Synced Today'
-    elif time_diff.days == 1:
-        return 'Synced Yesterday'
-    elif time_diff.days < 7:
-        return f'Synced {time_diff.days} days ago'
-    else:
-        return 'Needs Sync'
-
-
-# ============================================================================
-# Status Checking Utilities (ENHANCED FOR PRP)
-# ============================================================================
-
-def get_user_status_summary():
-    """
-    Enhanced user status summary with PRP integration data.
-    Returns comprehensive dictionary with counts and PRP statistics.
-    """
-    try:
-        total_users = CustomUser.objects.count()
-        active_users = CustomUser.objects.filter(is_active=True).count()
-        inactive_users = total_users - active_users
-        staff_users = CustomUser.objects.filter(is_staff=True, is_active=True).count()
-        admin_users = CustomUser.objects.filter(is_superuser=True, is_active=True).count()
-        
-        summary = {
-            'total_users': total_users,
-            'active_users': active_users,
-            'inactive_users': inactive_users,
-            'staff_users': staff_users,
-            'admin_users': admin_users,
-            'activation_rate': round((active_users / total_users * 100), 2) if total_users > 0 else 0,
-            'prp_integration_available': PRP_INTEGRATION_AVAILABLE
-        }
-        
-        # Add PRP statistics if available
-        if hasattr(CustomUser, 'is_prp_managed'):
-            prp_users = CustomUser.objects.filter(is_prp_managed=True).count()
-            local_users = total_users - prp_users
-            
-            # PRP sync statistics
-            now = timezone.now()
-            never_synced = CustomUser.objects.filter(
-                is_prp_managed=True,
-                prp_last_sync__isnull=True
-            ).count()
-            
-            recently_synced = CustomUser.objects.filter(
-                is_prp_managed=True,
-                prp_last_sync__gte=now - timedelta(hours=24)
-            ).count()
-            
-            needs_sync = CustomUser.objects.filter(
-                is_prp_managed=True,
-                prp_last_sync__lt=now - timedelta(days=7)
-            ).count()
-            
-            summary.update({
-                'prp_users': prp_users,
-                'local_users': local_users,
-                'prp_never_synced': never_synced,
-                'prp_recently_synced': recently_synced,
-                'prp_needs_sync': needs_sync,
-                'prp_sync_rate': round(((prp_users - never_synced) / prp_users * 100), 2) if prp_users > 0 else 0
-            })
-        
-        return summary
-        
-    except Exception as e:
-        logger.error(f"Error getting user status summary: {e}")
-        return {
-            'total_users': 0,
-            'active_users': 0,
-            'inactive_users': 0,
-            'staff_users': 0,
-            'admin_users': 0,
-            'activation_rate': 0,
-            'prp_integration_available': PRP_INTEGRATION_AVAILABLE,
-            'error': str(e)
-        }
-
-
-
-# ============================================================================
-
-# PRP sync
-# ============================================================================
-
 @require_http_methods(["GET", "POST"])
 @login_required
 @staff_member_required
 def prp_sync_departments(request):
-    """
-    View to sync and refresh departments from PRP API.
-    
-    This view manages department synchronization from Parliament Resource Portal
-    for accurate office field mapping during user sync operations.
-    
-    Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
-    """
-    if not PRP_INTEGRATION_AVAILABLE:
-        messages.error(request, 'PRP integration is not available.')
-        return redirect('users:list')
-    
+    """View to sync and refresh departments from PRP API."""
     context = {
         'page_title': 'PRP Department Synchronization',
         'breadcrumb_items': [
@@ -2197,56 +1026,49 @@ def prp_sync_departments(request):
     
     if request.method == 'POST':
         try:
-            # Initialize PRP client and sync service
-            prp_client = create_prp_client()
+            prp_client = PRPClient()
             sync_service = PRPSyncService(prp_client)
             
-            # Get sync options from form
-            force_sync = request.POST.get('force_sync', False)
-            dry_run = request.POST.get('dry_run', False)
+            force_sync = request.POST.get('force_sync', False) == 'on'
+            dry_run = request.POST.get('dry_run', False) == 'on'
             
             logger.info(
                 f"Starting PRP department sync - Force: {force_sync}, Dry Run: {dry_run}",
-                extra={'user': request.user.username, 'location': 'Dhaka, Bangladesh'}
+                extra={'user': request.user.username, 'location': 'Bangladesh Parliament Secretariat, Dhaka'}
             )
             
-            # Perform department synchronization
             with transaction.atomic():
-                if not dry_run:
-                    savepoint = transaction.savepoint()
-                
+                savepoint = transaction.savepoint()
                 try:
-                    # Sync departments from PRP
                     dept_result = sync_service.sync_departments(force_refresh=force_sync)
                     
                     if not dry_run and not dept_result.success:
                         transaction.savepoint_rollback(savepoint)
                         raise PRPSyncError("Department sync failed", details=dept_result.errors)
                     
-                    # Prepare success message
-                    if dry_run:
-                        message = f"Dry Run Complete: Would sync {dept_result.departments_processed} departments"
-                    else:
-                        message = f"Successfully synced {dept_result.departments_processed} departments from PRP"
-                        transaction.savepoint_commit(savepoint)
-                    
+                    message = (
+                        f"Dry Run Complete: Would sync {dept_result.departments_processed} departments"
+                        if dry_run else
+                        f"Successfully synced {dept_result.departments_processed} departments from PRP"
+                    )
                     messages.success(request, message)
                     context['sync_result'] = dept_result
                     
+                    if not dry_run:
+                        transaction.savepoint_commit(savepoint)
+                
                 except Exception as e:
                     if not dry_run:
                         transaction.savepoint_rollback(savepoint)
                     raise
-                    
+                
         except (PRPConnectionError, PRPAuthenticationError, PRPSyncError) as e:
             logger.error(f"PRP error during department sync: {e}")
-            messages.error(request, f'Department sync failed: {e.message if hasattr(e, "message") else str(e)}')
-            
+            messages.error(request, f'Department sync failed: {str(e)}')
         except Exception as e:
             logger.error(f"Unexpected error during department sync: {e}", exc_info=True)
             messages.error(request, f'Department sync failed: {str(e)}')
     
-    # Get current department cache status
     try:
         from django.core.cache import cache
         cached_departments = cache.get('prp_departments', [])
@@ -2257,11 +1079,10 @@ def prp_sync_departments(request):
             'last_sync_time': last_sync_time,
             'cache_expired': (
                 not last_sync_time or 
-                (timezone.now() - last_sync_time).total_seconds() > 86400  # 24 hours
+                (timezone.now() - last_sync_time).total_seconds() > 86400
             ),
             'departments_sample': cached_departments[:5] if cached_departments else []
         })
-        
     except Exception as e:
         logger.warning(f"Could not get department cache status: {e}")
         context['cache_error'] = str(e)
@@ -2269,30 +1090,27 @@ def prp_sync_departments(request):
     return render(request, 'users/prp_sync_departments.html', context)
 
 
-@require_http_methods(["POST"])
+@require_POST
 @login_required
 @staff_member_required
 def prp_departments_refresh(request):
-    """
-    AJAX endpoint to refresh department cache from PRP API.
-    
-    Forces a refresh of the department cache, bypassing normal cache timeout.
-    Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
-    """
-    if not PRP_INTEGRATION_AVAILABLE:
-        return JsonResponse({
-            'success': False,
-            'error': 'PRP integration is not available.'
-        }, status=503)
-    
+    """AJAX endpoint to refresh department cache from PRP API."""
     try:
-        prp_client = create_prp_client()
+        prp_client = PRPClient()
         sync_service = PRPSyncService(prp_client)
         
-        # Force refresh departments
         result = sync_service.sync_departments(force_refresh=True)
         
         if result.success:
+            logger.info(
+                f"Department refresh completed",
+                extra={
+                    'initiated_by': request.user.username,
+                    'departments_processed': result.departments_processed,
+                    'sync_time': timezone.now().isoformat(),
+                    'location': 'Bangladesh Parliament Secretariat, Dhaka'
+                }
+            )
             return JsonResponse({
                 'success': True,
                 'message': f'Refreshed {result.departments_processed} departments',
@@ -2300,6 +1118,7 @@ def prp_departments_refresh(request):
                 'timestamp': timezone.now().isoformat()
             })
         else:
+            logger.error(f"Department refresh failed: {result.errors}")
             return JsonResponse({
                 'success': False,
                 'error': 'Department refresh failed',
@@ -2318,18 +1137,7 @@ def prp_departments_refresh(request):
 @login_required
 @staff_member_required
 def prp_bulk_sync_users(request):
-    """
-    View for bulk user synchronization from PRP.
-    
-    Handles bulk synchronization of users from multiple departments
-    with comprehensive progress tracking and error handling.
-    
-    Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
-    """
-    if not PRP_INTEGRATION_AVAILABLE:
-        messages.error(request, 'PRP integration is not available.')
-        return redirect('users:list')
-    
+    """View for bulk user synchronization from PRP."""
     context = {
         'page_title': 'PRP Bulk User Synchronization',
         'breadcrumb_items': [
@@ -2341,18 +1149,15 @@ def prp_bulk_sync_users(request):
     
     if request.method == 'POST':
         try:
-            # Initialize PRP client and sync service
-            prp_client = create_prp_client()
+            prp_client = PRPClient()
             sync_service = PRPSyncService(prp_client)
             
-            # Get sync parameters
             selected_departments = request.POST.getlist('departments', [])
             sync_all = request.POST.get('sync_all', False) == 'on'
             force_sync = request.POST.get('force_sync', False) == 'on'
             dry_run = request.POST.get('dry_run', False) == 'on'
             update_inactive = request.POST.get('update_inactive', False) == 'on'
             
-            # Validation
             if not sync_all and not selected_departments:
                 messages.error(request, 'Please select departments to sync or choose "Sync All"')
                 return render(request, 'users/prp_bulk_sync_users.html', context)
@@ -2368,21 +1173,16 @@ def prp_bulk_sync_users(request):
                 }
             )
             
-            # Perform bulk synchronization
             with transaction.atomic():
-                if not dry_run:
-                    savepoint = transaction.savepoint()
-                
+                savepoint = transaction.savepoint()
                 try:
                     if sync_all:
-                        # Sync all departments
                         sync_result = sync_service.sync_all_departments(
                             force_sync=force_sync,
                             update_inactive_users=update_inactive,
                             dry_run=dry_run
                         )
                     else:
-                        # Sync selected departments
                         sync_result = sync_service.sync_multiple_departments(
                             department_ids=[int(d) for d in selected_departments if d.isdigit()],
                             force_sync=force_sync,
@@ -2394,47 +1194,40 @@ def prp_bulk_sync_users(request):
                         transaction.savepoint_rollback(savepoint)
                         raise PRPSyncError("Bulk user sync failed", details=sync_result.errors)
                     
-                    # Prepare success message
-                    if dry_run:
-                        message = (
-                            f"Dry Run Complete: Would process {sync_result.users_created + sync_result.users_updated} users "
-                            f"from {sync_result.departments_processed} departments"
-                        )
-                    else:
-                        message = (
-                            f"Bulk sync completed successfully! "
-                            f"Created: {sync_result.users_created}, "
-                            f"Updated: {sync_result.users_updated}, "
-                            f"Departments: {sync_result.departments_processed}"
-                        )
-                        transaction.savepoint_commit(savepoint)
-                    
+                    message = (
+                        f"Dry Run Complete: Would process {sync_result.users_created + sync_result.users_updated} users "
+                        f"from {sync_result.departments_processed} departments"
+                        if dry_run else
+                        f"Bulk sync completed successfully! Created: {sync_result.users_created}, "
+                        f"Updated: {sync_result.users_updated}, Departments: {sync_result.departments_processed}"
+                    )
                     messages.success(request, message)
                     context['sync_result'] = sync_result
+                    
+                    if not dry_run:
+                        transaction.savepoint_commit(savepoint)
                     
                 except Exception as e:
                     if not dry_run:
                         transaction.savepoint_rollback(savepoint)
                     raise
-                    
+                
         except Exception as e:
             logger.error(f"Error during bulk sync: {e}", exc_info=True)
             messages.error(request, f'Bulk sync failed: {str(e)}')
     
-    # Get available departments for selection
     try:
         from django.core.cache import cache
         departments = cache.get('prp_departments', [])
         context['departments'] = departments
         
-        # Get current sync statistics
         context['sync_stats'] = {
             'total_users': CustomUser.objects.count(),
-            'prp_users': CustomUser.objects.filter(is_prp_managed=True).count() if hasattr(CustomUser, 'is_prp_managed') else 0,
+            'prp_users': CustomUser.objects.filter(is_prp_managed=True).count(),
             'never_synced': CustomUser.objects.filter(
                 is_prp_managed=True,
                 prp_last_sync__isnull=True
-            ).count() if hasattr(CustomUser, 'is_prp_managed') else 0,
+            ).count(),
         }
         
     except Exception as e:
@@ -2449,72 +1242,46 @@ def prp_bulk_sync_users(request):
 @login_required
 @staff_member_required
 def prp_sync_department_users(request, department_id=None):
-    """
-    View to sync users from a specific PRP department.
+    """View to sync users from a specific PRP department."""
+    context = {
+        'page_title': 'Select Department for User Sync' if not department_id else f'PRP Department User Sync (Dept {department_id})',
+        'breadcrumb_items': [
+            {'name': 'Users', 'url': reverse('users:list')},
+            {'name': 'PRP Integration', 'url': '#'},
+            {'name': 'Department User Sync' if not department_id else f'Sync Dept {department_id}', 'url': ''},
+        ]
+    }
     
-    Handles synchronization of users from a single department,
-    with detailed progress tracking and error handling.
-    
-    Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
-    """
-    if not PRP_INTEGRATION_AVAILABLE:
-        messages.error(request, 'PRP integration is not available.')
-        return redirect('users:list')
-    
-    # If no department_id provided, show department selection
     if not department_id and request.method == 'GET':
         try:
             from django.core.cache import cache
             departments = cache.get('prp_departments', [])
-            
-            context = {
-                'page_title': 'Select Department for User Sync',
-                'departments': departments,
-                'breadcrumb_items': [
-                    {'name': 'Users', 'url': reverse('users:list')},
-                    {'name': 'PRP Integration', 'url': '#'},
-                    {'name': 'Department User Sync', 'url': ''},
-                ]
-            }
-            
+            context['departments'] = departments
             return render(request, 'users/prp_select_department.html', context)
-            
         except Exception as e:
             logger.error(f"Could not load departments: {e}")
             messages.error(request, f'Could not load departments: {str(e)}')
             return redirect('users:list')
     
-    # Handle department selection from POST
     if not department_id and request.method == 'POST':
         department_id = request.POST.get('department_id')
         if not department_id:
             messages.error(request, 'Please select a department')
             return redirect('users:prp_sync_department_users')
     
-    # Convert to int and validate
     try:
         department_id = int(department_id)
     except (ValueError, TypeError):
         messages.error(request, 'Invalid department ID')
         return redirect('users:prp_sync_department_users')
     
-    context = {
-        'page_title': f'PRP Department User Sync (Dept {department_id})',
-        'department_id': department_id,
-        'breadcrumb_items': [
-            {'name': 'Users', 'url': reverse('users:list')},
-            {'name': 'PRP Integration', 'url': '#'},
-            {'name': f'Sync Dept {department_id}', 'url': ''},
-        ]
-    }
+    context['department_id'] = department_id
     
     if request.method == 'POST':
         try:
-            # Initialize PRP client and sync service
-            prp_client = create_prp_client()
+            prp_client = PRPClient()
             sync_service = PRPSyncService(prp_client)
             
-            # Get sync options
             force_sync = request.POST.get('force_sync', False) == 'on'
             dry_run = request.POST.get('dry_run', False) == 'on'
             update_inactive = request.POST.get('update_inactive', False) == 'on'
@@ -2530,13 +1297,9 @@ def prp_sync_department_users(request, department_id=None):
                 }
             )
             
-            # Perform department user synchronization
             with transaction.atomic():
-                if not dry_run:
-                    savepoint = transaction.savepoint()
-                
+                savepoint = transaction.savepoint()
                 try:
-                    # Sync users from specific department
                     sync_result = sync_service.sync_department_users(
                         department_id=department_id,
                         force_sync=force_sync,
@@ -2548,34 +1311,28 @@ def prp_sync_department_users(request, department_id=None):
                         transaction.savepoint_rollback(savepoint)
                         raise PRPSyncError(f"Department {department_id} sync failed", details=sync_result.errors)
                     
-                    # Prepare success message
-                    if dry_run:
-                        message = (
-                            f"Dry Run Complete: Would process {sync_result.users_created + sync_result.users_updated} users "
-                            f"from department {department_id}"
-                        )
-                    else:
-                        message = (
-                            f"Department sync completed successfully! "
-                            f"Created: {sync_result.users_created}, "
-                            f"Updated: {sync_result.users_updated}, "
-                            f"Skipped: {sync_result.users_skipped}"
-                        )
-                        transaction.savepoint_commit(savepoint)
-                    
+                    message = (
+                        f"Dry Run Complete: Would process {sync_result.users_created + sync_result.users_updated} users "
+                        f"from department {department_id}"
+                        if dry_run else
+                        f"Department sync completed successfully! Created: {sync_result.users_created}, "
+                        f"Updated: {sync_result.users_updated}, Skipped: {sync_result.users_skipped}"
+                    )
                     messages.success(request, message)
                     context['sync_result'] = sync_result
                     
+                    if not dry_run:
+                        transaction.savepoint_commit(savepoint)
+                
                 except Exception as e:
                     if not dry_run:
                         transaction.savepoint_rollback(savepoint)
                     raise
-                    
+                
         except Exception as e:
             logger.error(f"Error during department sync: {e}", exc_info=True)
             messages.error(request, f'Department sync failed: {str(e)}')
     
-    # Get existing users from this department
     try:
         from django.core.cache import cache
         departments = cache.get('prp_departments', [])
@@ -2583,12 +1340,11 @@ def prp_sync_department_users(request, department_id=None):
         
         if dept_info:
             context['department_name'] = dept_info.get('nameEng', f'Department {department_id}')
-            # Get existing users from this department  
             if hasattr(CustomUser, 'is_prp_managed'):
                 existing_users = CustomUser.objects.filter(
                     office=dept_info.get('nameEng'),
                     is_prp_managed=True
-                ).order_by('first_name', 'last_name')[:10]  # Limit for display
+                ).order_by('first_name', 'last_name')[:10]
                 context['existing_users'] = existing_users
                 context['existing_users_count'] = CustomUser.objects.filter(
                     office=dept_info.get('nameEng'),
@@ -2607,32 +1363,15 @@ def prp_sync_department_users(request, department_id=None):
 @login_required
 @staff_member_required
 def prp_sync_reports(request):
-    """
-    View to display PRP synchronization reports and analytics.
-    
-    Provides comprehensive reporting on PRP sync operations including:
-    - Sync operation history and status
-    - User synchronization statistics  
-    - Department coverage analysis
-    - Error reporting and troubleshooting
-    
-    Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
-    """
-    if not PRP_INTEGRATION_AVAILABLE:
-        messages.error(request, 'PRP integration is not available.')
-        return redirect('users:list')
-    
+    """View to display PRP synchronization reports and analytics."""
     try:
-        # Get date filter parameters
-        days_back = int(request.GET.get('days', 30))  # Default last 30 days
+        days_back = int(request.GET.get('days', 30))
         start_date = timezone.now() - timedelta(days=days_back)
         
-        # Basic sync statistics
         total_users = CustomUser.objects.count()
-        prp_users = CustomUser.objects.filter(is_prp_managed=True).count() if hasattr(CustomUser, 'is_prp_managed') else 0
+        prp_users = CustomUser.objects.filter(is_prp_managed=True).count()
         local_users = total_users - prp_users
         
-        # Sync status analysis (only if PRP fields exist)
         sync_stats = {}
         if hasattr(CustomUser, 'is_prp_managed'):
             never_synced = CustomUser.objects.filter(
@@ -2650,20 +1389,17 @@ def prp_sync_reports(request):
                 prp_last_sync__lt=timezone.now() - timedelta(days=7)
             ).count()
             
-            # Department coverage analysis
             dept_coverage = CustomUser.objects.filter(
                 is_prp_managed=True
             ).values('office').annotate(
                 user_count=Count('id')
             ).order_by('-user_count')[:10]
             
-            # Recent sync activity
             recent_syncs = CustomUser.objects.filter(
                 is_prp_managed=True,
                 prp_last_sync__gte=start_date
             ).order_by('-prp_last_sync')[:20]
             
-            # User status distribution
             active_prp_users = CustomUser.objects.filter(
                 is_prp_managed=True,
                 is_active=True,
@@ -2680,15 +1416,13 @@ def prp_sync_reports(request):
                 'recent_syncs': recent_syncs,
             }
         
-        # Get PRP API status
         api_status = {'success': False, 'error': 'Not tested'}
         try:
-            prp_client = create_prp_client()
+            prp_client = PRPClient()
             api_status = prp_client.test_connection()
         except Exception as e:
             api_status = {'success': False, 'error': str(e)}
         
-        # Department cache status
         try:
             from django.core.cache import cache
             cached_departments = cache.get('prp_departments', [])
@@ -2706,26 +1440,16 @@ def prp_sync_reports(request):
             ],
             'report_period': f'Last {days_back} days',
             'report_generated': timezone.now(),
-            
-            # Basic statistics
             'total_users': total_users,
             'prp_users': prp_users,
             'local_users': local_users,
             'prp_percentage': round((prp_users / total_users * 100), 1) if total_users > 0 else 0,
-            
-            # Department data
             'cached_departments_count': len(cached_departments),
             'dept_cache_time': dept_cache_time,
-            
-            # API status
             'api_status': api_status,
-            
-            # Filter options
             'days_options': [7, 15, 30, 60, 90],
             'selected_days': days_back,
         }
-        
-        # Add PRP-specific stats if available
         context.update(sync_stats)
         
         return render(request, 'users/prp_sync_reports.html', context)
@@ -2740,33 +1464,15 @@ def prp_sync_reports(request):
 @login_required
 @staff_member_required
 def prp_sync_history(request):
-    """
-    View to display detailed PRP synchronization history.
-    
-    Provides detailed history of sync operations including:
-    - Individual sync operation logs
-    - Success/failure tracking  
-    - User-level sync details
-    - Error analysis and troubleshooting
-    
-    Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
-    """
-    if not PRP_INTEGRATION_AVAILABLE:
-        messages.error(request, 'PRP integration is not available.')
-        return redirect('users:list')
-    
+    """View to display detailed PRP synchronization history."""
     try:
-        # Get filter parameters
-        days_back = int(request.GET.get('days', 7))  # Default last 7 days
+        days_back = int(request.GET.get('days', 7))
         search_query = request.GET.get('q', '').strip()
         
-        # Date range
         end_date = timezone.now()
         start_date = end_date - timedelta(days=days_back)
         
-        # Get users with sync activity in the date range (only if PRP fields exist)
         sync_activity = CustomUser.objects.none()
-        
         if hasattr(CustomUser, 'is_prp_managed'):
             sync_activity = CustomUser.objects.filter(
                 is_prp_managed=True,
@@ -2774,7 +1480,6 @@ def prp_sync_history(request):
                 prp_last_sync__lte=end_date
             ).order_by('-prp_last_sync')
             
-            # Apply search filter
             if search_query:
                 sync_activity = sync_activity.filter(
                     Q(first_name__icontains=search_query) |
@@ -2784,21 +1489,17 @@ def prp_sync_history(request):
                     Q(office__icontains=search_query)
                 )
         
-        # Pagination
-        paginator = Paginator(sync_activity, 20)  # 20 records per page
+        paginator = Paginator(sync_activity, 20)
         page = request.GET.get('page')
         sync_records = paginator.get_page(page)
         
-        # Get summary statistics for the period
         total_syncs = sync_activity.count()
         unique_users = sync_activity.values('id').distinct().count()
         
-        # Department breakdown
         dept_breakdown = sync_activity.values('office').annotate(
             sync_count=Count('id')
         ).order_by('-sync_count')[:10]
         
-        # Daily sync activity (for chart)
         daily_activity = []
         current_date = start_date.date()
         end_date_only = end_date.date()
@@ -2807,13 +1508,11 @@ def prp_sync_history(request):
             day_start = timezone.make_aware(datetime.combine(current_date, datetime.min.time()))
             day_end = day_start + timedelta(days=1)
             
-            day_syncs = 0
-            if hasattr(CustomUser, 'is_prp_managed'):
-                day_syncs = CustomUser.objects.filter(
-                    is_prp_managed=True,
-                    prp_last_sync__gte=day_start,
-                    prp_last_sync__lt=day_end
-                ).count()
+            day_syncs = CustomUser.objects.filter(
+                is_prp_managed=True,
+                prp_last_sync__gte=day_start,
+                prp_last_sync__lt=day_end
+            ).count()
             
             daily_activity.append({
                 'date': current_date.strftime('%Y-%m-%d'),
@@ -2823,7 +1522,6 @@ def prp_sync_history(request):
             
             current_date += timedelta(days=1)
         
-        # Export functionality
         if request.GET.get('export') == 'csv':
             response = HttpResponse(content_type='text/csv')
             response['Content-Disposition'] = f'attachment; filename="prp_sync_history_{start_date.date()}_{end_date.date()}.csv"'
@@ -2854,23 +1552,15 @@ def prp_sync_history(request):
                 {'name': 'PRP Integration', 'url': '#'},
                 {'name': 'Sync History', 'url': ''},
             ],
-            
-            # Filter and pagination
             'sync_records': sync_records,
             'total_syncs': total_syncs,
             'unique_users': unique_users,
             'start_date': start_date,
             'end_date': end_date,
-            
-            # Filter values for form
             'days_back': days_back,
             'search_query': search_query,
-            
-            # Analytics data
             'dept_breakdown': dept_breakdown,
             'daily_activity': daily_activity,
-            
-            # Filter options
             'days_options': [1, 3, 7, 15, 30, 60, 90],
         }
         
@@ -2882,24 +1572,688 @@ def prp_sync_history(request):
         return redirect('users:list')
 
 
-# ============================================================================
-# END OF PRP SYNC VIEWS
-# ============================================================================
+@require_http_methods(["GET"])
+@login_required
+@staff_member_required
+def prp_health_check(request):
+    """Health check endpoint for PRP integration status."""
+    try:
+        prp_client = PRPClient()
+        
+        health_data = {
+            'timestamp': timezone.now().isoformat(),
+            'location': 'Bangladesh Parliament Secretariat, Dhaka',
+            'prp_base_url': settings.PRP_API_BASE_URL,
+            'checks': {}
+        }
+        
+        try:
+            auth_result = prp_client.authenticate()
+            health_data['checks']['authentication'] = {
+                'status': 'pass' if auth_result else 'fail',
+                'message': 'PRP authentication successful' if auth_result else 'PRP authentication failed'
+            }
+        except Exception as e:
+            health_data['checks']['authentication'] = {
+                'status': 'fail',
+                'message': f'Authentication error: {str(e)}'
+            }
+        
+        try:
+            departments = prp_client.get_departments()
+            health_data['checks']['departments_api'] = {
+                'status': 'pass',
+                'message': f'Retrieved {len(departments)} departments',
+                'data_sample': len(departments)
+            }
+        except Exception as e:
+            health_data['checks']['departments_api'] = {
+                'status': 'fail',
+                'message': f'Departments API error: {str(e)}'
+            }
+        
+        try:
+            prp_user_count = CustomUser.objects.filter(is_prp_managed=True).count()
+            total_users = CustomUser.objects.count()
+            
+            health_data['checks']['local_data'] = {
+                'status': 'pass',
+                'message': f'{prp_user_count} PRP users out of {total_users} total users',
+                'prp_users': prp_user_count,
+                'total_users': total_users
+            }
+        except Exception as e:
+            health_data['checks']['local_data'] = {
+                'status': 'fail',
+                'message': f'Local data check error: {str(e)}'
+            }
+        
+        all_checks_passed = all(check['status'] == 'pass' for check in health_data['checks'].values())
+        health_data['overall_status'] = 'healthy' if all_checks_passed else 'unhealthy'
+        
+        return JsonResponse(health_data)
+        
+    except Exception as e:
+        logger.error(f"Error in PRP health check: {e}")
+        return JsonResponse({
+            'overall_status': 'error',
+            'timestamp': timezone.now().isoformat(),
+            'error': str(e)
+        }, status=500)
+
+
+@require_POST
+@login_required
+@staff_member_required
+def bulk_user_action(request):
+    """Bulk user actions with PRP protection."""
+    try:
+        data = json.loads(request.body)
+        user_ids = data.get('user_ids', [])
+        action = data.get('action')
+        
+        if not user_ids or action not in ['activate', 'deactivate', 'delete']:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid parameters'
+            }, status=400)
+        
+        users = CustomUser.objects.filter(id__in=user_ids)
+        if not users.exists():
+            return JsonResponse({
+                'success': False,
+                'error': 'No valid users found.'
+            }, status=400)
+        
+        if request.user.id in user_ids:
+            return JsonResponse({
+                'success': False,
+                'error': 'You cannot perform bulk actions on your own account.'
+            }, status=400)
+        
+        results = {
+            'total_users': users.count(),
+            'prp_users': 0,
+            'local_users': 0,
+            'success_count': 0,
+            'error_count': 0,
+            'errors': []
+        }
+        
+        with transaction.atomic():
+            for user in users:
+                try:
+                    is_prp_user = getattr(user, 'is_prp_managed', False)
+                    if is_prp_user:
+                        results['prp_users'] += 1
+                    else:
+                        results['local_users'] += 1
+                    
+                    if action == 'activate':
+                        if not user.is_active:
+                            user.is_active = True
+                            user.save(update_fields=['is_active'])
+                            results['success_count'] += 1
+                            
+                            logger.info(
+                                f"Bulk user activation: {user.username} ({user.employee_id})",
+                                extra={
+                                    'user_id': user.id,
+                                    'activated_by': request.user.username,
+                                    'is_prp_managed': is_prp_user,
+                                    'bulk_operation': True,
+                                    'activation_time': timezone.now().isoformat(),
+                                    'location': 'Bangladesh Parliament Secretariat, Dhaka'
+                                }
+                            )
+                    
+                    elif action == 'deactivate':
+                        if user.is_active:
+                            user.is_active = False
+                            user.save(update_fields=['is_active'])
+                            results['success_count'] += 1
+                            
+                            logger.info(
+                                f"Bulk user deactivation: {user.username} ({user.employee_id})",
+                                extra={
+                                    'user_id': user.id,
+                                    'deactivated_by': request.user.username,
+                                    'is_prp_managed': is_prp_user,
+                                    'bulk_operation': True,
+                                    'deactivation_time': timezone.now().isoformat(),
+                                    'admin_override': is_prp_user,
+                                    'location': 'Bangladesh Parliament Secretariat, Dhaka'
+                                }
+                            )
+                    
+                    elif action == 'delete':
+                        if is_prp_user:
+                            results['errors'].append(
+                                f"Cannot delete PRP-managed user: {user.get_display_name()}"
+                            )
+                            results['error_count'] += 1
+                        else:
+                            user.delete()
+                            results['success_count'] += 1
+                            
+                            logger.warning(
+                                f"Bulk user deletion: {user.username} ({user.employee_id})",
+                                extra={
+                                    'user_id': user.id,
+                                    'deleted_by': request.user.username,
+                                    'is_prp_managed': is_prp_user,
+                                    'bulk_operation': True,
+                                    'deletion_time': timezone.now().isoformat(),
+                                    'location': 'Bangladesh Parliament Secretariat, Dhaka'
+                                }
+                            )
+                    
+                except Exception as e:
+                    results['errors'].append(f"Error processing {user.get_display_name()}: {str(e)}")
+                    results['error_count'] += 1
+        
+        action_past_tense = {
+            'activate': 'activated',
+            'deactivate': 'deactivated',
+            'delete': 'deleted'
+        }.get(action, action)
+        
+        message = f"Bulk operation completed: {results['success_count']} users {action_past_tense}"
+        if results['prp_users'] > 0:
+            message += f" ({results['prp_users']} PRP users, {results['local_users']} local users)"
+        
+        return JsonResponse({
+            'success': True,
+            'message': message,
+            'results': results
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON data.'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Error in bulk user action: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': f'Bulk operation failed: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@staff_member_required
+def admin_prp_sync_status(request):
+    """Administrative view for PRP sync status monitoring."""
+    try:
+        prp_client = PRPClient()
+        sync_service = PRPSyncService(prp_client)
+        
+        status_data = {
+            'api_health': sync_service.check_api_health(),
+            'sync_statistics': sync_service.get_sync_statistics(),
+            'recent_operations': sync_service.get_recent_operations(limit=20),
+            'system_status': {
+                'timestamp': timezone.now().isoformat(),
+                'location': 'Bangladesh Parliament Secretariat, Dhaka',
+                'prp_base_url': settings.PRP_API_BASE_URL
+            }
+        }
+        
+        if request.headers.get('Content-Type') == 'application/json':
+            return JsonResponse({
+                'success': True,
+                'data': status_data
+            })
+        
+        return render(request, 'users/admin_prp_status.html', {
+            'page_title': 'PRP Integration Status',
+            'status_data': status_data
+        })
+        
+    except PRPConnectionError as e:
+        logger.error(f"PRP connection error in admin status: {e}")
+        error_response = {
+            'success': False,
+            'error': f'PRP connection failed: {str(e)}',
+            'error_type': 'connection'
+        }
+        
+        if request.headers.get('Content-Type') == 'application/json':
+            return JsonResponse(error_response, status=503)
+        
+        return render(request, 'users/admin_prp_status.html', {
+            'page_title': 'PRP Integration Status',
+            'connection_error': error_response
+        })
+    
+    except Exception as e:
+        logger.error(f"Unexpected error in admin PRP status: {e}")
+        error_response = {
+            'success': False,
+            'error': str(e),
+            'error_type': 'system'
+        }
+        
+        if request.headers.get('Content-Type') == 'application/json':
+            return JsonResponse(error_response, status=500)
+        
+        return render(request, 'users/admin_prp_status.html', {
+            'page_title': 'PRP Integration Status',
+            'system_error': error_response
+        })
 
 
 # ============================================================================
-# BACKWARDS COMPATIBILITY FUNCTIONS
+# Error Handlers and Utility Functions
 # ============================================================================
 
-# Maintain backwards compatibility with existing code
-def user_lookup_by_employee_id_legacy(request, employee_id):
-    """Legacy function name - redirects to new implementation."""
-    return user_lookup_by_employee_id(request, employee_id)
+def handle_prp_error(error, request=None):
+    """Centralized PRP error handling utility."""
+    error_context = {
+        'timestamp': timezone.now().isoformat(),
+        'location': 'Bangladesh Parliament Secretariat, Dhaka',
+        'error_type': type(error).__name__,
+        'error_message': str(error)
+    }
+    
+    if isinstance(error, PRPConnectionError):
+        error_context.update({
+            'user_message': 'Cannot connect to PRP system. Please try again later.',
+            'admin_action': 'Check PRP API connectivity and credentials.',
+            'severity': 'high'
+        })
+    elif isinstance(error, PRPAuthenticationError):
+        error_context.update({
+            'user_message': 'PRP authentication failed. Contact administrator.',
+            'admin_action': 'Check PRP API credentials and token validity.',
+            'severity': 'critical'
+        })
+    elif isinstance(error, PRPDataValidationError):
+        error_context.update({
+            'user_message': 'Data validation error during PRP sync.',
+            'admin_action': 'Check data format and validation rules.',
+            'severity': 'medium'
+        })
+    elif isinstance(error, PRPBusinessRuleError):
+        error_context.update({
+            'user_message': 'Business rule violation during PRP operation.',
+            'admin_action': 'Review business rules and operation parameters.',
+            'severity': 'medium'
+        })
+    else:
+        error_context.update({
+            'user_message': 'Unexpected error occurred. Contact administrator.',
+            'admin_action': 'Check system logs for detailed error information.',
+            'severity': 'high'
+        })
+    
+    logger.error(
+        f"PRP Integration Error: {error_context['error_type']}",
+        extra=error_context
+    )
+    
+    if request:
+        messages.error(request, error_context['user_message'])
+    
+    return error_context
 
 
-# Legacy view aliases for backwards compatibility
-UserList = UserListView
-UserDetail = UserDetailView  
-UserCreate = UserCreateView
-UserUpdate = UserUpdateView
-UserDelete = UserDeleteView
+@login_required
+def user_lookup_by_employee_id(request, employee_id):
+    """User lookup with PRP integration."""
+    try:
+        try:
+            user = CustomUser.objects.get(employee_id=employee_id)
+            is_prp_managed = getattr(user, 'is_prp_managed', False)
+            
+            user_data = {
+                'found': True,
+                'source': 'local',
+                'is_prp_managed': is_prp_managed,
+                'user_id': user.id,
+                'username': user.username,
+                'display_name': user.get_display_name(),
+                'is_active': user.is_active,
+                'last_sync': getattr(user, 'prp_last_sync', None) if is_prp_managed else None
+            }
+            
+            if request.headers.get('Accept') == 'application/json':
+                return JsonResponse(user_data)
+            
+            return redirect('users:detail', pk=user.id)
+            
+        except CustomUser.DoesNotExist:
+            try:
+                prp_client = PRPClient()
+                prp_data = prp_client.lookup_user_by_employee_id(employee_id)
+                
+                if prp_data:
+                    user_data = {
+                        'found': True,
+                        'source': 'prp',
+                        'exists_locally': False,
+                        'prp_data': prp_data,
+                        'sync_available': True
+                    }
+                    
+                    if request.headers.get('Accept') == 'application/json':
+                        return JsonResponse(user_data)
+                    
+                    if request.user.is_staff:
+                        messages.info(
+                            request,
+                            f'Employee {employee_id} found in PRP but not synced to PIMS. '
+                            f'Use sync interface to import this user.'
+                        )
+                        return redirect('users:prp_sync_dashboard')
+                    
+                else:
+                    user_data = {
+                        'found': False,
+                        'employee_id': employee_id,
+                        'checked_sources': ['local', 'prp']
+                    }
+                    
+                    if request.headers.get('Accept') == 'application/json':
+                        return JsonResponse(user_data, status=404)
+                    
+                    messages.error(
+                        request,
+                        f'Employee ID {employee_id} not found in PIMS or PRP.'
+                    )
+                    return redirect('users:list')
+                    
+            except PRPConnectionError:
+                user_data = {
+                    'found': False,
+                    'employee_id': employee_id,
+                    'checked_sources': ['local', 'prp'],
+                    'error': 'PRP connection failed'
+                }
+                
+                if request.headers.get('Accept') == 'application/json':
+                    return JsonResponse(user_data, status=503)
+                
+                messages.error(
+                    request,
+                    f'Employee ID {employee_id} not found. PRP connection failed.'
+                )
+                return redirect('users:list')
+    
+    except Exception as e:
+        logger.error(f"Error in user lookup: {e}")
+        if request.headers.get('Accept') == 'application/json':
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+        
+        messages.error(
+            request,
+            f'Error looking up employee ID {employee_id}: {str(e)}'
+        )
+        return redirect('users:list')
+
+
+@login_required
+def check_prp_user_status(request):
+    """AJAX endpoint to check current user's PRP status."""
+    user = request.user
+    
+    try:
+        data = {
+            'is_prp_managed': getattr(user, 'is_prp_managed', False),
+            'employee_id': user.employee_id,
+            'last_sync': getattr(user, 'prp_last_sync', None),
+            'readonly_fields': []
+        }
+        
+        if data['is_prp_managed']:
+            data['readonly_fields'] = [
+                'employee_id', 'first_name', 'last_name', 'email',
+                'designation', 'office', 'phone_number'
+            ]
+            
+            if data['last_sync']:
+                last_sync_dt = (
+                    timezone.datetime.fromisoformat(data['last_sync'])
+                    if isinstance(data['last_sync'], str)
+                    else data['last_sync']
+                )
+                data['needs_sync'] = (timezone.now() - last_sync_dt).days > 7
+        
+        return JsonResponse({
+            'success': True,
+            'data': data
+        })
+        
+    except Exception as e:
+        logger.error(f"Error checking PRP user status: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+# ============================================================================
+# Reports and Analytics
+# ============================================================================
+
+class UserReportsView(LoginRequiredMixin, PRPAwareMixin, TemplateView):
+    """User analytics and reports with PRP insights."""
+    template_name = 'users/users_reports.html'
+    permission_required = 'auth.view_user'
+    
+    def get_context_data(self, **kwargs):
+        """Provide comprehensive report data with PRP analytics."""
+        context = super().get_context_data(**kwargs)
+        
+        total_users = CustomUser.objects.count()
+        active_users = CustomUser.objects.filter(is_active=True).count()
+        inactive_users = total_users - active_users
+        staff_users = CustomUser.objects.filter(is_staff=True, is_active=True).count()
+        admin_users = CustomUser.objects.filter(is_superuser=True, is_active=True).count()
+        
+        prp_stats = {}
+        if hasattr(CustomUser, 'is_prp_managed'):
+            prp_users = CustomUser.objects.filter(is_prp_managed=True).count()
+            local_users = total_users - prp_users
+            prp_active = CustomUser.objects.filter(is_prp_managed=True, is_active=True).count()
+            prp_inactive = prp_users - prp_active
+            
+            now = timezone.now()
+            never_synced = CustomUser.objects.filter(
+                is_prp_managed=True,
+                prp_last_sync__isnull=True
+            ).count()
+            
+            recently_synced = CustomUser.objects.filter(
+                is_prp_managed=True,
+                prp_last_sync__gte=now - timedelta(hours=24)
+            ).count()
+            
+            needs_sync = CustomUser.objects.filter(
+                is_prp_managed=True,
+                prp_last_sync__lt=now - timedelta(days=7)
+            ).count()
+            
+            prp_stats = {
+                'total_prp_users': prp_users,
+                'local_users': local_users,
+                'prp_active': prp_active,
+                'prp_inactive': prp_inactive,
+                'never_synced': never_synced,
+                'recently_synced': recently_synced,
+                'needs_sync': needs_sync,
+                'sync_compliance': round((recently_synced / prp_users * 100), 1) if prp_users > 0 else 0
+            }
+            
+            try:
+                prp_client = PRPClient()
+                sync_service = PRPSyncService(prp_client)
+                prp_stats['api_status'] = sync_service.check_api_health()
+            except Exception as e:
+                logger.warning(f"Could not fetch real-time PRP statistics: {e}")
+                prp_stats['api_status'] = {'connected': False, 'error': str(e)}
+        
+        department_stats = CustomUser.objects.values('office').annotate(
+            count=Count('id'),
+            prp_count=Count('id', filter=Q(is_prp_managed=True)),
+            active_count=Count('id', filter=Q(is_active=True))
+        ).order_by('-count')[:10]
+        
+        now = timezone.now()
+        recent_activity = {
+            'new_users_last_30_days': CustomUser.objects.filter(
+                created_at__gte=now - timedelta(days=30)
+            ).count(),
+            'prp_syncs_last_24_hours': CustomUser.objects.filter(
+                is_prp_managed=True,
+                prp_last_sync__gte=now - timedelta(hours=24)
+            ).count(),
+        }
+        
+        context.update({
+            'page_title': 'User Analytics & Reports - Bangladesh Parliament Secretariat',
+            'basic_stats': {
+                'total_users': total_users,
+                'active_users': active_users,
+                'inactive_users': inactive_users,
+                'staff_users': staff_users,
+                'admin_users': admin_users,
+                'prp_percentage': round((prp_stats.get('total_prp_users', 0) / total_users * 100), 1) if total_users > 0 else 0
+            },
+            'prp_stats': prp_stats,
+            'department_stats': department_stats,
+            'recent_activity': recent_activity,
+            'report_generated': timezone.now(),
+            'location': 'Bangladesh Parliament Secretariat, Dhaka',
+            'days_options': [7, 15, 30, 60, 90],
+            'selected_days': self.request.GET.get('days', 30)
+        })
+
+        # Add export option context
+        if self.request.GET.get('export') == 'csv':
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="user_report_{timezone.now().date()}.csv"'
+            
+            writer = csv.writer(response)
+            writer.writerow([
+                'Employee ID', 'Full Name', 'Email', 'Office', 'Designation',
+                'Is Active', 'Is PRP Managed', 'Last Sync', 'Created At'
+            ])
+            
+            users = CustomUser.objects.all()
+            for user in users:
+                writer.writerow([
+                    user.employee_id,
+                    user.get_full_name(),
+                    user.email,
+                    user.office,
+                    user.designation,
+                    'Active' if user.is_active else 'Inactive',
+                    'Yes' if getattr(user, 'is_prp_managed', False) else 'No',
+                    user.prp_last_sync.strftime('%Y-%m-%d %H:%M:%S') if getattr(user, 'prp_last_sync', None) else '',
+                    user.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                ])
+            
+            return response
+
+        return context
+
+
+# ============================================================================
+# Legacy View Aliases (for backward compatibility)
+# ============================================================================
+
+@method_decorator(login_required, name='dispatch')
+class UserListViewLegacy(UserListView):
+    """Legacy alias for UserListView."""
+    pass
+
+
+@method_decorator(login_required, name='dispatch')
+class UserDetailViewLegacy(UserDetailView):
+    """Legacy alias for UserDetailView."""
+    pass
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(staff_member_required, name='dispatch')
+class UserCreateViewLegacy(UserCreateView):
+    """Legacy alias for UserCreateView."""
+    pass
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(staff_member_required, name='dispatch')
+class UserUpdateViewLegacy(UserUpdateView):
+    """Legacy alias for UserUpdateView."""
+    pass
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(staff_member_required, name='dispatch')
+class UserDeleteViewLegacy(UserDeleteView):
+    """Legacy alias for UserDeleteView."""
+    pass
+
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
+
+def get_prp_user_data(user_id: str) -> Optional[Dict[str, Any]]:
+    """Helper function to fetch PRP user data with error handling."""
+    try:
+        prp_client = PRPClient()
+        return prp_client.lookup_user_by_employee_id(user_id)
+    except PRPConnectionError as e:
+        logger.error(f"PRP connection error in get_prp_user_data: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected error in get_prp_user_data: {e}")
+        return None
+
+
+def update_user_from_prp(user: CustomUser, prp_data: Dict[str, Any]) -> bool:
+    """Helper function to update user with PRP data."""
+    try:
+        with transaction.atomic():
+            user.username = f"prp_{prp_data.get('userId')}"
+            user.first_name = prp_data.get('firstName', '')
+            user.last_name = prp_data.get('lastName', '')
+            user.email = prp_data.get('email', '')
+            user.employee_id = prp_data.get('userId', '')
+            user.designation = prp_data.get('designation', '')
+            user.office = prp_data.get('department', {}).get('nameEng', '')
+            user.phone_number = prp_data.get('phoneNumber', '')
+            user.is_prp_managed = True
+            user.prp_last_sync = timezone.now()
+            
+            # Set default password for new PRP users
+            if not user.pk:  # New user
+                user.set_password("12345678")
+            
+            user.save()
+            
+            logger.info(
+                f"User updated from PRP: {user.username}",
+                extra={
+                    'user_id': user.id,
+                    'employee_id': user.employee_id,
+                    'sync_time': timezone.now().isoformat(),
+                    'location': 'Bangladesh Parliament Secretariat, Dhaka'
+                }
+            )
+            return True
+    except Exception as e:
+        logger.error(f"Error updating user from PRP: {e}")
+        return False
+
+
+def validate_prp_data(data: Dict[str, Any]) -> bool:
+    """Validate PRP data before processing."""
+    required_fields = ['userId', 'firstName', 'lastName', 'email']
+    return all(field in data and data[field] for field in required_fields)

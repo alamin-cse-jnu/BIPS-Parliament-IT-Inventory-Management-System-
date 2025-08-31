@@ -954,7 +954,7 @@ body {
                     </a>
                 {% endif %}
                 
-                <a href="{% url 'users:export_csv' %}" class="btn-outline-secondary">
+                <a href="#" class="btn-outline-secondary">
                     <i class="bi bi-download"></i>
                     Export
                 </a>
@@ -1108,14 +1108,14 @@ body {
             </h2>
             
             <div class="table-actions">
-                <a href="{% url 'users:export_csv' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" 
+                <a href="#" 
                    class="btn-export">
                     <i class="bi bi-file-earmark-excel"></i>
                     Export CSV
                 </a>
                 
                 {% if perms.users.sync_prp_users %}
-                    <a href="{% url 'users:prp_bulk_sync' %}" class="btn-export" style="background: var(--prp-indicator);">
+                    <a href="#" class="btn-export" style="background: var(--prp-indicator);">
                         <i class="bi bi-cloud-download"></i>
                         Bulk PRP Sync
                     </a>
@@ -1281,7 +1281,7 @@ body {
 
                                         {% if perms.users.change_customuser %}
                                             <!-- Edit Button (disabled for PRP readonly fields) -->
-                                            <a href="{% url 'users:update' user.pk %}" 
+                                            <a href="{% url 'users:edit' user.pk %}" 
                                                class="btn-action edit"
                                                title="{% if user.is_prp_managed %}Edit User (PRP fields are read-only){% else %}Edit User{% endif %}">
                                                 <i class="bi bi-pencil"></i>

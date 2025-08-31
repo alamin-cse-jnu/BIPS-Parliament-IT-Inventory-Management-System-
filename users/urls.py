@@ -82,7 +82,7 @@ user_management_patterns = [
 profile_patterns = [
     path('profile/', views.UserProfileView.as_view(), name='profile'),
     path('profile/edit/', views.UserProfileEditView.as_view(), name='profile_edit'),
-    #path('profile/password/', views.UserPasswordChangeView.as_view(), name='password_change'),
+    path('profile/password/', views.UserPasswordChangeView.as_view(), name='password_change'),
 ]
 
 # ============================================================================

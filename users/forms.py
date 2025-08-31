@@ -25,6 +25,8 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.conf import settings
 import logging
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import authenticate
 
 from .models import CustomUser
 
@@ -681,7 +683,7 @@ class UserRoleForm(forms.Form):
         return cleaned_data
 
 
-class CustomLoginForm(forms.Form):
+class CustomLoginForm(AuthenticationForm):
     """
     Enhanced custom login form for PIMS with PRP User ID support.
     
@@ -689,36 +691,41 @@ class CustomLoginForm(forms.Form):
     - Support for PRP User ID login (prp_{userId} format)
     - Regular username/email login for local users
     - Default password handling for PRP users
+    - Compatible with Django's LoginView (inherits from AuthenticationForm)
+    
+    Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
     """
     
-    username = forms.CharField(
-        max_length=150,
-        required=True,
-        widget=forms.TextInput(attrs={
+    def __init__(self, *args, **kwargs):
+        """Initialize form with PRP-aware styling."""
+        super().__init__(*args, **kwargs)
+        
+        # Customize field styling and placeholders
+        self.fields['username'].widget.attrs.update({
             'class': 'form-control',
             'placeholder': 'Username or PRP User ID',
             'id': 'id_username'
-        }),
-        help_text='Enter your username or PRP User ID (format: prp_12345)'
-    )
-    
-    password = forms.CharField(
-        widget=forms.PasswordInput(attrs={
+        })
+        self.fields['password'].widget.attrs.update({
             'class': 'form-control',
             'placeholder': 'Password',
             'id': 'id_password'
-        }),
-        help_text='Default password for PRP users: 12345678'
-    )
-    
-    remember_me = forms.BooleanField(
-        required=False,
-        widget=forms.CheckboxInput(attrs={
-            'class': 'form-check-input',
-            'id': 'id_remember_me'
-        }),
-        label='Remember me'
-    )
+        })
+        
+        # Update help text for PRP integration
+        self.fields['username'].help_text = 'Enter your username or PRP User ID (format: prp_12345)'
+        self.fields['password'].help_text = 'Default password for PRP users: 12345678'
+        
+        # Add remember me field
+        from django import forms
+        self.fields['remember_me'] = forms.BooleanField(
+            required=False,
+            widget=forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'id': 'id_remember_me'
+            }),
+            label='Remember me'
+        )
 
     def clean_username(self):
         """Enhanced username validation for PRP format."""
@@ -734,6 +741,41 @@ class CustomLoginForm(forms.Form):
                 )
         
         return username
+
+    def clean(self):
+        """Enhanced authentication with PRP user support."""
+        username = self.cleaned_data.get('username')
+        password = self.cleaned_data.get('password')
+
+        if username is not None and password:
+            # Authenticate using Django's authenticate function
+            self.user_cache = authenticate(
+                self.request, 
+                username=username, 
+                password=password
+            )
+            
+            if self.user_cache is None:
+                # Check if this might be a PRP user that needs to be synced
+                if self._is_potential_prp_user(username):
+                    raise ValidationError(
+                        'User not found in PIMS. Contact admin to sync your PRP account.',
+                        code='prp_user_not_synced'
+                    )
+                else:
+                    raise ValidationError(
+                        'Please enter a correct username and password. Note that both fields may be case-sensitive.',
+                        code='invalid_login'
+                    )
+            else:
+                self.confirm_login_allowed(self.user_cache)
+
+        return self.cleaned_data
+    
+    def _is_potential_prp_user(self, username: str) -> bool:
+        """Check if username pattern suggests a PRP user."""
+        # PRP users might login with employee ID directly or prp_ format
+        return (username.isdigit() and len(username) >= 4) or username.startswith('prp_')
 
 
 class CustomPasswordResetForm(forms.Form):

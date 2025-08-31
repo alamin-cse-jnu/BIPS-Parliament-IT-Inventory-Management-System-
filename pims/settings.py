@@ -39,8 +39,7 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     '0.0.0.0',
-    '*.parliament.gov.bd',  # Bangladesh Parliament domain
-    '*.ezzetech.com',       # Development domain
+    '*.parliament.gov.bd',  # Bangladesh Parliament domainn
 ]
 
 # Security settings for Bangladesh Parliament Secretariat
@@ -58,6 +57,8 @@ if not DEBUG and os.environ.get('ENVIRONMENT') == 'production':
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_BROWSER_XSS_FILTER = True
     X_FRAME_OPTIONS = 'DENY'
+
+
 
 # ============================================================================
 # APPLICATION DEFINITION
@@ -138,7 +139,7 @@ PIMS_TEMPLATE_SETTINGS = {
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [BASE_DIR / 'pims' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -218,9 +219,9 @@ USE_TZ = True             # Enable timezone support
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Additional locations of static files
+# Additional locations of static files - FIXED PATH
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',
+    BASE_DIR / 'pims' / 'static',  # FIXED: Correct path to static files
 ]
 
 # Static files storage

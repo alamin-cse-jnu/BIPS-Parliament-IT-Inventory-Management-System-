@@ -162,7 +162,7 @@ class UserListView(ListView):
     Shows both local PIMS users and PRP-synced users with appropriate indicators.
     """
     model = CustomUser
-    template_name = 'users/user_list.html'
+    template_name = 'users/users_list.html'
     context_object_name = 'users'
     paginate_by = 20
     
@@ -263,7 +263,7 @@ class UserDetailView(DetailView):
     Shows comprehensive user information including PRP sync status.
     """
     model = CustomUser
-    template_name = 'users/user_detail.html'
+    template_name = 'users/users_detail.html'
     context_object_name = 'user_obj'  # Avoid conflict with request.user
     
     def get_context_data(self, **kwargs):
@@ -325,7 +325,7 @@ class UserCreateView(CreateView):
     """
     model = CustomUser
     form_class = CustomUserCreationForm
-    template_name = 'users/user_create.html'
+    template_name = 'users/users_create.html'
     success_url = reverse_lazy('users:list')
     
     def get_context_data(self, **kwargs):
@@ -384,7 +384,7 @@ class UserUpdateView(UpdateView):
     """
     model = CustomUser
     form_class = CustomUserUpdateForm
-    template_name = 'users/user_edit.html'
+    template_name = 'users/users_edit.html'
     
     def get_success_url(self):
         return reverse('users:detail', kwargs={'pk': self.object.pk})
@@ -715,7 +715,7 @@ class UserRoleUpdateView(UpdateView):
     """Update user roles and permissions"""
     model = CustomUser
     form_class = UserRoleForm
-    template_name = 'users/user_roles.html'
+    template_name = 'users/users_roles.html'
     
     def get_success_url(self):
         return reverse('users:detail', kwargs={'pk': self.object.pk})
@@ -738,7 +738,7 @@ class UserRoleUpdateView(UpdateView):
 class UserPermissionView(DetailView):
     """View user permissions and group memberships"""
     model = CustomUser
-    template_name = 'users/user_permissions.html'
+    template_name = 'users/users_permissions.html'
     context_object_name = 'user_obj'
     
     def get_context_data(self, **kwargs):
@@ -847,7 +847,7 @@ def user_deactivate_view(request, pk):
 class UserProfileView(DetailView):
     """User profile view for logged-in user"""
     model = CustomUser
-    template_name = 'users/user_profile.html'
+    template_name = 'users/users_profile.html'
     context_object_name = 'user_obj'
     
     def get_object(self):
@@ -876,7 +876,7 @@ class UserProfileEditView(UpdateView):
     """User profile edit view with PRP field protection"""
     model = CustomUser
     fields = ['first_name', 'last_name', 'phone_number', 'profile_image', 'notes']
-    template_name = 'users/user_profile_edit.html'
+    template_name = 'users/users_profile_edit.html'
     success_url = reverse_lazy('users:profile')
     
     def get_object(self):
@@ -917,7 +917,7 @@ class UserProfileEditView(UpdateView):
 class UserSearchView(ListView):
     """Advanced user search with PRP filtering"""
     model = CustomUser
-    template_name = 'users/user_search.html'
+    template_name = 'users/users_search.html'
     context_object_name = 'users'
     paginate_by = 25
     
@@ -1007,7 +1007,7 @@ class UserReportsView(TemplateView):
     User reports and analytics with PRP integration.
     Provides insights into user distribution, sync status, and trends.
     """
-    template_name = 'users/user_reports.html'
+    template_name = 'users/users_reports.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

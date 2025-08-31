@@ -27,8 +27,16 @@ urlpatterns = [
 
 # Serve media files during development
 if settings.DEBUG:
+    # Serve media files (user uploads, PRP profile images)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
+    
+    # Serve static files safely - only if STATICFILES_DIRS has content
+    if hasattr(settings, 'STATICFILES_DIRS') and settings.STATICFILES_DIRS:
+        # Use the first directory in STATICFILES_DIRS
+        urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
+    else:
+        # Fallback to STATIC_ROOT
+        urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 # Custom error handlers
 handler403 = 'django.views.defaults.permission_denied'

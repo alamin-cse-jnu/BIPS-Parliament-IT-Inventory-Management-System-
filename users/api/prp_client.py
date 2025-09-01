@@ -579,57 +579,45 @@ class PRPClient:
             raise PRPConnectionError(f"Employee retrieval failed: {str(e)}")
     
     def lookup_user_by_employee_id(self, employee_id: str) -> Optional[Dict[str, Any]]:
-        """
-        Lookup a specific user by employee ID across all departments.
-        
-        Note: PRP API doesn't have direct employee lookup by ID, so we search through departments.
-        This is less efficient but necessary for the current PRP API structure.
-        
-        Args:
-            employee_id: Employee ID (PRP userId field)
-            
-        Returns:
-            dict: Employee data if found, None if not found
-            
-        Raises:
-            PRPConnectionError: If API request fails
-        """
-        if not employee_id or not isinstance(employee_id, str):
-            logger.warning(f"Invalid employee ID: {employee_id}")
+        """Debug version to find the employee search issue."""
+        if not employee_id:
             return None
         
         try:
             logger.info(f"Looking up employee: {employee_id}")
-            
-            # Get all departments first
             departments = self.get_departments()
+            logger.info(f"Found {len(departments)} departments to search")
             
-            # Search through each department
             for dept in departments:
+                dept_id = dept.get('id')
+                dept_name = dept.get('nameEng', 'Unknown')
+                
                 try:
-                    employees = self.get_department_employees(dept['id'])
+                    employees = self.get_department_employees(dept_id)
+                    logger.info(f"Department '{dept_name}': {len(employees)} employees")
                     
-                    # Look for matching employee ID
+                    # Log first few employee IDs for debugging
+                    if employees:
+                        sample_ids = [str(emp.get('userId', 'N/A')) for emp in employees[:3]]
+                        logger.info(f"Sample IDs in {dept_name}: {sample_ids}")
+                    
+                    # Search for target employee
                     for employee in employees:
-                        # ✅ FIX: Handle both string and numeric userId comparisons
-                        prp_user_id = employee.get('userId')
-                        if prp_user_id is not None:
-                            # Convert both to strings for comparison
-                            if str(prp_user_id) == str(employee_id):
-                                logger.info(f"Found employee {employee_id} in department {dept['nameEng']}")
-                                # Add department info to employee data
-                                employee['department'] = dept
-                                return employee
-                                
+                        prp_user_id = str(employee.get('userId', ''))
+                        if prp_user_id == str(employee_id):
+                            logger.info(f"FOUND employee {employee_id} in {dept_name}")
+                            employee['department'] = dept
+                            return employee
+                            
                 except Exception as e:
-                    logger.warning(f"Error searching department {dept['id']}: {e}")
+                    logger.error(f"Error in department {dept_name}: {e}")
                     continue
             
-            logger.info(f"Employee {employee_id} not found in any department")
+            logger.warning(f"Employee {employee_id} not found in any department")
             return None
             
         except Exception as e:
-            logger.error(f"Employee lookup failed for {employee_id}: {e}")
+            logger.error(f"Lookup failed: {e}")
             raise PRPConnectionError(f"Employee lookup failed: {str(e)}")
     
     def convert_photo_to_django_file(self, photo_data: Union[bytes, str, None]) -> Optional[ContentFile]:

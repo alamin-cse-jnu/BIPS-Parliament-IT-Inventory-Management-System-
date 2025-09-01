@@ -263,13 +263,13 @@ PRP_API_ENABLED = os.environ.get('PRP_API_ENABLED', 'True').lower() == 'true'
 
 # PRP API Configuration (Official Bangladesh Parliament Resource Portal)
 PRP_API_SETTINGS = {
-    # Base API Configuration
-    'BASE_URL': os.environ.get('PRP_API_BASE_URL', 'https://prp.parliament.gov.bd'),
-    'API_VERSION': 'v1',
-    'TIMEOUT': int(os.environ.get('PRP_API_TIMEOUT', '30')),          # 30 seconds timeout
-    'RETRY_ATTEMPTS': int(os.environ.get('PRP_API_RETRY_ATTEMPTS', '3')),  # 3 retry attempts
-    'RATE_LIMIT': int(os.environ.get('PRP_API_RATE_LIMIT', '100')),   # 100 calls per hour
-    'BATCH_SIZE': int(os.environ.get('PRP_API_BATCH_SIZE', '50')),    # 50 users per batch
+    'BASE_URL': 'https://prp.parliament.gov.bd',
+    'AUTH_USERNAME': 'ezzetech',
+    'AUTH_PASSWORD': '${Fty#3a',
+    'TIMEOUT': 30,
+    'RETRY_ATTEMPTS': 3,
+    'VERIFY_SSL': False,  # ✅ FIX: Disable SSL verification for gov servers
+    'DEBUG_API_CALLS': True,  # Enable detailed logging
     
     # Authentication Configuration (Official Credentials)
     'AUTH_USERNAME': os.environ.get('PRP_AUTH_USERNAME', 'ezzetech'),

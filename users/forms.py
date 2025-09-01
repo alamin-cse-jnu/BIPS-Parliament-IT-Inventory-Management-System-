@@ -812,3 +812,88 @@ class CustomPasswordResetForm(forms.Form):
             pass
         
         return email
+    
+class UserRoleManagementForm(forms.ModelForm):
+    """
+    Form for managing user roles and permissions in UserRoleUpdateView.
+    This form was missing and causing the BaseForm.__init__() error.
+    
+    Location: Bangladesh Parliament Secretariat, Dhaka
+    """
+    
+    # System permission fields
+    is_active = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        help_text='Designates whether this user should be treated as active.'
+    )
+    
+    is_staff = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        help_text='Designates whether the user can log into the admin interface.'
+    )
+    
+    is_superuser = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        help_text='Designates that this user has all permissions without explicitly assigning them.'
+    )
+    
+    # Group assignments
+    groups = forms.ModelMultipleChoiceField(
+        queryset=Group.objects.all(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        help_text='The groups this user belongs to.'
+    )
+
+    class Meta:
+        model = CustomUser
+        fields = ['is_active', 'is_staff', 'is_superuser', 'groups']
+
+    def __init__(self, *args, **kwargs):
+        """Initialize form properly to avoid BaseForm.__init__() error."""
+        # Call parent init without any modifications to kwargs
+        super().__init__(*args, **kwargs)
+        
+        # Get instance after initialization to avoid the 'instance' argument error
+        instance = getattr(self, 'instance', None)
+        
+        # Add PRP-specific handling if user is PRP-managed
+        if instance and hasattr(instance, 'is_prp_managed') and getattr(instance, 'is_prp_managed', False):
+            # Add visual indicators for PRP users
+            for field_name in self.fields:
+                field = self.fields[field_name]
+                current_class = field.widget.attrs.get('class', '')
+                
+                # Add PRP styling class
+                field.widget.attrs['class'] = f'{current_class} prp-managed-field'
+                
+                # Add tooltips for PRP fields
+                if field_name in ['is_active']:
+                    field.widget.attrs['title'] = 'Status may be overridden by PRP sync'
+                else:
+                    field.widget.attrs['title'] = 'This field can be modified for PRP users'
+
+    def clean(self):
+        """Enhanced validation for role assignments."""
+        cleaned_data = super().clean()
+        
+        # Get the instance
+        instance = getattr(self, 'instance', None)
+        
+        # Validate superuser assignment
+        is_superuser = cleaned_data.get('is_superuser', False)
+        is_staff = cleaned_data.get('is_staff', False)
+        
+        # If user is being made superuser, ensure they're also staff
+        if is_superuser and not is_staff:
+            cleaned_data['is_staff'] = True
+            
+        # Add business rule validation for PRP users
+        if instance and hasattr(instance, 'is_prp_managed') and getattr(instance, 'is_prp_managed', False):
+            # PRP users can have roles modified, but add logging/warnings
+            pass  # Allow role changes for PRP users
+        
+        return cleaned_data

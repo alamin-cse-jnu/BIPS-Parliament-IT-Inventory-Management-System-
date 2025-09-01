@@ -1,332 +1,185 @@
+# users/api/__init__.py
+# PIMS-PRP Integration API Module
+# Location: Bangladesh Parliament Secretariat, Dhaka
+# 
+# This module provides API integration capabilities for connecting PIMS
+# with the Parliament Resource Portal (PRP) system.
+# ============================================================================
+
 """
-PRP (Parliament Resource Portal) Integration API Package
-========================================================
+PIMS-PRP API Integration Module
+===============================
 
-This package provides API integration functionality for syncing user data
-from PRP to PIMS (Parliament IT Inventory Management System).
+This package contains all PRP (Parliament Resource Portal) API integration
+components for the PIMS (Parliament IT Inventory Management System).
 
-Location: Bangladesh Parliament Secretariat, Dhaka, Bangladesh
-Project: PIMS-PRP Integration
-Purpose: One-way sync PRP → PIMS (PRP is authoritative source)
+Key Components:
+- prp_client.py: Low-level API client for PRP communication
+- sync_service.py: Business logic for synchronizing user data
+- exceptions.py: Custom exception classes for PRP operations
 
-Package Structure:
------------------
-- exceptions.py     : Custom exceptions for PRP API operations
-- prp_client.py     : Core PRP API client with authentication and HTTP requests
-- sync_service.py   : Business logic for user synchronization and data mapping  
-
-Integration Details:
--------------------
-- API Base URL: https://prp.parliament.gov.bd  
-- Authentication: Bearer token based (username: "ezzetech", password: "${Fty#3a")
-- Sync Direction: PRP → PIMS only (one-way)
-- Business Rule: NO user creation from PIMS, all users from PRP
-- Data Fields: Reuse existing CustomUser fields for PRP data mapping
-
-PRP API Endpoints (Required for PIMS User Integration):
-------------------------------------------------------
-1. Authentication:
-   - Get Token: POST /api/authentication/external?action=token
-   - Refresh Token: GET /api/authentication/external?action=refresh-token
-
-2. Employee Data (Core Requirements):
-   - Employee Details: GET /api/secure/external?action=employee_details&departmentId={departmentId}
-   - Departments: GET /api/secure/external?action=departments
-
-Note: PRP API has additional endpoints (divisions, districts, parliament info, MP details) 
-but they are not used in the current PIMS user integration scope.
-
-Data Models (PIMS Integration Scope Only):
-------------------------------------------
-EmployeeDetails (PIMS Uses Only): {userId, nameEng, designationEng, email, mobile, photo, status}
-DepartmentModel: {nameEng, nameBng, id, isWing}
-
-Response Format: {responseCode: 200, payload: [...], msg: "Success"}
-
-Note: The complete PRP API has additional models (LocationModel, ParliamentModel, MPDetails, 
-PoliticalParty) but they are outside the current PIMS user integration scope.
-
-Key Features:
-------------
-- Token-based authentication with automatic refresh
-- Comprehensive error handling and logging
-- Rate limiting and API failure recovery
-- One-way data sync with admin override protection
-- Status management following PRP business rules
-
-Usage Example:
--------------
-from users.api.prp_client import PRPClient
-from users.api.sync_service import PRPSyncService
-from users.api.exceptions import PRPConnectionError
-
-try:
-    # Initialize PRP client with official credentials
-    prp_client = PRPClient(
-        base_url='https://prp.parliament.gov.bd',
-        username='ezzetech',
-        password='${Fty#3a'
-    )
-    
-    # Create sync service
-    sync_service = PRPSyncService(prp_client)
-    
-    # Sync users from specific department (requires departmentId from DepartmentModel)
-    result = sync_service.sync_department_users(department_id=1)
-    
-    # Sync all departments
-    result = sync_service.sync_all_departments()
-    
-    # Get sync status for a user
-    user_status = sync_service.get_sync_status(employee_id="12345")
-    
-except PRPConnectionError as e:
-    logger.error(f"PRP connection failed: {e}")
-
-PRP Data Mapping (Official Field Mapping - PIMS Integration):
-----------------------------------------------------------
-PRP EmployeeDetails → PIMS CustomUser Fields (ONLY these 7 fields used):
-- userId → employee_id  
-- nameEng → first_name + last_name (split)
-- email → email
-- designationEng → designation
-- mobile → phone_number
-- photo (byte[]) → profile_image (converted)
-- status → is_active + is_active_employee
-
-PRP DepartmentModel → PIMS Office Field:
-- nameEng → office
-
-Note: PRP EmployeeDetails has additional fields (fatherNameEng, motherNameEng, dateOfBirth, 
-addresses, etc.) but PIMS integration ONLY uses the 7 fields listed above per project requirements.
-
-Security Notes:
---------------
-- All API credentials stored securely in Django settings
-- Token refresh handled automatically
-- Comprehensive audit logging for all sync operations
-- Rate limiting to prevent API overload
-- Error handling prevents data corruption
-
-Business Rules Implementation:
------------------------------
-1. User Creation: NO user creation from PIMS interface
-2. Data Authority: PRP is the single source of truth
-3. Sync Direction: One-way PRP → PIMS only
-4. Field Editing: PRP-sourced fields are read-only in PIMS
-5. Status Override: PIMS admin can override user status
-6. Sync Control: Admin-initiated sync operations only
-
-Maintenance:
------------
-- Regular token refresh (handled automatically)
-- Sync operation logging and monitoring
-- Error notification system for failed syncs
-- Data integrity validation after each sync
+Location: Bangladesh Parliament Secretariat, Dhaka
+All operations maintain Asia/Dhaka timezone consistency.
 """
 
-# Package metadata
 __version__ = '1.0.0'
 __author__ = 'PIMS Development Team'
-__email__ = 'pims@parliament.gov.bd'
-__description__ = 'PRP Integration API for PIMS User Synchronization'
+__location__ = 'Bangladesh Parliament Secretariat, Dhaka'
 
-# Import main classes for convenient access
-# Note: We handle imports gracefully to avoid circular import issues
-__all__ = []
-
-# Import exceptions first (no dependencies)
+# Import key classes for easy access
 try:
+    from .prp_client import PRPClient
+    from .sync_service import PRPSyncService
     from .exceptions import (
-        PRPBaseException,
-        PRPConnectionError, 
+        PRPException,
+        PRPConnectionError,
         PRPAuthenticationError,
-        PRPSyncError,
         PRPDataError,
-        PRPRateLimitError,
-        PRPDataValidationError,
-        PRPConfigurationError
+        PRPConfigurationError,
+        PRPBusinessRuleError
     )
     
-    # Add exception classes to __all__ if successfully imported
-    __all__.extend([
-        'PRPBaseException',
-        'PRPConnectionError',
-        'PRPAuthenticationError', 
-        'PRPSyncError',
-        'PRPDataError',
-        'PRPRateLimitError',
-        'PRPDataValidationError',
-        'PRPConfigurationError'
-    ])
+    # API availability flag
+    PRP_API_AVAILABLE = True
     
-except ImportError:
-    # exceptions.py not created yet - this is expected during development
-    pass
-
-# Import PRP client (depends on exceptions only)
-try:
-    from .prp_client import PRPClient, PRPAPIConfig, create_prp_client
-    
-    # Add client classes to __all__ if successfully imported
-    __all__.extend([
+    __all__ = [
         'PRPClient',
-        'PRPAPIConfig', 
-        'create_prp_client'
-    ])
-    
-except ImportError:
-    # prp_client.py not created yet - this is expected during development
-    pass
-
-# Import sync service (depends on prp_client and exceptions)
-try:
-    from .sync_service import PRPSyncService, PRPSyncResult
-    
-    # Add sync service classes to __all__ if successfully imported
-    __all__.extend([
         'PRPSyncService', 
-        'PRPSyncResult'
-    ])
-    
-except ImportError:
-    # sync_service.py not fully implemented yet - this is expected during development
-    pass
+        'PRPException',
+        'PRPConnectionError',
+        'PRPAuthenticationError',
+        'PRPDataError',
+        'PRPConfigurationError',
+        'PRPBusinessRuleError',
+        'PRP_API_AVAILABLE'
+    ]
 
-# Package-level configuration based on official PRP API documentation
-DEFAULT_CONFIG = {
-    # API Connection Settings
-    'API_BASE_URL': 'https://prp.parliament.gov.bd',
-    'API_TIMEOUT': 30,
-    'MAX_RETRIES': 3,
-    'RETRY_DELAY': 1,
-    'BATCH_SIZE': 50,
-    'RATE_LIMIT_DELAY': 0.5,
+except ImportError as e:
+    # Handle case where PRP dependencies are not available
+    import logging
     
-    # Authentication Settings (from official API spec)
-    'AUTH_USERNAME': 'ezzetech',
-    'AUTH_PASSWORD': '${Fty#3a',  # From official API documentation
+    logger = logging.getLogger(__name__)
+    logger.warning(f"PRP API components not available: {e}")
+    logger.warning("PRP integration will be disabled")
     
-    # API Endpoints (PIMS Integration - Only Required Endpoints)
-    'ENDPOINTS': {
-        # Authentication (Required)
-        'TOKEN': '/api/authentication/external?action=token',
-        'REFRESH_TOKEN': '/api/authentication/external?action=refresh-token',
+    # Provide stub implementations to prevent import errors
+    class PRPClientStub:
+        """Stub implementation when PRP client is not available."""
         
-        # Employee & Department Data (Required for User Sync)
-        'EMPLOYEE_DETAILS': '/api/secure/external?action=employee_details&departmentId={departmentId}',
-        'DEPARTMENTS': '/api/secure/external?action=departments',
-    },
+        def __init__(self, *args, **kwargs):
+            raise ImportError("PRP API client not available - missing dependencies")
     
-    # Response Structure (from official API spec)
-    'RESPONSE_STRUCTURE': {
-        'SUCCESS_CODE': 200,
-        'SUCCESS_MESSAGE': 'Success',
-        'PAYLOAD_KEY': 'payload',
-        'MESSAGE_KEY': 'msg',
-        'RESPONSE_CODE_KEY': 'responseCode',
-    },
-}
-
-# Logging configuration for PRP operations
-import logging
-
-# Create PRP-specific logger
-prp_logger = logging.getLogger('pims.prp_integration')
-
-# Set up basic configuration if not already configured
-if not prp_logger.handlers:
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-    handler.setFormatter(formatter)
-    prp_logger.addHandler(handler)
-    prp_logger.setLevel(logging.INFO)
-
-def get_prp_logger():
-    """
-    Get the PRP integration logger.
+    class PRPSyncServiceStub:
+        """Stub implementation when PRP sync service is not available."""
+        
+        def __init__(self, *args, **kwargs):
+            raise ImportError("PRP sync service not available - missing dependencies")
     
-    Returns:
-        logging.Logger: Configured logger for PRP operations
-    """
-    return prp_logger
-
-# Utility functions for package
-def get_version():
-    """
-    Get the current package version.
+    # Export stub classes
+    PRPClient = PRPClientStub
+    PRPSyncService = PRPSyncServiceStub
     
-    Returns:
-        str: Package version string
-    """
-    return __version__
+    # Generic exception for when PRP is not available
+    class PRPNotAvailableError(Exception):
+        """Raised when PRP functionality is requested but not available."""
+        pass
+    
+    PRPException = PRPNotAvailableError
+    PRPConnectionError = PRPNotAvailableError
+    PRPAuthenticationError = PRPNotAvailableError
+    PRPDataError = PRPNotAvailableError
+    PRPConfigurationError = PRPNotAvailableError
+    PRPBusinessRuleError = PRPNotAvailableError
+    
+    # API availability flag
+    PRP_API_AVAILABLE = False
+    
+    __all__ = [
+        'PRPClient',
+        'PRPSyncService',
+        'PRPException',
+        'PRPConnectionError', 
+        'PRPAuthenticationError',
+        'PRPDataError',
+        'PRPConfigurationError',
+        'PRPBusinessRuleError',
+        'PRP_API_AVAILABLE',
+        'PRPNotAvailableError'
+    ]
 
-def get_config():
+# Configuration validation helper
+def validate_prp_configuration():
     """
-    Get the default PRP configuration.
+    Validate PRP configuration is properly set up.
     
     Returns:
-        dict: Default configuration dictionary
+        bool: True if PRP configuration is valid, False otherwise
     """
-    return DEFAULT_CONFIG.copy()
-
-def validate_integration():
-    """
-    Validate that PRP integration is properly configured.
+    if not PRP_API_AVAILABLE:
+        return False
     
-    Returns:
-        dict: Validation results with 'success' boolean and 'messages' list
-    """
-    validation_result = {
-        'success': True,
-        'messages': []
+    try:
+        from django.conf import settings
+        
+        # Check required settings exist
+        prp_settings = getattr(settings, 'PRP_API_SETTINGS', {})
+        required_settings = ['BASE_URL', 'AUTH_USERNAME', 'AUTH_PASSWORD']
+        
+        for setting in required_settings:
+            if not prp_settings.get(setting):
+                return False
+        
+        return True
+        
+    except Exception:
+        return False
+
+# Auto-validation on import (in development)
+def _auto_validate():
+    """Auto-validate PRP configuration during import."""
+    try:
+        from django.conf import settings
+        
+        if getattr(settings, 'DEBUG', False):
+            is_valid = validate_prp_configuration()
+            if PRP_API_AVAILABLE and not is_valid:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(
+                    "🚨 PRP API is available but configuration is incomplete. "
+                    "Check PRP_API_SETTINGS in your Django settings."
+                )
+    except Exception:
+        pass  # Ignore validation errors during import
+
+# Run auto-validation
+_auto_validate()
+
+# Module information for debugging
+def get_module_info():
+    """Get information about this API module."""
+    return {
+        'version': __version__,
+        'author': __author__,
+        'location': __location__,
+        'api_available': PRP_API_AVAILABLE,
+        'configuration_valid': validate_prp_configuration() if PRP_API_AVAILABLE else False,
+        'components': __all__
     }
-    
-    # Check if all required modules are importable
-    required_modules = ['exceptions', 'prp_client', 'sync_service']
-    missing_modules = []
-    
-    for module_name in required_modules:
-        if module_name == 'exceptions' and 'PRPBaseException' not in __all__:
-            missing_modules.append('exceptions.py')
-        elif module_name == 'prp_client' and 'PRPClient' not in __all__:
-            missing_modules.append('prp_client.py')  
-        elif module_name == 'sync_service' and 'PRPSyncService' not in __all__:
-            missing_modules.append('sync_service.py')
-    
-    if missing_modules:
-        validation_result['success'] = False
-        validation_result['messages'].append(
-            f"Missing PRP integration modules: {', '.join(missing_modules)}"
-        )
-    else:
-        validation_result['messages'].append("All PRP integration modules are available")
-    
-    return validation_result
 
-# Create shorthand function for quick client creation
-def create_default_client():
-    """
-    Create PRP client with default configuration.
-    
-    Returns:
-        PRPClient: Configured PRP client instance
-        
-    Raises:
-        ImportError: If prp_client module is not available
-    """
-    if 'create_prp_client' not in __all__:
-        raise ImportError("PRP client module not available. Ensure prp_client.py is implemented.")
-    
-    return create_prp_client()
+# Development helper
+def print_module_status():
+    """Print module status for debugging (development only)."""
+    info = get_module_info()
+    print("\n" + "="*60)
+    print("🏛️  PIMS-PRP API Module Status")
+    print("="*60)
+    print(f"Location: {info['location']}")
+    print(f"Version: {info['version']}")
+    print(f"API Available: {'✅' if info['api_available'] else '❌'}")
+    print(f"Configuration Valid: {'✅' if info['configuration_valid'] else '❌'}")
+    print(f"Components Loaded: {len(info['components'])}")
+    print("="*60 + "\n")
 
-# Export utility functions
-__all__.extend([
-    'get_prp_logger', 
-    'get_version', 
-    'get_config', 
-    'validate_integration',
-    'create_default_client'
-])
+# Export module info for external access
+MODULE_INFO = get_module_info()

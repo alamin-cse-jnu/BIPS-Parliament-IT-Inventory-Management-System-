@@ -1,4 +1,5 @@
 # users/urls.py
+# ============================================================================
 # PIMS-PRP Integration - Bangladesh Parliament Secretariat
 # Location: Dhaka, Bangladesh
 # 
@@ -17,19 +18,19 @@ app_name = 'users'
 # PRP Integration URL Patterns (Admin-only, secure endpoints)
 # ============================================================================
 prp_patterns = [
-    # PRP Sync Dashboard and Control Panel
+    # ✅ CORRECTED: These match your frontend calls exactly
+    path('departments/', views.prp_departments_api, name='prp_departments'),
+    path('lookup/<str:employee_id>/', views.prp_lookup_employee, name='prp_lookup'),
+    
+    # PRP Dashboard and Control Panel
     path('dashboard/', views.PRPSyncDashboardView.as_view(), name='prp_sync_dashboard'),
     path('sync/trigger/', views.PRPSyncTriggerView.as_view(), name='prp_sync_trigger'),
-    #path('sync/status/', views.PRPSyncStatusView.as_view(), name='prp_sync_status'),
-    #path('health/', views.PRPHealthCheckView.as_view(), name='prp_health_check'),
-    
-    # Department Operations
-    #path('departments/', views.PRPDepartmentListView.as_view(), name='prp_departments'),
-    #path('departments/<int:department_id>/sync/', views.PRPSyncDepartmentUsersView.as_view(), name='prp_sync_department_users'),
-    
-    # Sync Operations and Reporting
-    #path('sync/reports/', views.PRPSyncReportsView.as_view(), name='prp_sync_reports'),
-    #path('sync/logs/', views.PRPSyncLogsView.as_view(), name='prp_sync_logs'),
+    # Commented out - implement these views when needed
+    # path('sync/status/', views.PRPSyncStatusView.as_view(), name='prp_sync_status'),
+    # path('health/', views.PRPHealthCheckView.as_view(), name='prp_health_check'),
+    # path('departments/<int:department_id>/sync/', views.PRPSyncDepartmentUsersView.as_view(), name='prp_sync_department_users'),
+    # path('sync/reports/', views.PRPSyncReportsView.as_view(), name='prp_sync_reports'),
+    # path('sync/logs/', views.PRPSyncLogsView.as_view(), name='prp_sync_logs'),
 ]
 
 # ============================================================================
@@ -37,11 +38,11 @@ prp_patterns = [
 # ============================================================================
 auth_patterns = [
     # Login (supports both PIMS local users and PRP User ID as username)
-    path('login/', views.CustomLoginView.as_view(), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='users:login'), name='logout'),
+    path('login/', views.CustomLoginView.as_view(), name='auth_login'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='users:login'), name='auth_logout'),
     
     # Password Reset URLs (for local users only)
-    path('password-reset/', views.CustomPasswordResetView.as_view(), name='password_reset'),
+    path('password-reset/', views.CustomPasswordResetView.as_view(), name='auth_password_reset'),
     path('password-reset/done/', 
          auth_views.PasswordResetDoneView.as_view(
              template_name='users/password_reset_done.html'
@@ -61,28 +62,28 @@ auth_patterns = [
 # ============================================================================
 user_management_patterns = [
     # User CRUD Operations
-    path('', views.UserListView.as_view(), name='list'),
-    path('create/', views.UserCreateView.as_view(), name='create'),
-    path('<int:pk>/', views.UserDetailView.as_view(), name='detail'),
-    path('<int:pk>/edit/', views.UserUpdateView.as_view(), name='edit'),
-    path('<int:pk>/delete/', views.UserDeleteView.as_view(), name='delete'),
-    
-    # User Status Management
-    #path('<int:pk>/activate/', views.UserActivateView.as_view(), name='activate'),
-    #path('<int:pk>/deactivate/', views.UserDeactivateView.as_view(), name='deactivate'),
+    path('', views.UserListView.as_view(), name='manage_list'),
+    path('create/', views.UserCreateView.as_view(), name='manage_create'),
+    path('<int:pk>/', views.UserDetailView.as_view(), name='manage_detail'),
+    path('<int:pk>/edit/', views.UserUpdateView.as_view(), name='manage_edit'),
+    path('<int:pk>/delete/', views.UserDeleteView.as_view(), name='manage_delete'),
     
     # Role and Permission Management
-    path('<int:pk>/roles/', views.UserRoleUpdateView.as_view(), name='roles'),
-    path('<int:pk>/permissions/', views.UserPermissionView.as_view(), name='permissions'),
+    path('<int:pk>/roles/', views.UserRoleUpdateView.as_view(), name='manage_roles'),
+    path('<int:pk>/permissions/', views.UserPermissionView.as_view(), name='manage_permissions'),
+    
+    # User Status Management (commented out - implement when needed)
+    # path('<int:pk>/activate/', views.UserActivateView.as_view(), name='manage_activate'),
+    # path('<int:pk>/deactivate/', views.UserDeactivateView.as_view(), name='manage_deactivate'),
 ]
 
 # ============================================================================
 # User Profile Management
 # ============================================================================
 profile_patterns = [
-    path('profile/', views.UserProfileView.as_view(), name='profile'),
-    path('profile/edit/', views.UserProfileEditView.as_view(), name='profile_edit'),
-    path('profile/password/', views.UserPasswordChangeView.as_view(), name='password_change'),
+    path('', views.UserProfileView.as_view(), name='profile'),
+    path('edit/', views.UserProfileEditView.as_view(), name='profile_edit'),
+    path('password/', views.UserPasswordChangeView.as_view(), name='password_change'),
 ]
 
 # ============================================================================
@@ -96,25 +97,30 @@ search_reporting_patterns = [
     path('lookup/<str:employee_id>/', views.user_lookup_by_employee_id, name='lookup'),
     
     # User Reports and Analytics
-    path('reports/', views.UserReportsView.as_view(), name='reports'),
+    path('', views.UserReportsView.as_view(), name='reports'),
 ]
 
 # ============================================================================
-# AJAX API Endpoints (Future Implementation)
+# AJAX API Endpoints
 # ============================================================================
 api_patterns = [
-    # PRP-specific API endpoints (placeholder for future development)
-    # path('api/prp-user-check/<str:employee_id>/', views.check_prp_user_exists, name='api_prp_user_check'),
-    # path('api/prp-departments/', views.get_prp_departments_ajax, name='api_prp_departments'),
-    # path('api/prp-sync-progress/', views.get_prp_sync_progress, name='api_prp_sync_progress'),
+    # Employee lookup AJAX endpoints
+    path('employee/<str:employee_id>/', views.lookup_user_by_employee_id_ajax, name='employee_lookup'),
+    
+    # PRP-specific API endpoints
+    path('prp-check/<str:employee_id>/', views.check_prp_user_exists, name='prp_user_check'),
+    
+    # Future API endpoints (commented out - implement when needed)
+    # path('prp-departments/', views.get_prp_departments_ajax, name='api_prp_departments'),
+    # path('prp-sync-progress/', views.get_prp_sync_progress, name='api_prp_sync_progress'),
 ]
 
 # ============================================================================
-# Main URL Patterns - Combined Structure
+# Main URL Patterns - Complete Structure
 # ============================================================================
 urlpatterns = [
     # ========================================================================
-    # PRP Integration Routes (Admin-only, secured)
+    # PRP Integration Routes (Admin-only, secured) - MUST BE FIRST
     # ========================================================================
     path('prp/', include(prp_patterns)),
     
@@ -132,21 +138,6 @@ urlpatterns = [
     # ========================================================================
     path('manage/', include(user_management_patterns)),
     
-    # Direct user management URLs (maintains existing structure)
-    path('', views.UserListView.as_view(), name='list'),
-    path('create/', views.UserCreateView.as_view(), name='create'),
-    path('<int:pk>/', views.UserDetailView.as_view(), name='detail'),
-    path('<int:pk>/edit/', views.UserUpdateView.as_view(), name='edit'),
-    path('<int:pk>/delete/', views.UserDeleteView.as_view(), name='delete'),
-    
-    # ========================================================================
-    # User Roles and Permissions
-    # ========================================================================
-    path('<int:pk>/roles/', views.UserRoleUpdateView.as_view(), name='roles'),
-    path('<int:pk>/permissions/', views.UserPermissionView.as_view(), name='permissions'),
-    #path('<int:pk>/activate/', views.UserActivateView.as_view(), name='activate'),
-    #path('<int:pk>/deactivate/', views.UserDeactivateView.as_view(), name='deactivate'),
-    
     # ========================================================================
     # User Profile Management
     # ========================================================================
@@ -163,13 +154,22 @@ urlpatterns = [
     path('api/', include(api_patterns)),
     
     # ========================================================================
-    # Legacy Support and Backward Compatibility
+    # Direct URL Access (maintains existing structure for backward compatibility)
     # ========================================================================
     
-    # Password reset (direct access)
-    path('password-reset/', views.CustomPasswordResetView.as_view(), name='password_reset'),
+    # Main user management URLs
+    path('', views.UserListView.as_view(), name='list'),
+    path('create/', views.UserCreateView.as_view(), name='create'),
+    path('<int:pk>/', views.UserDetailView.as_view(), name='detail'),
+    path('<int:pk>/edit/', views.UserUpdateView.as_view(), name='edit'),
+    path('<int:pk>/delete/', views.UserDeleteView.as_view(), name='delete'),
     
-    # Employee lookup (backward compatibility)
+    # User Roles and Permissions
+    path('<int:pk>/roles/', views.UserRoleUpdateView.as_view(), name='roles'),
+    path('<int:pk>/permissions/', views.UserPermissionView.as_view(), name='permissions'),
+    
+    # Legacy Support and Backward Compatibility
+    path('password-reset/', views.CustomPasswordResetView.as_view(), name='password_reset'),
     path('lookup/<str:employee_id>/', views.user_lookup_by_employee_id, name='lookup'),
 ]
 
@@ -177,83 +177,50 @@ urlpatterns = [
 # URL Pattern Summary for PIMS-PRP Integration
 # ============================================================================
 """
-Essential PRP Integration URLs (Admin-only):
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ CORRECTED URLs that match your frontend expectations:
 
-Dashboard & Management:
-• /users/prp/dashboard/                     - PRP sync control panel
+PRP Integration URLs (Admin-only):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• /users/prp/departments/                   - Get PRP departments (AJAX)
+• /users/prp/lookup/110100092/              - Lookup employee in PRP (AJAX)
+• /users/prp/dashboard/                     - PRP sync dashboard
 • /users/prp/sync/trigger/                  - Manual sync trigger
-• /users/prp/sync/status/                   - Sync operation status
-• /users/prp/health/                        - PRP API health check
 
-Department Operations:
-• /users/prp/departments/                   - List PRP departments
-• /users/prp/departments/<id>/sync/         - Sync specific department users
-
-Sync Operations:
-• /users/prp/sync/reports/                  - View sync reports
-• /users/prp/sync/logs/                     - View sync operation logs
-
-Preserved PIMS URLs (No Breaking Changes):
+Authentication URLs:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Authentication:
 • /users/login/                             - Login (supports PRP User ID)
 • /users/logout/                            - Logout
 • /users/auth/login/                        - Enhanced login
 • /users/auth/password-reset/               - Password reset
 
-User Management:
+User Management URLs (Preserved):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 • /users/                                   - User list (shows both local & PRP)
 • /users/create/                            - Create new user (local only)
 • /users/<pk>/                              - User detail
 • /users/<pk>/edit/                         - Edit user (PRP fields read-only)
 • /users/<pk>/delete/                       - Delete user
-
-User Operations:
-• /users/<pk>/activate/                     - Activate user
-• /users/<pk>/deactivate/                   - Deactivate user
 • /users/<pk>/roles/                        - Manage user roles
 • /users/<pk>/permissions/                  - Manage permissions
 
-Profile & Search:
+AJAX API URLs:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• /users/api/employee/<employee_id>/        - Employee lookup AJAX
+• /users/api/prp-check/<employee_id>/       - PRP user check AJAX
+
+Profile & Search URLs:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 • /users/profile/                           - User profile
 • /users/reports/search/                    - User search
 • /users/lookup/<employee_id>/              - Employee lookup
-• /users/reports/reports/                   - User reports
+• /users/reports/                           - User reports
 
-Integration Design Notes:
+Key Features:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-1. Business Rules Implementation:
-   - PRP users login with PRP User ID as username
-   - Default password: "12345678" for all PRP users
-   - PRP-sourced fields are read-only in PIMS interface
-   - Admin can override user status (inactive status takes precedence)
-   - One-way sync: PRP → PIMS only
-
-2. Template Design Pattern:
-   - Flat design with high contrast (NO glass-morphism)
-   - Color scheme: Teal (#14b8a6), Orange (#f97316), Red (#ef4444)
-   - Location context: Bangladesh Parliament Secretariat, Dhaka
-   - Responsive design for all device sizes
-   - Consistent spacing and modern typography
-
-3. Security Considerations:
-   - PRP routes are admin-only and secured
-   - Token-based authentication for PRP API
-   - Comprehensive audit logging
-   - Rate limiting for API calls
-   - Error handling prevents data corruption
-
-4. Development Approach:
-   - NO breaking changes to existing PIMS functionality
-   - Minimal URL structure focused on essential operations
-   - Clean separation between PRP and local user management
-   - Future-ready structure for additional PRP features
-
-This URL configuration provides a solid foundation for the PIMS-PRP integration
-while maintaining backward compatibility and following Django best practices.
-The design supports the business requirements while keeping the implementation
-simple and maintainable.
+✅ PRP URLs positioned FIRST to avoid conflicts
+✅ All existing URLs preserved for backward compatibility  
+✅ Template design pattern: flat design, high contrast
+✅ Location context: Bangladesh Parliament Secretariat, Dhaka
+✅ Admin-only PRP routes with proper security
+✅ One-way sync: PRP → PIMS business rules maintained
 """

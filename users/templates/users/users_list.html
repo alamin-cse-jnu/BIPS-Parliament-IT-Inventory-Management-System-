@@ -1,1576 +1,1068 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load static %}
 
-{% block title %}Users Management - PIMS - Bangladesh Parliament Secretariat{% endblock %}
-
-{% block breadcrumb_items %}
-    <li class="breadcrumb-item active">Users Management</li>
-{% endblock %}
+{% block title %}Create User - PIMS{% endblock %}
 
 {% block extra_css %}
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 <style>
-/* Users List Template - Bangladesh Parliament Secretariat PIMS */
-/* Location: Dhaka, Bangladesh - Flat Design with High Contrast */
-/* Following Template Design Pattern Rule - Teal, Orange, Red Color Scheme */
+/* PIMS Template Design Pattern Rules - Flat Design, High Contrast */
+/* Location: Bangladesh Parliament Secretariat, Dhaka */
+/* Color Scheme: Teal (#14b8a6), Orange (#f97316), Red (#ef4444) */
 
 :root {
     --primary-teal: #14b8a6;
-    --primary-teal-hover: #0f9488;
-    --primary-teal-light: #5eead4;
+    --primary-teal-hover: #0d9488;
     --primary-orange: #f97316;
     --primary-orange-hover: #ea580c;
     --primary-red: #ef4444;
     --primary-red-hover: #dc2626;
-    --text-primary: #1e293b;
-    --text-secondary: #64748b;
-    --text-muted: #94a3b8;
     --bg-primary: #ffffff;
     --bg-secondary: #f8fafc;
-    --bg-tertiary: #f1f5f9;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
     --border-light: #e2e8f0;
-    --border-medium: #cbd5e1;
-    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
-    --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
     --success: #10b981;
     --warning: #f59e0b;
-    --danger: #ef4444;
-    --info: #3b82f6;
-    --prp-sync-bg: #ecfdf5;
-    --prp-indicator: #14b8a6;
-    --prp-readonly-bg: #f8f9fa;
-    --prp-status-active: #10b981;
-    --prp-status-inactive: #ef4444;
-    --prp-status-sync: #3b82f6;
+    --error: #ef4444;
+    --shadow-base: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background-color: var(--bg-secondary);
-}
-
-/* Main Container */
-.users-container {
-    background: linear-gradient(135deg, var(--bg-secondary) 0%, #e2e8f0 100%);
-    min-height: 100vh;
-    padding: 1.5rem 0;
+/* Page Container */
+.page-container {
+    padding: 2rem 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 /* Page Header */
-.users-header {
+.page-header {
     background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: 16px;
     padding: 2rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow-base);
     margin-bottom: 2rem;
-    box-shadow: var(--shadow-card);
-    position: relative;
-    overflow: hidden;
+    border-left: 4px solid var(--primary-teal);
 }
 
-.users-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-orange) 100%);
-}
-
-.header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 1.5rem;
-}
-
-.page-title-section h1 {
-    color: var(--text-primary);
-    font-weight: 700;
-    margin-bottom: 0.5rem;
+.page-title {
     font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
     display: flex;
     align-items: center;
     gap: 1rem;
-}
-
-.page-title-section h1 i {
-    color: var(--primary-teal);
-    background: rgba(20, 184, 166, 0.1);
-    padding: 0.75rem;
-    border-radius: 12px;
 }
 
 .page-subtitle {
     color: var(--text-secondary);
-    margin-bottom: 0;
-    font-size: 1.125rem;
-}
-
-.page-meta {
-    text-align: right;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-}
-
-.header-actions {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
-    border: none;
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 12px;
-    font-weight: 600;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(20, 184, 166, 0.3);
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(20, 184, 166, 0.4);
-    color: white;
-    text-decoration: none;
-}
-
-.btn-outline-secondary {
-    background: transparent;
-    border: 2px solid var(--border-light);
-    color: var(--text-secondary);
-    padding: 0.75rem 1.5rem;
-    border-radius: 12px;
-    font-weight: 600;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.3s ease;
-}
-
-.btn-outline-secondary:hover {
-    background: var(--primary-teal);
-    border-color: var(--primary-teal);
-    color: white;
-    text-decoration: none;
-    transform: translateY(-2px);
-}
-
-/* Statistics Cards */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.stats-card {
-    background: var(--bg-primary);
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: var(--shadow-card);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    border: 1px solid var(--border-light);
-}
-
-.stats-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-hover);
-}
-
-.stats-card.total {
-    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-hover) 100%);
-    color: white;
-}
-
-.stats-card.active {
-    background: linear-gradient(135deg, var(--success) 0%, #047857 100%);
-    color: white;
-}
-
-.stats-card.inactive {
-    background: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-red-hover) 100%);
-    color: white;
-}
-
-.stats-card.prp {
-    background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-orange-hover) 100%);
-    color: white;
-}
-
-.stats-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-}
-
-.stats-icon {
-    width: 70px;
-    height: 70px;
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-}
-
-.stats-number {
-    font-size: 3rem;
-    font-weight: 800;
-    line-height: 1;
-    margin-bottom: 0.5rem;
-}
-
-.stats-label {
     font-size: 1rem;
+    margin-top: 0.5rem;
+    font-weight: 400;
+}
+
+.location-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--primary-teal);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: 0.75rem;
-    opacity: 0.9;
 }
 
-.stats-change {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    background: rgba(255, 255, 255, 0.15);
-    padding: 0.5rem 0.75rem;
-    border-radius: 8px;
-}
-
-/* Filters Section */
-.filters-section {
+/* Form Container */
+.form-container {
     background: var(--bg-primary);
+    border-radius: 12px;
+    box-shadow: var(--shadow-base);
+    overflow: hidden;
     border: 1px solid var(--border-light);
-    border-radius: 16px;
-    padding: 2rem;
-    margin-bottom: 2rem;
-    box-shadow: var(--shadow-card);
 }
 
-.filters-header {
-    display: flex;
-    justify-content: between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    gap: 1rem;
+.form-header {
+    background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-hover));
+    color: white;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-light);
 }
 
-.filters-title {
+.form-header h3 {
+    margin: 0;
     font-size: 1.25rem;
     font-weight: 600;
-    color: var(--text-primary);
+}
+
+.form-body {
+    padding: 2rem;
+}
+
+/* Alert Container */
+.alert-container {
+    margin-bottom: 1.5rem;
+}
+
+.alert {
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    margin-bottom: 1rem;
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    align-items: flex-start;
+    gap: 0.75rem;
 }
 
-.filters-grid {
+.alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: var(--success);
+    color: #065f46;
+}
+
+.alert-warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: var(--warning);
+    color: #92400e;
+}
+
+.alert-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--error);
+    color: #991b1b;
+}
+
+.alert-info {
+    background: rgba(20, 184, 166, 0.1);
+    border-color: var(--primary-teal);
+    color: #134e4a;
+}
+
+/* PRP User Source Selection */
+.user-source-selection {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border: 2px solid var(--border-light);
+}
+
+.source-options {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: 1fr 1fr;
     gap: 1rem;
-    align-items: end;
+    margin-top: 1rem;
 }
 
-.form-group {
-    margin-bottom: 0;
+.source-option {
+    padding: 1.25rem;
+    border: 2px solid var(--border-light);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: var(--bg-primary);
 }
 
-.form-label {
-    font-weight: 500;
+.source-option:hover {
+    border-color: var(--primary-teal);
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-2px);
+}
+
+.source-option.active {
+    border-color: var(--primary-teal);
+    background: rgba(20, 184, 166, 0.05);
+}
+
+.source-option input[type="radio"] {
+    margin-right: 0.75rem;
+    transform: scale(1.2);
+}
+
+.prp-option-title {
+    font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 0.5rem;
+    margin: 0;
+    font-size: 1.125rem;
+}
+
+.prp-option-description {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+/* PRP Employee Lookup */
+.prp-lookup-section {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    border: 1px solid var(--border-light);
+    display: none;
+}
+
+.prp-lookup-section.active {
     display: block;
 }
 
-.form-control {
+.lookup-form {
+    display: flex;
+    gap: 1rem;
+    align-items: end;
+    flex-wrap: wrap;
+}
+
+.lookup-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.lookup-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.lookup-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
     border: 2px solid var(--border-light);
     border-radius: 8px;
-    padding: 0.75rem;
     font-size: 0.875rem;
     transition: all 0.3s ease;
+    background: var(--bg-primary);
+}
+
+.lookup-input:focus {
+    outline: none;
+    border-color: var(--primary-teal);
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+/* Buttons */
+.btn-prp {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.btn-sync {
+    background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-hover));
+    color: white;
+}
+
+.btn-sync:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    color: white;
+}
+
+.btn-outline-teal {
+    background: var(--bg-primary);
+    color: var(--primary-teal);
+    border: 2px solid var(--primary-teal);
+}
+
+.btn-outline-teal:hover {
+    background: var(--primary-teal);
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* PRP User Preview */
+.prp-user-preview {
+    background: var(--bg-primary);
+    border: 2px solid var(--success);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    display: none;
+}
+
+.prp-user-preview.active {
+    display: block;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.preview-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-light);
+}
+
+.preview-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--primary-teal);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.preview-info h4 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.preview-info p {
+    margin: 0.25rem 0 0 0;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.preview-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.preview-field {
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: 6px;
+    border-left: 3px solid var(--primary-teal);
+}
+
+.preview-field-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+.preview-field-value {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.sync-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.sync-status.synced {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+
+.sync-status.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+}
+
+.preview-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    border-top: 2px solid var(--border-light);
+}
+
+/* Form Fields */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.form-label.required::after {
+    content: ' *';
+    color: var(--primary-red);
+    font-weight: 700;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--border-light);
+    border-radius: 8px;
     background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
 }
 
 .form-control:focus {
+    outline: none;
     border-color: var(--primary-teal);
     box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
-    outline: none;
-}
-
-.btn-filter {
-    background: var(--primary-teal);
-    border: none;
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.btn-filter:hover {
-    background: var(--primary-teal-hover);
-    transform: translateY(-1px);
-}
-
-.btn-clear {
-    background: transparent;
-    border: 2px solid var(--border-light);
-    color: var(--text-secondary);
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-clear:hover {
-    border-color: var(--primary-red);
-    color: var(--primary-red);
-}
-
-/* Users Table */
-.users-table-section {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: 16px;
-    box-shadow: var(--shadow-card);
-    overflow: hidden;
-}
-
-.table-header {
-    background: var(--bg-tertiary);
-    border-bottom: 2px solid var(--border-light);
-    padding: 1.5rem 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.table-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.table-actions {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-}
-
-.btn-export {
-    background: var(--primary-orange);
-    border: none;
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    text-decoration: none;
-}
-
-.btn-export:hover {
-    background: var(--primary-orange-hover);
-    color: white;
-    text-decoration: none;
-    transform: translateY(-1px);
-}
-
-/* Table Styles */
-.table-responsive {
-    overflow-x: auto;
-}
-
-.users-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.875rem;
-}
-
-.users-table th {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    font-weight: 600;
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 2px solid var(--border-light);
-    white-space: nowrap;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.users-table td {
-    padding: 1rem;
-    border-bottom: 1px solid var(--border-light);
-    vertical-align: middle;
-}
-
-.users-table tbody tr {
-    transition: all 0.2s ease;
-}
-
-.users-table tbody tr:hover {
-    background: var(--bg-secondary);
-}
-
-/* User Row Styling */
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid var(--border-light);
-}
-
-.user-avatar-placeholder {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-light) 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 600;
-    font-size: 1rem;
-}
-
-.user-details h6 {
-    margin: 0 0 0.25rem 0;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.user-details .text-muted {
-    margin: 0;
-    font-size: 0.8125rem;
-    color: var(--text-muted);
-}
-
-/* PRP Status Indicators */
-.prp-indicator {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.375rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-}
-
-.prp-indicator.prp-managed {
-    background: var(--prp-sync-bg);
-    color: var(--prp-indicator);
-    border: 1px solid var(--prp-indicator);
-}
-
-.prp-indicator.local-user {
-    background: var(--bg-tertiary);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-medium);
-}
-
-.prp-sync-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 500;
-}
-
-.prp-sync-status.synced {
-    background: rgba(16, 185, 129, 0.1);
-    color: var(--success);
-}
-
-.prp-sync-status.needs-sync {
-    background: rgba(245, 158, 11, 0.1);
-    color: var(--warning);
-}
-
-.prp-sync-status.never-synced {
-    background: rgba(239, 68, 68, 0.1);
-    color: var(--danger);
-}
-
-/* Status Badges */
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.375rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-}
-
-.status-badge.active {
-    background: rgba(16, 185, 129, 0.1);
-    color: var(--success);
-    border: 1px solid var(--success);
-}
-
-.status-badge.inactive {
-    background: rgba(239, 68, 68, 0.1);
-    color: var(--danger);
-    border: 1px solid var(--danger);
-}
-
-.status-badge.staff {
-    background: rgba(59, 130, 246, 0.1);
-    color: var(--info);
-    border: 1px solid var(--info);
-}
-
-/* Action Buttons */
-.action-buttons {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-}
-
-.btn-action {
-    padding: 0.375rem;
-    border-radius: 6px;
-    border: 1px solid var(--border-light);
-    background: var(--bg-primary);
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 32px;
-    height: 32px;
-}
-
-.btn-action:hover {
-    text-decoration: none;
-}
-
-.btn-action.view {
-    color: var(--info);
-    border-color: var(--info);
-}
-
-.btn-action.view:hover {
-    background: var(--info);
-    color: white;
-}
-
-.btn-action.edit {
-    color: var(--primary-orange);
-    border-color: var(--primary-orange);
-}
-
-.btn-action.edit:hover {
-    background: var(--primary-orange);
-    color: white;
-}
-
-.btn-action.delete {
-    color: var(--danger);
-    border-color: var(--danger);
-}
-
-.btn-action.delete:hover {
-    background: var(--danger);
-    color: white;
-}
-
-.btn-action.prp-sync {
-    color: var(--prp-indicator);
-    border-color: var(--prp-indicator);
-}
-
-.btn-action.prp-sync:hover {
-    background: var(--prp-indicator);
-    color: white;
-}
-
-/* Pagination */
-.pagination-section {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-top: none;
-    border-radius: 0 0 16px 16px;
-    padding: 1.5rem 2rem;
-    display: flex;
-    justify-content: between;
-    align-items: center;
-    gap: 1rem;
-}
-
-.pagination-info {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-}
-
-.pagination {
-    display: flex;
-    gap: 0.25rem;
-    margin: 0;
-}
-
-.page-link {
-    padding: 0.5rem 0.75rem;
-    border: 1px solid var(--border-light);
-    border-radius: 8px;
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: all 0.2s ease;
-    font-size: 0.875rem;
-}
-
-.page-link:hover {
-    background: var(--primary-teal);
-    border-color: var(--primary-teal);
-    color: white;
-    text-decoration: none;
-}
-
-.page-link.active {
-    background: var(--primary-teal);
-    border-color: var(--primary-teal);
-    color: white;
-}
-
-.page-link.disabled {
-    color: var(--text-muted);
-    pointer-events: none;
-    opacity: 0.5;
-}
-
-/* Empty State */
-.empty-state {
-    text-align: center;
-    padding: 4rem 2rem;
-    color: var(--text-muted);
-}
-
-.empty-state i {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-    color: var(--border-medium);
-}
-
-.empty-state h3 {
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-}
-
-.empty-state p {
-    margin-bottom: 2rem;
 }
 
 /* Responsive Design */
-@media (max-width: 1200px) {
-    .stats-grid {
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    }
-    
-    .filters-grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    }
-}
-
 @media (max-width: 768px) {
-    .users-container {
-        padding: 1rem 0;
+    .page-container {
+        padding: 1rem 0.5rem;
     }
     
-    .users-header {
-        padding: 1.5rem;
-        border-radius: 12px;
-    }
-    
-    .header-content {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-    
-    .header-actions {
-        width: 100%;
-        justify-content: flex-start;
-    }
-    
-    .stats-grid {
+    .source-options {
         grid-template-columns: 1fr;
-        gap: 1rem;
     }
     
-    .stats-card {
-        padding: 1.5rem;
-    }
-    
-    .filters-section {
-        padding: 1.5rem;
-    }
-    
-    .filters-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    
-    .table-header {
-        padding: 1rem;
+    .lookup-form {
         flex-direction: column;
-        gap: 1rem;
         align-items: stretch;
     }
     
-    .table-actions {
-        justify-content: space-between;
+    .preview-details {
+        grid-template-columns: 1fr;
     }
     
-    .users-table th,
-    .users-table td {
-        padding: 0.75rem 0.5rem;
-    }
-    
-    .user-info {
-        gap: 0.75rem;
-    }
-    
-    .user-avatar,
-    .user-avatar-placeholder {
-        width: 32px;
-        height: 32px;
-        font-size: 0.875rem;
-    }
-    
-    .pagination-section {
-        padding: 1rem;
+    .preview-actions {
         flex-direction: column;
-        gap: 1rem;
     }
 }
 
 @media (max-width: 480px) {
-    .users-header {
-        padding: 1rem;
-    }
-    
-    .page-title-section h1 {
-        font-size: 1.5rem;
-        gap: 0.75rem;
-    }
-    
-    .page-title-section h1 i {
-        padding: 0.5rem;
-    }
-    
-    .stats-card {
-        padding: 1rem;
-    }
-    
-    .stats-number {
-        font-size: 2rem;
-    }
-    
-    .stats-icon {
-        width: 50px;
-        height: 50px;
+    .page-title {
         font-size: 1.5rem;
     }
     
-    .filters-section {
+    .form-header,
+    .form-body {
         padding: 1rem;
     }
-    
-    .users-table {
-        font-size: 0.8125rem;
-    }
-    
-    .users-table th,
-    .users-table td {
-        padding: 0.5rem 0.375rem;
-    }
-    
-    .action-buttons {
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-    
-    .btn-action {
-        min-width: 28px;
-        height: 28px;
-    }
-}
-
-/* Print Styles */
-@media print {
-    .users-container {
-        background: white;
-        padding: 0;
-    }
-    
-    .header-actions,
-    .filters-section,
-    .action-buttons,
-    .pagination-section {
-        display: none;
-    }
-    
-    .users-header {
-        border: none;
-        box-shadow: none;
-        padding: 1rem 0;
-    }
-    
-    .users-table {
-        font-size: 0.75rem;
-    }
-    
-    .users-table th,
-    .users-table td {
-        padding: 0.5rem 0.25rem;
-    }
-    
-    .stats-grid {
-        display: none;
-    }
-}
-
-/* Dark Theme Support (Future Enhancement) */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --text-primary: #f8fafc;
-        --text-secondary: #cbd5e1;
-        --text-muted: #64748b;
-        --bg-primary: #1e293b;
-        --bg-secondary: #0f172a;
-        --bg-tertiary: #334155;
-        --border-light: #334155;
-        --border-medium: #475569;
-    }
-}
-
-/* Loading States */
-.loading {
-    opacity: 0.6;
-    pointer-events: none;
-    position: relative;
-}
-
-.loading::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 20px;
-    height: 20px;
-    margin: -10px 0 0 -10px;
-    border: 2px solid var(--primary-teal);
-    border-radius: 50%;
-    border-top-color: transparent;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid users-container">
+<div class="page-container">
     <!-- Page Header -->
-    <div class="users-header">
-        <div class="header-content">
-            <div class="page-title-section">
-                <h1>
-                    <i class="bi bi-people-fill"></i>
-                    Users Management
-                </h1>
-                <p class="page-subtitle">
-                    Manage PIMS users with PRP (Parliament Resource Portal) integration
-                </p>
-            </div>
-            
-            <div class="page-meta">
-                <div>Location: <strong>Dhaka, Bangladesh</strong></div>
-                <div>Last Updated: {{ "now"|date:"M d, Y H:i" }} BDT</div>
-            </div>
-            
-            <div class="header-actions">
-                {% if perms.users.add_customuser %}
-                    <a href="{% url 'users:create' %}" class="btn-primary">
-                        <i class="bi bi-person-plus"></i>
-                        Create User
-                    </a>
-                {% endif %}
-                
-                {% if perms.users.sync_prp_users %}
-                    <a href="{% url 'users:prp_sync_dashboard' %}" class="btn-outline-secondary">
-                        <i class="bi bi-arrow-clockwise"></i>
-                        PRP Sync
-                    </a>
-                {% endif %}
-                
-                <a href="#" class="btn-outline-secondary">
-                    <i class="bi bi-download"></i>
-                    Export
-                </a>
-            </div>
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="bi bi-person-plus"></i>
+            Create New User
+        </h1>
+        <p class="page-subtitle">
+            Add a new user to PIMS - Parliament IT Inventory Management System
+        </p>
+        <div class="location-badge">
+            <i class="bi bi-geo-alt"></i>
+            Bangladesh Parliament Secretariat, Dhaka
         </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="stats-grid">
-        <div class="stats-card total">
-            <div class="stats-header">
-                <div class="stats-icon">
-                    <i class="bi bi-people"></i>
-                </div>
-            </div>
-            <div class="stats-number">{{ total_users|default:"0" }}</div>
-            <div class="stats-label">Total Users</div>
-            <div class="stats-change">
-                <i class="bi bi-arrow-up"></i>
-                <span>{{ new_users_this_month|default:"0" }} this month</span>
-            </div>
-        </div>
-
-        <div class="stats-card active">
-            <div class="stats-header">
-                <div class="stats-icon">
-                    <i class="bi bi-person-check"></i>
-                </div>
-            </div>
-            <div class="stats-number">{{ active_users|default:"0" }}</div>
-            <div class="stats-label">Active Users</div>
-            <div class="stats-change positive">
-                <i class="bi bi-check-circle"></i>
-                <span>{{ active_percentage|default:"0" }}% of total</span>
-            </div>
-        </div>
-
-        <div class="stats-card inactive">
-            <div class="stats-header">
-                <div class="stats-icon">
-                    <i class="bi bi-person-x"></i>
-                </div>
-            </div>
-            <div class="stats-number">{{ inactive_users|default:"0" }}</div>
-            <div class="stats-label">Inactive Users</div>
-            <div class="stats-change">
-                <i class="bi bi-exclamation-triangle"></i>
-                <span>{{ inactive_percentage|default:"0" }}% of total</span>
-            </div>
-        </div>
-
-        <div class="stats-card prp">
-            <div class="stats-header">
-                <div class="stats-icon">
-                    <i class="bi bi-cloud-arrow-down"></i>
-                </div>
-            </div>
-            <div class="stats-number">{{ prp_users|default:"0" }}</div>
-            <div class="stats-label">PRP Users</div>
-            <div class="stats-change">
-                <i class="bi bi-clock-history"></i>
-                <span>
-                    {% if prp_last_sync %}
-                        Last sync: {{ prp_last_sync|timesince }} ago
-                    {% else %}
-                        Never synced
-                    {% endif %}
-                </span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filters Section -->
-    <div class="filters-section">
-        <div class="filters-header">
-            <div class="filters-title">
-                <i class="bi bi-funnel"></i>
-                Filter Users
-            </div>
+    <!-- Main Form Container -->
+    <div class="form-container">
+        <div class="form-header">
+            <h3>User Registration</h3>
         </div>
         
-        <form method="get" class="filters-form" id="userFiltersForm">
-            <div class="filters-grid">
-                <div class="form-group">
-                    <label for="search" class="form-label">Search</label>
-                    <input type="text" 
-                           name="search" 
-                           id="search"
-                           value="{{ request.GET.search }}" 
-                           placeholder="Search by name, ID, email..."
-                           class="form-control">
-                </div>
+        <div class="form-body">
+            <!-- Alert Container -->
+            <div id="alert-container" class="alert-container"></div>
 
-                <div class="form-group">
-                    <label for="status" class="form-label">Status</label>
-                    <select name="status" id="status" class="form-control">
-                        <option value="">All Users</option>
-                        <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active Only</option>
-                        <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive Only</option>
-                        <option value="prp" {% if request.GET.status == 'prp' %}selected{% endif %}>PRP Users Only</option>
-                        <option value="local" {% if request.GET.status == 'local' %}selected{% endif %}>Local Users Only</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="office" class="form-label">Office</label>
-                    <input type="text" 
-                           name="office" 
-                           id="office"
-                           value="{{ request.GET.office }}" 
-                           placeholder="Filter by office/department..."
-                           class="form-control">
-                </div>
-
-                <div class="form-group">
-                    <label for="designation" class="form-label">Designation</label>
-                    <input type="text" 
-                           name="designation" 
-                           id="designation"
-                           value="{{ request.GET.designation }}" 
-                           placeholder="Filter by designation..."
-                           class="form-control">
-                </div>
-
-                <div class="form-group">
-                    <button type="submit" class="btn-filter">
-                        <i class="bi bi-search"></i>
-                        Apply Filters
-                    </button>
-                </div>
-
-                <div class="form-group">
-                    <a href="{% url 'users:list' %}" class="btn-clear">
-                        <i class="bi bi-x-circle"></i>
-                        Clear All
-                    </a>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    <!-- Users Table -->
-    <div class="users-table-section">
-        <div class="table-header">
-            <h2 class="table-title">
-                <i class="bi bi-table"></i>
-                Users List
-                {% if users %}
-                    <span class="text-muted">({{ users|length }} of {{ total_users }} users)</span>
-                {% endif %}
-            </h2>
-            
-            <div class="table-actions">
-                <a href="#" 
-                   class="btn-export">
-                    <i class="bi bi-file-earmark-excel"></i>
-                    Export CSV
-                </a>
+            {% if prp_integration_enabled %}
+            <!-- PRP User Source Selection -->
+            <div class="user-source-selection">
+                <h4 style="margin: 0 0 1rem 0; color: var(--text-primary);">
+                    <i class="bi bi-diagram-3"></i>
+                    Select User Source
+                </h4>
+                <p style="color: var(--text-secondary); margin: 0 0 1rem 0;">
+                    Choose whether to import from PRP or create a local user account.
+                </p>
                 
-                {% if perms.users.sync_prp_users %}
-                    <a href="#" class="btn-export" style="background: var(--prp-indicator);">
-                        <i class="bi bi-cloud-download"></i>
-                        Bulk PRP Sync
-                    </a>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="table-responsive">
-            {% if users %}
-                <table class="users-table">
-                    <thead>
-                        <tr>
-                            <th>User</th>
-                            <th>Employee ID</th>
-                            <th>Email</th>
-                            <th>Office</th>
-                            <th>Designation</th>
-                            <th>Phone</th>
-                            <th>PRP Status</th>
-                            <th>User Status</th>
-                            <th>Last Login</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user in users %}
-                            <tr class="{% if not user.is_active %}inactive-row{% endif %}">
-                                <!-- User Info -->
-                                <td>
-                                    <div class="user-info">
-                                        {% if user.profile_image %}
-                                            <img src="{{ user.profile_image.url }}" 
-                                                 alt="{{ user.get_full_name }}"
-                                                 class="user-avatar"
-                                                 loading="lazy">
-                                        {% else %}
-                                            <div class="user-avatar-placeholder">
-                                                {{ user.first_name.0|default:user.username.0|upper }}{{ user.last_name.0|default:""|upper }}
-                                            </div>
-                                        {% endif %}
-                                        
-                                        <div class="user-details">
-                                            <h6>{{ user.get_full_name|default:user.username }}</h6>
-                                            <p class="text-muted">{{ user.username }}</p>
-                                        </div>
-                                    </div>
-                                </td>
-
-                                <!-- Employee ID -->
-                                <td>
-                                    <strong>{{ user.employee_id|default:"-" }}</strong>
-                                </td>
-
-                                <!-- Email -->
-                                <td>
-                                    {% if user.email %}
-                                        <a href="mailto:{{ user.email }}" class="text-decoration-none">
-                                            {{ user.email }}
-                                        </a>
-                                    {% else %}
-                                        <span class="text-muted">No email</span>
-                                    {% endif %}
-                                </td>
-
-                                <!-- Office -->
-                                <td>
-                                    {{ user.office|default:"-" }}
-                                </td>
-
-                                <!-- Designation -->
-                                <td>
-                                    {{ user.designation|default:"-" }}
-                                </td>
-
-                                <!-- Phone -->
-                                <td>
-                                    {% if user.phone_number %}
-                                        <a href="tel:{{ user.phone_number }}" class="text-decoration-none">
-                                            {{ user.phone_number }}
-                                        </a>
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-
-                                <!-- PRP Status -->
-                                <td>
-                                    {% if user.is_prp_managed %}
-                                        <div class="prp-indicator prp-managed">
-                                            <i class="bi bi-cloud-check"></i>
-                                            PRP Managed
-                                        </div>
-                                        
-                                        {% if user.prp_last_sync %}
-                                            <div class="prp-sync-status synced mt-1">
-                                                <i class="bi bi-check-circle"></i>
-                                                <span>Synced {{ user.prp_last_sync|timesince }} ago</span>
-                                            </div>
-                                        {% else %}
-                                            <div class="prp-sync-status never-synced mt-1">
-                                                <i class="bi bi-exclamation-circle"></i>
-                                                <span>Never synced</span>
-                                            </div>
-                                        {% endif %}
-                                    {% else %}
-                                        <div class="prp-indicator local-user">
-                                            <i class="bi bi-person"></i>
-                                            Local User
-                                        </div>
-                                    {% endif %}
-                                </td>
-
-                                <!-- User Status -->
-                                <td>
-                                    <div class="d-flex flex-column gap-1">
-                                        {% if user.is_active %}
-                                            <div class="status-badge active">
-                                                <i class="bi bi-check-circle"></i>
-                                                Active
-                                            </div>
-                                        {% else %}
-                                            <div class="status-badge inactive">
-                                                <i class="bi bi-x-circle"></i>
-                                                Inactive
-                                            </div>
-                                        {% endif %}
-                                        
-                                        {% if user.is_staff %}
-                                            <div class="status-badge staff">
-                                                <i class="bi bi-shield"></i>
-                                                Staff
-                                            </div>
-                                        {% endif %}
-                                        
-                                        {% if user.is_superuser %}
-                                            <div class="status-badge" style="background: rgba(139, 69, 19, 0.1); color: #8b4513; border: 1px solid #8b4513;">
-                                                <i class="bi bi-crown"></i>
-                                                Admin
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                </td>
-
-                                <!-- Last Login -->
-                                <td>
-                                    {% if user.last_login %}
-                                        <div>{{ user.last_login|date:"M d, Y" }}</div>
-                                        <small class="text-muted">{{ user.last_login|time:"H:i" }} BDT</small>
-                                    {% else %}
-                                        <span class="text-muted">Never logged in</span>
-                                    {% endif %}
-                                </td>
-
-                                <!-- Actions -->
-                                <td>
-                                    <div class="action-buttons">
-                                        <!-- View Button -->
-                                        <a href="{% url 'users:detail' user.pk %}" 
-                                           class="btn-action view"
-                                           title="View User Details">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-
-                                        {% if perms.users.change_customuser %}
-                                            <!-- Edit Button (disabled for PRP readonly fields) -->
-                                            <a href="{% url 'users:edit' user.pk %}" 
-                                               class="btn-action edit"
-                                               title="{% if user.is_prp_managed %}Edit User (PRP fields are read-only){% else %}Edit User{% endif %}">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-
-                                            <!-- Role Management Button -->
-                                            <a href="{% url 'users:roles' user.pk %}" 
-                                               class="btn-action"
-                                               style="color: var(--primary-orange); border-color: var(--primary-orange);"
-                                               title="Manage User Roles">
-                                                <i class="bi bi-person-gear"></i>
-                                            </a>
-                                        {% endif %}
-
-                                        {% if perms.users.sync_prp_users and user.is_prp_managed %}
-                                            <!-- PRP Sync Button -->
-                                            <a href="{% url 'users:prp_sync_user' user.pk %}" 
-                                               class="btn-action prp-sync"
-                                               title="Sync with PRP"
-                                               onclick="return confirm('Sync this user with PRP data?')">
-                                                <i class="bi bi-arrow-clockwise"></i>
-                                            </a>
-                                        {% endif %}
-
-                                        {% if perms.users.delete_customuser and not user.is_superuser %}
-                                            <!-- Delete/Deactivate Button -->
-                                            {% if user.is_prp_managed %}
-                                                <a href="{% url 'users:deactivate' user.pk %}" 
-                                                   class="btn-action delete"
-                                                   title="Deactivate PRP User"
-                                                   onclick="return confirm('Deactivate this PRP user? This will not delete the user from PRP.')">
-                                                    <i class="bi bi-person-slash"></i>
-                                                </a>
-                                            {% else %}
-                                                <a href="{% url 'users:delete' user.pk %}" 
-                                                   class="btn-action delete"
-                                                   title="Delete User"
-                                                   onclick="return confirm('Are you sure you want to delete this user? This action cannot be undone.')">
-                                                    <i class="bi bi-trash"></i>
-                                                </a>
-                                            {% endif %}
-                                        {% endif %}
-                                    </div>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <!-- Empty State -->
-                <div class="empty-state">
-                    <i class="bi bi-people"></i>
-                    <h3>No Users Found</h3>
-                    <p>
-                        {% if request.GET.search or request.GET.status or request.GET.office %}
-                            No users match your current filters. Try adjusting your search criteria.
-                        {% else %}
-                            No users have been added to the system yet.
-                        {% endif %}
-                    </p>
-                    
-                    {% if perms.users.add_customuser %}
-                        <a href="{% url 'users:create' %}" class="btn-primary">
-                            <i class="bi bi-person-plus"></i>
-                            Create First User
-                        </a>
-                    {% endif %}
-                    
-                    {% if perms.users.sync_prp_users %}
-                        <a href="{% url 'users:prp_sync_dashboard' %}" class="btn-outline-secondary">
-                            <i class="bi bi-cloud-download"></i>
-                            Sync from PRP
-                        </a>
-                    {% endif %}
-                </div>
-            {% endif %}
-        </div>
-
-        <!-- Pagination -->
-        {% if page_obj.has_other_pages %}
-            <div class="pagination-section">
-                <div class="pagination-info">
-                    Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} users
-                </div>
-                
-                <nav aria-label="Users pagination">
-                    <div class="pagination">
-                        {% if page_obj.has_previous %}
-                            <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page=1" 
-                               class="page-link" title="First page">
-                                <i class="bi bi-chevron-double-left"></i>
-                            </a>
-                            <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}" 
-                               class="page-link" title="Previous page">
-                                <i class="bi bi-chevron-left"></i>
-                            </a>
-                        {% else %}
-                            <span class="page-link disabled">
-                                <i class="bi bi-chevron-double-left"></i>
-                            </span>
-                            <span class="page-link disabled">
-                                <i class="bi bi-chevron-left"></i>
-                            </span>
-                        {% endif %}
-
-                        {% for num in page_obj.paginator.page_range %}
-                            {% if page_obj.number == num %}
-                                <span class="page-link active">{{ num }}</span>
-                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                                <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}" 
-                                   class="page-link">{{ num }}</a>
-                            {% endif %}
-                        {% endfor %}
-
-                        {% if page_obj.has_next %}
-                            <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}" 
-                               class="page-link" title="Next page">
-                                <i class="bi bi-chevron-right"></i>
-                            </a>
-                            <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.paginator.num_pages }}" 
-                               class="page-link" title="Last page">
-                                <i class="bi bi-chevron-double-right"></i>
-                            </a>
-                        {% else %}
-                            <span class="page-link disabled">
-                                <i class="bi bi-chevron-right"></i>
-                            </span>
-                            <span class="page-link disabled">
-                                <i class="bi bi-chevron-double-right"></i>
-                            </span>
-                        {% endif %}
+                <div class="source-options">
+                    <div class="source-option" onclick="selectUserSource('prp')">
+                        <input type="radio" name="user_source" value="prp" id="source-prp">
+                        <label for="source-prp">
+                            <div class="prp-option-title">
+                                <i class="bi bi-cloud-download"></i>
+                                Import from PRP
+                            </div>
+                            <div class="prp-option-description">
+                                Search and import employee data from Parliament Resource Portal.
+                            </div>
+                        </label>
                     </div>
-                </nav>
-            </div>
-        {% endif %}
-    </div>
-
-    <!-- PRP Sync Alert (if needed) -->
-    {% if prp_sync_needed %}
-        <div class="alert alert-warning mt-3" role="alert">
-            <div class="d-flex align-items-center">
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                <div class="flex-grow-1">
-                    <strong>PRP Sync Required</strong><br>
-                    Some users haven't been synced with PRP for over 7 days. Consider running a sync to ensure data accuracy.
+                    
+                    <div class="source-option" onclick="selectUserSource('local')">
+                        <input type="radio" name="user_source" value="local" id="source-local">
+                        <label for="source-local">
+                            <div class="prp-option-title">
+                                <i class="bi bi-person-plus"></i>
+                                Create Local User
+                            </div>
+                            <div class="prp-option-description">
+                                Manually create a user account with custom information.
+                            </div>
+                        </label>
+                    </div>
                 </div>
-                {% if perms.users.sync_prp_users %}
-                    <a href="{% url 'users:prp_sync_dashboard' %}" class="btn btn-sm btn-warning">
-                        <i class="bi bi-arrow-clockwise"></i>
-                        Sync Now
-                    </a>
-                {% endif %}
+            </div>
+
+            <!-- PRP Employee Lookup Section -->
+            <div id="prp-lookup-section" class="prp-lookup-section">
+                <h4 style="margin: 0 0 1rem 0; color: var(--text-primary);">
+                    <i class="bi bi-search"></i>
+                    Lookup Employee in PRP Database
+                </h4>
+                
+                <div class="lookup-form">
+                    <div class="lookup-group">
+                        <label for="employee-id-lookup" class="lookup-label">Employee ID</label>
+                        <input 
+                            type="text" 
+                            id="employee-id-lookup" 
+                            class="lookup-input" 
+                            placeholder="Enter Employee ID (numbers only)"
+                            pattern="[0-9]+"
+                        >
+                    </div>
+                    
+                    <div class="lookup-group">
+                        <label for="department-select" class="lookup-label">Department (Optional)</label>
+                        <select id="department-select" class="lookup-input">
+                            <option value="">Select Department</option>
+                            <option value="1">Administration</option>
+                            <option value="2">IT Department</option>
+                            <option value="3">Finance</option>
+                            <option value="4">Human Resources</option>
+                            <option value="5">Security</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <button type="button" class="btn-prp btn-sync" onclick="lookupPRPEmployee()">
+                            <i class="bi bi-search"></i>
+                            Search PRP
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- PRP User Preview -->
+                <div id="prp-preview" class="prp-user-preview">
+                    <div class="preview-header">
+                        <div class="preview-avatar">
+                            <i class="bi bi-person-circle"></i>
+                        </div>
+                        <div class="preview-info">
+                            <h4 id="preview-name">Employee Name</h4>
+                            <p id="preview-designation">Designation</p>
+                            <div id="preview-status" class="sync-status synced">
+                                <i class="bi bi-check-circle"></i>
+                                Active Employee
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="preview-details">
+                        <div class="preview-field">
+                            <div class="preview-field-label">Employee ID</div>
+                            <div class="preview-field-value" id="preview-employee-id">--</div>
+                        </div>
+                        <div class="preview-field">
+                            <div class="preview-field-label">Email</div>
+                            <div class="preview-field-value" id="preview-email">--</div>
+                        </div>
+                        <div class="preview-field">
+                            <div class="preview-field-label">Department</div>
+                            <div class="preview-field-value" id="preview-department">--</div>
+                        </div>
+                        <div class="preview-field">
+                            <div class="preview-field-label">Mobile</div>
+                            <div class="preview-field-value" id="preview-mobile">--</div>
+                        </div>
+                    </div>
+                    
+                    <div class="preview-actions">
+                        <button type="button" class="btn-prp btn-outline-teal" onclick="clearPRPLookup()">
+                            <i class="bi bi-x-circle"></i>
+                            Clear
+                        </button>
+                        <button type="button" class="btn-prp btn-sync" onclick="importPRPUser()">
+                            <i class="bi bi-download"></i>
+                            Import User
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Manual User Creation Form -->
+            <div id="manual-form-section" class="manual-form-section">
+                <form method="post" id="user-create-form">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <label for="id_first_name" class="form-label required">First Name</label>
+                        <input type="text" name="first_name" id="id_first_name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="id_last_name" class="form-label required">Last Name</label>
+                        <input type="text" name="last_name" id="id_last_name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="id_email" class="form-label">Email</label>
+                        <input type="email" name="email" id="id_email" class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="id_employee_id" class="form-label required">Employee ID</label>
+                        <input type="text" name="employee_id" id="id_employee_id" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="id_phone_number" class="form-label">Phone Number</label>
+                        <input type="text" name="phone_number" id="id_phone_number" class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="id_designation" class="form-label">Designation</label>
+                        <input type="text" name="designation" id="id_designation" class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="id_office" class="form-label">Office</label>
+                        <input type="text" name="office" id="id_office" class="form-control">
+                    </div>
+                    
+                    <div class="form-actions" style="margin-top: 2rem; text-align: right;">
+                        <a href="{% url 'users:list' %}" class="btn-prp btn-outline-teal" style="margin-right: 1rem;">
+                            <i class="bi bi-arrow-left"></i>
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn-prp btn-sync">
+                            <i class="bi bi-check-circle"></i>
+                            Create User
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
-    {% endif %}
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+// PRP Configuration - FIXED URL MAPPING
+const PRP_CONFIG = {
+    lookupUrl: '/users/prp/lookup/',
+    departmentsUrl: '/users/prp/departments/',
+    importUrl: '/users/prp/import/',
+    enabled: {% if prp_integration_enabled %}true{% else %}false{% endif %}
+};
+
+// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Auto-submit form on filter changes
-    const filterForm = document.getElementById('userFiltersForm');
-    const filterInputs = filterForm.querySelectorAll('select, input');
-    
-    // Add change event listeners for instant filtering (optional)
-    // filterInputs.forEach(input => {
-    //     input.addEventListener('change', function() {
-    //         if (this.name !== 'search') { // Don't auto-submit on search input
-    //             filterForm.submit();
-    //         }
-    //     });
-    // });
-    
-    // Search input with debounce
-    const searchInput = document.getElementById('search');
-    let searchTimeout;
-    
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        // searchTimeout = setTimeout(() => {
-        //     filterForm.submit();
-        // }, 500); // 500ms debounce
-    });
-    
-    // Keyboard shortcuts
-    document.addEventListener('keydown', function(e) {
-        // Ctrl+F or Cmd+F to focus search
-        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-            e.preventDefault();
-            searchInput.focus();
-            searchInput.select();
+    // Helper Functions
+    function getCSRFToken() {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'csrftoken') return value;
         }
-        
-        // Escape to clear search
-        if (e.key === 'Escape' && document.activeElement === searchInput) {
-            searchInput.value = '';
-            filterForm.submit();
-        }
-    });
-    
-    // Enhanced table interactions
-    const tableRows = document.querySelectorAll('.users-table tbody tr');
-    
-    tableRows.forEach(row => {
-        // Add hover effects and click-to-select functionality
-        row.addEventListener('click', function(e) {
-            // Don't trigger on action button clicks
-            if (!e.target.closest('.action-buttons')) {
-                // Optional: Navigate to user detail page on row click
-                const viewButton = row.querySelector('.btn-action.view');
-                if (viewButton) {
-                    // window.location.href = viewButton.href;
-                }
-            }
-        });
-    });
-    
-    // Loading states for sync buttons
-    const syncButtons = document.querySelectorAll('.btn-action.prp-sync, .btn-export');
-    
-    syncButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            this.classList.add('loading');
-            this.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i>';
-        });
-    });
-    
-    // Show/hide PRP columns based on filters
-    const statusFilter = document.getElementById('status');
-    const prpColumns = document.querySelectorAll('[data-prp-column]');
-    
-    function togglePRPColumns() {
-        const showPRP = statusFilter.value === 'prp' || statusFilter.value === '';
-        prpColumns.forEach(col => {
-            col.style.display = showPRP ? '' : 'none';
-        });
+        return '';
     }
-    
-    statusFilter.addEventListener('change', togglePRPColumns);
-    togglePRPColumns(); // Initial call
-    
-    // Toast notifications for actions
-    function showToast(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.className = `toast align-items-center text-white bg-${type} border-0`;
-        toast.setAttribute('role', 'alert');
-        toast.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">${message}</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
+
+    function getDepartmentName(departmentId) {
+        const departments = {
+            1: 'Administration',
+            2: 'IT Department',
+            3: 'Finance',
+            4: 'Human Resources',
+            5: 'Security'
+        };
+        return departments[departmentId] || `Department ${departmentId}`;
+    }
+
+    function showAlert(type, message) {
+        let alertContainer = document.getElementById('alert-container');
+        if (!alertContainer) {
+            alertContainer = document.createElement('div');
+            alertContainer.id = 'alert-container';
+            alertContainer.className = 'alert-container';
+            const formBody = document.querySelector('.form-body');
+            if (formBody) formBody.insertBefore(alertContainer, formBody.firstChild);
+        }
+
+        const alertClass = type === 'success' ? 'alert-success' : 
+                         type === 'warning' ? 'alert-warning' : 
+                         type === 'info' ? 'alert-info' : 'alert-danger';
+        
+        const iconClass = type === 'success' ? 'bi-check-circle' :
+                         type === 'warning' ? 'bi-exclamation-triangle' :
+                         type === 'info' ? 'bi-info-circle' : 'bi-x-circle';
+
+        const alertElement = document.createElement('div');
+        alertElement.className = `alert ${alertClass}`;
+        alertElement.innerHTML = `
+            <i class="bi ${iconClass}"></i>
+            <div>${message}</div>
         `;
         
-        document.body.appendChild(toast);
-        const bsToast = new bootstrap.Toast(toast);
-        bsToast.show();
+        alertContainer.appendChild(alertElement);
         
-        toast.addEventListener('hidden.bs.toast', () => {
-            toast.remove();
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (alertElement.parentNode) {
+                alertElement.parentNode.removeChild(alertElement);
+            }
+        }, 5000);
+    }
+
+    // User Source Selection
+    window.selectUserSource = function(source) {
+        const prpOption = document.querySelector('.source-option:nth-child(1)');
+        const localOption = document.querySelector('.source-option:nth-child(2)');
+        const prpLookupSection = document.getElementById('prp-lookup-section');
+        const manualFormSection = document.getElementById('manual-form-section');
+        
+        // Remove active class from all options
+        prpOption.classList.remove('active');
+        localOption.classList.remove('active');
+        
+        if (source === 'prp') {
+            prpOption.classList.add('active');
+            document.getElementById('source-prp').checked = true;
+            prpLookupSection.classList.add('active');
+            manualFormSection.style.display = 'none';
+            showAlert('info', 'PRP mode selected. Search for employees in Parliament Resource Portal database. All production users should come from PRP.');
+        } else {
+            localOption.classList.add('active');
+            document.getElementById('source-local').checked = true;
+            prpLookupSection.classList.remove('active');
+            manualFormSection.style.display = 'block';
+            showAlert('warning', 'Local user mode selected. This should only be used for testing or special cases. All production users should come from PRP.');
+        }
+    }
+
+    // PRP Employee Lookup Function - FIXED ENDPOINT URL
+    window.lookupPRPEmployee = function() {
+        const employeeId = document.getElementById('employee-id-lookup').value.trim();
+        const departmentId = document.getElementById('department-select').value;
+        
+        if (!employeeId) {
+            showAlert('warning', 'Please enter an Employee ID to search.');
+            document.getElementById('employee-id-lookup').focus();
+            return;
+        }
+        
+        // Validate employee ID format (should be numbers)
+        if (!/^\d+$/.test(employeeId)) {
+            showAlert('warning', 'Employee ID should contain numbers only.');
+            document.getElementById('employee-id-lookup').focus();
+            return;
+        }
+        
+        // Show loading state
+        const lookupBtn = document.querySelector('.btn-sync');
+        const originalHTML = lookupBtn.innerHTML;
+        lookupBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Searching PRP Database...';
+        lookupBtn.disabled = true;
+        
+        // Hide any existing preview
+        document.getElementById('prp-preview').classList.remove('active');
+        
+        // Make REAL API call to PRP lookup endpoint - FIXED URL
+        fetch(`${PRP_CONFIG.lookupUrl}${employeeId}/`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken(),
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Reset button state
+            lookupBtn.innerHTML = originalHTML;
+            lookupBtn.disabled = false;
+            
+            console.log('PRP Lookup Response:', data);
+            
+            if (data.success) {
+                if (data.found_in_prp && data.prp_data) {
+                    // Display PRP user data
+                    displayPRPUserPreview({
+                        userId: data.prp_data.userId,
+                        nameEng: data.prp_data.nameEng,
+                        email: data.prp_data.email,
+                        designationEng: data.prp_data.designation,
+                        department: getDepartmentName(data.prp_data.departmentId),
+                        mobile: data.prp_data.mobile,
+                        status: data.prp_data.status,
+                        departmentId: data.prp_data.departmentId
+                    });
+                    
+                    // Check if user already exists in PIMS
+                    if (data.found_in_pims) {
+                        showAlert('info', `Employee found in PRP! This user already exists in PIMS as: ${data.full_name}. Review details and click Import to create user account.`);
+                    } else {
+                        showAlert('success', 'Employee found in PRP! Review details and click Import to create user account.');
+                    }
+                } else if (data.found_in_pims && !data.found_in_prp) {
+                    showAlert('warning', `Employee ID ${employeeId} exists in PIMS but not found in PRP database. This might be a local user.`);
+                    if (data.profile_url) showAlert('info', `<a href="${data.profile_url}" target="_blank">View existing local user</a>`);
+                } else {
+                    showAlert('error', `Employee ID ${employeeId} not found in PRP database. Please verify the ID and try again.`);
+                }
+            } else {
+                const errorMsg = data.error || 'Failed to lookup employee in PRP database.';
+                if (errorMsg.includes('not available')) {
+                    showAlert('warning', 'PRP integration is currently unavailable. Please contact system administrator.');
+                } else if (errorMsg.includes('authentication')) {
+                    showAlert('error', 'PRP authentication failed. Please contact system administrator.');
+                } else {
+                    showAlert('error', `PRP Lookup Error: ${errorMsg}`);
+                }
+            }
+        })
+        .catch(error => {
+            lookupBtn.innerHTML = originalHTML;
+            lookupBtn.disabled = false;
+
+            if (error.message.includes('HTTP 503')) {
+                showAlert('error', 'PRP service is currently unavailable. Please try again later.');
+            } else if (error.message.includes('HTTP 401')) {
+                showAlert('error', 'Authentication failed. Please contact system administrator.');
+            } else if (error.message.includes('HTTP 404')) {
+                showAlert('error', 'PRP lookup endpoint not found. Please contact system administrator.');
+            } else if (error.message.includes('Failed to fetch')) {
+                showAlert('error', 'Network connection failed. Please check your internet connection.');
+            } else {
+                showAlert('error', `Network error while searching PRP database. Please check your connection and try again.`);
+            }
         });
     }
-    
-    // Check for messages from Django
-    {% if messages %}
-        {% for message in messages %}
-            showToast('{{ message|escapejs }}', '{{ message.tags }}');
-        {% endfor %}
-    {% endif %}
-    
-    // Refresh page periodically for PRP sync status updates (optional)
-    // setInterval(() => {
-    //     if (document.querySelector('.prp-indicator')) {
-    //         location.reload();
-    //     }
-    // }, 300000); // 5 minutes
-    
-    console.log('PIMS Users List - Dhaka, Bangladesh Parliament Secretariat');
-    console.log('PRP Integration Active:', {{ prp_users|default:"0" }} > 0);
-});
 
-// CSS Animation for sync buttons
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes spin {
-        to { transform: rotate(360deg); }
+    // Display PRP User Preview
+    function displayPRPUserPreview(userData) {
+        const preview = document.getElementById('prp-preview');
+        
+        if (!preview) {
+            console.error('PRP preview element not found');
+            return;
+        }
+        
+        // Update preview data safely
+        updateElementText('preview-name', userData.nameEng || 'Unknown Name');
+        updateElementText('preview-designation', userData.designationEng || 'Unknown Designation');
+        updateElementText('preview-employee-id', userData.userId || '');
+        updateElementText('preview-email', userData.email || 'No email');
+        updateElementText('preview-department', userData.department || 'Unknown Department');
+        updateElementText('preview-mobile', userData.mobile || 'No mobile');
+        
+        // Update avatar if photo exists (placeholder for future enhancement)
+        const avatarElement = preview.querySelector('.preview-avatar');
+        if (avatarElement) {
+            avatarElement.innerHTML = '<i class="bi bi-person-circle"></i>';
+        }
+        
+        // Update status with proper styling
+        const statusElement = document.getElementById('preview-status');
+        if (statusElement) {
+            if (userData.status === 'active') {
+                statusElement.className = 'sync-status synced';
+                statusElement.innerHTML = '<i class="bi bi-check-circle"></i> Active Employee';
+            } else {
+                statusElement.className = 'sync-status error';
+                statusElement.innerHTML = '<i class="bi bi-x-circle"></i> Inactive Employee';
+            }
+        }
+        
+        // Show preview with animation
+        preview.classList.add('active');
+        
+        // Scroll to preview if needed
+        setTimeout(() => {
+            preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 300);
     }
-    .spin { animation: spin 1s linear infinite; }
-`;
-document.head.appendChild(style);
+
+    function updateElementText(elementId, text) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = text;
+        }
+    }
+
+    // Import PRP User Function
+    window.importPRPUser = function() {
+        const employeeId = document.getElementById('employee-id-lookup').value.trim();
+        
+        if (!employeeId) {
+            showAlert('error', 'Employee ID is required for import.');
+            return;
+        }
+        
+        // Show loading state
+        const importBtn = document.querySelector('.preview-actions .btn-sync');
+        if (!importBtn) {
+            showAlert('error', 'Import button not found.');
+            return;
+        }
+        
+        const originalHTML = importBtn.innerHTML;
+        importBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Importing...';
+        importBtn.disabled = true;
+        
+        // Create form data for import
+        const formData = new FormData();
+        formData.append('employee_id', employeeId);
+        formData.append('source', 'prp');
+        formData.append('csrfmiddlewaretoken', getCSRFToken());
+        
+        // Submit import request
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        })
+        .then(data => {
+            importBtn.innerHTML = originalHTML;
+            importBtn.disabled = false;
+            
+            if (data.success) {
+                showAlert('success', 'User imported successfully from PRP!');
+                setTimeout(() => {
+                    window.location.href = data.redirect_url || '/users/';
+                }, 2000);
+            } else {
+                showAlert('error', data.error || 'Failed to import user from PRP.');
+            }
+        })
+        .catch(error => {
+            importBtn.innerHTML = originalHTML;
+            importBtn.disabled = false;
+            showAlert('error', `Import failed: ${error.message}`);
+        });
+    }
+
+    // Clear PRP Lookup
+    window.clearPRPLookup = function() {
+        document.getElementById('employee-id-lookup').value = '';
+        document.getElementById('department-select').value = '';
+        const previewContainer = document.getElementById('prp-preview');
+        if (previewContainer) previewContainer.classList.remove('active');
+        const alertContainer = document.getElementById('alert-container');
+        if (alertContainer) alertContainer.innerHTML = '';
+    }
+
+    // Load departments on page load if PRP is enabled
+    if (PRP_CONFIG.enabled) {
+        loadPRPDepartments();
+    }
+
+    // Load PRP Departments
+    function loadPRPDepartments() {
+        fetch(PRP_CONFIG.departmentsUrl, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken(),
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.departments) {
+                const departmentSelect = document.getElementById('department-select');
+                if (departmentSelect) {
+                    // Clear existing options except the first one
+                    departmentSelect.innerHTML = '<option value="">Select Department</option>';
+                    
+                    // Add departments from PRP
+                    data.departments.forEach(dept => {
+                        const option = document.createElement('option');
+                        option.value = dept.id;
+                        option.textContent = dept.name;
+                        departmentSelect.appendChild(option);
+                    });
+                }
+            }
+        })
+        .catch(error => {
+            console.warn('Failed to load PRP departments:', error);
+            // Keep default departments if PRP fails
+        });
+    }
+
+    // Initialize form if no PRP integration
+    if (!PRP_CONFIG.enabled) {
+        // Show manual form by default
+        const manualFormSection = document.getElementById('manual-form-section');
+        if (manualFormSection) {
+            manualFormSection.style.display = 'block';
+        }
+        
+        // Hide PRP options
+        const userSourceSelection = document.querySelector('.user-source-selection');
+        if (userSourceSelection) {
+            userSourceSelection.style.display = 'none';
+        }
+    } else {
+        // Hide manual form initially when PRP is enabled
+        const manualFormSection = document.getElementById('manual-form-section');
+        if (manualFormSection) {
+            manualFormSection.style.display = 'none';
+        }
+    }
+});
 </script>
 {% endblock %}

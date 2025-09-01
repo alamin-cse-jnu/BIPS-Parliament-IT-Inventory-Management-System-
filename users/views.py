@@ -26,7 +26,8 @@ import json
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List
-
+from django.contrib.auth import get_user_model
+from django.contrib.auth.views import PasswordChangeView
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -46,22 +47,50 @@ from django.views.decorators.http import require_http_methods, require_GET, requ
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView, 
-    TemplateView, FormView
+    TemplateView, FormView,
 )
-
+from django.conf import settings
 from .models import CustomUser
 from .forms import (
     CustomUserCreationForm, CustomUserChangeForm as CustomUserUpdateForm, UserRoleForm,
-    CustomLoginForm, CustomPasswordResetForm, PRPSyncForm
+    CustomLoginForm, CustomPasswordResetForm, PRPSyncForm, 
 )
 
 # PRP Integration imports
-from .api.prp_client import PRPClient
-from .api.sync_service import PRPSyncService
-from .api.exceptions import PRPConnectionError, PRPSyncError, PRPAuthenticationError
+try:
+    from .api.prp_client import PRPClient, create_prp_client
+    from .api.sync_service import PRPSyncService  # ✅ FIX: Added missing import
+    from .api.exceptions import (
+        PRPException, PRPConnectionError, PRPSyncError, 
+        PRPDataValidationError, PRPAuthenticationError, PRPBusinessRuleError
+    )
+    PRP_INTEGRATION_ENABLED = True
+    PRP_API_AVAILABLE = True
+except ImportError as e:
+    logging.getLogger(__name__).warning(f"PRP integration not available: {e}")
+    PRP_INTEGRATION_ENABLED = False
+    PRP_API_AVAILABLE = False
+    
+    # Stub classes to prevent import errors
+    class PRPClient:
+        def lookup_user_by_employee_id(self, employee_id):
+            raise ImportError("PRP integration not available")
+    
+    class PRPSyncService:
+        def check_prp_user_exists(self, employee_id):
+            raise ImportError("PRP integration not available")
+    
+    class PRPException(Exception):
+        pass
+    
+    class PRPConnectionError(Exception):
+        pass
 
-# Configure logging
 logger = logging.getLogger(__name__)
+
+# ✅ FIX: Use get_user_model() instead of direct import
+User = get_user_model()  # This will be CustomUser
+
 
 # ============================================================================
 # AUTHENTICATION VIEWS (Supports both PIMS local and PRP users)
@@ -712,26 +741,93 @@ class PRPSyncTriggerView(FormView):
 @method_decorator(login_required, name='dispatch')
 @method_decorator(staff_member_required, name='dispatch')
 class UserRoleUpdateView(UpdateView):
-    """Update user roles and permissions"""
+    """
+    Enhanced user role and permission management view.
+    Handles both local PIMS users and PRP-managed users.
+    Location: Bangladesh Parliament Secretariat, Dhaka
+    """
     model = CustomUser
-    form_class = UserRoleForm
     template_name = 'users/users_roles.html'
+    context_object_name = 'object'
     
-    def get_success_url(self):
-        return reverse('users:detail', kwargs={'pk': self.object.pk})
+    # Use specific fields for role management
+    fields = ['is_active', 'is_staff', 'is_superuser', 'groups']
+    
+    def get_form_class(self):
+        """Return appropriate form class for user role management."""
+        from users.forms import UserRoleManagementForm
+        return UserRoleManagementForm
     
     def get_context_data(self, **kwargs):
+        """Add additional context for role management."""
         context = super().get_context_data(**kwargs)
-        user_obj = self.get_object()
+        user = self.get_object()
         
+        # Add available groups/roles
+        from django.contrib.auth.models import Group
         context.update({
-            'page_title': f'Manage Roles: {user_obj.get_full_name()}',
-            'location': 'Bangladesh Parliament Secretariat, Dhaka',
-            'current_time': timezone.now(),
-            'user_obj': user_obj,
+            'available_groups': Group.objects.all().order_by('name'),
+            'user_groups': user.groups.all(),
+            'is_prp_managed': getattr(user, 'is_prp_managed', False),
+            'page_title': f'Role Management - {user.get_full_name()}',
+            'breadcrumbs': [
+                {'title': 'Users', 'url': '/users/'},
+                {'title': user.get_full_name(), 'url': f'/users/{user.pk}/'},
+                {'title': 'Roles', 'url': ''},
+            ]
         })
         
+        # Add PRP-specific context
+        if getattr(user, 'is_prp_managed', False):
+            context['prp_sync_info'] = {
+                'last_sync': getattr(user, 'prp_last_sync', None),
+                'readonly_note': 'Some fields are managed by PRP and cannot be edited'
+            }
+        
         return context
+    
+    def form_valid(self, form):
+        """Process role updates with PRP user considerations."""
+        user = form.save(commit=False)
+        
+        # Log role changes
+        original_user = self.get_object()
+        changes = []
+        
+        if original_user.is_active != user.is_active:
+            changes.append(f"Status: {'Active' if user.is_active else 'Inactive'}")
+        
+        if original_user.is_staff != user.is_staff:
+            changes.append(f"Staff: {'Yes' if user.is_staff else 'No'}")
+        
+        if original_user.is_superuser != user.is_superuser:
+            changes.append(f"Superuser: {'Yes' if user.is_superuser else 'No'}")
+        
+        # Save user
+        user.save()
+        
+        # Handle group assignments
+        form.save_m2m()
+        
+        # Log the changes
+        if changes:
+            change_summary = ', '.join(changes)
+            logger.info(
+                f'User roles updated for {user.employee_id} by {self.request.user.username}: {change_summary}'
+            )
+            
+            messages.success(
+                self.request,
+                f'Roles updated for {user.get_full_name()}: {change_summary}'
+            )
+        else:
+            messages.info(self.request, f'No role changes made for {user.get_full_name()}')
+        
+        return redirect('users:detail', pk=user.pk)
+    
+    def get_success_url(self):
+        """Redirect to user detail page after successful role update."""
+        return reverse_lazy('users:detail', kwargs={'pk': self.object.pk})
 
 
 @method_decorator(login_required, name='dispatch')
@@ -908,6 +1004,10 @@ class UserProfileEditView(UpdateView):
         })
         
         return context
+    
+class UserPasswordChangeView(PasswordChangeView):
+    template_name = 'users/users_password_change.html'
+    success_url = reverse_lazy('profile')
 
 # ============================================================================
 # SEARCH, REPORTING, AND ANALYTICS
@@ -1113,6 +1213,186 @@ class UserReportsView(TemplateView):
         
         return list(office_stats)
 
+
+# ============================================================================
+# PRP API Views for PIMS Integration
+# ============================================================================
+
+@require_GET
+@login_required
+@staff_member_required
+def prp_departments_api(request):
+    """
+    AJAX endpoint to get PRP departments list.
+    Used by frontend for department selection and sync operations.
+    """
+    if not PRP_INTEGRATION_ENABLED:
+        return JsonResponse({
+            'success': False,
+            'error': 'PRP integration not available',
+            'message': 'PRP API services are not configured or unavailable.'
+        }, status=503)
+    
+    try:
+        # Initialize PRP client
+        prp_client = create_prp_client()
+        
+        # Get departments from PRP
+        departments = prp_client.get_departments()
+        
+        # Format response for frontend
+        formatted_departments = []
+        for dept in departments:
+            formatted_departments.append({
+                'id': dept.get('id'),
+                'name': dept.get('nameEng', dept.get('name', 'Unknown')),
+                'nameBn': dept.get('nameBn', ''),
+                'code': dept.get('code', ''),
+                'status': dept.get('status', 'active')
+            })
+        
+        logger.info(f"✅ Retrieved {len(formatted_departments)} departments from PRP")
+        
+        return JsonResponse({
+            'success': True,
+            'departments': formatted_departments,
+            'count': len(formatted_departments),
+            'location': 'Bangladesh Parliament Secretariat, Dhaka',
+            'timestamp': timezone.now().isoformat()
+        })
+        
+    except PRPConnectionError as e:
+        logger.error(f"❌ PRP connection failed: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': 'connection_failed',
+            'message': 'Unable to connect to PRP. Please try again later.',
+            'details': str(e)
+        }, status=502)
+    
+    except PRPAuthenticationError as e:
+        logger.error(f"❌ PRP authentication failed: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': 'authentication_failed', 
+            'message': 'PRP authentication failed. Please contact system administrator.',
+            'details': str(e)
+        }, status=401)
+    
+    except Exception as e:
+        logger.error(f"❌ Unexpected error in PRP departments API: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': 'unexpected_error',
+            'message': 'An unexpected error occurred. Please contact system administrator.',
+            'details': str(e) if settings.DEBUG else 'Enable DEBUG for details'
+        }, status=500)
+
+
+@require_GET  
+@login_required
+@staff_member_required
+def prp_lookup_employee(request, employee_id):
+    """
+    AJAX endpoint to lookup employee by ID in PRP.
+    Used by frontend search functionality.
+    """
+    if not PRP_INTEGRATION_ENABLED:
+        return JsonResponse({
+            'found': False,
+            'error': 'PRP integration not available',
+            'message': 'PRP API services are not configured or unavailable.'
+        }, status=503)
+    
+    try:
+        # Validate employee_id
+        employee_id = str(employee_id).strip()
+        if not employee_id:
+            return JsonResponse({
+                'found': False,
+                'error': 'invalid_input',
+                'message': 'Employee ID is required.'
+            }, status=400)
+        
+        # Initialize PRP client  
+        prp_client = create_prp_client()
+        
+        # Search for employee in PRP
+        employee_data = prp_client.lookup_user_by_employee_id(employee_id)
+        
+        if employee_data:
+            # Format employee data for frontend
+            formatted_employee = {
+                'userId': employee_data.get('userId'),
+                'employeeId': employee_data.get('userId'),  # PRP uses userId as employee ID
+                'name': employee_data.get('nameEng', ''),
+                'nameBn': employee_data.get('nameBn', ''),
+                'email': employee_data.get('email', ''),
+                'designation': employee_data.get('designationEng', ''),
+                'department': employee_data.get('department', {}).get('nameEng', ''),
+                'mobile': employee_data.get('mobile', ''),
+                'status': employee_data.get('status', 'unknown'),
+                'photo': employee_data.get('photo', ''),
+            }
+            
+            # Check if user already exists in PIMS
+            existing_user = None
+            try:
+                existing_user = User.objects.get(employee_id=employee_id)
+            except User.DoesNotExist:
+                pass
+            
+            response_data = {
+                'found': True,
+                'employee': formatted_employee,
+                'in_pims': existing_user is not None,
+                'pims_user_id': existing_user.id if existing_user else None,
+                'is_prp_managed': getattr(existing_user, 'is_prp_managed', False) if existing_user else False,
+                'last_sync': existing_user.prp_last_sync.isoformat() if (existing_user and hasattr(existing_user, 'prp_last_sync') and existing_user.prp_last_sync) else None,
+                'can_sync': True,
+                'location': 'Bangladesh Parliament Secretariat, Dhaka',
+                'timestamp': timezone.now().isoformat()
+            }
+            
+            logger.info(f"✅ Found employee {employee_id} in PRP")
+            return JsonResponse(response_data)
+        
+        else:
+            logger.info(f"⚠️  Employee {employee_id} not found in PRP")
+            return JsonResponse({
+                'found': False,
+                'message': f'Employee {employee_id} not found in PRP database.',
+                'can_sync': False,
+                'location': 'Bangladesh Parliament Secretariat, Dhaka',
+                'timestamp': timezone.now().isoformat()
+            })
+            
+    except PRPConnectionError as e:
+        logger.error(f"❌ PRP connection failed for employee lookup {employee_id}: {e}")
+        return JsonResponse({
+            'found': False,
+            'error': 'connection_failed',
+            'message': 'Unable to connect to PRP. Please try again later.',
+            'details': str(e)
+        }, status=502)
+    
+    except PRPAuthenticationError as e:
+        logger.error(f"❌ PRP authentication failed for employee lookup {employee_id}: {e}")
+        return JsonResponse({
+            'found': False,
+            'error': 'authentication_failed',
+            'message': 'PRP authentication failed. Please contact system administrator.',
+            'details': str(e)
+        }, status=401)
+    
+    except Exception as e:
+        logger.error(f"❌ Unexpected error in PRP employee lookup for {employee_id}: {e}")
+        return JsonResponse({
+            'found': False,
+            'error': 'unexpected_error',
+            'message': 'An unexpected error occurred. Please contact system administrator.',
+            'details': str(e) if settings.DEBUG else 'Enable DEBUG for details'
+        }, status=500)
 # ============================================================================
 # AJAX API ENDPOINTS
 # ============================================================================
@@ -1234,6 +1514,58 @@ def get_prp_departments_ajax(request):
             'success': False,
             'error': 'Failed to fetch departments from PRP'
         })
+    
+@require_GET
+@login_required
+def lookup_user_by_employee_id_ajax(request, employee_id):
+    """
+    AJAX endpoint to lookup user by employee ID.
+    Used for quick user verification and autocomplete features.
+    """
+    try:
+        user = User.objects.get(employee_id=employee_id)  # ✅ FIX: Use User model
+        
+        user_data = {
+            'found': True,
+            'user_id': user.id,
+            'employee_id': user.employee_id,
+            'full_name': user.get_full_name(),
+            'email': user.email,
+            'office': user.office,
+            'designation': user.designation,
+            'is_active': user.is_active,
+            'is_prp_managed': getattr(user, 'is_prp_managed', False),
+            'profile_url': reverse('users:detail', kwargs={'pk': user.pk}),
+        }
+        
+        return JsonResponse(user_data)
+        
+    except User.DoesNotExist:  # ✅ FIX: Use User model
+        # Check if this might be a PRP user not yet synced
+        if PRP_INTEGRATION_ENABLED:
+            try:
+                sync_service = PRPSyncService()
+                prp_user_data = sync_service.check_prp_user_exists(employee_id)
+                
+                if prp_user_data:
+                    return JsonResponse({
+                        'found': False,
+                        'prp_exists': True,
+                        'message': 'User exists in PRP but not synced to PIMS yet.',
+                        'prp_data': {
+                            'name': prp_user_data.get('nameEng', ''),
+                            'designation': prp_user_data.get('designationEng', ''),
+                            'email': prp_user_data.get('email', ''),
+                        }
+                    })
+            except Exception as e:
+                logger.error(f'PRP lookup failed for {employee_id}: {str(e)}')
+        
+        return JsonResponse({
+            'found': False,
+            'prp_exists': False,
+            'message': 'User not found in PIMS or PRP.'
+        })
 
 # ============================================================================
 # HELPER FUNCTIONS
@@ -1241,6 +1573,9 @@ def get_prp_departments_ajax(request):
 
 def get_prp_user_data(user_id: str) -> Optional[Dict[str, Any]]:
     """Helper function to fetch PRP user data with error handling"""
+    if not PRP_INTEGRATION_ENABLED:
+        return None
+        
     try:
         sync_service = PRPSyncService()
         return sync_service.get_user_data_from_prp(user_id)
@@ -1251,14 +1586,64 @@ def get_prp_user_data(user_id: str) -> Optional[Dict[str, Any]]:
 
 def sync_single_prp_user(employee_id: str, department_id: Optional[int] = None) -> Dict[str, Any]:
     """Helper function to sync a single PRP user"""
+    if not PRP_INTEGRATION_ENABLED:
+        return {'success': False, 'error': 'PRP integration not enabled'}
+        
     try:
         sync_service = PRPSyncService()
-        result = sync_service.sync_single_user(employee_id, department_id)
-        return {'success': True, 'result': result}
+        result = sync_service.sync_user_by_employee_id(employee_id, department_id)
+        return {
+            'success': result.success,
+            'users_created': result.users_created,
+            'users_updated': result.users_updated,
+            'errors': result.errors
+        }
     except Exception as e:
         logger.error(f'Failed to sync PRP user {employee_id}: {str(e)}')
         return {'success': False, 'error': str(e)}
 
+
+@require_GET
+@login_required
+@staff_member_required
+def test_prp_connection(request):
+    """Quick PRP connection test endpoint."""
+    try:
+        import requests
+        from django.conf import settings
+        
+        # Test basic connectivity
+        prp_settings = getattr(settings, 'PRP_API_SETTINGS', {})
+        base_url = prp_settings.get('BASE_URL', 'https://prp.parliament.gov.bd')
+        
+        response = requests.get(base_url, timeout=10)
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'PRP server is reachable',
+            'status_code': response.status_code,
+            'url': base_url,
+            'location': 'Bangladesh Parliament Secretariat, Dhaka'
+        })
+        
+    except requests.exceptions.ConnectionError:
+        return JsonResponse({
+            'success': False,
+            'error': 'connection_failed',
+            'message': 'Cannot reach PRP server. Check network connection.',
+            'suggestions': [
+                'Check internet connection',
+                'Verify VPN if required',
+                'Check firewall settings',
+                'Confirm PRP server is running'
+            ]
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': 'unexpected_error',
+            'message': str(e)
+        })
 
 # ============================================================================
 # LEGACY VIEW ALIASES (for backward compatibility)

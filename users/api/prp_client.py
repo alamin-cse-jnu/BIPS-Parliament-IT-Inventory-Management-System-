@@ -86,39 +86,58 @@ class PRPClient:
         timeout: int = 30,
         enable_caching: bool = True
     ):
-        """
-        Initialize PRP client with production configuration.
-        
-        Args:
-            base_url: PRP API base URL (defaults to production URL)
-            username: PRP API username (defaults to production credentials)
-            password: PRP API password (defaults to production credentials)
-            timeout: Request timeout in seconds
-            enable_caching: Enable response caching
-        """
+
+        # Get PRP settings from Django settings
+        prp_settings = getattr(settings, 'PRP_API_SETTINGS', {})
+    
         # Production PRP API Configuration (Bangladesh Parliament Secretariat)
-        self.base_url = base_url or getattr(settings, 'PRP_BASE_URL', 'https://prp.parliament.gov.bd')
-        self.username = username or getattr(settings, 'PRP_USERNAME', 'ezzetech')
-        self.password = password or getattr(settings, 'PRP_PASSWORD', '${Fty#3a')
-        self.timeout = timeout
+        self.base_url = base_url or prp_settings.get('BASE_URL', 'https://prp.parliament.gov.bd')
+        self.username = username or prp_settings.get('AUTH_USERNAME', 'ezzetech')
+        self.password = password or prp_settings.get('AUTH_PASSWORD', '${Fty#3a')
+        self.timeout = timeout or prp_settings.get('TIMEOUT', 30)
         self.enable_caching = enable_caching
-        
+    
+        # ✅ FIX: SSL Configuration from settings
+        self.verify_ssl = prp_settings.get('VERIFY_SSL', True)
+    
         # Authentication state
         self.token = None
         self.token_expires = None
         self.last_auth_time = None
-        
-        # HTTP session for connection pooling
+    
+        # ✅ FIX: HTTP session with SSL configuration
         self.session = requests.Session()
         self.session.headers.update({
             'Content-Type': 'application/json',
             'User-Agent': 'PIMS-PRP-Integration/1.0 (Bangladesh Parliament Secretariat)',
             'Accept': 'application/json'
         })
-        
-        logger.info(f"🏛️  Real PRP Client initialized for Bangladesh Parliament Secretariat")
+    
+        # ✅ FIX: Apply SSL verification setting
+        if not self.verify_ssl:
+            self.session.verify = False
+            # Disable SSL warnings
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            logger.warning("⚠️  SSL verification disabled for PRP API")
+    
+        # ✅ FIX: Add retry strategy for reliability
+        from requests.adapters import HTTPAdapter
+        from urllib3.util.retry import Retry
+    
+        retry_strategy = Retry(
+            total=3,
+            status_forcelist=[429, 500, 502, 503, 504],
+            backoff_factor=1
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
+    
+        logger.info(f"🏛️  PRP Client initialized for Bangladesh Parliament Secretariat")
         logger.info(f"🌐 API Base URL: {self.base_url}")
         logger.info(f"👤 Username: {self.username}")
+        logger.info(f"🔒 SSL Verification: {'Enabled' if self.verify_ssl else 'Disabled'}")
         logger.info(f"📍 Location: Dhaka, Bangladesh")
     
     def authenticate(self) -> bool:

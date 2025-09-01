@@ -539,85 +539,158 @@ class PRPClient:
             raise PRPConnectionError(f"Department retrieval failed: {str(e)}")
     
     def get_department_employees(self, department_id: int) -> List[Dict[str, Any]]:
-        """Get all employees for a specific department."""
+        """Enhanced debug version to see what's happening with employee retrieval."""
         try:
+            logger.info(f"🔍 Getting employees for department ID: {department_id}")
+            
             params = {
                 'action': 'employee_details',
                 'departmentId': department_id
             }
             
             response_data = self._make_authenticated_request('employee_details', params)
+            
+            # Enhanced debug logging
+            logger.info(f"📋 Response type: {type(response_data)}")
+            if isinstance(response_data, dict):
+                logger.info(f"📋 Response keys: {list(response_data.keys())}")
+                logger.info(f"📋 Response code: {response_data.get('responseCode', 'N/A')}")
+                logger.info(f"📋 Response message: {response_data.get('msg', 'N/A')}")
+            
             employees = response_data.get('payload', [])
             
+            logger.info(f"👥 Raw employee payload type: {type(employees)}")
+            if isinstance(employees, list):
+                logger.info(f"👥 Raw employee count: {len(employees)}")
+            else:
+                logger.warning(f"⚠️  Expected list, got: {employees}")
+                return []
+            
+            if not employees:
+                logger.warning(f"⚠️  No employees returned for department {department_id}")
+                return []
+            
+            # Enhanced employee processing with debug info
             validated_employees = []
-            for emp in employees:
+            for i, emp in enumerate(employees):
                 if isinstance(emp, dict):
+                    user_id = emp.get('userId')
+                    name = emp.get('nameEng', 'Unknown')
+                    
+                    logger.debug(f"👤 Processing employee {i+1}: {name} (ID: {user_id}, type: {type(user_id)})")
+                    
                     validated_employee = {
-                        'userId': str(emp.get('userId', '')),  # ✅ FIX: Convert to string
-                        'nameEng': emp.get('nameEng', ''),
+                        'userId': str(user_id) if user_id is not None else '',
+                        'nameEng': name,
                         'nameBn': emp.get('nameBn', ''),
                         'email': emp.get('email', ''),
                         'designationEng': emp.get('designationEng', ''),
                         'mobile': emp.get('mobile', ''),
                         'status': emp.get('status', 'unknown'),
-                        'photo': emp.get('photo', ''),  # Will be converted later
+                        'photo': emp.get('photo', ''),
                     }
                     
-                    # Only include employees with valid userId
                     if validated_employee['userId']:
                         validated_employees.append(validated_employee)
+                        logger.debug(f"✅ Added: {name} (ID: {validated_employee['userId']})")
                     else:
-                        logger.warning(f"Skipping employee with missing userId: {emp}")
+                        logger.warning(f"⚠️  Skipped {name} - missing userId (original: {user_id})")
                 else:
-                    logger.warning(f"Invalid employee data: {emp}")
+                    logger.warning(f"⚠️  Invalid employee data at index {i}: {type(emp)}")
             
-            logger.info(f"Retrieved {len(validated_employees)} employees from department {department_id}")
+            logger.info(f"✅ Returning {len(validated_employees)}/{len(employees)} validated employees for department {department_id}")
+            
+            # Log first few validated employee IDs for debugging
+            if validated_employees:
+                sample_validated = [f"{emp['nameEng']}({emp['userId']})" for emp in validated_employees[:3]]
+                logger.info(f"📋 Sample validated employees: {sample_validated}")
+            
             return validated_employees
             
         except Exception as e:
-            logger.error(f"Failed to get employees for department {department_id}: {e}")
+            logger.error(f"❌ Failed to get employees for department {department_id}: {e}")
+            import traceback
+            logger.error(f"❌ Traceback: {traceback.format_exc()}")
             raise PRPConnectionError(f"Employee retrieval failed: {str(e)}")
     
     def lookup_user_by_employee_id(self, employee_id: str) -> Optional[Dict[str, Any]]:
-        """Debug version to find the employee search issue."""
+        """Enhanced debug version to find the employee search issue."""
         if not employee_id:
             return None
         
         try:
-            logger.info(f"Looking up employee: {employee_id}")
+            logger.info(f"🔍 Starting search for employee: {employee_id}")
             departments = self.get_departments()
-            logger.info(f"Found {len(departments)} departments to search")
+            logger.info(f"📋 Found {len(departments)} departments")
+            
+            # Log department details
+            for i, dept in enumerate(departments[:5]):  # Log first 5 departments
+                logger.info(f"📂 Dept {i+1}: {dept.get('nameEng')} (ID: {dept.get('id')})")
             
             for dept in departments:
                 dept_id = dept.get('id')
                 dept_name = dept.get('nameEng', 'Unknown')
                 
+                logger.info(f"🏢 Searching department: {dept_name} (ID: {dept_id})")
+                
                 try:
                     employees = self.get_department_employees(dept_id)
-                    logger.info(f"Department '{dept_name}': {len(employees)} employees")
+                    logger.info(f"👥 Found {len(employees)} employees in {dept_name}")
                     
-                    # Log first few employee IDs for debugging
-                    if employees:
-                        sample_ids = [str(emp.get('userId', 'N/A')) for emp in employees[:3]]
-                        logger.info(f"Sample IDs in {dept_name}: {sample_ids}")
+                    # DEBUG: If no employees found, let's check the raw response
+                    if len(employees) == 0:
+                        logger.warning(f"⚠️  No employees in {dept_name} - checking raw API response...")
+                        # Make direct API call to see raw response
+                        try:
+                            params = {'action': 'employee_details', 'departmentId': dept_id}
+                            raw_response = self._make_authenticated_request('employee_details', params)
+                            logger.info(f"📋 Raw API response for {dept_name}: {type(raw_response)}")
+                            if isinstance(raw_response, dict):
+                                logger.info(f"📋 Response keys: {list(raw_response.keys())}")
+                                payload = raw_response.get('payload', [])
+                                logger.info(f"📋 Payload type: {type(payload)}, length: {len(payload) if isinstance(payload, list) else 'N/A'}")
+                                if isinstance(payload, list) and payload:
+                                    sample_employee = payload[0]
+                                    logger.info(f"📋 Sample employee structure: {type(sample_employee)}")
+                                    if isinstance(sample_employee, dict):
+                                        logger.info(f"📋 Sample employee keys: {list(sample_employee.keys())}")
+                                        logger.info(f"📋 Sample userId: {sample_employee.get('userId')} (type: {type(sample_employee.get('userId'))})")
+                        except Exception as debug_e:
+                            logger.error(f"❌ Debug API call failed: {debug_e}")
+                    else:
+                        # Log sample employee IDs if we have employees
+                        sample_ids = []
+                        for emp in employees[:3]:
+                            user_id = emp.get('userId', 'N/A')
+                            name = emp.get('nameEng', 'Unknown')
+                            sample_ids.append(f"{name}({user_id})")
+                        logger.info(f"👤 Sample employees in {dept_name}: {sample_ids}")
                     
                     # Search for target employee
                     for employee in employees:
                         prp_user_id = str(employee.get('userId', ''))
+                        employee_name = employee.get('nameEng', 'Unknown')
+                        
+                        logger.debug(f"🔍 Comparing: '{prp_user_id}' == '{employee_id}' for {employee_name}")
+                        
                         if prp_user_id == str(employee_id):
-                            logger.info(f"FOUND employee {employee_id} in {dept_name}")
+                            logger.info(f"✅ MATCH FOUND! Employee {employee_id} ({employee_name}) in {dept_name}")
                             employee['department'] = dept
                             return employee
                             
                 except Exception as e:
-                    logger.error(f"Error in department {dept_name}: {e}")
+                    logger.error(f"❌ Error searching department {dept_name}: {e}")
+                    import traceback
+                    logger.error(f"❌ Traceback: {traceback.format_exc()}")
                     continue
             
-            logger.warning(f"Employee {employee_id} not found in any department")
+            logger.warning(f"❌ Employee {employee_id} not found in any department after searching {len(departments)} departments")
             return None
             
         except Exception as e:
-            logger.error(f"Lookup failed: {e}")
+            logger.error(f"❌ Lookup failed: {e}")
+            import traceback
+            logger.error(f"❌ Traceback: {traceback.format_exc()}")
             raise PRPConnectionError(f"Employee lookup failed: {str(e)}")
     
     def convert_photo_to_django_file(self, photo_data: Union[bytes, str, None]) -> Optional[ContentFile]:

@@ -539,67 +539,43 @@ class PRPClient:
             raise PRPConnectionError(f"Department retrieval failed: {str(e)}")
     
     def get_department_employees(self, department_id: int) -> List[Dict[str, Any]]:
-        """
-        Get all employees from a specific department.
-        
-        API Endpoint: GET /api/secure/external?action=employee_details&departmentId={departmentId}
-        Response Model: EmployeeDetails{userId, nameEng, designationEng, email, mobile, photo, status, ...}
-        
-        Args:
-            department_id: Department ID from DepartmentModel
-            
-        Returns:
-            list: List of employee objects (PIMS integration fields only)
-            
-        Raises:
-            PRPConnectionError: If API request fails
-        """
+        """Get all employees for a specific department."""
         try:
-            logger.info(f"👥 Fetching employees from department {department_id}...")
-            
             params = {
                 'action': 'employee_details',
                 'departmentId': department_id
             }
             
-            data = self._make_authenticated_request('employees', params=params)
+            response_data = self._make_authenticated_request('employee_details', params)
+            employees = response_data.get('payload', [])
             
-            # Handle response format - PRP returns array directly in payload
-            if isinstance(data, list):
-                employees = data
-            else:
-                employees = []
-                logger.warning(f"⚠️  Unexpected employees response format: {type(data)}")
-            
-            # Validate and extract only PIMS-required fields from EmployeeDetails
             validated_employees = []
             for emp in employees:
-                if isinstance(emp, dict) and 'userId' in emp:
-                    # Map only the fields used by PIMS (per integration requirements)
+                if isinstance(emp, dict):
                     validated_employee = {
-                        'userId': str(emp.get('userId', '')),
-                        'nameEng': str(emp.get('nameEng', '')),
-                        'email': str(emp.get('email', '')),
-                        'designationEng': str(emp.get('designationEng', '')),
-                        'mobile': str(emp.get('mobile', '')),
-                        'status': str(emp.get('status', 'unknown')),
-                        'departmentId': department_id,
-                        'photo': emp.get('photo')  # byte[] from PRP - will be converted later
+                        'userId': str(emp.get('userId', '')),  # ✅ FIX: Convert to string
+                        'nameEng': emp.get('nameEng', ''),
+                        'nameBn': emp.get('nameBn', ''),
+                        'email': emp.get('email', ''),
+                        'designationEng': emp.get('designationEng', ''),
+                        'mobile': emp.get('mobile', ''),
+                        'status': emp.get('status', 'unknown'),
+                        'photo': emp.get('photo', ''),  # Will be converted later
                     }
                     
                     # Only include employees with valid userId
                     if validated_employee['userId']:
                         validated_employees.append(validated_employee)
                     else:
-                        logger.warning(f"⚠️  Skipping employee with missing userId: {emp}")
+                        logger.warning(f"Skipping employee with missing userId: {emp}")
                 else:
-                    logger.warning(f"⚠️  Invalid employee data: {emp}")
+                    logger.warning(f"Invalid employee data: {emp}")
             
-            logger.info(f"✅ Retrieved {len(validated_employees)} employees from department {department_id}")
+            logger.info(f"Retrieved {len(validated_employees)} employees from department {department_id}")
             return validated_employees
             
         except Exception as e:
-            logger.error(f"❌ Failed to get employees for department {department_id}: {e}")
+            logger.error(f"Failed to get employees for department {department_id}: {e}")
             raise PRPConnectionError(f"Employee retrieval failed: {str(e)}")
     
     def lookup_user_by_employee_id(self, employee_id: str) -> Optional[Dict[str, Any]]:
@@ -619,11 +595,11 @@ class PRPClient:
             PRPConnectionError: If API request fails
         """
         if not employee_id or not isinstance(employee_id, str):
-            logger.warning(f"⚠️  Invalid employee ID: {employee_id}")
+            logger.warning(f"Invalid employee ID: {employee_id}")
             return None
         
         try:
-            logger.info(f"🔍 Looking up employee: {employee_id}")
+            logger.info(f"Looking up employee: {employee_id}")
             
             # Get all departments first
             departments = self.get_departments()
@@ -635,21 +611,25 @@ class PRPClient:
                     
                     # Look for matching employee ID
                     for employee in employees:
-                        if employee.get('userId') == employee_id:
-                            logger.info(f"✅ Found employee {employee_id} in department {dept['nameEng']}")
-                            # Add department info to employee data
-                            employee['department'] = dept
-                            return employee
-                            
+                        # ✅ FIX: Handle both string and numeric userId comparisons
+                        prp_user_id = employee.get('userId')
+                        if prp_user_id is not None:
+                            # Convert both to strings for comparison
+                            if str(prp_user_id) == str(employee_id):
+                                logger.info(f"Found employee {employee_id} in department {dept['nameEng']}")
+                                # Add department info to employee data
+                                employee['department'] = dept
+                                return employee
+                                
                 except Exception as e:
-                    logger.warning(f"⚠️  Error searching department {dept['id']}: {e}")
+                    logger.warning(f"Error searching department {dept['id']}: {e}")
                     continue
             
-            logger.info(f"❌ Employee {employee_id} not found in any department")
+            logger.info(f"Employee {employee_id} not found in any department")
             return None
             
         except Exception as e:
-            logger.error(f"❌ Employee lookup failed for {employee_id}: {e}")
+            logger.error(f"Employee lookup failed for {employee_id}: {e}")
             raise PRPConnectionError(f"Employee lookup failed: {str(e)}")
     
     def convert_photo_to_django_file(self, photo_data: Union[bytes, str, None]) -> Optional[ContentFile]:

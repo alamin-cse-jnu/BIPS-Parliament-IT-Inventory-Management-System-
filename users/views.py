@@ -59,7 +59,7 @@ from .forms import (
 # PRP Integration imports
 try:
     from .api.prp_client import PRPClient, create_prp_client
-    from .api.sync_service import PRPSyncService  # ✅ FIX: Added missing import
+    from .api.sync_service import PRPSyncService 
     from .api.exceptions import (
         PRPException, PRPConnectionError, PRPSyncError, 
         PRPDataValidationError, PRPAuthenticationError, PRPBusinessRuleError
@@ -88,7 +88,7 @@ except ImportError as e:
 
 logger = logging.getLogger(__name__)
 
-# ✅ FIX: Use get_user_model() instead of direct import
+
 User = get_user_model()  # This will be CustomUser
 
 
@@ -400,7 +400,6 @@ class UserCreateView(CreateView):
     def _is_potential_prp_employee_id(self, employee_id: str) -> bool:
         """Check if employee ID pattern suggests PRP origin"""
         # Implement pattern matching based on PRP employee ID format
-        # This is a placeholder - adjust based on actual PRP ID patterns
         return employee_id.startswith('prp_') or (employee_id.isdigit() and len(employee_id) >= 6)
 
 
@@ -1246,7 +1245,6 @@ def prp_departments_api(request):
             formatted_departments.append({
                 'id': dept.get('id'),
                 'name': dept.get('nameEng', dept.get('name', 'Unknown')),
-                'nameBn': dept.get('nameBn', ''),
                 'code': dept.get('code', ''),
                 'status': dept.get('status', 'active')
             })
@@ -1262,7 +1260,7 @@ def prp_departments_api(request):
         })
         
     except PRPConnectionError as e:
-        logger.error(f"❌ PRP connection failed: {e}")
+        logger.error(f" PRP connection failed: {e}")
         return JsonResponse({
             'success': False,
             'error': 'connection_failed',
@@ -1271,7 +1269,7 @@ def prp_departments_api(request):
         }, status=502)
     
     except PRPAuthenticationError as e:
-        logger.error(f"❌ PRP authentication failed: {e}")
+        logger.error(f" PRP authentication failed: {e}")
         return JsonResponse({
             'success': False,
             'error': 'authentication_failed', 
@@ -1280,7 +1278,7 @@ def prp_departments_api(request):
         }, status=401)
     
     except Exception as e:
-        logger.error(f"❌ Unexpected error in PRP departments API: {e}")
+        logger.error(f" Unexpected error in PRP departments API: {e}")
         return JsonResponse({
             'success': False,
             'error': 'unexpected_error',
@@ -1368,7 +1366,7 @@ def prp_lookup_employee(request, employee_id):
             })
             
     except PRPConnectionError as e:
-        logger.error(f"❌ PRP connection failed for employee lookup {employee_id}: {e}")
+        logger.error(f" PRP connection failed for employee lookup {employee_id}: {e}")
         return JsonResponse({
             'found': False,
             'error': 'connection_failed',

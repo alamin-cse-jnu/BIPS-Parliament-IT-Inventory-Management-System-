@@ -276,11 +276,11 @@ class Command(BaseCommand):
     
     def _sync_department(self, department_id: str) -> PRPSyncResult:
         """Sync users from a specific department."""
-        self.stdout.write(f"🏢 Syncing department: {department_id}")
+        self.stdout.write(f" Syncing department: {department_id}")
         
         try:
             if self.dry_run:
-                self.stdout.write("🧪 DRY RUN: Department sync preview not yet implemented")
+                self.stdout.write(" DRY RUN: Department sync preview not yet implemented")
                 result = PRPSyncResult()
                 result.add_warning("Dry run mode - no changes applied")
                 return result.finalize()
@@ -295,7 +295,7 @@ class Command(BaseCommand):
         except ValueError:
             raise CommandError(f"Invalid department ID: {department_id}")
         except PRPException as e:
-            self.stderr.write(self.style.ERROR(f"❌ Department sync error: {e}"))
+            self.stderr.write(self.style.ERROR(f" Department sync error: {e}"))
             result = PRPSyncResult()
             result.success = False
             result.add_error("sync_department", str(e))
@@ -307,7 +307,7 @@ class Command(BaseCommand):
         
         try:
             if self.dry_run:
-                self.stdout.write("🧪 DRY RUN: Full sync preview not yet implemented")
+                self.stdout.write(" DRY RUN: Full sync preview not yet implemented")
                 result = PRPSyncResult()
                 result.add_warning("Dry run mode - no changes applied")
                 return result.finalize()
@@ -319,7 +319,7 @@ class Command(BaseCommand):
             return result
             
         except PRPException as e:
-            self.stderr.write(self.style.ERROR(f"❌ Full sync error: {e}"))
+            self.stderr.write(self.style.ERROR(f" Full sync error: {e}"))
             result = PRPSyncResult()
             result.success = False
             result.add_error("sync_all_departments", str(e))
@@ -336,11 +336,11 @@ class Command(BaseCommand):
         
         # Success/Failure status
         status_style = self.style.SUCCESS if result.success else self.style.ERROR
-        status_text = "SUCCESS ✅" if result.success else "FAILED ❌"
+        status_text = "SUCCESS " if result.success else "FAILED "
         self.stdout.write(f"Status: {status_style(status_text)}")
         
         # User statistics
-        self.stdout.write(f"\n📈 User Statistics:")
+        self.stdout.write(f"\n User Statistics:")
         self.stdout.write(f"  • Created: {self.style.SUCCESS(str(summary['users_created']))}")
         self.stdout.write(f"  • Updated: {self.style.WARNING(str(summary['users_updated']))}")
         self.stdout.write(f"  • Skipped: {summary['users_skipped']}")
